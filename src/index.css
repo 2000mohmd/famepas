@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 260 20% 8%;
+    --foreground: 45 30% 92%;
+
+    --card: 260 18% 12%;
+    --card-foreground: 45 30% 92%;
+
+    --popover: 260 18% 12%;
+    --popover-foreground: 45 30% 92%;
+
+    --primary: 270 50% 40%;
+    --primary-foreground: 45 50% 92%;
+
+    --secondary: 260 15% 18%;
+    --secondary-foreground: 45 30% 92%;
+
+    --muted: 260 12% 16%;
+    --muted-foreground: 260 10% 55%;
+
+    --accent: 43 80% 55%;
+    --accent-foreground: 260 20% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 15% 20%;
+    --input: 260 15% 20%;
+    --ring: 270 50% 40%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 260 20% 6%;
+    --sidebar-foreground: 45 30% 85%;
+    --sidebar-primary: 270 50% 40%;
+    --sidebar-primary-foreground: 45 50% 92%;
+    --sidebar-accent: 260 15% 14%;
+    --sidebar-accent-foreground: 45 30% 92%;
+    --sidebar-border: 260 15% 16%;
+    --sidebar-ring: 270 50% 40%;
+
+    --gold: 43 80% 55%;
+    --gold-light: 43 70% 70%;
+    --gold-dark: 43 90% 40%;
+    --purple-glow: 270 60% 50%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(43 80% 55%), hsl(43 70% 70%), hsl(43 90% 40%));
+  }
+
+  .gradient-purple {
+    background: linear-gradient(135deg, hsl(270 50% 30%), hsl(270 60% 50%));
+  }
+
+  .gradient-card {
+    background: linear-gradient(145deg, hsl(260 18% 14%), hsl(260 18% 10%));
+  }
+
+  .text-gold {
+    color: hsl(43 80% 55%);
+  }
+
+  .border-gold {
+    border-color: hsl(43 80% 55% / 0.3);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 30px hsl(270 60% 50% / 0.15);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(43 80% 55% / 0.1);
+  }
+
+  .glass {
+    background: hsl(260 18% 12% / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(260 15% 20% / 0.5);
+  }
+}
