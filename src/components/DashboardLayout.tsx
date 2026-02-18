@@ -10,6 +10,8 @@ import {
   LogOut,
   Settings,
   Send,
+  FolderTree,
+  MapPin,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.jpeg";
 
@@ -19,6 +21,8 @@ const adminLinks = [
   { to: "/admin/influencers", icon: Users, label: "Influencers" },
   { to: "/admin/offers", icon: Tag, label: "Offers" },
   { to: "/admin/events", icon: CalendarDays, label: "Events" },
+  { to: "/admin/categories", icon: FolderTree, label: "Categories" },
+  { to: "/admin/locations", icon: MapPin, label: "Locations" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
 ];
 

@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+interface Category { id: string; name: string; }
+interface Location { id: string; city: string; }
+
 interface Venue {
   id: string;
   name: string;
@@ -24,7 +27,9 @@ const AdminVenues = () => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [newVenue, setNewVenue] = useState({ name: "", category: "dining", city: "", email: "", password: "" });
+  const [newVenue, setNewVenue] = useState({ name: "", category: "", city: "", email: "", password: "" });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const { toast } = useToast();
 
   const fetchVenues = async () => {
@@ -33,6 +38,18 @@ const AdminVenues = () => {
   };
 
   useEffect(() => { fetchVenues(); }, []);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      const [catRes, locRes] = await Promise.all([
+        supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
+        supabase.from("service_locations").select("id, city").eq("is_active", true).order("city"),
+      ]);
+      setCategories((catRes.data as Category[]) ?? []);
+      setLocations((locRes.data as Location[]) ?? []);
+    };
+    fetchOptions();
+  }, []);
 
   const filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -66,7 +83,7 @@ const AdminVenues = () => {
 
       toast({ title: "Venue created", description: `${newVenue.name} account is ready` });
       setOpen(false);
-      setNewVenue({ name: "", category: "dining", city: "", email: "", password: "" });
+      setNewVenue({ name: "", category: "", city: "", email: "", password: "" });
       fetchVenues();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -111,22 +128,29 @@ const AdminVenues = () => {
                     <Label className="text-muted-foreground">Category</Label>
                     <Select value={newVenue.category} onValueChange={val => setNewVenue(v => ({ ...v, category: val }))}>
                       <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue />
+                        <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="dining">Dining</SelectItem>
-                        <SelectItem value="nightlife">Nightlife</SelectItem>
-                        <SelectItem value="cafe">Café</SelectItem>
-                        <SelectItem value="hotel">Hotel</SelectItem>
-                        <SelectItem value="spa">Spa</SelectItem>
-                        <SelectItem value="fitness">Fitness</SelectItem>
-                        <SelectItem value="entertainment">Entertainment</SelectItem>
+                        {categories.map(c => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                        {categories.length === 0 && <SelectItem value="dining">Dining</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-muted-foreground">City</Label>
-                    <Input value={newVenue.city} onChange={e => setNewVenue(v => ({ ...v, city: e.target.value }))} placeholder="e.g. Dubai" className="bg-secondary border-border" />
+                    <Select value={newVenue.city} onValueChange={val => setNewVenue(v => ({ ...v, city: val }))}>
+                      <SelectTrigger className="bg-secondary border-border">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map(l => (
+                          <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
+                        ))}
+                        {locations.length === 0 && <SelectItem value="">Other</SelectItem>}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <Button onClick={handleCreateVenue} disabled={isCreating} className="w-full gradient-gold text-accent-foreground font-semibold">

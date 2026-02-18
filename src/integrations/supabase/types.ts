@@ -84,6 +84,30 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       deliverables: {
         Row: {
           booking_id: string
@@ -563,6 +587,9 @@ export type Database = {
           is_verified: boolean
           niche: string[] | null
           phone: string | null
+          social_links: Json | null
+          tiktok_followers: number | null
+          tiktok_handle: string | null
           updated_at: string
           user_id: string
         }
@@ -581,6 +608,9 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          social_links?: Json | null
+          tiktok_followers?: number | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id: string
         }
@@ -599,6 +629,9 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          social_links?: Json | null
+          tiktok_followers?: number | null
+          tiktok_handle?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -685,6 +718,30 @@ export type Database = {
           tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      service_locations: {
+        Row: {
+          city: string
+          country: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          city: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          city?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
         }
         Relationships: []
       }
