@@ -4,9 +4,11 @@ import { Tag, Users, TrendingUp, CalendarDays } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const VenueDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ offers: 0, redemptions: 0, events: 0 });
   const [venueName, setVenueName] = useState("");
 
@@ -49,8 +51,8 @@ const VenueDashboard = () => {
               { label: "Create New Offer", href: "/venue/offers", icon: Tag },
               { label: "View Redemptions", href: "/venue/redemptions", icon: Users },
               { label: "Add Event", href: "/venue/events", icon: CalendarDays },
-            ].map(({ label, icon: Icon }) => (
-              <div key={label} className="p-4 rounded-lg bg-secondary/50 border border-border hover:border-gold/30 transition-all cursor-pointer group">
+            ].map(({ label, href, icon: Icon }) => (
+              <div key={label} onClick={() => navigate(href)} className="p-4 rounded-lg bg-secondary/50 border border-border hover:border-gold/30 transition-all cursor-pointer group">
                 <Icon className="w-8 h-8 text-gold mb-3" />
                 <p className="text-foreground font-medium group-hover:text-gold transition-colors">{label}</p>
               </div>

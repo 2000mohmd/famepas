@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const VenueSettings = () => {
@@ -12,6 +13,20 @@ const VenueSettings = () => {
   const { toast } = useToast();
   const [venue, setVenue] = useState<any>(null);
   const [form, setForm] = useState({ name: "", description: "", category: "dining", address: "", city: "", phone: "", email: "", website: "" });
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [locations, setLocations] = useState<{ id: string; city: string }[]>([]);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      const [catRes, locRes] = await Promise.all([
+        supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
+        supabase.from("service_locations").select("id, city").eq("is_active", true).order("city"),
+      ]);
+      setCategories((catRes.data as any[]) ?? []);
+      setLocations((locRes.data as any[]) ?? []);
+    };
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -55,7 +70,6 @@ const VenueSettings = () => {
             { label: "Venue Name", key: "name" },
             { label: "Description", key: "description" },
             { label: "Address", key: "address" },
-            { label: "City", key: "city" },
             { label: "Phone", key: "phone" },
             { label: "Email", key: "email" },
             { label: "Website", key: "website" },
@@ -71,15 +85,27 @@ const VenueSettings = () => {
           ))}
           <div>
             <Label className="text-muted-foreground text-sm">Category</Label>
-            <select
-              value={form.category}
-              onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-              className="w-full mt-1 rounded-lg bg-secondary border border-border p-2 text-foreground"
-            >
-              {["dining", "beauty", "nightlife", "fashion", "fitness", "wellness", "entertainment"].map(c => (
-                <option key={c} value={c} className="capitalize">{c}</option>
-              ))}
-            </select>
+            <Select value={form.category} onValueChange={val => setForm(f => ({ ...f, category: val }))}>
+              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {categories.map(c => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+                {categories.length === 0 && <SelectItem value="dining">Dining</SelectItem>}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-muted-foreground text-sm">City</Label>
+            <Select value={form.city} onValueChange={val => setForm(f => ({ ...f, city: val }))}>
+              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {locations.map(l => (
+                  <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
+                ))}
+                {locations.length === 0 && <SelectItem value="">Other</SelectItem>}
+              </SelectContent>
+            </Select>
           </div>
           <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
             Save Settings
