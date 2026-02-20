@@ -584,6 +584,7 @@ export type Database = {
           id: string
           influencer_score: number | null
           instagram_handle: string | null
+          is_suspended: boolean
           is_verified: boolean
           niche: string[] | null
           phone: string | null
@@ -605,6 +606,7 @@ export type Database = {
           id?: string
           influencer_score?: number | null
           instagram_handle?: string | null
+          is_suspended?: boolean
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
@@ -626,6 +628,7 @@ export type Database = {
           id?: string
           influencer_score?: number | null
           instagram_handle?: string | null
+          is_suspended?: boolean
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
@@ -639,9 +642,11 @@ export type Database = {
       }
       reviews: {
         Row: {
+          admin_note: string | null
           booking_id: string | null
           created_at: string
           id: string
+          is_hidden: boolean
           is_public: boolean
           rating: number
           review_text: string | null
@@ -652,9 +657,11 @@ export type Database = {
           venue_id: string | null
         }
         Insert: {
+          admin_note?: string | null
           booking_id?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           is_public?: boolean
           rating: number
           review_text?: string | null
@@ -665,9 +672,11 @@ export type Database = {
           venue_id?: string | null
         }
         Update: {
+          admin_note?: string | null
           booking_id?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           is_public?: boolean
           rating?: number
           review_text?: string | null
@@ -745,6 +754,42 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_tiers: {
+        Row: {
+          commission_pct: number
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          commission_pct?: number
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_pct?: number
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -769,6 +814,7 @@ export type Database = {
       venues: {
         Row: {
           address: string | null
+          approval_status: string
           category: string
           city: string | null
           cover_image_url: string | null
@@ -788,6 +834,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          approval_status?: string
           category?: string
           city?: string | null
           cover_image_url?: string | null
@@ -807,6 +854,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          approval_status?: string
           category?: string
           city?: string | null
           cover_image_url?: string | null

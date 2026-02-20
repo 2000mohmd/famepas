@@ -16,6 +16,8 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminLocations from "./pages/admin/AdminLocations";
+import AdminBilling from "./pages/admin/AdminBilling";
+import AdminModeration from "./pages/admin/AdminModeration";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
 import VenueInvitations from "./pages/venue/VenueInvitations";
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCategories /></ProtectedRoute>} />
             <Route path="/admin/locations" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLocations /></ProtectedRoute>} />
+            <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling /></ProtectedRoute>} />
+            <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDashboard /></ProtectedRoute>} />
