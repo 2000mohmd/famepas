@@ -19,6 +19,7 @@ interface Venue {
   category: string;
   city: string | null;
   is_active: boolean;
+  approval_status: string;
   created_at: string;
 }
 
@@ -33,8 +34,8 @@ const AdminVenues = () => {
   const { toast } = useToast();
 
   const fetchVenues = async () => {
-    const { data } = await supabase.from("venues").select("id, name, category, city, is_active, created_at").order("created_at", { ascending: false });
-    setVenues(data ?? []);
+    const { data } = await supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at").order("created_at", { ascending: false });
+    setVenues((data as any) ?? []);
   };
 
   useEffect(() => { fetchVenues(); }, []);
@@ -54,7 +55,12 @@ const AdminVenues = () => {
   const filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
 
   const toggleActive = async (id: string, active: boolean) => {
-    await supabase.from("venues").update({ is_active: !active }).eq("id", id);
+    await supabase.from("venues").update({ is_active: !active } as any).eq("id", id);
+    fetchVenues();
+  };
+
+  const setApprovalStatus = async (id: string, status: string) => {
+    await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
     fetchVenues();
   };
 
@@ -175,13 +181,14 @@ const AdminVenues = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Category</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">City</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Approval</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
               ) : (
                 filtered.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -189,14 +196,31 @@ const AdminVenues = () => {
                     <td className="p-4"><Badge variant="secondary" className="capitalize">{venue.category}</Badge></td>
                     <td className="p-4 text-muted-foreground">{venue.city || "—"}</td>
                     <td className="p-4">
+                      <Badge className={
+                        venue.approval_status === "approved" ? "bg-success/20 text-success border-success/30" :
+                        venue.approval_status === "pending" ? "bg-yellow-500/20 text-yellow-400 border-yellow-400/30" :
+                        "bg-destructive/20 text-destructive border-destructive/30"
+                      } variant="outline">
+                        {venue.approval_status || "approved"}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
                       <Badge className={venue.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
                         {venue.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </td>
                     <td className="p-4">
-                      <Button variant="ghost" size="sm" onClick={() => toggleActive(venue.id, venue.is_active)} className="text-muted-foreground hover:text-gold">
-                        {venue.is_active ? "Deactivate" : "Activate"}
-                      </Button>
+                      <div className="flex gap-1 flex-wrap">
+                        {venue.approval_status === "pending" && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="text-success hover:bg-success/10 h-7 text-xs">Approve</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(venue.id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 text-xs">Reject</Button>
+                          </>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => toggleActive(venue.id, venue.is_active)} className="text-muted-foreground hover:text-gold h-7 text-xs">
+                          {venue.is_active ? "Deactivate" : "Activate"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

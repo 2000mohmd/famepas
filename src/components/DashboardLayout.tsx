@@ -12,6 +12,8 @@ import {
   Send,
   FolderTree,
   MapPin,
+  CreditCard,
+  ShieldAlert,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.jpeg";
 
@@ -24,6 +26,8 @@ const adminLinks = [
   { to: "/admin/categories", icon: FolderTree, label: "Categories" },
   { to: "/admin/locations", icon: MapPin, label: "Locations" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+  { to: "/admin/billing", icon: CreditCard, label: "Billing" },
+  { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
 ];
 
 const venueLinks = [
