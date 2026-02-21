@@ -14,6 +14,7 @@ import {
   MapPin,
   CreditCard,
   ShieldAlert,
+  MessageSquare,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.jpeg";
 
@@ -33,9 +34,13 @@ const adminLinks = [
 const venueLinks = [
   { to: "/venue", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/venue/offers", icon: Tag, label: "My Offers" },
+  { to: "/venue/discover", icon: Users, label: "Discover" },
   { to: "/venue/invitations", icon: Send, label: "Invitations" },
+  { to: "/venue/bookings", icon: CalendarDays, label: "Bookings" },
   { to: "/venue/redemptions", icon: Users, label: "Redemptions" },
+  { to: "/venue/messages", icon: MessageSquare, label: "Messages" },
   { to: "/venue/events", icon: CalendarDays, label: "Events" },
+  { to: "/venue/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/venue/settings", icon: Settings, label: "Settings" },
 ];
 

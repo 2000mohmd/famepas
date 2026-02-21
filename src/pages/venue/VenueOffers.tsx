@@ -25,6 +25,10 @@ const VenueOffers = () => {
     discount_value: "",
     requirements: "",
     image_url: "",
+    min_followers: "",
+    max_redemptions: "",
+    starts_at: "",
+    ends_at: "",
   });
 
   const fetchData = async () => {
@@ -64,13 +68,17 @@ const VenueOffers = () => {
       discount_value: form.discount_value ? Number(form.discount_value) : null,
       requirements: form.requirements || null,
       image_url: form.image_url || null,
+      min_followers: form.min_followers ? Number(form.min_followers) : null,
+      max_redemptions: form.max_redemptions ? Number(form.max_redemptions) : null,
+      starts_at: form.starts_at || new Date().toISOString(),
+      ends_at: form.ends_at || null,
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Offer created!" });
       setOpen(false);
-      setForm({ title: "", description: "", offer_type: "free", discount_value: "", requirements: "", image_url: "" });
+      setForm({ title: "", description: "", offer_type: "free", discount_value: "", requirements: "", image_url: "", min_followers: "", max_redemptions: "", starts_at: "", ends_at: "" });
       fetchData();
     }
   };
@@ -127,9 +135,11 @@ const VenueOffers = () => {
                 <div>
                   <Label className="text-muted-foreground">Type</Label>
                   <select value={form.offer_type} onChange={e => setForm(f => ({ ...f, offer_type: e.target.value }))} className="w-full mt-1 rounded-lg bg-secondary border border-border p-2 text-foreground">
-                    <option value="free">Free</option>
+                    <option value="free">Free / Barter</option>
                     <option value="discount">Discount</option>
                     <option value="complimentary">Complimentary</option>
+                    <option value="paid">Paid Collaboration</option>
+                    <option value="event_invite">Event Invite</option>
                   </select>
                 </div>
                 {form.offer_type === "discount" && (
@@ -139,19 +149,41 @@ const VenueOffers = () => {
                   </div>
                 )}
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Min Followers</Label>
+                    <Input type="number" value={form.min_followers} onChange={e => setForm(f => ({ ...f, min_followers: e.target.value }))} placeholder="e.g. 5000" className="bg-secondary border-border mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Max Redemptions</Label>
+                    <Input type="number" value={form.max_redemptions} onChange={e => setForm(f => ({ ...f, max_redemptions: e.target.value }))} placeholder="e.g. 10" className="bg-secondary border-border mt-1" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Start Date</Label>
+                    <Input type="datetime-local" value={form.starts_at} onChange={e => setForm(f => ({ ...f, starts_at: e.target.value }))} className="bg-secondary border-border mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">End Date</Label>
+                    <Input type="datetime-local" value={form.ends_at} onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} className="bg-secondary border-border mt-1" />
+                  </div>
+                </div>
+
                 {/* Requirements */}
                 <div>
-                  <Label className="text-muted-foreground">Requirements for Influencer</Label>
+                  <Label className="text-muted-foreground">Deliverables & Requirements</Label>
                   <Textarea
                     value={form.requirements}
                     onChange={e => setForm(f => ({ ...f, requirements: e.target.value }))}
-                    placeholder="e.g. Post 1 story + 1 reel, tag our account, minimum 5k followers..."
+                    placeholder="e.g. 1 story + 1 reel, tag our account, use location tag, minimum 5k followers..."
                     className="bg-secondary border-border mt-1"
                     rows={3}
                   />
                 </div>
 
-                <Button onClick={handleCreate} className="w-full gradient-gold text-accent-foreground font-semibold">Create Offer</Button>
+                <Button onClick={handleCreate} className="w-full gradient-gold text-accent-foreground font-semibold">Create Campaign</Button>
               </div>
             </DialogContent>
           </Dialog>
