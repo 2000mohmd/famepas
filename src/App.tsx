@@ -28,6 +28,16 @@ import VenueMessages from "./pages/venue/VenueMessages";
 import VenueEvents from "./pages/venue/VenueEvents";
 import VenueAnalytics from "./pages/venue/VenueAnalytics";
 import VenueSettings from "./pages/venue/VenueSettings";
+import InfluencerDashboard from "./pages/influencer/InfluencerDashboard";
+import InfluencerExplore from "./pages/influencer/InfluencerExplore";
+import InfluencerInvitations from "./pages/influencer/InfluencerInvitations";
+import InfluencerBookings from "./pages/influencer/InfluencerBookings";
+import InfluencerMessages from "./pages/influencer/InfluencerMessages";
+import InfluencerEarnings from "./pages/influencer/InfluencerEarnings";
+import InfluencerProfile from "./pages/influencer/InfluencerProfile";
+import InfluencerReviews from "./pages/influencer/InfluencerReviews";
+import InfluencerRewards from "./pages/influencer/InfluencerRewards";
+import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +75,18 @@ const App = () => (
             <Route path="/venue/events" element={<ProtectedRoute allowedRoles={["venue"]}><VenueEvents /></ProtectedRoute>} />
             <Route path="/venue/analytics" element={<ProtectedRoute allowedRoles={["venue"]}><VenueAnalytics /></ProtectedRoute>} />
             <Route path="/venue/settings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueSettings /></ProtectedRoute>} />
+
+            {/* Influencer Routes */}
+            <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
+            <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
+            <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
+            <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
+            <Route path="/influencer/messages" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerMessages /></ProtectedRoute>} />
+            <Route path="/influencer/earnings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerEarnings /></ProtectedRoute>} />
+            <Route path="/influencer/profile" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerProfile /></ProtectedRoute>} />
+            <Route path="/influencer/reviews" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerReviews /></ProtectedRoute>} />
+            <Route path="/influencer/rewards" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerRewards /></ProtectedRoute>} />
+            <Route path="/influencer/settings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerSettings /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

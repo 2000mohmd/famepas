@@ -44,10 +44,23 @@ const venueLinks = [
   { to: "/venue/settings", icon: Settings, label: "Settings" },
 ];
 
-const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" }) => {
+const influencerLinks = [
+  { to: "/influencer", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/influencer/explore", icon: Building2, label: "Explore" },
+  { to: "/influencer/invitations", icon: Send, label: "Invitations" },
+  { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
+  { to: "/influencer/messages", icon: MessageSquare, label: "Messages" },
+  { to: "/influencer/earnings", icon: CreditCard, label: "Earnings" },
+  { to: "/influencer/profile", icon: Users, label: "My Profile" },
+  { to: "/influencer/reviews", icon: ShieldAlert, label: "Reviews" },
+  { to: "/influencer/rewards", icon: BarChart3, label: "Rewards" },
+  { to: "/influencer/settings", icon: Settings, label: "Settings" },
+];
+
+const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" }) => {
   const { signOut, user } = useAuth();
   const location = useLocation();
-  const links = type === "admin" ? adminLinks : venueLinks;
+  const links = type === "admin" ? adminLinks : type === "venue" ? venueLinks : influencerLinks;
 
   return (
     <div className="flex min-h-screen bg-background">

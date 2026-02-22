@@ -16,6 +16,7 @@ const Index = () => {
 
   if (role === "admin") return <Navigate to="/admin" replace />;
   if (role === "venue") return <Navigate to="/venue" replace />;
+  if (role === "influencer") return <Navigate to="/influencer" replace />;
 
   // Fallback - no role assigned yet
   return (
