@@ -103,7 +103,7 @@ const VenueSettings = () => {
                 {locations.map(l => (
                   <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
                 ))}
-                {locations.length === 0 && <SelectItem value="">Other</SelectItem>}
+                {locations.length === 0 && <SelectItem value="other">Other</SelectItem>}
               </SelectContent>
             </Select>
           </div>
