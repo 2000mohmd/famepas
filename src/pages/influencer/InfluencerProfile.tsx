@@ -1,0 +1,155 @@
+import DashboardLayout from "@/components/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { User, Instagram, Shield, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+
+const InfluencerProfile = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const [form, setForm] = useState({
+    full_name: "",
+    bio: "",
+    phone: "",
+    instagram_handle: "",
+    tiktok_handle: "",
+    followers_count: 0,
+    tiktok_followers: 0,
+    niche: [] as string[],
+  });
+  const [nicheInput, setNicheInput] = useState("");
+
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        full_name: profile.full_name || "",
+        bio: profile.bio || "",
+        phone: profile.phone || "",
+        instagram_handle: profile.instagram_handle || "",
+        tiktok_handle: profile.tiktok_handle || "",
+        followers_count: profile.followers_count || 0,
+        tiktok_followers: profile.tiktok_followers || 0,
+        niche: profile.niche || [],
+      });
+    }
+  }, [profile]);
+
+  const updateProfile = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("profiles").update(form).eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Profile updated!" });
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const addNiche = () => {
+    if (nicheInput.trim() && !form.niche.includes(nicheInput.trim())) {
+      setForm({ ...form, niche: [...form.niche, nicheInput.trim()] });
+      setNicheInput("");
+    }
+  };
+
+  const removeNiche = (n: string) => setForm({ ...form, niche: form.niche.filter((x) => x !== n) });
+
+  return (
+    <DashboardLayout type="influencer">
+      <div className="space-y-6 max-w-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-foreground">My Profile</h1>
+            <p className="text-muted-foreground">Manage your influencer profile</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {profile?.is_verified && <Badge className="bg-green-500/10 text-green-500"><Shield className="w-3 h-3 mr-1" /> Verified</Badge>}
+            {profile?.badge && <Badge variant="outline" className="capitalize">{profile.badge}</Badge>}
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader><CardTitle>Personal Info</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Bio</Label>
+              <Textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Social Accounts</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Instagram Handle</Label>
+                <Input value={form.instagram_handle} onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })} placeholder="@handle" />
+              </div>
+              <div className="space-y-2">
+                <Label>Instagram Followers</Label>
+                <Input type="number" value={form.followers_count} onChange={(e) => setForm({ ...form, followers_count: parseInt(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-2">
+                <Label>TikTok Handle</Label>
+                <Input value={form.tiktok_handle} onChange={(e) => setForm({ ...form, tiktok_handle: e.target.value })} placeholder="@handle" />
+              </div>
+              <div className="space-y-2">
+                <Label>TikTok Followers</Label>
+                <Input type="number" value={form.tiktok_followers} onChange={(e) => setForm({ ...form, tiktok_followers: parseInt(e.target.value) || 0 })} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Niches</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              <Input value={nicheInput} onChange={(e) => setNicheInput(e.target.value)} placeholder="Add niche (e.g. Food, Fashion)" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addNiche())} />
+              <Button variant="outline" onClick={addNiche}>Add</Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {form.niche.map((n) => (
+                <Badge key={n} variant="secondary" className="cursor-pointer" onClick={() => removeNiche(n)}>{n} ×</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full" onClick={() => updateProfile.mutate()} disabled={updateProfile.isPending}>
+          <Save className="w-4 h-4 mr-2" /> {updateProfile.isPending ? "Saving..." : "Save Profile"}
+        </Button>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default InfluencerProfile;
