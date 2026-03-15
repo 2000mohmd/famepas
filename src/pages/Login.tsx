@@ -116,8 +116,8 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="absolute inset-0 gradient-purple opacity-20" />
+    <div className="relative flex min-h-screen items-center justify-center bg-background overflow-auto py-8">
+      <div className="fixed inset-0 gradient-purple opacity-20 pointer-events-none" />
       <div className="relative z-10 w-full max-w-md px-6">
         <div className="glass rounded-2xl p-8 glow-purple animate-fade-in">
           <div className="flex flex-col items-center mb-6">
