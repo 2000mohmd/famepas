@@ -65,7 +65,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar flex flex-col">
+      <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar flex flex-col overflow-hidden">
         <div className="flex items-center gap-3 p-6 border-b border-border">
           <img src={famepassLogo} alt="Fame Pass" className="w-10 h-10 rounded-xl border border-gold/30" />
           <div>
@@ -76,7 +76,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
           {links.map(({ to, icon: Icon, label }) => {
             const isActive = location.pathname === to;
             return (
