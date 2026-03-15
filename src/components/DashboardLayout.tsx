@@ -110,6 +110,15 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
       {/* Main Content */}
       <main className="ml-64 flex-1 p-8">
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-sidebar-accent transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
         {children}
       </main>
     </div>
