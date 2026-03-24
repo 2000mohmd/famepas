@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Instagram, Shield, Save } from "lucide-react";
+import { Shield, Save, Camera } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 
 const InfluencerProfile = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -34,6 +35,7 @@ const InfluencerProfile = () => {
     followers_count: 0,
     tiktok_followers: 0,
     niche: [] as string[],
+    avatar_url: "",
   });
   const [nicheInput, setNicheInput] = useState("");
 
@@ -48,9 +50,30 @@ const InfluencerProfile = () => {
         followers_count: profile.followers_count || 0,
         tiktok_followers: profile.tiktok_followers || 0,
         niche: profile.niche || [],
+        avatar_url: profile.avatar_url || "",
       });
     }
   }, [profile]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/avatar.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const url = `${publicUrl}?t=${Date.now()}`;
+      setForm(f => ({ ...f, avatar_url: url }));
+      await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast({ title: "Avatar updated!" });
+    }
+    setAvatarUploading(false);
+  };
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -86,6 +109,32 @@ const InfluencerProfile = () => {
             {profile?.badge && <Badge variant="outline" className="capitalize">{profile.badge}</Badge>}
           </div>
         </div>
+
+        {/* Avatar */}
+        <Card>
+          <CardHeader><CardTitle>Profile Photo</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-secondary flex items-center justify-center">
+                  {form.avatar_url ? (
+                    <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl text-muted-foreground">{(form.full_name || "?")[0]?.toUpperCase()}</span>
+                  )}
+                </div>
+                <label className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                  <Camera className="w-4 h-4" />
+                  <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={avatarUploading} />
+                </label>
+              </div>
+              <div>
+                <p className="text-sm text-foreground font-medium">{form.full_name || "Your Name"}</p>
+                <p className="text-xs text-muted-foreground">{avatarUploading ? "Uploading..." : "Click the camera icon to change photo"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader><CardTitle>Personal Info</CardTitle></CardHeader>
