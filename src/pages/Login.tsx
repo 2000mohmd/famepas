@@ -39,6 +39,8 @@ const Login = () => {
   const [tiktokHandle, setTiktokHandle] = useState("");
   const [tiktokFollowers, setTiktokFollowers] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
   // Venue fields
   const [venueName, setVenueName] = useState("");
   const [venueCategory, setVenueCategory] = useState("");
