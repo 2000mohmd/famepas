@@ -106,7 +106,10 @@ const InfluencerExplore = () => {
         {/* Offers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {offers?.map((offer: any) => (
-            <Card key={offer.id} className="hover:border-gold/30 transition-colors">
+            <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
+              {offer.image_url && (
+                <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />
+              )}
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{offer.title}</CardTitle>
