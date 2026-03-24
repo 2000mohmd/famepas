@@ -108,6 +108,16 @@ const Login = () => {
       if (loginErr) {
         toast({ title: "Account created! Please sign in.", description: "Your account was created successfully." });
       } else {
+        // Upload avatar after login if file was selected
+        if (avatarFile && signupRole === "influencer" && res.data?.user?.id) {
+          const ext = avatarFile.name.split(".").pop();
+          const filePath = `${res.data.user.id}/avatar.${ext}`;
+          const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, avatarFile, { upsert: true });
+          if (!uploadErr) {
+            const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+            await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", res.data.user.id);
+          }
+        }
         toast({ title: "Welcome!", description: "Your account has been created." });
       }
     } catch (err: any) {
