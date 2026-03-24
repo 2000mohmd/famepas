@@ -205,6 +205,29 @@ const Login = () => {
 
                 {signupRole === "influencer" && (
                   <>
+                    {/* Avatar upload */}
+                    <div className="space-y-2">
+                      <Label className="text-muted-foreground text-sm">Profile Photo</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border bg-secondary flex items-center justify-center shrink-0">
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xl text-muted-foreground">?</span>
+                          )}
+                        </div>
+                        <label className="flex-1 flex flex-col items-center justify-center h-16 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-gold/40 transition-colors bg-secondary/50">
+                          <span className="text-xs text-muted-foreground">{avatarFile ? avatarFile.name : "Click to upload"}</span>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setAvatarFile(file);
+                              setAvatarPreview(URL.createObjectURL(file));
+                            }
+                          }} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
                     <div className="space-y-2">
                       <Label className="text-muted-foreground text-sm">Full Name</Label>
                       <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" required className="bg-secondary border-border" />
