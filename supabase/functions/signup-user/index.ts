@@ -49,18 +49,31 @@ serve(async (req) => {
     // Assign role
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
 
-    // For influencer: update profile with social info
+    // For influencer: upsert profile with social info
     if (role === "influencer") {
-      // Wait a moment for the trigger to create the profile
+      // Wait for any trigger, then upsert
       await new Promise(resolve => setTimeout(resolve, 500));
-      await supabaseAdmin.from("profiles").update({
+      const profileData = {
+        user_id: userId,
         full_name: full_name || null,
         phone: phone || null,
         instagram_handle: instagram_handle || null,
         tiktok_handle: tiktok_handle || null,
         tiktok_followers: tiktok_followers || 0,
         social_links: social_links || {},
-      }).eq("user_id", userId);
+      };
+      // Try update first, if no rows affected, insert
+      const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
+      if (!updated || updated.length === 0) {
+        await supabaseAdmin.from("profiles").insert(profileData);
+      }
+    } else {
+      // For venue: ensure profile exists
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const { data: existing } = await supabaseAdmin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
+      if (!existing) {
+        await supabaseAdmin.from("profiles").insert({ user_id: userId, full_name: venue_name ? `${venue_name} Owner` : email });
+      }
     }
 
     // For venue: create venue record
