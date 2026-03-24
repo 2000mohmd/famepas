@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -51,6 +51,8 @@ serve(async (req) => {
 
     // For influencer: update profile with social info
     if (role === "influencer") {
+      // Wait a moment for the trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 500));
       await supabaseAdmin.from("profiles").update({
         full_name: full_name || null,
         phone: phone || null,
