@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star } from "lucide-react";
+import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const InfluencerDashboard = () => {
@@ -62,6 +62,15 @@ const InfluencerDashboard = () => {
     enabled: !!user,
   });
 
+  const { data: warnings } = useQuery({
+    queryKey: ["influencer-warnings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("influencer_warnings" as any).select("*").eq("influencer_id", user!.id).order("created_at", { ascending: false }).limit(5);
+      return (data as any[]) ?? [];
+    },
+    enabled: !!user,
+  });
+
   const profileStrength = (() => {
     if (!profile) return 0;
     let score = 0;
@@ -85,6 +94,26 @@ const InfluencerDashboard = () => {
           </h1>
           <p className="text-muted-foreground mt-1">Here's your activity summary</p>
         </div>
+
+        {/* Warnings */}
+        {warnings && warnings.length > 0 && (
+          <Card className="border-destructive/30 bg-destructive/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <h3 className="font-semibold text-destructive">Warnings</h3>
+              </div>
+              <div className="space-y-2">
+                {warnings.map((w: any) => (
+                  <div key={w.id} className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-foreground">{w.warning_message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(w.created_at).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Profile Strength */}
         <Card className="border-gold/20">
@@ -137,7 +166,7 @@ const InfluencerDashboard = () => {
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-primary/10"><DollarSign className="w-5 h-5 text-gold" /></div>
               <div>
-                <p className="text-2xl font-bold">AED {Number(stats?.walletBalance ?? 0).toFixed(0)}</p>
+                <p className="text-2xl font-bold">$ {Number(stats?.walletBalance ?? 0).toFixed(0)}</p>
                 <p className="text-sm text-muted-foreground">Wallet Balance</p>
               </div>
             </CardContent>

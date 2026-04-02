@@ -26,6 +26,8 @@ interface Venue {
 const AdminVenues = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newVenue, setNewVenue] = useState({ name: "", category: "", city: "", email: "", password: "" });
@@ -52,7 +54,10 @@ const AdminVenues = () => {
     fetchOptions();
   }, []);
 
-  const filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
+  let filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
+  if (categoryFilter !== "all") filtered = filtered.filter(v => v.category === categoryFilter);
+  if (cityFilter !== "all") filtered = filtered.filter(v => v.city === cityFilter);
+  const allCities = [...new Set(venues.map(v => v.city).filter(Boolean))].sort();
 
   const toggleActive = async (id: string, active: boolean) => {
     await supabase.from("venues").update({ is_active: !active } as any).eq("id", id);
@@ -167,11 +172,25 @@ const AdminVenues = () => {
           </Dialog>
         </div>
 
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search venues..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="City" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cities</SelectItem>
+              {allCities.map(c => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">

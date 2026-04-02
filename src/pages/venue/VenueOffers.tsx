@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -204,10 +205,14 @@ const VenueOffers = () => {
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">{offer.description || "No description"}</p>
                 {offer.requirements && (
-                  <p className="text-xs text-gold/80 mb-4 border border-gold/20 rounded-md p-2 bg-gold/5">
+                  <p className="text-xs text-gold/80 mb-2 border border-gold/20 rounded-md p-2 bg-gold/5">
                     <strong>Requirements:</strong> {offer.requirements}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground mb-4">
+                  {format(new Date(offer.starts_at), "MMM d, yyyy")}
+                  {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+                </p>
                 <div className="flex justify-between items-center text-sm">
                   <Badge variant="secondary" className="capitalize">{offer.offer_type}</Badge>
                   <span className="text-muted-foreground">{offer.current_redemptions} redeemed</span>
