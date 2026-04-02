@@ -132,8 +132,8 @@ const InfluencerEarnings = () => {
                   <p className="text-xs text-muted-foreground">{format(new Date(e.created_at), "PPP")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold">AED {Number(e.amount).toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">Commission: AED {Number(e.commission).toFixed(2)}</p>
+                  <p className="text-sm font-semibold">$ {Number(e.amount).toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Commission: $ {Number(e.commission).toFixed(2)}</p>
                   <Badge variant="outline" className="text-xs capitalize">{e.status}</Badge>
                 </div>
               </div>
