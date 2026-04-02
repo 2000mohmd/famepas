@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, MapPin, Users, Building2 } from "lucide-react";
+import { Search, MapPin, Users, Building2, Clock, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const InfluencerExplore = () => {
   const { user } = useAuth();
@@ -19,6 +20,19 @@ const InfluencerExplore = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
+
+  // Fetch user's existing applications
+  const { data: myApplications } = useQuery({
+    queryKey: ["my-applications", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("offer_redemptions")
+        .select("offer_id, status")
+        .eq("influencer_id", user!.id);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
 
   const { data: offers } = useQuery({
     queryKey: ["explore-offers", search, categoryFilter, typeFilter],
@@ -66,10 +80,15 @@ const InfluencerExplore = () => {
     onSuccess: () => {
       toast({ title: "Application submitted!", description: "The venue will review your application." });
       queryClient.invalidateQueries({ queryKey: ["explore-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
       setSelectedOffer(null);
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
+
+  const getApplicationStatus = (offerId: string) => {
+    return myApplications?.find(a => a.offer_id === offerId);
+  };
 
   return (
     <DashboardLayout type="influencer">
@@ -105,70 +124,91 @@ const InfluencerExplore = () => {
 
         {/* Offers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {offers?.map((offer: any) => (
-            <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
-              {offer.image_url && (
-                <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />
-              )}
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{offer.title}</CardTitle>
-                  <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Building2 className="w-4 h-4" />
-                  <span>{offer.venues?.name}</span>
-                </div>
-                {offer.venues?.city && (
+          {offers?.map((offer: any) => {
+            const application = getApplicationStatus(offer.id);
+            const hasApplied = !!application;
+
+            return (
+              <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
+                {offer.image_url && (
+                  <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />
+                )}
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{offer.title}</CardTitle>
+                    <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{offer.venues.city}</span>
+                    <Building2 className="w-4 h-4" />
+                    <span>{offer.venues?.name}</span>
                   </div>
-                )}
-                <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
-                {offer.min_followers > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Users className="w-3 h-3" />
-                    <span>Min {offer.min_followers} followers</span>
-                  </div>
-                )}
-                {offer.requirements && (
-                  <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
-                )}
-                <div className="flex items-center justify-between pt-2">
-                  {offer.max_redemptions && (
-                    <span className="text-xs text-muted-foreground">{offer.max_redemptions - offer.current_redemptions} slots left</span>
+                  {offer.venues?.city && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      <span>{offer.venues.city}</span>
+                    </div>
                   )}
-                  <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => !o && setSelectedOffer(null)}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Apply to: {offer.title}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">{offer.description}</p>
-                        {offer.requirements && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-1">Requirements</h4>
-                            <p className="text-sm text-muted-foreground">{offer.requirements}</p>
+                  {/* Time info */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      {format(new Date(offer.starts_at), "MMM d, yyyy")}
+                      {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
+                  {offer.min_followers > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Users className="w-3 h-3" />
+                      <span>Min {offer.min_followers} followers</span>
+                    </div>
+                  )}
+                  {offer.requirements && (
+                    <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
+                  )}
+                  <div className="flex items-center justify-between pt-2">
+                    {offer.max_redemptions && (
+                      <span className="text-xs text-muted-foreground">{offer.max_redemptions - offer.current_redemptions} slots left</span>
+                    )}
+                    {hasApplied ? (
+                      <Button size="sm" disabled className="bg-success/20 text-success border border-success/30">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        {application.status === "pending" ? "Applied" : application.status === "approved" ? "Approved" : "Rejected"}
+                      </Button>
+                    ) : (
+                      <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => !o && setSelectedOffer(null)}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Apply to: {offer.title}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground">{offer.description}</p>
+                            {offer.requirements && (
+                              <div>
+                                <h4 className="text-sm font-medium mb-1">Requirements</h4>
+                                <p className="text-sm text-muted-foreground">{offer.requirements}</p>
+                              </div>
+                            )}
+                            <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
+                            <p className="text-sm"><strong>Duration:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}{offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}</p>
+                            {offer.discount_value && <p className="text-sm"><strong>Value:</strong> $ {offer.discount_value}</p>}
+                            <Button className="w-full" onClick={() => applyMutation.mutate(offer.id)} disabled={applyMutation.isPending}>
+                              {applyMutation.isPending ? "Submitting..." : "Confirm Application"}
+                            </Button>
                           </div>
-                        )}
-                        <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
-                        {offer.discount_value && <p className="text-sm"><strong>Value:</strong> $ {offer.discount_value}</p>}
-                        <Button className="w-full" onClick={() => applyMutation.mutate(offer.id)} disabled={applyMutation.isPending}>
-                          {applyMutation.isPending ? "Submitting..." : "Confirm Application"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
           {offers?.length === 0 && (
             <div className="col-span-full text-center py-12 text-muted-foreground">No offers found matching your criteria.</div>
           )}

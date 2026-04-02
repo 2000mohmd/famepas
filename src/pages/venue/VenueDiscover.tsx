@@ -35,6 +35,8 @@ const VenueDiscover = () => {
   const [filtered, setFiltered] = useState<InfluencerProfile[]>([]);
   const [search, setSearch] = useState("");
   const [nicheFilter, setNicheFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [minFollowers, setMinFollowers] = useState("");
   const [venueId, setVenueId] = useState<string | null>(null);
@@ -42,6 +44,8 @@ const VenueDiscover = () => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [selectedInfluencer, setSelectedInfluencer] = useState<string | null>(null);
   const [inviteForm, setInviteForm] = useState({ offer_id: "", message: "", scheduled_at: "" });
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,8 +57,16 @@ const VenueDiscover = () => {
         setOffers(offData ?? []);
       }
 
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "influencer");
-      const ids = (roles ?? []).map(r => r.user_id);
+      const [rolesRes, catRes, locRes] = await Promise.all([
+        supabase.from("user_roles").select("user_id").eq("role", "influencer"),
+        supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
+        supabase.from("service_locations").select("city").eq("is_active", true).order("city"),
+      ]);
+
+      setCategories((catRes.data as any) ?? []);
+      setCities((locRes.data ?? []).map((l: any) => l.city));
+
+      const ids = (rolesRes.data ?? []).map(r => r.user_id);
       if (ids.length === 0) return;
 
       const { data } = await supabase.from("profiles")
@@ -79,6 +91,9 @@ const VenueDiscover = () => {
     if (nicheFilter !== "all") {
       result = result.filter(p => (p.niche || []).some(n => n.toLowerCase() === nicheFilter.toLowerCase()));
     }
+    if (categoryFilter !== "all") {
+      result = result.filter(p => (p.niche || []).some(n => n.toLowerCase() === categoryFilter.toLowerCase()));
+    }
     if (verifiedOnly) {
       result = result.filter(p => p.is_verified);
     }
@@ -86,7 +101,7 @@ const VenueDiscover = () => {
       result = result.filter(p => (p.followers_count || 0) >= Number(minFollowers));
     }
     setFiltered(result);
-  }, [profiles, search, nicheFilter, verifiedOnly, minFollowers]);
+  }, [profiles, search, nicheFilter, categoryFilter, cityFilter, verifiedOnly, minFollowers]);
 
   const allNiches = [...new Set(profiles.flatMap(p => p.niche || []))].sort();
 
@@ -117,8 +132,8 @@ const VenueDiscover = () => {
         <p className="text-muted-foreground mb-6">Find and invite influencers for your campaigns</p>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search name, handle, niche..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
@@ -129,13 +144,31 @@ const VenueDiscover = () => {
               {allNiches.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input placeholder="Min followers" type="number" value={minFollowers} onChange={e => setMinFollowers(e.target.value)} className="bg-secondary border-border" />
-          <Button variant={verifiedOnly ? "default" : "outline"} onClick={() => setVerifiedOnly(!verifiedOnly)} className={verifiedOnly ? "gradient-gold text-accent-foreground" : "border-border"}>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="City" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cities</SelectItem>
+              {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2">
+            <Input placeholder="Min followers" type="number" value={minFollowers} onChange={e => setMinFollowers(e.target.value)} className="bg-secondary border-border" />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-muted-foreground">{filtered.length} influencers found</p>
+          <Button variant={verifiedOnly ? "default" : "outline"} size="sm" onClick={() => setVerifiedOnly(!verifiedOnly)} className={verifiedOnly ? "gradient-gold text-accent-foreground" : "border-border"}>
             <Star className="w-4 h-4 mr-2" /> Verified Only
           </Button>
         </div>
-
-        <p className="text-sm text-muted-foreground mb-4">{filtered.length} influencers found</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(p => (
