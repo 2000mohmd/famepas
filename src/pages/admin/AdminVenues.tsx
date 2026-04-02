@@ -54,7 +54,10 @@ const AdminVenues = () => {
     fetchOptions();
   }, []);
 
-  const filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
+  let filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
+  if (categoryFilter !== "all") filtered = filtered.filter(v => v.category === categoryFilter);
+  if (cityFilter !== "all") filtered = filtered.filter(v => v.city === cityFilter);
+  const allCities = [...new Set(venues.map(v => v.city).filter(Boolean))].sort();
 
   const toggleActive = async (id: string, active: boolean) => {
     await supabase.from("venues").update({ is_active: !active } as any).eq("id", id);
