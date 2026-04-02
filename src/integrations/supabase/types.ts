@@ -312,6 +312,33 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_warnings: {
+        Row: {
+          created_at: string
+          id: string
+          influencer_id: string
+          is_read: boolean
+          issued_by: string
+          warning_message: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          influencer_id: string
+          is_read?: boolean
+          issued_by: string
+          warning_message: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          influencer_id?: string
+          is_read?: boolean
+          issued_by?: string
+          warning_message?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string
