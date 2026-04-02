@@ -158,7 +158,7 @@ const InfluencerExplore = () => {
                           </div>
                         )}
                         <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
-                        {offer.discount_value && <p className="text-sm"><strong>Value:</strong> AED {offer.discount_value}</p>}
+                        {offer.discount_value && <p className="text-sm"><strong>Value:</strong> $ {offer.discount_value}</p>}
                         <Button className="w-full" onClick={() => applyMutation.mutate(offer.id)} disabled={applyMutation.isPending}>
                           {applyMutation.isPending ? "Submitting..." : "Confirm Application"}
                         </Button>

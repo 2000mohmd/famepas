@@ -150,7 +150,7 @@ const InfluencerEarnings = () => {
               {withdrawals?.map((w: any) => (
                 <div key={w.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium">AED {Number(w.amount).toFixed(2)}</p>
+                    <p className="text-sm font-medium">$ {Number(w.amount).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">{format(new Date(w.created_at), "PPP")}</p>
                   </div>
                   <Badge variant="outline" className="capitalize">{w.status}</Badge>

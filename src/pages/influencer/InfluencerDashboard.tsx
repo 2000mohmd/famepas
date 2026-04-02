@@ -137,7 +137,7 @@ const InfluencerDashboard = () => {
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-primary/10"><DollarSign className="w-5 h-5 text-gold" /></div>
               <div>
-                <p className="text-2xl font-bold">AED {Number(stats?.walletBalance ?? 0).toFixed(0)}</p>
+                <p className="text-2xl font-bold">$ {Number(stats?.walletBalance ?? 0).toFixed(0)}</p>
                 <p className="text-sm text-muted-foreground">Wallet Balance</p>
               </div>
             </CardContent>
