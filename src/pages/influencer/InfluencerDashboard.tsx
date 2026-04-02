@@ -62,6 +62,15 @@ const InfluencerDashboard = () => {
     enabled: !!user,
   });
 
+  const { data: warnings } = useQuery({
+    queryKey: ["influencer-warnings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("influencer_warnings" as any).select("*").eq("influencer_id", user!.id).order("created_at", { ascending: false }).limit(5);
+      return (data as any[]) ?? [];
+    },
+    enabled: !!user,
+  });
+
   const profileStrength = (() => {
     if (!profile) return 0;
     let score = 0;
