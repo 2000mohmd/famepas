@@ -26,6 +26,8 @@ interface Venue {
 const AdminVenues = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newVenue, setNewVenue] = useState({ name: "", category: "", city: "", email: "", password: "" });
