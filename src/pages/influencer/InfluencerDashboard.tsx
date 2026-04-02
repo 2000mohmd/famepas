@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star } from "lucide-react";
+import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const InfluencerDashboard = () => {
