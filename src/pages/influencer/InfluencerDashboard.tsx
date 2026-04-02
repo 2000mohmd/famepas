@@ -95,6 +95,26 @@ const InfluencerDashboard = () => {
           <p className="text-muted-foreground mt-1">Here's your activity summary</p>
         </div>
 
+        {/* Warnings */}
+        {warnings && warnings.length > 0 && (
+          <Card className="border-destructive/30 bg-destructive/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <h3 className="font-semibold text-destructive">Warnings</h3>
+              </div>
+              <div className="space-y-2">
+                {warnings.map((w: any) => (
+                  <div key={w.id} className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-foreground">{w.warning_message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(w.created_at).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Profile Strength */}
         <Card className="border-gold/20">
           <CardContent className="pt-6">
