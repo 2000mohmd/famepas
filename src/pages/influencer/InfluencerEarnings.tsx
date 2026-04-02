@@ -80,8 +80,8 @@ const InfluencerEarnings = () => {
             <DialogContent>
               <DialogHeader><DialogTitle>Request Withdrawal</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Available balance: AED {Number(balance).toFixed(2)}</p>
-                <Input type="number" placeholder="Amount (AED)" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
+                <p className="text-sm text-muted-foreground">Available balance: $ {Number(balance).toFixed(2)}</p>
+                <Input type="number" placeholder="Amount (USD)" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
                 <Button className="w-full" onClick={() => requestWithdrawal.mutate()} disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || requestWithdrawal.isPending}>
                   Submit Request
                 </Button>
