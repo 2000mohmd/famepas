@@ -105,7 +105,7 @@ const InfluencerEarnings = () => {
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-yellow-500/10"><Clock className="w-5 h-5 text-yellow-500" /></div>
               <div>
-                <p className="text-2xl font-bold">AED {pendingAmount.toFixed(2)}</p>
+                <p className="text-2xl font-bold">$ {pendingAmount.toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground">Pending</p>
               </div>
             </CardContent>
