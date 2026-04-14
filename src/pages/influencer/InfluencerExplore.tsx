@@ -8,20 +8,35 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, MapPin, Users, Building2, Clock, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useSearchParams } from "react-router-dom";
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from "@react-google-maps/api";
+
+const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
+const defaultCenter = { lat: 25.2048, lng: 55.2708 }; // Dubai default
 
 const InfluencerExplore = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("venue") || "");
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
+  const [mapApiKey, setMapApiKey] = useState<string | null>(null);
 
-  // Fetch user's existing applications
+  // Fetch Google Maps key
+  useEffect(() => {
+    supabase.functions.invoke("google-maps-key").then(({ data }) => {
+      if (data?.key) setMapApiKey(data.key);
+    });
+  }, []);
+
   const { data: myApplications } = useQuery({
     queryKey: ["my-applications", user?.id],
     queryFn: async () => {
@@ -39,7 +54,7 @@ const InfluencerExplore = () => {
     queryFn: async () => {
       let query = supabase
         .from("offers")
-        .select("*, venues(name, city, category, logo_url, description)")
+        .select("*, venues(name, city, category, logo_url, description, latitude, longitude, address)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -50,13 +65,29 @@ const InfluencerExplore = () => {
       if (search) {
         const s = search.toLowerCase();
         filtered = filtered.filter(
-          (o: any) => o.title.toLowerCase().includes(s) || o.venues?.name?.toLowerCase().includes(s) || o.venues?.city?.toLowerCase().includes(s)
+          (o: any) =>
+            o.title.toLowerCase().includes(s) ||
+            o.venues?.name?.toLowerCase().includes(s) ||
+            o.venues?.city?.toLowerCase().includes(s) ||
+            o.venues?.address?.toLowerCase().includes(s)
         );
       }
       if (categoryFilter !== "all") {
         filtered = filtered.filter((o: any) => o.venues?.category === categoryFilter);
       }
       return filtered;
+    },
+  });
+
+  const { data: venues } = useQuery({
+    queryKey: ["explore-venues"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("venues")
+        .select("*")
+        .eq("is_active", true)
+        .eq("approval_status", "approved");
+      return data ?? [];
     },
   });
 
@@ -86,23 +117,51 @@ const InfluencerExplore = () => {
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  const getApplicationStatus = (offerId: string) => {
-    return myApplications?.find(a => a.offer_id === offerId);
-  };
+  const getApplicationStatus = (offerId: string) => myApplications?.find((a) => a.offer_id === offerId);
+
+  // Get unique venues with coordinates for map
+  const mapVenues = venues?.filter((v) => v.latitude && v.longitude) ?? [];
+
+  const offersForVenue = (venueId: string) => offers?.filter((o: any) => o.venue_id === venueId) ?? [];
 
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Explore Opportunities</h1>
-          <p className="text-muted-foreground">Find campaigns and collaborations from top venues</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-foreground">Explore Opportunities</h1>
+            <p className="text-muted-foreground">Find campaigns and collaborations from top venues</p>
+          </div>
+          <div className="flex gap-2 bg-card border border-border rounded-lg p-1">
+            <Button
+              size="sm"
+              variant={viewMode === "list" ? "default" : "ghost"}
+              onClick={() => setViewMode("list")}
+              className="gap-1"
+            >
+              <List className="w-4 h-4" /> List
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === "map" ? "default" : "ghost"}
+              onClick={() => setViewMode("map")}
+              className="gap-1"
+            >
+              <Map className="w-4 h-4" /> Map
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search offers or venues..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input
+              placeholder="Search by venue name, offer, or location..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
@@ -122,99 +181,222 @@ const InfluencerExplore = () => {
           </Select>
         </div>
 
-        {/* Offers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {offers?.map((offer: any) => {
-            const application = getApplicationStatus(offer.id);
-            const hasApplied = !!application;
+        {/* Map View */}
+        {viewMode === "map" && (
+          <MapView
+            apiKey={mapApiKey}
+            venues={mapVenues}
+            selectedVenue={selectedVenueMarker}
+            onSelectVenue={setSelectedVenueMarker}
+            offersForVenue={offersForVenue}
+            onApply={(offerId: string) => applyMutation.mutate(offerId)}
+            getApplicationStatus={getApplicationStatus}
+          />
+        )}
 
-            return (
-              <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
-                {offer.image_url && (
-                  <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />
-                )}
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{offer.title}</CardTitle>
-                    <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Building2 className="w-4 h-4" />
-                    <span>{offer.venues?.name}</span>
-                  </div>
-                  {offer.venues?.city && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span>{offer.venues.city}</span>
-                    </div>
-                  )}
-                  {/* Time info */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span>
-                      {format(new Date(offer.starts_at), "MMM d, yyyy")}
-                      {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
-                  {offer.min_followers > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Users className="w-3 h-3" />
-                      <span>Min {offer.min_followers} followers</span>
-                    </div>
-                  )}
-                  {offer.requirements && (
-                    <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
-                  )}
-                  <div className="flex items-center justify-between pt-2">
-                    {offer.max_redemptions && (
-                      <span className="text-xs text-muted-foreground">{offer.max_redemptions - offer.current_redemptions} slots left</span>
-                    )}
-                    {hasApplied ? (
-                      <Button size="sm" disabled className="bg-success/20 text-success border border-success/30">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        {application.status === "pending" ? "Applied" : application.status === "approved" ? "Approved" : "Rejected"}
-                      </Button>
-                    ) : (
-                      <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => !o && setSelectedOffer(null)}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Apply to: {offer.title}</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">{offer.description}</p>
-                            {offer.requirements && (
-                              <div>
-                                <h4 className="text-sm font-medium mb-1">Requirements</h4>
-                                <p className="text-sm text-muted-foreground">{offer.requirements}</p>
-                              </div>
-                            )}
-                            <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
-                            <p className="text-sm"><strong>Duration:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}{offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}</p>
-                            {offer.discount_value && <p className="text-sm"><strong>Value:</strong> $ {offer.discount_value}</p>}
-                            <Button className="w-full" onClick={() => applyMutation.mutate(offer.id)} disabled={applyMutation.isPending}>
-                              {applyMutation.isPending ? "Submitting..." : "Confirm Application"}
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {offers?.length === 0 && (
-            <div className="col-span-full text-center py-12 text-muted-foreground">No offers found matching your criteria.</div>
-          )}
-        </div>
+        {/* List View */}
+        {viewMode === "list" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {offers?.map((offer: any) => (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                application={getApplicationStatus(offer.id)}
+                selectedOffer={selectedOffer}
+                setSelectedOffer={setSelectedOffer}
+                onApply={() => applyMutation.mutate(offer.id)}
+                isPending={applyMutation.isPending}
+              />
+            ))}
+            {offers?.length === 0 && (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                No offers found matching your criteria.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
+  );
+};
+
+// Map component
+const MapView = ({
+  apiKey,
+  venues,
+  selectedVenue,
+  onSelectVenue,
+  offersForVenue,
+  onApply,
+  getApplicationStatus,
+}: any) => {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey || "",
+    id: "google-map-script",
+  });
+
+  if (!apiKey) {
+    return (
+      <div className="rounded-xl bg-card border border-border p-12 text-center text-muted-foreground">
+        Map loading...
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="rounded-xl bg-card border border-border p-12 text-center text-muted-foreground">
+        Loading map...
+      </div>
+    );
+  }
+
+  const center = venues.length > 0
+    ? { lat: venues[0].latitude, lng: venues[0].longitude }
+    : defaultCenter;
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border">
+      <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={12}>
+        {venues.map((venue: any) => (
+          <MarkerF
+            key={venue.id}
+            position={{ lat: venue.latitude, lng: venue.longitude }}
+            onClick={() => onSelectVenue(venue)}
+            title={venue.name}
+          />
+        ))}
+        {selectedVenue && (
+          <InfoWindowF
+            position={{ lat: selectedVenue.latitude, lng: selectedVenue.longitude }}
+            onCloseClick={() => onSelectVenue(null)}
+          >
+            <div className="p-2 max-w-[250px] text-foreground">
+              <h3 className="font-semibold text-sm mb-1" style={{ color: "#1a1a2e" }}>{selectedVenue.name}</h3>
+              <p className="text-xs mb-1" style={{ color: "#666" }}>{selectedVenue.address || selectedVenue.city}</p>
+              <p className="text-xs mb-2" style={{ color: "#888" }}>{selectedVenue.category}</p>
+              {offersForVenue(selectedVenue.id).length > 0 ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium" style={{ color: "#333" }}>
+                    {offersForVenue(selectedVenue.id).length} offer(s):
+                  </p>
+                  {offersForVenue(selectedVenue.id).slice(0, 3).map((o: any) => {
+                    const app = getApplicationStatus(o.id);
+                    return (
+                      <div key={o.id} className="flex items-center justify-between gap-2">
+                        <span className="text-xs truncate" style={{ color: "#333" }}>{o.title}</span>
+                        {app ? (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 capitalize">
+                            {app.status}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => onApply(o.id)}
+                            className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700"
+                          >
+                            Apply
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: "#999" }}>No active offers</p>
+              )}
+            </div>
+          </InfoWindowF>
+        )}
+      </GoogleMap>
+    </div>
+  );
+};
+
+// Offer card component
+const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onApply, isPending }: any) => {
+  const hasApplied = !!application;
+
+  return (
+    <Card className="hover:border-gold/30 transition-colors overflow-hidden">
+      {offer.image_url && <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">{offer.title}</CardTitle>
+          <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Building2 className="w-4 h-4" />
+          <span>{offer.venues?.name}</span>
+        </div>
+        {offer.venues?.city && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4" />
+            <span>{offer.venues.city}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>
+            {format(new Date(offer.starts_at), "MMM d, yyyy")}
+            {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
+        {offer.min_followers > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Users className="w-3 h-3" />
+            <span>Min {offer.min_followers} followers</span>
+          </div>
+        )}
+        {offer.requirements && (
+          <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
+        )}
+        <div className="flex items-center justify-between pt-2">
+          {offer.max_redemptions && (
+            <span className="text-xs text-muted-foreground">
+              {offer.max_redemptions - offer.current_redemptions} slots left
+            </span>
+          )}
+          {hasApplied ? (
+            <Button size="sm" disabled className="bg-success/20 text-success border border-success/30">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              {application.status === "pending" ? "Applied" : application.status === "approved" ? "Approved" : "Rejected"}
+            </Button>
+          ) : (
+            <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => !o && setSelectedOffer(null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Apply to: {offer.title}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{offer.description}</p>
+                  {offer.requirements && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">Requirements</h4>
+                      <p className="text-sm text-muted-foreground">{offer.requirements}</p>
+                    </div>
+                  )}
+                  <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
+                  <p className="text-sm">
+                    <strong>Duration:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}
+                    {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+                  </p>
+                  {offer.discount_value && <p className="text-sm"><strong>Value:</strong> ${offer.discount_value}</p>}
+                  <Button className="w-full" onClick={onApply} disabled={isPending}>
+                    {isPending ? "Submitting..." : "Confirm Application"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -38,6 +38,7 @@ import InfluencerProfile from "./pages/influencer/InfluencerProfile";
 import InfluencerReviews from "./pages/influencer/InfluencerReviews";
 import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
+import InfluencerHome from "./pages/influencer/InfluencerHome";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
 
             {/* Influencer Routes */}
             <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
+            <Route path="/influencer/home" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerHome /></ProtectedRoute>} />
             <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
             <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
             <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
