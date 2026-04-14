@@ -46,7 +46,8 @@ const venueLinks = [
 
 const influencerLinks = [
   { to: "/influencer", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/influencer/explore", icon: Building2, label: "Explore" },
+  { to: "/influencer/home", icon: Building2, label: "Home" },
+  { to: "/influencer/explore", icon: MapPin, label: "Explore" },
   { to: "/influencer/invitations", icon: Send, label: "Invitations" },
   { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
   { to: "/influencer/messages", icon: MessageSquare, label: "Messages" },

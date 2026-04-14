@@ -38,6 +38,7 @@ import InfluencerProfile from "./pages/influencer/InfluencerProfile";
 import InfluencerReviews from "./pages/influencer/InfluencerReviews";
 import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
+import InfluencerHome from "./pages/influencer/InfluencerHome";
 
 const queryClient = new QueryClient();
 
