@@ -79,6 +79,7 @@ const App = () => (
 
             {/* Influencer Routes */}
             <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
+            <Route path="/influencer/home" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerHome /></ProtectedRoute>} />
             <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
             <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
             <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
