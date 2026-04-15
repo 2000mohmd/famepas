@@ -1,10 +1,20 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import famepassLogo from "@/assets/famepass-logo.jpeg";
+
+const navLinks = [
+  { label: "Categories", href: "#categories" },
+  { label: "Venues", href: "#venues" },
+  { label: "Offers", href: "#offers" },
+  { label: "Map", href: "#map" },
+];
 
 const Navbar = () => {
   const { user, role } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const dashboardPath =
     role === "admin" ? "/admin" : role === "venue" ? "/venue" : role === "influencer" ? "/influencer" : "/login";
@@ -20,23 +30,46 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#categories" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Categories</a>
-          <a href="#venues" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Venues</a>
-          <a href="#offers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Offers</a>
+          {navLinks.map((l) => (
+            <a key={l.label} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {l.label}
+            </a>
+          ))}
         </div>
 
         <div className="flex items-center gap-3">
           {user ? (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl">
               <Link to={dashboardPath}>Dashboard</Link>
             </Button>
           ) : (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl">
               <Link to="/login">Sign In</Link>
             </Button>
           )}
+          <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="w-5 h-5 text-foreground" /> : <Menu className="w-5 h-5 text-foreground" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg">
+          <div className="px-4 py-4 space-y-3">
+            {navLinks.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm text-muted-foreground hover:text-foreground transition-colors font-medium py-2"
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

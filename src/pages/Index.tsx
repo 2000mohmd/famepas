@@ -4,6 +4,7 @@ import HeroSlider from "@/components/public/HeroSlider";
 import CategoriesSection from "@/components/public/CategoriesSection";
 import VenuesSection from "@/components/public/VenuesSection";
 import OffersSection from "@/components/public/OffersSection";
+import MapSection from "@/components/public/MapSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
 
@@ -18,6 +19,7 @@ const Index = () => {
       <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
       <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <MapSection onVenueClick={setSelectedVenueId} />
       <Footer />
       <VenueOffersModal venueId={selectedVenueId} onClose={() => setSelectedVenueId(null)} />
     </div>
