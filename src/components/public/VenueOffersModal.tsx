@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Tag, Clock, Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, MapPin, Tag, Clock, Globe, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Props {
   venueId: string | null;
@@ -10,6 +13,8 @@ interface Props {
 }
 
 const VenueOffersModal = ({ venueId, onClose }: Props) => {
+  const { user } = useAuth();
+
   const { data: venue } = useQuery({
     queryKey: ["public-venue", venueId],
     queryFn: async () => {
@@ -64,6 +69,19 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
               {venue.description && <p className="text-sm text-muted-foreground mt-3">{venue.description}</p>}
             </DialogHeader>
 
+            {/* Login prompt for non-authenticated users */}
+            {!user && (
+              <div className="mt-4 p-4 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Want to apply to offers?</p>
+                  <p className="text-xs text-muted-foreground">Sign in to your account to start applying</p>
+                </div>
+                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 shrink-0">
+                  <Link to="/login"><LogIn className="w-4 h-4" /> Sign In</Link>
+                </Button>
+              </div>
+            )}
+
             <div className="mt-6">
               <h3 className="font-display font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Tag className="w-4 h-4 text-accent" /> Available Offers ({offers?.length || 0})
@@ -71,7 +89,7 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
               {offers && offers.length > 0 ? (
                 <div className="space-y-4">
                   {offers.map((offer) => (
-                    <div key={offer.id} className="rounded-xl border border-border bg-background p-4 space-y-2">
+                    <div key={offer.id} className="rounded-xl border border-border bg-background p-4 space-y-2 hover:border-accent/30 transition-colors">
                       <div className="flex items-start justify-between gap-3">
                         <h4 className="font-semibold text-foreground">{offer.title}</h4>
                         {offer.discount_value && (
