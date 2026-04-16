@@ -1,34 +1,26 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, MapPin, Sparkles, Star, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Sparkles, Star } from "lucide-react";
+import { Link } from "react-router-dom";
+import heroVenue from "@/assets/hero-venue.jpg";
+import heroInfluencer from "@/assets/hero-influencer.jpg";
 
 const slides = [
   {
     title: "Discover Exclusive Venue Experiences",
     subtitle: "Connect with top venues and unlock premium offers curated for influencers",
     cta: "Explore Venues",
-    ctaHref: "#venues",
+    ctaLink: "/venues",
     icon: <Sparkles className="w-5 h-5" />,
-    gradient: "from-primary/60 via-primary/30 to-transparent",
-    accent: "bg-primary/20 border-primary/30",
+    image: heroVenue,
   },
   {
     title: "Turn Your Influence Into Rewards",
     subtitle: "Browse categories, find the perfect venue, and redeem exclusive deals",
     cta: "Browse Offers",
-    ctaHref: "#offers",
+    ctaLink: "/offers",
     icon: <Star className="w-5 h-5" />,
-    gradient: "from-accent/30 via-accent/10 to-transparent",
-    accent: "bg-accent/15 border-accent/25",
-  },
-  {
-    title: "Map-Based Venue Discovery",
-    subtitle: "Find venues near you with our interactive map and apply to offers instantly",
-    cta: "Open Map",
-    ctaHref: "#map",
-    icon: <Zap className="w-5 h-5" />,
-    gradient: "from-purple-glow/40 via-purple-glow/15 to-transparent",
-    accent: "bg-purple-glow/15 border-purple-glow/25",
+    image: heroInfluencer,
   },
 ];
 
@@ -44,24 +36,21 @@ const HeroSlider = () => {
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Layered backgrounds */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-card to-background" />
-      <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient} transition-all duration-1000`} />
-
-      {/* Animated orbs */}
-      <div className="absolute top-10 right-[10%] w-80 h-80 rounded-full bg-accent/5 blur-[100px] animate-pulse" />
-      <div className="absolute bottom-10 left-[5%] w-96 h-96 rounded-full bg-primary/8 blur-[120px]" />
-      <div className="absolute top-1/2 right-[30%] w-64 h-64 rounded-full bg-purple-glow/5 blur-[80px]" />
-
-      {/* Grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
-        backgroundSize: "60px 60px",
-      }} />
+      {/* Background image */}
+      {slides.map((s, i) => (
+        <div
+          key={i}
+          className="absolute inset-0 transition-opacity duration-1000"
+          style={{ opacity: i === current ? 1 : 0 }}
+        >
+          <img src={s.image} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
+        </div>
+      ))}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="max-w-2xl space-y-8" key={current}>
-          <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border ${slide.accent} backdrop-blur-sm`}>
+        <div className="max-w-2xl space-y-8">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-accent/30 bg-accent/10 backdrop-blur-sm">
             <span className="text-accent">{slide.icon}</span>
             <span className="text-sm font-semibold text-accent tracking-wide">FamePass Platform</span>
           </div>
@@ -71,13 +60,13 @@ const HeroSlider = () => {
           <p className="text-lg sm:text-xl text-muted-foreground max-w-lg leading-relaxed">{slide.subtitle}</p>
           <div className="flex flex-wrap gap-4 pt-2">
             <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 text-base px-8 h-13 rounded-xl shadow-lg shadow-accent/20" asChild>
-              <a href={slide.ctaHref}>
+              <Link to={slide.ctaLink}>
                 <MapPin className="w-5 h-5" />
                 {slide.cta}
-              </a>
+              </Link>
             </Button>
             <Button size="lg" variant="outline" className="border-border hover:bg-card/80 text-base px-8 h-13 rounded-xl" asChild>
-              <a href="#categories">Browse Categories</a>
+              <Link to="/categories">Browse Categories</Link>
             </Button>
           </div>
 
