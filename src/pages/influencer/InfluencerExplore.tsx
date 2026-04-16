@@ -6,17 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
-const defaultCenter = { lat: 25.2048, lng: 55.2708 }; // Dubai default
+const defaultCenter = { lat: 25.2048, lng: 55.2708 };
 
 const InfluencerExplore = () => {
   const { user } = useAuth();
@@ -28,14 +29,6 @@ const InfluencerExplore = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
-  const [mapApiKey, setMapApiKey] = useState<string | null>(null);
-
-  // Fetch Google Maps key
-  useEffect(() => {
-    supabase.functions.invoke("google-maps-key").then(({ data }) => {
-      if (data?.key) setMapApiKey(data.key);
-    });
-  }, []);
 
   const { data: myApplications } = useQuery({
     queryKey: ["my-applications", user?.id],
@@ -119,9 +112,7 @@ const InfluencerExplore = () => {
 
   const getApplicationStatus = (offerId: string) => myApplications?.find((a) => a.offer_id === offerId);
 
-  // Get unique venues with coordinates for map
   const mapVenues = venues?.filter((v) => v.latitude && v.longitude) ?? [];
-
   const offersForVenue = (venueId: string) => offers?.filter((o: any) => o.venue_id === venueId) ?? [];
 
   return (
@@ -133,35 +124,19 @@ const InfluencerExplore = () => {
             <p className="text-muted-foreground">Find campaigns and collaborations from top venues</p>
           </div>
           <div className="flex gap-2 bg-card border border-border rounded-lg p-1">
-            <Button
-              size="sm"
-              variant={viewMode === "list" ? "default" : "ghost"}
-              onClick={() => setViewMode("list")}
-              className="gap-1"
-            >
+            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")} className="gap-1">
               <List className="w-4 h-4" /> List
             </Button>
-            <Button
-              size="sm"
-              variant={viewMode === "map" ? "default" : "ghost"}
-              onClick={() => setViewMode("map")}
-              className="gap-1"
-            >
+            <Button size="sm" variant={viewMode === "map" ? "default" : "ghost"} onClick={() => setViewMode("map")} className="gap-1">
               <Map className="w-4 h-4" /> Map
             </Button>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by venue name, offer, or location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search by venue name, offer, or location..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
@@ -181,10 +156,8 @@ const InfluencerExplore = () => {
           </Select>
         </div>
 
-        {/* Map View */}
         {viewMode === "map" && (
           <MapView
-            apiKey={mapApiKey}
             venues={mapVenues}
             selectedVenue={selectedVenueMarker}
             onSelectVenue={setSelectedVenueMarker}
@@ -194,7 +167,6 @@ const InfluencerExplore = () => {
           />
         )}
 
-        {/* List View */}
         {viewMode === "list" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {offers?.map((offer: any) => (
@@ -220,28 +192,8 @@ const InfluencerExplore = () => {
   );
 };
 
-// Map component
-const MapView = ({
-  apiKey,
-  venues,
-  selectedVenue,
-  onSelectVenue,
-  offersForVenue,
-  onApply,
-  getApplicationStatus,
-}: any) => {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || "",
-    id: "google-map-script",
-  });
-
-  if (!apiKey) {
-    return (
-      <div className="rounded-xl bg-card border border-border p-12 text-center text-muted-foreground">
-        Map loading...
-      </div>
-    );
-  }
+const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus }: any) => {
+  const { isLoaded } = useGoogleMaps();
 
   if (!isLoaded) {
     return (
@@ -259,43 +211,26 @@ const MapView = ({
     <div className="rounded-xl overflow-hidden border border-border">
       <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={12}>
         {venues.map((venue: any) => (
-          <MarkerF
-            key={venue.id}
-            position={{ lat: venue.latitude, lng: venue.longitude }}
-            onClick={() => onSelectVenue(venue)}
-            title={venue.name}
-          />
+          <MarkerF key={venue.id} position={{ lat: venue.latitude, lng: venue.longitude }} onClick={() => onSelectVenue(venue)} title={venue.name} />
         ))}
         {selectedVenue && (
-          <InfoWindowF
-            position={{ lat: selectedVenue.latitude, lng: selectedVenue.longitude }}
-            onCloseClick={() => onSelectVenue(null)}
-          >
+          <InfoWindowF position={{ lat: selectedVenue.latitude, lng: selectedVenue.longitude }} onCloseClick={() => onSelectVenue(null)}>
             <div className="p-2 max-w-[250px] text-foreground">
               <h3 className="font-semibold text-sm mb-1" style={{ color: "#1a1a2e" }}>{selectedVenue.name}</h3>
               <p className="text-xs mb-1" style={{ color: "#666" }}>{selectedVenue.address || selectedVenue.city}</p>
               <p className="text-xs mb-2" style={{ color: "#888" }}>{selectedVenue.category}</p>
               {offersForVenue(selectedVenue.id).length > 0 ? (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium" style={{ color: "#333" }}>
-                    {offersForVenue(selectedVenue.id).length} offer(s):
-                  </p>
+                  <p className="text-xs font-medium" style={{ color: "#333" }}>{offersForVenue(selectedVenue.id).length} offer(s):</p>
                   {offersForVenue(selectedVenue.id).slice(0, 3).map((o: any) => {
                     const app = getApplicationStatus(o.id);
                     return (
                       <div key={o.id} className="flex items-center justify-between gap-2">
                         <span className="text-xs truncate" style={{ color: "#333" }}>{o.title}</span>
                         {app ? (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 capitalize">
-                            {app.status}
-                          </span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 capitalize">{app.status}</span>
                         ) : (
-                          <button
-                            onClick={() => onApply(o.id)}
-                            className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700"
-                          >
-                            Apply
-                          </button>
+                          <button onClick={() => onApply(o.id)} className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700">Apply</button>
                         )}
                       </div>
                     );
@@ -312,7 +247,6 @@ const MapView = ({
   );
 };
 
-// Offer card component
 const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onApply, isPending }: any) => {
   const hasApplied = !!application;
 
@@ -355,9 +289,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
         )}
         <div className="flex items-center justify-between pt-2">
           {offer.max_redemptions && (
-            <span className="text-xs text-muted-foreground">
-              {offer.max_redemptions - offer.current_redemptions} slots left
-            </span>
+            <span className="text-xs text-muted-foreground">{offer.max_redemptions - offer.current_redemptions} slots left</span>
           )}
           {hasApplied ? (
             <Button size="sm" disabled className="bg-success/20 text-success border border-success/30">

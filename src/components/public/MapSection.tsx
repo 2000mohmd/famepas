@@ -1,13 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from "@react-google-maps/api";
-import { useState, useEffect } from "react";
-import { Building2, MapPin, Tag } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
+import { useState } from "react";
+import { MapPin } from "lucide-react";
+import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
 const defaultCenter = { lat: 25.2048, lng: 55.2708 };
@@ -26,16 +22,8 @@ interface Props {
 }
 
 const MapSection = ({ onVenueClick }: Props) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [mapApiKey, setMapApiKey] = useState<string | null>(null);
+  const { isLoaded, apiKey } = useGoogleMaps();
   const [selectedVenue, setSelectedVenue] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.functions.invoke("google-maps-key").then(({ data }) => {
-      if (data?.key) setMapApiKey(data.key);
-    });
-  }, []);
 
   const { data: venues } = useQuery({
     queryKey: ["map-venues"],
@@ -61,11 +49,6 @@ const MapSection = ({ onVenueClick }: Props) => {
     },
   });
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: mapApiKey || "",
-    id: "google-map-script",
-  });
-
   const center = venues && venues.length > 0
     ? { lat: venues[0].latitude!, lng: venues[0].longitude! }
     : defaultCenter;
@@ -83,7 +66,7 @@ const MapSection = ({ onVenueClick }: Props) => {
         </div>
 
         <div className="rounded-2xl overflow-hidden border border-border shadow-xl shadow-primary/5">
-          {!mapApiKey || !isLoaded ? (
+          {!isLoaded ? (
             <div className="h-[500px] bg-secondary/50 flex items-center justify-center">
               <div className="text-center space-y-3">
                 <MapPin className="w-10 h-10 text-muted-foreground mx-auto animate-pulse" />
@@ -132,7 +115,7 @@ const MapSection = ({ onVenueClick }: Props) => {
           )}
         </div>
 
-        {(!venues || venues.length === 0) && mapApiKey && isLoaded && (
+        {(!venues || venues.length === 0) && isLoaded && (
           <p className="text-center text-muted-foreground mt-6 text-sm">
             No venues with map coordinates available yet.
           </p>
