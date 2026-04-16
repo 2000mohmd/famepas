@@ -41,6 +41,12 @@ import InfluencerReviews from "./pages/influencer/InfluencerReviews";
 import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
+import VenuesPage from "./pages/public/VenuesPage";
+import OffersPage from "./pages/public/OffersPage";
+import CategoriesPage from "./pages/public/CategoriesPage";
+import ExplorePage from "./pages/public/ExplorePage";
+import AboutPage from "./pages/public/AboutPage";
+import ContactPage from "./pages/public/ContactPage";
 
 const queryClient = new QueryClient();
 
