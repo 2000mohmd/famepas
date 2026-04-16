@@ -60,6 +60,12 @@ const App = () => (
           <GoogleMapsProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/venues" element={<VenuesPage />} />
+            <Route path="/offers" element={<OffersPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
