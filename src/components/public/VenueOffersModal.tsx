@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, Tag, Clock, Globe, LogIn } from "lucide-react";
+import { Building2, MapPin, Tag, Clock, Globe, LogIn, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 interface Props {
   venueId: string | null;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 const VenueOffersModal = ({ venueId, onClose }: Props) => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   const { data: venue } = useQuery({
     queryKey: ["public-venue", venueId],
@@ -37,6 +38,40 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
     },
     enabled: !!venueId,
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-check", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user && role === "influencer",
+  });
+
+  const isProfileComplete = profile &&
+    profile.avatar_url &&
+    profile.full_name &&
+    profile.bio &&
+    (profile.instagram_handle || profile.tiktok_handle) &&
+    ((profile.followers_count ?? 0) > 0 || (profile.tiktok_followers ?? 0) > 0);
+
+  const handleApply = async (offerId: string) => {
+    if (!user) return;
+    if (!isProfileComplete) {
+      toast({ title: "Complete your profile first", description: "You need a profile photo, bio, and social account to apply.", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("offer_redemptions").insert({ offer_id: offerId, influencer_id: user.id });
+    if (error) {
+      if (error.code === "23505") {
+        toast({ title: "Already applied", description: "You've already applied to this offer." });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Applied!", description: "Your application has been submitted." });
+    }
+  };
 
   return (
     <Dialog open={!!venueId} onOpenChange={() => onClose()}>
@@ -69,15 +104,30 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
               {venue.description && <p className="text-sm text-muted-foreground mt-3">{venue.description}</p>}
             </DialogHeader>
 
-            {/* Login prompt for non-authenticated users */}
+            {/* Auth / Profile prompts */}
             {!user && (
               <div className="mt-4 p-4 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-foreground">Want to apply to offers?</p>
-                  <p className="text-xs text-muted-foreground">Sign in to your account to start applying</p>
+                  <p className="text-xs text-muted-foreground">Create an account to start applying</p>
                 </div>
                 <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 shrink-0">
                   <Link to="/login"><LogIn className="w-4 h-4" /> Sign In</Link>
+                </Button>
+              </div>
+            )}
+
+            {user && role === "influencer" && !isProfileComplete && (
+              <div className="mt-4 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Complete your profile to apply</p>
+                    <p className="text-xs text-muted-foreground">Add your photo, bio, and social accounts first</p>
+                  </div>
+                </div>
+                <Button asChild size="sm" variant="outline" className="shrink-0">
+                  <Link to="/influencer/profile">Complete Profile</Link>
                 </Button>
               </div>
             )}
@@ -89,7 +139,7 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
               {offers && offers.length > 0 ? (
                 <div className="space-y-4">
                   {offers.map((offer) => (
-                    <div key={offer.id} className="rounded-xl border border-border bg-background p-4 space-y-2 hover:border-accent/30 transition-colors">
+                    <div key={offer.id} className="rounded-xl border border-border bg-background p-4 space-y-3 hover:border-accent/30 transition-colors">
                       <div className="flex items-start justify-between gap-3">
                         <h4 className="font-semibold text-foreground">{offer.title}</h4>
                         {offer.discount_value && (
@@ -109,7 +159,17 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
                         )}
                       </div>
                       {offer.requirements && (
-                        <p className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">{offer.requirements}</p>
+                        <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
+                      )}
+                      {user && role === "influencer" && (
+                        <Button
+                          size="sm"
+                          className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg mt-1"
+                          onClick={() => handleApply(offer.id)}
+                          disabled={!isProfileComplete}
+                        >
+                          Apply Now
+                        </Button>
                       )}
                     </div>
                   ))}

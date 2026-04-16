@@ -41,6 +41,12 @@ import InfluencerReviews from "./pages/influencer/InfluencerReviews";
 import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
+import VenuesPage from "./pages/public/VenuesPage";
+import OffersPage from "./pages/public/OffersPage";
+import CategoriesPage from "./pages/public/CategoriesPage";
+import ExplorePage from "./pages/public/ExplorePage";
+import AboutPage from "./pages/public/AboutPage";
+import ContactPage from "./pages/public/ContactPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +60,12 @@ const App = () => (
           <GoogleMapsProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/venues" element={<VenuesPage />} />
+            <Route path="/offers" element={<OffersPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
