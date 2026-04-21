@@ -43,18 +43,28 @@ const CategoriesSection = ({ selected, onSelect }: Props) => {
             <span className="text-3xl">🏠</span>
             <span className="text-sm font-semibold text-foreground">All</span>
           </button>
-          {categories?.map((cat) => (
+          {categories?.map((cat: any) => (
             <button
               key={cat.id}
               onClick={() => onSelect(cat.name)}
-              className={`group px-7 py-5 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-3 min-w-[130px] hover:scale-105 ${
+              className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 flex flex-col items-center gap-2 w-[150px] h-[140px] hover:scale-105 ${
                 selected === cat.name
-                  ? "bg-accent/15 border-accent/40 shadow-lg shadow-accent/10 scale-105"
-                  : "bg-card border-border hover:border-accent/30"
+                  ? "border-accent/60 shadow-lg shadow-accent/20 scale-105"
+                  : "border-border hover:border-accent/40"
               }`}
             >
-              <span className="text-3xl">{cat.icon || "🏢"}</span>
-              <span className="text-sm font-semibold text-foreground">{cat.name}</span>
+              {cat.image_url ? (
+                <>
+                  <img src={cat.image_url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-card" />
+              )}
+              <div className="relative flex flex-col items-center justify-end h-full pb-4 gap-1">
+                <span className="text-2xl">{cat.icon || "🏢"}</span>
+                <span className="text-sm font-semibold text-foreground capitalize">{cat.name}</span>
+              </div>
             </button>
           ))}
         </div>

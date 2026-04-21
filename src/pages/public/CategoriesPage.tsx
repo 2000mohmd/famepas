@@ -53,22 +53,32 @@ const CategoriesPage = () => {
           </div>
 
           {/* Category Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-14">
-            {categories?.map((cat) => {
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 mb-14">
+            {categories?.map((cat: any) => {
               const venueCount = venues?.filter((v) => v.category === cat.name).length ?? 0;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCat(selectedCat === cat.name ? null : cat.name)}
-                  className={`group p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-3 hover:scale-105 ${
+                  className={`group relative overflow-hidden h-48 rounded-2xl border transition-all duration-300 hover:scale-[1.03] ${
                     selectedCat === cat.name
-                      ? "bg-accent/15 border-accent/40 shadow-lg shadow-accent/10"
-                      : "bg-card border-border hover:border-accent/30"
+                      ? "border-accent/60 shadow-xl shadow-accent/20"
+                      : "border-border hover:border-accent/40"
                   }`}
                 >
-                  <span className="text-4xl">{cat.icon || "🏢"}</span>
-                  <span className="text-sm font-semibold text-foreground">{cat.name}</span>
-                  <span className="text-xs text-muted-foreground">{venueCount} venue{venueCount !== 1 ? "s" : ""}</span>
+                  {cat.image_url ? (
+                    <>
+                      <img src={cat.image_url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-secondary to-card" />
+                  )}
+                  <div className="relative h-full flex flex-col items-center justify-end p-4 gap-1">
+                    <span className="text-3xl drop-shadow-lg">{cat.icon || "🏢"}</span>
+                    <span className="text-base font-bold text-foreground capitalize">{cat.name}</span>
+                    <span className="text-xs text-muted-foreground">{venueCount} venue{venueCount !== 1 ? "s" : ""}</span>
+                  </div>
                 </button>
               );
             })}

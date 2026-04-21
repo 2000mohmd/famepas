@@ -52,10 +52,10 @@ const OffersSection = ({ categoryFilter, onVenueClick }: Props) => {
                 onClick={() => offer.venues?.id && onVenueClick(offer.venues.id)}
                 className="group rounded-2xl bg-card border border-border hover:border-accent/40 transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-1"
               >
-                {offer.image_url ? (
+                {(offer.cover_image_url || offer.image_url) ? (
                   <div className="relative h-44 overflow-hidden">
                     <img
-                      src={offer.image_url}
+                      src={offer.cover_image_url || offer.image_url}
                       alt={offer.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />

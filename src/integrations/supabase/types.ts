@@ -89,6 +89,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           name: string
         }
@@ -96,6 +97,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name: string
         }
@@ -103,6 +105,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name?: string
         }
@@ -535,11 +538,13 @@ export type Database = {
       }
       offers: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           current_redemptions: number
           description: string | null
           discount_value: number | null
           ends_at: string | null
+          gallery_urls: string[] | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -553,11 +558,13 @@ export type Database = {
           venue_id: string
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
           description?: string | null
           discount_value?: number | null
           ends_at?: string | null
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -571,11 +578,13 @@ export type Database = {
           venue_id: string
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
           description?: string | null
           discount_value?: number | null
           ends_at?: string | null
+          gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -604,6 +613,8 @@ export type Database = {
           avatar_url: string | null
           badge: string | null
           bio: string | null
+          city: string | null
+          country: string | null
           created_at: string
           engagement_rate: number | null
           followers_count: number | null
@@ -626,6 +637,8 @@ export type Database = {
           avatar_url?: string | null
           badge?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
@@ -648,6 +661,8 @@ export type Database = {
           avatar_url?: string | null
           badge?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
@@ -844,6 +859,7 @@ export type Database = {
           approval_status: string
           category: string
           city: string | null
+          country: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -864,6 +880,7 @@ export type Database = {
           approval_status?: string
           category?: string
           city?: string | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -884,6 +901,7 @@ export type Database = {
           approval_status?: string
           category?: string
           city?: string | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null

@@ -36,8 +36,17 @@ const InfluencerProfile = () => {
     tiktok_followers: 0,
     niche: [] as string[],
     avatar_url: "",
+    city: "",
+    country: "",
   });
   const [nicheInput, setNicheInput] = useState("");
+  const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city").then(({ data }) => {
+      setLocations((data as any[]) ?? []);
+    });
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -51,6 +60,8 @@ const InfluencerProfile = () => {
         tiktok_followers: profile.tiktok_followers || 0,
         niche: profile.niche || [],
         avatar_url: profile.avatar_url || "",
+        city: (profile as any).city || "",
+        country: (profile as any).country || "",
       });
     }
   }, [profile]);
@@ -150,6 +161,29 @@ const InfluencerProfile = () => {
             <div className="space-y-2">
               <Label>Phone</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <select
+                  value={form.city}
+                  onChange={(e) => {
+                    const city = e.target.value;
+                    const loc = locations.find(l => l.city === city);
+                    setForm({ ...form, city, country: loc?.country || form.country });
+                  }}
+                  className="w-full rounded-md bg-background border border-border p-2 text-sm text-foreground"
+                >
+                  <option value="">Select city</option>
+                  {locations.map(l => (
+                    <option key={l.id} value={l.city}>{l.city}{l.country ? ` (${l.country})` : ""}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input value={form.country} readOnly placeholder="Auto from city" />
+              </div>
             </div>
           </CardContent>
         </Card>
