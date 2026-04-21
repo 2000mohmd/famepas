@@ -7,20 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { MapPin } from "lucide-react";
 
 const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [venue, setVenue] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", description: "", category: "dining", address: "", city: "", phone: "", email: "", website: "" });
+  const [form, setForm] = useState({
+    name: "", description: "", category: "dining", address: "", city: "", country: "",
+    phone: "", email: "", website: "", latitude: "", longitude: "",
+  });
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [locations, setLocations] = useState<{ id: string; city: string }[]>([]);
+  const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
 
   useEffect(() => {
     const fetchOptions = async () => {
       const [catRes, locRes] = await Promise.all([
         supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("service_locations").select("id, city").eq("is_active", true).order("city"),
+        supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city"),
       ]);
       setCategories((catRes.data as any[]) ?? []);
       setLocations((locRes.data as any[]) ?? []);
@@ -40,18 +44,58 @@ const VenueSettings = () => {
           category: data.category || "dining",
           address: data.address || "",
           city: data.city || "",
+          country: (data as any).country || "",
           phone: data.phone || "",
           email: data.email || "",
           website: data.website || "",
+          latitude: data.latitude?.toString() || "",
+          longitude: data.longitude?.toString() || "",
         });
       }
     };
     fetch();
   }, [user]);
 
+  const handleCityChange = (city: string) => {
+    const loc = locations.find(l => l.city === city);
+    setForm(f => ({ ...f, city, country: loc?.country || f.country }));
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation not supported", variant: "destructive" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm(f => ({ ...f, latitude: pos.coords.latitude.toFixed(6), longitude: pos.coords.longitude.toFixed(6) }));
+        toast({ title: "Location captured" });
+      },
+      () => toast({ title: "Could not get location", variant: "destructive" })
+    );
+  };
+
   const handleSave = async () => {
     if (!venue) return;
-    const { error } = await supabase.from("venues").update(form).eq("id", venue.id);
+    const lat = form.latitude ? parseFloat(form.latitude) : null;
+    const lng = form.longitude ? parseFloat(form.longitude) : null;
+    if ((form.latitude && isNaN(lat!)) || (form.longitude && isNaN(lng!))) {
+      toast({ title: "Invalid coordinates", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("venues").update({
+      name: form.name,
+      description: form.description,
+      category: form.category,
+      address: form.address,
+      city: form.city,
+      country: form.country,
+      phone: form.phone,
+      email: form.email,
+      website: form.website,
+      latitude: lat,
+      longitude: lng,
+    } as any).eq("id", venue.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -63,7 +107,7 @@ const VenueSettings = () => {
     <DashboardLayout type="venue">
       <div className="animate-fade-in max-w-2xl">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Venue <span className="text-gold">Settings</span></h1>
-        <p className="text-muted-foreground mb-8">Update your venue information</p>
+        <p className="text-muted-foreground mb-8">Update your venue information and map location</p>
 
         <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
           {[
@@ -97,16 +141,42 @@ const VenueSettings = () => {
           </div>
           <div>
             <Label className="text-muted-foreground text-sm">City</Label>
-            <Select value={form.city} onValueChange={val => setForm(f => ({ ...f, city: val }))}>
+            <Select value={form.city} onValueChange={handleCityChange}>
               <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {locations.map(l => (
-                  <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
+                  <SelectItem key={l.id} value={l.city}>{l.city}{l.country ? ` (${l.country})` : ""}</SelectItem>
                 ))}
                 {locations.length === 0 && <SelectItem value="other">Other</SelectItem>}
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label className="text-muted-foreground text-sm">Country</Label>
+            <Input value={form.country} readOnly className="bg-secondary/50 border-border mt-1" placeholder="Auto-set from city" />
+          </div>
+
+          {/* Map Coordinates */}
+          <div className="border border-gold/20 bg-gold/5 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-foreground font-semibold flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gold" /> Map Location
+              </Label>
+              <Button type="button" size="sm" variant="outline" onClick={useCurrentLocation}>Use My Location</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Required to show your venue on the explore map. You can also paste coordinates from Google Maps.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Latitude</Label>
+                <Input value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))} placeholder="25.2048" className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Longitude</Label>
+                <Input value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))} placeholder="55.2708" className="bg-secondary border-border mt-1" />
+              </div>
+            </div>
+          </div>
+
           <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
             Save Settings
           </Button>
