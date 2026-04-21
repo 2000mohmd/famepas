@@ -11,6 +11,19 @@ const GoogleMapsContext = createContext<GoogleMapsContextType>({ isLoaded: false
 
 export const useGoogleMaps = () => useContext(GoogleMapsContext);
 
+const MapsLoader = ({ apiKey, children }: { apiKey: string; children: ReactNode }) => {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: apiKey,
+    id: "google-map-script",
+  });
+
+  return (
+    <GoogleMapsContext.Provider value={{ isLoaded, apiKey }}>
+      {children}
+    </GoogleMapsContext.Provider>
+  );
+};
+
 export const GoogleMapsProvider = ({ children }: { children: ReactNode }) => {
   const [apiKey, setApiKey] = useState<string | null>(null);
 
@@ -20,14 +33,13 @@ export const GoogleMapsProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: apiKey || "",
-    id: "google-map-script",
-  });
+  if (!apiKey) {
+    return (
+      <GoogleMapsContext.Provider value={{ isLoaded: false, apiKey: null }}>
+        {children}
+      </GoogleMapsContext.Provider>
+    );
+  }
 
-  return (
-    <GoogleMapsContext.Provider value={{ isLoaded: !!apiKey && isLoaded, apiKey }}>
-      {children}
-    </GoogleMapsContext.Provider>
-  );
+  return <MapsLoader apiKey={apiKey}>{children}</MapsLoader>;
 };
