@@ -162,6 +162,29 @@ const InfluencerProfile = () => {
               <Label>Phone</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <select
+                  value={form.city}
+                  onChange={(e) => {
+                    const city = e.target.value;
+                    const loc = locations.find(l => l.city === city);
+                    setForm({ ...form, city, country: loc?.country || form.country });
+                  }}
+                  className="w-full rounded-md bg-background border border-border p-2 text-sm text-foreground"
+                >
+                  <option value="">Select city</option>
+                  {locations.map(l => (
+                    <option key={l.id} value={l.city}>{l.city}{l.country ? ` (${l.country})` : ""}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input value={form.country} readOnly placeholder="Auto from city" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
