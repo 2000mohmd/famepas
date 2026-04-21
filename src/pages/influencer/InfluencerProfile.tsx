@@ -36,8 +36,17 @@ const InfluencerProfile = () => {
     tiktok_followers: 0,
     niche: [] as string[],
     avatar_url: "",
+    city: "",
+    country: "",
   });
   const [nicheInput, setNicheInput] = useState("");
+  const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city").then(({ data }) => {
+      setLocations((data as any[]) ?? []);
+    });
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -51,6 +60,8 @@ const InfluencerProfile = () => {
         tiktok_followers: profile.tiktok_followers || 0,
         niche: profile.niche || [],
         avatar_url: profile.avatar_url || "",
+        city: (profile as any).city || "",
+        country: (profile as any).country || "",
       });
     }
   }, [profile]);
