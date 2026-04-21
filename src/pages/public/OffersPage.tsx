@@ -59,9 +59,9 @@ const OffersPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((offer: any) => (
                 <div key={offer.id} onClick={() => offer.venues?.id && setSelectedVenueId(offer.venues.id)} className="group rounded-2xl bg-card border border-border hover:border-accent/40 transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-1">
-                  {offer.image_url ? (
+                  {(offer.cover_image_url || offer.image_url) ? (
                     <div className="relative h-44 overflow-hidden">
-                      <img src={offer.image_url} alt={offer.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                       {offer.discount_value && (
                         <div className="absolute top-3 right-3 bg-accent text-accent-foreground px-3 py-1.5 rounded-full text-sm font-bold shadow-lg shadow-accent/20">${offer.discount_value}</div>
                       )}
