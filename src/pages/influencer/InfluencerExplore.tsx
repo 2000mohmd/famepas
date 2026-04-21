@@ -26,9 +26,21 @@ const InfluencerExplore = () => {
   const [search, setSearch] = useState(searchParams.get("venue") || "");
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState<"my" | "all">("my");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
+
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-country", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("country, city").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const myCountry = (myProfile as any)?.country as string | undefined;
 
   const { data: myApplications } = useQuery({
     queryKey: ["my-applications", user?.id],
@@ -43,11 +55,11 @@ const InfluencerExplore = () => {
   });
 
   const { data: offers } = useQuery({
-    queryKey: ["explore-offers", search, categoryFilter, typeFilter],
+    queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry],
     queryFn: async () => {
       let query = supabase
         .from("offers")
-        .select("*, venues(name, city, category, logo_url, description, latitude, longitude, address)")
+        .select("*, venues(name, city, country, category, logo_url, description, latitude, longitude, address)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -55,6 +67,9 @@ const InfluencerExplore = () => {
 
       const { data } = await query;
       let filtered = data ?? [];
+      if (countryFilter === "my" && myCountry) {
+        filtered = filtered.filter((o: any) => (o.venues?.country || "").toLowerCase() === myCountry.toLowerCase());
+      }
       if (search) {
         const s = search.toLowerCase();
         filtered = filtered.filter(
@@ -73,14 +88,19 @@ const InfluencerExplore = () => {
   });
 
   const { data: venues } = useQuery({
-    queryKey: ["explore-venues"],
+    queryKey: ["explore-venues", countryFilter, myCountry],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("venues")
         .select("*")
         .eq("is_active", true)
         .eq("approval_status", "approved");
-      return data ?? [];
+      const { data } = await query;
+      let list = data ?? [];
+      if (countryFilter === "my" && myCountry) {
+        list = list.filter((v: any) => (v.country || "").toLowerCase() === myCountry.toLowerCase());
+      }
+      return list;
     },
   });
 
