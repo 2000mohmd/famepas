@@ -174,7 +174,19 @@ const InfluencerExplore = () => {
               <SelectItem value="event">Event</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={countryFilter} onValueChange={(v: any) => setCountryFilter(v)}>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="my" disabled={!myCountry}>My country{myCountry ? ` (${myCountry})` : " — set in profile"}</SelectItem>
+              <SelectItem value="all">All countries</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {!myCountry && countryFilter === "my" && (
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
+            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> to see offers near you.
+          </div>
+        )}
 
         {viewMode === "map" && (
           <MapView
