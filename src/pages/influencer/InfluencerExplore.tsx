@@ -284,7 +284,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
 
   return (
     <Card className="hover:border-gold/30 transition-colors overflow-hidden">
-      {offer.image_url && <img src={offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
+      {(offer.cover_image_url || offer.image_url) && <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{offer.title}</CardTitle>
