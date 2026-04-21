@@ -613,6 +613,8 @@ export type Database = {
           avatar_url: string | null
           badge: string | null
           bio: string | null
+          city: string | null
+          country: string | null
           created_at: string
           engagement_rate: number | null
           followers_count: number | null
@@ -635,6 +637,8 @@ export type Database = {
           avatar_url?: string | null
           badge?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
@@ -657,6 +661,8 @@ export type Database = {
           avatar_url?: string | null
           badge?: string | null
           bio?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
