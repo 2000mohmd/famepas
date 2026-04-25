@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin } from "lucide-react";
+import { MapPin, ImagePlus, X } from "lucide-react";
 
 const VenueSettings = () => {
   const { user } = useAuth();
@@ -16,7 +16,10 @@ const VenueSettings = () => {
   const [form, setForm] = useState({
     name: "", description: "", category: "dining", address: "", city: "", country: "",
     phone: "", email: "", website: "", latitude: "", longitude: "",
+    logo_url: "", cover_image_url: "",
   });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
 
@@ -50,6 +53,8 @@ const VenueSettings = () => {
           website: data.website || "",
           latitude: data.latitude?.toString() || "",
           longitude: data.longitude?.toString() || "",
+          logo_url: data.logo_url || "",
+          cover_image_url: data.cover_image_url || "",
         });
       }
     };
