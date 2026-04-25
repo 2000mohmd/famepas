@@ -175,6 +175,9 @@ const AdminCategories = () => {
                       </Badge>
                     </td>
                     <td className="p-4 flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(cat)} className="text-muted-foreground hover:text-gold">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => toggleActive(cat.id, cat.is_active)} className="text-muted-foreground hover:text-gold">
                         {cat.is_active ? "Deactivate" : "Activate"}
                       </Button>
