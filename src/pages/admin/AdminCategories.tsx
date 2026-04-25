@@ -103,15 +103,13 @@ const AdminCategories = () => {
             <h1 className="text-3xl font-display font-bold text-foreground">Manage <span className="text-gold">Categories</span></h1>
             <p className="text-muted-foreground mt-1">{categories.length} categories</p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="gradient-gold text-accent-foreground font-semibold">
-                <Plus className="w-4 h-4 mr-2" /> Add Category
-              </Button>
-            </DialogTrigger>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditingId(null); }}>
+            <Button onClick={openCreate} className="gradient-gold text-accent-foreground font-semibold">
+              <Plus className="w-4 h-4 mr-2" /> Add Category
+            </Button>
             <DialogContent className="bg-card border-border">
               <DialogHeader>
-                <DialogTitle className="text-foreground font-display">New Category</DialogTitle>
+                <DialogTitle className="text-foreground font-display">{editingId ? "Edit Category" : "New Category"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
@@ -139,7 +137,7 @@ const AdminCategories = () => {
                     </label>
                   )}
                 </div>
-                <Button onClick={handleCreate} disabled={uploading} className="w-full gradient-gold text-accent-foreground font-semibold">Create Category</Button>
+                <Button onClick={handleSave} disabled={uploading} className="w-full gradient-gold text-accent-foreground font-semibold">{editingId ? "Save Changes" : "Create Category"}</Button>
               </div>
             </DialogContent>
           </Dialog>
