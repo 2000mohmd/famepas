@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin } from "lucide-react";
+import { MapPin, ImagePlus, X } from "lucide-react";
 
 const VenueSettings = () => {
   const { user } = useAuth();
@@ -16,7 +16,10 @@ const VenueSettings = () => {
   const [form, setForm] = useState({
     name: "", description: "", category: "dining", address: "", city: "", country: "",
     phone: "", email: "", website: "", latitude: "", longitude: "",
+    logo_url: "", cover_image_url: "",
   });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
 
@@ -50,6 +53,8 @@ const VenueSettings = () => {
           website: data.website || "",
           latitude: data.latitude?.toString() || "",
           longitude: data.longitude?.toString() || "",
+          logo_url: data.logo_url || "",
+          cover_image_url: data.cover_image_url || "",
         });
       }
     };
@@ -75,6 +80,23 @@ const VenueSettings = () => {
     );
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: "logo" | "cover") => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const setter = kind === "logo" ? setUploadingLogo : setUploadingCover;
+    setter(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/${kind}-${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      setForm(f => ({ ...f, [kind === "logo" ? "logo_url" : "cover_image_url"]: publicUrl }));
+    }
+    setter(false);
+  };
+
   const handleSave = async () => {
     if (!venue) return;
     const lat = form.latitude ? parseFloat(form.latitude) : null;
@@ -95,6 +117,8 @@ const VenueSettings = () => {
       website: form.website,
       latitude: lat,
       longitude: lng,
+      logo_url: form.logo_url || null,
+      cover_image_url: form.cover_image_url || null,
     } as any).eq("id", venue.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -110,6 +134,44 @@ const VenueSettings = () => {
         <p className="text-muted-foreground mb-8">Update your venue information and map location</p>
 
         <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
+          {/* Logo + Cover */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-muted-foreground text-sm">Logo</Label>
+              {form.logo_url ? (
+                <div className="relative mt-1 w-28 h-28">
+                  <img src={form.logo_url} alt="Logo" className="w-28 h-28 rounded-full object-cover border border-border" />
+                  <button type="button" onClick={() => setForm(f => ({ ...f, logo_url: "" }))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="mt-1 flex flex-col items-center justify-center w-28 h-28 rounded-full border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">{uploadingLogo ? "Uploading..." : "Logo"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} disabled={uploadingLogo} />
+                </label>
+              )}
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-sm">Cover Image</Label>
+              {form.cover_image_url ? (
+                <div className="relative mt-1">
+                  <img src={form.cover_image_url} alt="Cover" className="w-full h-28 rounded-lg object-cover border border-border" />
+                  <button type="button" onClick={() => setForm(f => ({ ...f, cover_image_url: "" }))} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="mt-1 flex flex-col items-center justify-center w-full h-28 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground mt-1">{uploadingCover ? "Uploading..." : "Upload cover"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} disabled={uploadingCover} />
+                </label>
+              )}
+            </div>
+          </div>
+
           {[
             { label: "Venue Name", key: "name" },
             { label: "Description", key: "description" },

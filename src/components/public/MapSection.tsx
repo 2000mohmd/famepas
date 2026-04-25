@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
-import { useState } from "react";
-import { MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { MapPin, AlertTriangle } from "lucide-react";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
@@ -24,6 +24,26 @@ interface Props {
 const MapSection = ({ onVenueClick }: Props) => {
   const { isLoaded, apiKey } = useGoogleMaps();
   const [selectedVenue, setSelectedVenue] = useState<any>(null);
+  const [mapError, setMapError] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: ErrorEvent) => {
+      if (typeof e.message === "string" && e.message.includes("Google Maps")) setMapError(true);
+    };
+    const consoleError = console.error;
+    console.error = (...args: any[]) => {
+      const msg = args.join(" ");
+      if (msg.includes("ApiNotActivatedMapError") || msg.includes("Google Maps JavaScript API")) {
+        setMapError(true);
+      }
+      consoleError(...args);
+    };
+    window.addEventListener("error", handler);
+    return () => {
+      window.removeEventListener("error", handler);
+      console.error = consoleError;
+    };
+  }, []);
 
   const { data: venues } = useQuery({
     queryKey: ["map-venues"],
@@ -66,7 +86,17 @@ const MapSection = ({ onVenueClick }: Props) => {
         </div>
 
         <div className="rounded-2xl overflow-hidden border border-border shadow-xl shadow-primary/5">
-          {!isLoaded ? (
+          {mapError ? (
+            <div className="h-[500px] bg-secondary/50 flex items-center justify-center p-8">
+              <div className="text-center space-y-3 max-w-md">
+                <AlertTriangle className="w-10 h-10 text-warning mx-auto" />
+                <h3 className="text-foreground font-semibold">Map unavailable</h3>
+                <p className="text-muted-foreground text-sm">
+                  The Google Maps JavaScript API is not enabled for this project's API key. The site administrator needs to enable the <span className="text-foreground font-medium">Maps JavaScript API</span> in the Google Cloud Console for the configured key.
+                </p>
+              </div>
+            </div>
+          ) : !isLoaded ? (
             <div className="h-[500px] bg-secondary/50 flex items-center justify-center">
               <div className="text-center space-y-3">
                 <MapPin className="w-10 h-10 text-muted-foreground mx-auto animate-pulse" />
