@@ -80,6 +80,23 @@ const VenueSettings = () => {
     );
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: "logo" | "cover") => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const setter = kind === "logo" ? setUploadingLogo : setUploadingCover;
+    setter(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/${kind}-${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      setForm(f => ({ ...f, [kind === "logo" ? "logo_url" : "cover_image_url"]: publicUrl }));
+    }
+    setter(false);
+  };
+
   const handleSave = async () => {
     if (!venue) return;
     const lat = form.latitude ? parseFloat(form.latitude) : null;
@@ -100,6 +117,8 @@ const VenueSettings = () => {
       website: form.website,
       latitude: lat,
       longitude: lng,
+      logo_url: form.logo_url || null,
+      cover_image_url: form.cover_image_url || null,
     } as any).eq("id", venue.id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
