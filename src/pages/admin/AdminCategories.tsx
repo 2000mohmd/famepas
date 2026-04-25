@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, ImagePlus } from "lucide-react";
+import { Plus, Trash2, ImagePlus, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newCat, setNewCat] = useState({ name: "", icon: "", image_url: "" });
   const { toast } = useToast();
 
@@ -48,7 +49,19 @@ const AdminCategories = () => {
     setUploading(false);
   };
 
-  const handleCreate = async () => {
+  const openEdit = (cat: Category) => {
+    setEditingId(cat.id);
+    setNewCat({ name: cat.name, icon: cat.icon || "", image_url: cat.image_url || "" });
+    setOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setNewCat({ name: "", icon: "", image_url: "" });
+    setOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!newCat.name) {
       toast({ title: "Name is required", variant: "destructive" });
       return;
@@ -57,16 +70,16 @@ const AdminCategories = () => {
       toast({ title: "Cover image is required", description: "Please upload a cover image for the category", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("categories").insert({
-      name: newCat.name,
-      icon: newCat.icon || null,
-      image_url: newCat.image_url,
-    } as any);
+    const payload = { name: newCat.name, icon: newCat.icon || null, image_url: newCat.image_url };
+    const { error } = editingId
+      ? await supabase.from("categories").update(payload as any).eq("id", editingId)
+      : await supabase.from("categories").insert(payload as any);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Category created" });
+      toast({ title: editingId ? "Category updated" : "Category created" });
       setOpen(false);
+      setEditingId(null);
       setNewCat({ name: "", icon: "", image_url: "" });
       fetchCategories();
     }
