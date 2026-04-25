@@ -134,6 +134,44 @@ const VenueSettings = () => {
         <p className="text-muted-foreground mb-8">Update your venue information and map location</p>
 
         <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
+          {/* Logo + Cover */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-muted-foreground text-sm">Logo</Label>
+              {form.logo_url ? (
+                <div className="relative mt-1 w-28 h-28">
+                  <img src={form.logo_url} alt="Logo" className="w-28 h-28 rounded-full object-cover border border-border" />
+                  <button type="button" onClick={() => setForm(f => ({ ...f, logo_url: "" }))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="mt-1 flex flex-col items-center justify-center w-28 h-28 rounded-full border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">{uploadingLogo ? "Uploading..." : "Logo"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} disabled={uploadingLogo} />
+                </label>
+              )}
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-sm">Cover Image</Label>
+              {form.cover_image_url ? (
+                <div className="relative mt-1">
+                  <img src={form.cover_image_url} alt="Cover" className="w-full h-28 rounded-lg object-cover border border-border" />
+                  <button type="button" onClick={() => setForm(f => ({ ...f, cover_image_url: "" }))} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="mt-1 flex flex-col items-center justify-center w-full h-28 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground mt-1">{uploadingCover ? "Uploading..." : "Upload cover"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} disabled={uploadingCover} />
+                </label>
+              )}
+            </div>
+          </div>
+
           {[
             { label: "Venue Name", key: "name" },
             { label: "Description", key: "description" },
