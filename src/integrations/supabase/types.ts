@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_user_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          permission: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          permission?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           checked_in_at: string | null
@@ -507,6 +531,9 @@ export type Database = {
           id: string
           influencer_id: string
           offer_id: string
+          qr_code: string | null
+          qr_expires_at: string | null
+          qr_used_at: string | null
           redeemed_at: string | null
           status: string
         }
@@ -515,6 +542,9 @@ export type Database = {
           id?: string
           influencer_id: string
           offer_id: string
+          qr_code?: string | null
+          qr_expires_at?: string | null
+          qr_used_at?: string | null
           redeemed_at?: string | null
           status?: string
         }
@@ -523,6 +553,9 @@ export type Database = {
           id?: string
           influencer_id?: string
           offer_id?: string
+          qr_code?: string | null
+          qr_expires_at?: string | null
+          qr_used_at?: string | null
           redeemed_at?: string | null
           status?: string
         }
@@ -615,6 +648,7 @@ export type Database = {
           bio: string | null
           city: string | null
           country: string | null
+          cover_image_url: string | null
           created_at: string
           engagement_rate: number | null
           followers_count: number | null
@@ -639,6 +673,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
@@ -663,6 +698,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           engagement_rate?: number | null
           followers_count?: number | null
@@ -975,6 +1011,10 @@ export type Database = {
         }[]
       }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
+      has_admin_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
