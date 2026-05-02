@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, MapPin, Tag, Clock, Globe, LogIn, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 import { useState } from "react";
@@ -17,6 +17,7 @@ interface Props {
 
 const VenueOffersModal = ({ venueId, onClose }: Props) => {
   const { user, role } = useAuth();
+  const navigate = useNavigate();
   const [appliedOffers, setAppliedOffers] = useState<Record<string, string>>({});
 
   const { data: venue } = useQuery({
@@ -84,6 +85,8 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
       setAppliedOffers(prev => ({ ...prev, [offerId]: "pending" }));
       if (data?.qr_code) await QRCode.toDataURL(data.qr_code).catch(() => null);
       toast({ title: "Applied!", description: "Your application was submitted. Explore more offers from this venue." });
+      onClose();
+      navigate("/offers");
     }
   };
 
@@ -143,7 +146,7 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
                   </div>
                 </div>
                 <Button asChild size="sm" variant="outline" className="shrink-0">
-                  <Link to="/influencer/profile">Complete Profile</Link>
+                  <Link to="/influencer/profile?redirect=/offers">Complete Profile</Link>
                 </Button>
               </div>
             )}
