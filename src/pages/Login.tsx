@@ -225,7 +225,7 @@ const Login = () => {
                           {avatarPreview ? (
                             <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-xl text-muted-foreground">?</span>
+                            <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Photo</span>
                           )}
                         </div>
                         <label className="flex-1 flex flex-col items-center justify-center h-16 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-gold/40 transition-colors bg-secondary/50">
