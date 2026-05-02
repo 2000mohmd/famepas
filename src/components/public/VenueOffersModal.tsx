@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Building2, MapPin, Tag, Clock, Globe, LogIn, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import QRCode from "qrcode";
+import { useState } from "react";
 
 interface Props {
   venueId: string | null;
@@ -15,6 +17,7 @@ interface Props {
 
 const VenueOffersModal = ({ venueId, onClose }: Props) => {
   const { user, role } = useAuth();
+  const [appliedOffers, setAppliedOffers] = useState<Record<string, string>>({});
 
   const { data: venue } = useQuery({
     queryKey: ["public-venue", venueId],
@@ -48,6 +51,15 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
     enabled: !!user && role === "influencer",
   });
 
+  const { data: myApplications } = useQuery({
+    queryKey: ["public-my-applications", user?.id, venueId],
+    queryFn: async () => {
+      const { data } = await supabase.from("offer_redemptions").select("offer_id, status").eq("influencer_id", user!.id);
+      return data ?? [];
+    },
+    enabled: !!user && role === "influencer" && !!venueId,
+  });
+
   const isProfileComplete = profile &&
     profile.avatar_url &&
     profile.full_name &&
@@ -61,7 +73,7 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
       toast({ title: "Complete your profile first", description: "You need a profile photo, bio, and social account to apply.", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("offer_redemptions").insert({ offer_id: offerId, influencer_id: user.id });
+    const { data, error } = await supabase.from("offer_redemptions").insert({ offer_id: offerId, influencer_id: user.id }).select("qr_code").single();
     if (error) {
       if (error.code === "23505") {
         toast({ title: "Already applied", description: "You've already applied to this offer." });
@@ -69,9 +81,13 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       }
     } else {
-      toast({ title: "Applied!", description: "Your application has been submitted." });
+      setAppliedOffers(prev => ({ ...prev, [offerId]: "pending" }));
+      if (data?.qr_code) await QRCode.toDataURL(data.qr_code).catch(() => null);
+      toast({ title: "Applied!", description: "Your application was submitted. Explore more offers from this venue." });
     }
   };
+
+  const getApplication = (offerId: string) => appliedOffers[offerId] || myApplications?.find((a) => a.offer_id === offerId)?.status;
 
   return (
     <Dialog open={!!venueId} onOpenChange={() => onClose()}>
@@ -166,9 +182,9 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
                           size="sm"
                           className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg mt-1"
                           onClick={() => handleApply(offer.id)}
-                          disabled={!isProfileComplete}
+                          disabled={!isProfileComplete || !!getApplication(offer.id)}
                         >
-                          Apply Now
+                          {getApplication(offer.id) ? "Applied" : "Claim Offer"}
                         </Button>
                       )}
                     </div>
