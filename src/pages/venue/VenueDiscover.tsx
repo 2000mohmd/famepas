@@ -218,7 +218,9 @@ const VenueDiscover = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-full text-center p-12 text-muted-foreground">No influencers found matching your criteria</div>
+            <div className="col-span-full text-center p-12 text-muted-foreground">
+              {profiles.length === 0 ? "No influencer profiles are available yet" : "No influencers found matching your criteria"}
+            </div>
           )}
         </div>
 
