@@ -6,10 +6,14 @@ import Footer from "@/components/public/Footer";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag, Clock, Sparkles, Search } from "lucide-react";
 
 const OffersPage = () => {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
 
   const { data: offers } = useQuery({
@@ -17,17 +21,28 @@ const OffersPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(id, name, city, category, logo_url)")
+        .select("*, venues(id, name, city, category, logo_url, is_active, approval_status)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["public-categories-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name").eq("is_active", true).order("name");
+      return data ?? [];
+    },
+  });
+
   const filtered = offers?.filter((o: any) => {
+    if (o.venues && (o.venues.is_active === false || o.venues.approval_status !== "approved")) return false;
+    if (typeFilter !== "all" && o.offer_type !== typeFilter) return false;
+    if (categoryFilter !== "all" && o.venues?.category !== categoryFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
-    return o.title.toLowerCase().includes(q) || o.venues?.name?.toLowerCase().includes(q);
+    return o.title.toLowerCase().includes(q) || o.venues?.name?.toLowerCase().includes(q) || o.venues?.city?.toLowerCase().includes(q);
   }) ?? [];
 
   return (
