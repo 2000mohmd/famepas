@@ -150,7 +150,7 @@ const AdminCategories = () => {
             </thead>
             <tbody>
               {categories.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No categories yet</td></tr>
+                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No categories yet</td></tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
