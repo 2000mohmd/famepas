@@ -11,11 +11,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Shield, Save, Camera } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const InfluencerProfile = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -36,6 +40,7 @@ const InfluencerProfile = () => {
     tiktok_followers: 0,
     niche: [] as string[],
     avatar_url: "",
+    cover_image_url: "",
     city: "",
     country: "",
   });
@@ -60,6 +65,7 @@ const InfluencerProfile = () => {
         tiktok_followers: profile.tiktok_followers || 0,
         niche: profile.niche || [],
         avatar_url: profile.avatar_url || "",
+        cover_image_url: (profile as any).cover_image_url || "",
         city: (profile as any).city || "",
         country: (profile as any).country || "",
       });
@@ -86,14 +92,36 @@ const InfluencerProfile = () => {
     setAvatarUploading(false);
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setCoverUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/cover.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const url = `${publicUrl}?t=${Date.now()}`;
+      setForm(f => ({ ...f, cover_image_url: url }));
+      await supabase.from("profiles").update({ cover_image_url: url } as any).eq("user_id", user.id);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      toast({ title: "Cover updated!" });
+    }
+    setCoverUploading(false);
+  };
+
   const updateProfile = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update(form).eq("user_id", user!.id);
+      const { error } = await supabase.from("profiles").update(form as any).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast({ title: "Profile updated!" });
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+      const redirect = searchParams.get("redirect");
+      if (redirect) navigate(redirect);
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
