@@ -36,7 +36,7 @@ const AdminDashboard = () => {
         supabase.from("venues").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("venues").select("id, name, created_at, approval_status").order("created_at", { ascending: false }).limit(3),
-        supabase.from("offer_redemptions").select("id, created_at, status").order("created_at", { ascending: false }).limit(3),
+        supabase.from("offer_redemptions").select("id, created_at, status, influencer_id, offers(title, venues(name))").order("created_at", { ascending: false }).limit(3),
       ]);
 
       setStats({
@@ -52,8 +52,15 @@ const AdminDashboard = () => {
       (recentVenues.data ?? []).forEach((v: any) => {
         activity.push({ id: v.id, type: "venue", label: `New venue: ${v.name}`, time: v.created_at, status: v.approval_status });
       });
+      const influencerIds = [...new Set((recentRedemptions.data ?? []).map((r: any) => r.influencer_id).filter(Boolean))];
+      const { data: redemptionProfiles } = influencerIds.length
+        ? await supabase.from("profiles").select("user_id, full_name").in("user_id", influencerIds)
+        : { data: [] as any[] };
       (recentRedemptions.data ?? []).forEach((r: any) => {
-        activity.push({ id: r.id, type: "redemption", label: "Offer redeemed", time: r.created_at, status: r.status });
+        const influencerName = redemptionProfiles?.find((p: any) => p.user_id === r.influencer_id)?.full_name || "Influencer";
+        const offerTitle = r.offers?.title || "an offer";
+        const venueName = r.offers?.venues?.name ? ` at ${r.offers.venues.name}` : "";
+        activity.push({ id: r.id, type: "redemption", label: `${influencerName} applied to ${offerTitle}${venueName}`, time: r.created_at, status: r.status });
       });
       activity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       setRecentActivity(activity.slice(0, 6));

@@ -63,23 +63,18 @@ const VenueInvitations = () => {
     const [invRes, offRes, roleRes] = await Promise.all([
       supabase.from("invitations").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false }),
       supabase.from("offers").select("id, title, offer_type").eq("venue_id", venue.id).eq("is_active", true),
-      supabase.from("user_roles").select("user_id").eq("role", "influencer"),
+      supabase.rpc("get_discoverable_influencers" as any),
     ]);
 
     setOffers(offRes.data ?? []);
 
-    // Fetch influencer profiles
-    const infIds = (roleRes.data ?? []).map(r => r.user_id);
-    if (infIds.length > 0) {
-      const { data: profiles } = await supabase.from("profiles")
-        .select("user_id, full_name, instagram_handle, followers_count")
-        .in("user_id", infIds);
-      setInfluencers(profiles ?? []);
+    const profiles = (roleRes.data as Influencer[]) ?? [];
+    setInfluencers(profiles);
 
-      // Enrich invitations with names
+    if (profiles.length > 0) {
       const invData = (invRes.data ?? []).map(inv => ({
         ...inv,
-        influencer_name: profiles?.find(p => p.user_id === inv.influencer_id)?.full_name || "Unknown",
+        influencer_name: profiles.find(p => p.user_id === inv.influencer_id)?.full_name || "Unknown",
         offer_title: offRes.data?.find(o => o.id === inv.offer_id)?.title || "—",
       }));
       setInvitations(invData);

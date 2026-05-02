@@ -24,8 +24,11 @@ interface InfluencerProfile {
   niche: string[] | null;
   bio: string | null;
   avatar_url: string | null;
+  cover_image_url?: string | null;
   is_verified: boolean;
   badge: string | null;
+  city?: string | null;
+  country?: string | null;
 }
 
 const VenueDiscover = () => {
@@ -57,8 +60,8 @@ const VenueDiscover = () => {
         setOffers(offData ?? []);
       }
 
-      const [rolesRes, catRes, locRes] = await Promise.all([
-        supabase.from("user_roles").select("user_id").eq("role", "influencer"),
+      const [influencersRes, catRes, locRes] = await Promise.all([
+        supabase.rpc("get_discoverable_influencers" as any),
         supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
         supabase.from("service_locations").select("city").eq("is_active", true).order("city"),
       ]);
@@ -66,14 +69,10 @@ const VenueDiscover = () => {
       setCategories((catRes.data as any) ?? []);
       setCities((locRes.data ?? []).map((l: any) => l.city));
 
-      const ids = (rolesRes.data ?? []).map(r => r.user_id);
-      if (ids.length === 0) return;
-
-      const { data } = await supabase.from("profiles")
-        .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, engagement_rate, influencer_score, niche, bio, avatar_url, is_verified, badge")
-        .in("user_id", ids)
-        .eq("is_suspended", false);
-      setProfiles((data as InfluencerProfile[]) ?? []);
+      if (influencersRes.error) {
+        toast({ title: "Could not load influencers", description: influencersRes.error.message, variant: "destructive" });
+      }
+      setProfiles((influencersRes.data as InfluencerProfile[]) ?? []);
     };
     fetchData();
   }, [user]);
@@ -93,6 +92,9 @@ const VenueDiscover = () => {
     }
     if (categoryFilter !== "all") {
       result = result.filter(p => (p.niche || []).some(n => n.toLowerCase() === categoryFilter.toLowerCase()));
+    }
+    if (cityFilter !== "all") {
+      result = result.filter(p => (p.city || "").toLowerCase() === cityFilter.toLowerCase());
     }
     if (verifiedOnly) {
       result = result.filter(p => p.is_verified);
@@ -216,7 +218,9 @@ const VenueDiscover = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-full text-center p-12 text-muted-foreground">No influencers found matching your criteria</div>
+            <div className="col-span-full text-center p-12 text-muted-foreground">
+              {profiles.length === 0 ? "No influencer profiles are available yet" : "No influencers found matching your criteria"}
+            </div>
           )}
         </div>
 

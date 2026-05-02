@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 interface Category {
   id: string;
   name: string;
-  icon: string | null;
   image_url: string | null;
   is_active: boolean;
   created_at: string;
@@ -23,7 +22,7 @@ const AdminCategories = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [newCat, setNewCat] = useState({ name: "", icon: "", image_url: "" });
+  const [newCat, setNewCat] = useState({ name: "", image_url: "" });
   const { toast } = useToast();
 
   const fetchCategories = async () => {
@@ -51,13 +50,13 @@ const AdminCategories = () => {
 
   const openEdit = (cat: Category) => {
     setEditingId(cat.id);
-    setNewCat({ name: cat.name, icon: cat.icon || "", image_url: cat.image_url || "" });
+    setNewCat({ name: cat.name, image_url: cat.image_url || "" });
     setOpen(true);
   };
 
   const openCreate = () => {
     setEditingId(null);
-    setNewCat({ name: "", icon: "", image_url: "" });
+    setNewCat({ name: "", image_url: "" });
     setOpen(true);
   };
 
@@ -70,7 +69,7 @@ const AdminCategories = () => {
       toast({ title: "Cover image is required", description: "Please upload a cover image for the category", variant: "destructive" });
       return;
     }
-    const payload = { name: newCat.name, icon: newCat.icon || null, image_url: newCat.image_url };
+    const payload = { name: newCat.name, image_url: newCat.image_url };
     const { error } = editingId
       ? await supabase.from("categories").update(payload as any).eq("id", editingId)
       : await supabase.from("categories").insert(payload as any);
@@ -80,7 +79,7 @@ const AdminCategories = () => {
       toast({ title: editingId ? "Category updated" : "Category created" });
       setOpen(false);
       setEditingId(null);
-      setNewCat({ name: "", icon: "", image_url: "" });
+      setNewCat({ name: "", image_url: "" });
       fetchCategories();
     }
   };
@@ -117,10 +116,6 @@ const AdminCategories = () => {
                   <Input value={newCat.name} onChange={e => setNewCat(v => ({ ...v, name: e.target.value }))} placeholder="e.g. Hotels" className="bg-secondary border-border" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Icon (emoji, optional)</Label>
-                  <Input value={newCat.icon} onChange={e => setNewCat(v => ({ ...v, icon: e.target.value }))} placeholder="e.g. 🏨" className="bg-secondary border-border" />
-                </div>
-                <div className="space-y-2">
                   <Label className="text-muted-foreground">Cover Image *</Label>
                   {newCat.image_url ? (
                     <div className="relative">
@@ -148,7 +143,6 @@ const AdminCategories = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Cover</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Icon</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
@@ -156,7 +150,7 @@ const AdminCategories = () => {
             </thead>
             <tbody>
               {categories.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No categories yet</td></tr>
+                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No categories yet</td></tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -167,7 +161,6 @@ const AdminCategories = () => {
                         <div className="w-16 h-12 rounded-md bg-secondary flex items-center justify-center text-xs text-muted-foreground">none</div>
                       )}
                     </td>
-                    <td className="p-4 text-xl">{cat.icon || "—"}</td>
                     <td className="p-4 font-medium text-foreground capitalize">{cat.name}</td>
                     <td className="p-4">
                       <Badge className={cat.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>

@@ -6,10 +6,14 @@ import Footer from "@/components/public/Footer";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tag, Clock, Sparkles, Search } from "lucide-react";
 
 const OffersPage = () => {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
 
   const { data: offers } = useQuery({
@@ -17,17 +21,28 @@ const OffersPage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(id, name, city, category, logo_url)")
+        .select("*, venues(id, name, city, category, logo_url, is_active, approval_status)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["public-categories-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name").eq("is_active", true).order("name");
+      return data ?? [];
+    },
+  });
+
   const filtered = offers?.filter((o: any) => {
+    if (o.venues && (o.venues.is_active === false || o.venues.approval_status !== "approved")) return false;
+    if (typeFilter !== "all" && o.offer_type !== typeFilter) return false;
+    if (categoryFilter !== "all" && o.venues?.category !== categoryFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
-    return o.title.toLowerCase().includes(q) || o.venues?.name?.toLowerCase().includes(q);
+    return o.title.toLowerCase().includes(q) || o.venues?.name?.toLowerCase().includes(q) || o.venues?.city?.toLowerCase().includes(q);
   }) ?? [];
 
   return (
@@ -43,11 +58,28 @@ const OffersPage = () => {
             <p className="text-muted-foreground mt-4 max-w-lg mx-auto">Exclusive deals from top venues — browse and apply</p>
           </div>
 
-          <div className="flex justify-center mb-10">
-            <div className="relative w-full sm:w-96">
+          <div className="flex flex-col lg:flex-row justify-center gap-3 mb-10">
+            <div className="relative w-full lg:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Search offers or venues..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-card border-border rounded-xl h-11" />
             </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full lg:w-48 bg-card border-border rounded-xl h-11"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {categories?.map((cat) => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full lg:w-40 bg-card border-border rounded-xl h-11"><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="free">Barter</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="event">Event</SelectItem>
+                <SelectItem value="discount">Discount</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {filtered.length === 0 ? (
@@ -90,6 +122,9 @@ const OffersPage = () => {
                         </Badge>
                       )}
                     </div>
+                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={(e) => { e.stopPropagation(); offer.venues?.id && setSelectedVenueId(offer.venues.id); }}>
+                      Claim Offer
+                    </Button>
                   </div>
                 </div>
               ))}

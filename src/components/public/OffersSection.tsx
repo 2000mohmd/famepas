@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tag, Clock, Sparkles } from "lucide-react";
 
 interface Props {
@@ -14,14 +15,17 @@ const OffersSection = ({ categoryFilter, onVenueClick }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(id, name, city, category, logo_url)")
+        .select("*, venues(id, name, city, category, logo_url, is_active, approval_status)")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
 
-  const filtered = offers?.filter((o: any) => !categoryFilter || o.venues?.category === categoryFilter) ?? [];
+  const filtered = offers?.filter((o: any) => {
+    if (o.venues && (o.venues.is_active === false || o.venues.approval_status !== "approved")) return false;
+    return !categoryFilter || o.venues?.category === categoryFilter;
+  }) ?? [];
 
   return (
     <section id="offers" className="py-20 bg-background relative">
@@ -95,6 +99,9 @@ const OffersSection = ({ categoryFilter, onVenueClick }: Props) => {
                       </Badge>
                     )}
                   </div>
+                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={(e) => { e.stopPropagation(); offer.venues?.id && onVenueClick(offer.venues.id); }}>
+                    Claim Offer
+                  </Button>
                 </div>
               </div>
             ))}

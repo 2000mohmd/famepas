@@ -74,8 +74,7 @@ const CategoriesPage = () => {
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-secondary to-card" />
                   )}
-                  <div className="relative h-full flex flex-col items-center justify-end p-4 gap-1">
-                    <span className="text-3xl drop-shadow-lg">{cat.icon || "🏢"}</span>
+                  <div className="relative h-full flex flex-col items-center justify-end p-4 gap-1 text-center">
                     <span className="text-base font-bold text-foreground capitalize">{cat.name}</span>
                     <span className="text-xs text-muted-foreground">{venueCount} venue{venueCount !== 1 ? "s" : ""}</span>
                   </div>

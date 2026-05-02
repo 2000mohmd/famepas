@@ -74,8 +74,8 @@ const VenuesPage = () => {
                 All
               </button>
               {categories?.map((cat) => (
-                <button key={cat.id} onClick={() => setCategoryFilter(cat.name)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${categoryFilter === cat.name ? "bg-accent text-accent-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
-                  <span>{cat.icon || "🏢"}</span> {cat.name}
+                <button key={cat.id} onClick={() => setCategoryFilter(cat.name)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${categoryFilter === cat.name ? "bg-accent text-accent-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}>
+                  {cat.name}
                 </button>
               ))}
             </div>
