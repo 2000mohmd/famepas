@@ -34,13 +34,12 @@ const CategoriesSection = ({ selected, onSelect }: Props) => {
         <div className="flex flex-wrap justify-center gap-4">
           <button
             onClick={() => onSelect(null)}
-            className={`group px-7 py-5 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-3 min-w-[130px] hover:scale-105 ${
+            className={`group px-7 py-5 rounded-2xl border transition-all duration-300 flex items-center justify-center min-w-[130px] hover:scale-105 ${
               !selected
                 ? "bg-accent/15 border-accent/40 shadow-lg shadow-accent/10 scale-105"
                 : "bg-card border-border hover:border-accent/30"
             }`}
           >
-            <span className="text-3xl">🏠</span>
             <span className="text-sm font-semibold text-foreground">All</span>
           </button>
           {categories?.map((cat: any) => (
@@ -61,9 +60,8 @@ const CategoriesSection = ({ selected, onSelect }: Props) => {
               ) : (
                 <div className="absolute inset-0 bg-card" />
               )}
-              <div className="relative flex flex-col items-center justify-end h-full pb-4 gap-1">
-                <span className="text-2xl">{cat.icon || "🏢"}</span>
-                <span className="text-sm font-semibold text-foreground capitalize">{cat.name}</span>
+              <div className="relative flex items-end justify-center h-full p-4 text-center">
+                <span className="text-sm font-semibold text-foreground capitalize leading-tight">{cat.name}</span>
               </div>
             </button>
           ))}
