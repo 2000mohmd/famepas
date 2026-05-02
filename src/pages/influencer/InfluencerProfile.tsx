@@ -149,6 +149,24 @@ const InfluencerProfile = () => {
           </div>
         </div>
 
+        {/* Cover */}
+        <Card>
+          <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
+          <CardContent>
+            <div className="relative h-36 overflow-hidden rounded-lg border border-border bg-secondary flex items-center justify-center">
+              {form.cover_image_url ? (
+                <img src={form.cover_image_url} alt="Profile cover" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm text-muted-foreground">Add a cover image</span>
+              )}
+              <label className="absolute right-3 bottom-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity">
+                <Camera className="w-4 h-4" />
+                <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" disabled={coverUploading} />
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Avatar */}
         <Card>
           <CardHeader><CardTitle>Profile Photo</CardTitle></CardHeader>
