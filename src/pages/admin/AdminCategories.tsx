@@ -116,10 +116,6 @@ const AdminCategories = () => {
                   <Input value={newCat.name} onChange={e => setNewCat(v => ({ ...v, name: e.target.value }))} placeholder="e.g. Hotels" className="bg-secondary border-border" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Icon (emoji, optional)</Label>
-                  <Input value={newCat.icon} onChange={e => setNewCat(v => ({ ...v, icon: e.target.value }))} placeholder="e.g. 🏨" className="bg-secondary border-border" />
-                </div>
-                <div className="space-y-2">
                   <Label className="text-muted-foreground">Cover Image *</Label>
                   {newCat.image_url ? (
                     <div className="relative">
@@ -147,7 +143,6 @@ const AdminCategories = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Cover</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Icon</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
@@ -166,7 +161,6 @@ const AdminCategories = () => {
                         <div className="w-16 h-12 rounded-md bg-secondary flex items-center justify-center text-xs text-muted-foreground">none</div>
                       )}
                     </td>
-                    <td className="p-4 text-xl">{cat.icon || "—"}</td>
                     <td className="p-4 font-medium text-foreground capitalize">{cat.name}</td>
                     <td className="p-4">
                       <Badge className={cat.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
