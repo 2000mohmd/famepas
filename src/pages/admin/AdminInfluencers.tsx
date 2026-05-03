@@ -156,10 +156,19 @@ const AdminInfluencers = () => {
                   <tr key={inf.user_id} className={`border-b border-border/50 hover:bg-secondary/30 transition-colors ${inf.is_suspended ? "opacity-60" : ""}`}>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{inf.full_name || "—"}</span>
-                        {inf.is_verified && <ShieldCheck className="w-4 h-4 text-gold shrink-0" />}
+                        {inf.avatar_url ? (
+                          <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-secondary" />
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">{inf.full_name || "—"}</span>
+                            {inf.is_verified && <ShieldCheck className="w-4 h-4 text-gold shrink-0" />}
+                          </div>
+                          {inf.phone && <p className="text-xs text-muted-foreground">{inf.phone}</p>}
+                        </div>
                       </div>
-                      {inf.phone && <p className="text-xs text-muted-foreground">{inf.phone}</p>}
                     </td>
                     <td className="p-4 text-gold text-sm">{inf.instagram_handle ? `@${inf.instagram_handle}` : "—"}</td>
                     <td className="p-4 text-muted-foreground text-sm">{inf.tiktok_handle ? `@${inf.tiktok_handle}` : "—"}</td>
