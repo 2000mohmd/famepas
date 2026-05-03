@@ -21,6 +21,7 @@ interface Venue {
   is_active: boolean;
   approval_status: string;
   created_at: string;
+  logo_url: string | null;
 }
 
 const AdminVenues = () => {
