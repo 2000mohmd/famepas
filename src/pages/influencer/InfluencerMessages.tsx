@@ -16,7 +16,7 @@ const InfluencerMessages = () => {
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
 
-  // Get unique conversations
+  // Get unique conversations (existing messages + venues from offer applications)
   const { data: threads } = useQuery({
     queryKey: ["influencer-threads", user?.id],
     queryFn: async () => {
@@ -26,17 +26,28 @@ const InfluencerMessages = () => {
         .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
 
-      // Group by other party
       const threadMap = new Map<string, any>();
       (data ?? []).forEach((msg: any) => {
         const otherId = msg.sender_id === user!.id ? msg.receiver_id : msg.sender_id;
         if (!threadMap.has(otherId)) {
-          threadMap.set(otherId, { contactId: otherId, venueName: msg.venues?.name || "Unknown", lastMessage: msg.content, lastAt: msg.created_at, unread: msg.receiver_id === user!.id && !msg.is_read ? 1 : 0 });
+          threadMap.set(otherId, { contactId: otherId, venueName: msg.venues?.name || "Venue", logoUrl: msg.venues?.logo_url || null, lastMessage: msg.content, lastAt: msg.created_at, unread: msg.receiver_id === user!.id && !msg.is_read ? 1 : 0 });
         } else if (msg.receiver_id === user!.id && !msg.is_read) {
           threadMap.get(otherId).unread += 1;
         }
       });
-      return Array.from(threadMap.values());
+
+      // Add venues the influencer has applied to (offer_redemptions) so chats can be started
+      const { data: reds } = await supabase
+        .from("offer_redemptions")
+        .select("offer_id, offers(venue_id, venues(owner_id, name, logo_url))")
+        .eq("influencer_id", user!.id);
+      (reds ?? []).forEach((r: any) => {
+        const ownerId = r.offers?.venues?.owner_id;
+        if (!ownerId || threadMap.has(ownerId)) return;
+        threadMap.set(ownerId, { contactId: ownerId, venueName: r.offers?.venues?.name || "Venue", logoUrl: r.offers?.venues?.logo_url || null, lastMessage: "Start a conversation", lastAt: new Date(0).toISOString(), unread: 0 });
+      });
+
+      return Array.from(threadMap.values()).sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
     },
     enabled: !!user,
   });

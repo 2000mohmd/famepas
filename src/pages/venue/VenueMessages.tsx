@@ -45,28 +45,39 @@ const VenueMessages = () => {
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order("created_at", { ascending: false });
 
-      if (!msgs) return;
-
       const threadMap = new Map<string, { last_message: string; last_at: string; unread: number }>();
-      msgs.forEach(m => {
+      (msgs ?? []).forEach(m => {
         const otherId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
         if (!threadMap.has(otherId)) {
           threadMap.set(otherId, { last_message: m.content, last_at: m.created_at, unread: 0 });
         }
         if (m.receiver_id === user.id && !m.is_read) {
-          const t = threadMap.get(otherId)!;
-          t.unread++;
+          threadMap.get(otherId)!.unread++;
         }
       });
 
+      // Add influencers that applied to this venue's offers
+      if (venue) {
+        const { data: offers } = await supabase.from("offers").select("id").eq("venue_id", venue.id);
+        const offerIds = (offers ?? []).map(o => o.id);
+        if (offerIds.length) {
+          const { data: reds } = await supabase.from("offer_redemptions").select("influencer_id").in("offer_id", offerIds);
+          (reds ?? []).forEach(r => {
+            if (!threadMap.has(r.influencer_id)) {
+              threadMap.set(r.influencer_id, { last_message: "Start a conversation", last_at: new Date(0).toISOString(), unread: 0 });
+            }
+          });
+        }
+      }
+
       const userIds = [...threadMap.keys()];
-      if (userIds.length === 0) return;
+      if (userIds.length === 0) { setThreads([]); return; }
 
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
 
       const threadList: Thread[] = userIds.map(uid => ({
         user_id: uid,
-        full_name: profiles?.find(p => p.user_id === uid)?.full_name || "Unknown",
+        full_name: profiles?.find(p => p.user_id === uid)?.full_name || "Influencer",
         ...threadMap.get(uid)!,
       }));
       threadList.sort((a, b) => new Date(b.last_at).getTime() - new Date(a.last_at).getTime());
