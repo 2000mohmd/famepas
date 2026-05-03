@@ -23,6 +23,7 @@ interface Influencer {
   is_suspended: boolean;
   phone: string | null;
   created_at: string;
+  avatar_url: string | null;
 }
 
 const AdminInfluencers = () => {
