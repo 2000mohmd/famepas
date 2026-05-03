@@ -212,7 +212,16 @@ const AdminVenues = () => {
               ) : (
                 filtered.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 font-medium text-foreground">{venue.name}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        {venue.logo_url ? (
+                          <img src={venue.logo_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-secondary" />
+                        )}
+                        <span className="font-medium text-foreground">{venue.name}</span>
+                      </div>
+                    </td>
                     <td className="p-4"><Badge variant="secondary" className="capitalize">{venue.category}</Badge></td>
                     <td className="p-4 text-muted-foreground">{venue.city || "—"}</td>
                     <td className="p-4">
