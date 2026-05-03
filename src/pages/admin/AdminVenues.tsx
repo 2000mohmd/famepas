@@ -37,7 +37,7 @@ const AdminVenues = () => {
   const { toast } = useToast();
 
   const fetchVenues = async () => {
-    const { data } = await supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at").order("created_at", { ascending: false });
+    const { data } = await supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false });
     setVenues((data as any) ?? []);
   };
 
