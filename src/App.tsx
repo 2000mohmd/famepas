@@ -20,6 +20,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminModeration from "./pages/admin/AdminModeration";
+import AdminUsers from "./pages/admin/AdminUsers";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
 import VenueDiscover from "./pages/venue/VenueDiscover";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/admin/locations" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLocations /></ProtectedRoute>} />
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling /></ProtectedRoute>} />
             <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDashboard /></ProtectedRoute>} />

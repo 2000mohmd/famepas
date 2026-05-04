@@ -29,6 +29,7 @@ const adminLinks = [
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/admin/billing", icon: CreditCard, label: "Billing" },
   { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
+  { to: "/admin/users", icon: Users, label: "Admin Users" },
 ];
 
 const venueLinks = [
