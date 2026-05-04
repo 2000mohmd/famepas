@@ -16,7 +16,7 @@ import {
   ShieldAlert,
   MessageSquare,
 } from "lucide-react";
-import famepassLogo from "@/assets/famepass-logo.jpeg";
+import famepassLogo from "@/assets/famepass-logo.png";
 
 const adminLinks = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -29,6 +29,7 @@ const adminLinks = [
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/admin/billing", icon: CreditCard, label: "Billing" },
   { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
+  { to: "/admin/users", icon: Users, label: "Admin Users" },
 ];
 
 const venueLinks = [

@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import famepassLogo from "@/assets/famepass-logo.jpeg";
+import famepassLogo from "@/assets/famepass-logo.png";
 
 const navLinks = [
   { label: "Venues", href: "/venues" },

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import famepassLogo from "@/assets/famepass-logo.jpeg";
+import famepassLogo from "@/assets/famepass-logo.png";
 
 const Footer = () => (
   <footer className="py-16 bg-card/50 border-t border-border">

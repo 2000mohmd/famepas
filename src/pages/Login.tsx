@@ -9,7 +9,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import famepassLogo from "@/assets/famepass-logo.jpeg";
+import famepassLogo from "@/assets/famepass-logo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
