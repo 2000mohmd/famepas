@@ -105,7 +105,10 @@ const AdminInfluencers = () => {
   if (sortBy === "newest") filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   else if (sortBy === "oldest") filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   else if (sortBy === "followers") filtered.sort((a, b) => (b.followers_count || 0) - (a.followers_count || 0));
+  else if (sortBy === "tiktok") filtered.sort((a, b) => (b.tiktok_followers || 0) - (a.tiktok_followers || 0));
+  else if (sortBy === "score") filtered.sort((a, b) => (b.influencer_score || 0) - (a.influencer_score || 0));
   else if (sortBy === "name") filtered.sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+  else if (sortBy === "name_desc") filtered.sort((a, b) => (b.full_name || "").localeCompare(a.full_name || ""));
 
   return (
     <DashboardLayout type="admin">
