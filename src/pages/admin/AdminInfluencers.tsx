@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle } from "lucide-react";
+import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2 } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -70,6 +72,16 @@ const AdminInfluencers = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: current ? "Account reinstated" : "Account suspended" });
+      fetchInfluencers();
+    }
+  };
+
+  const deleteInfluencer = async (userId: string) => {
+    const { error } = await supabase.functions.invoke("delete-user", { body: { user_id: userId } });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Influencer deleted" });
       fetchInfluencers();
     }
   };
@@ -166,14 +178,15 @@ const AdminInfluencers = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         {inf.avatar_url ? (
-                          <div className="relative group">
-                            <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
-                            <img
-                              src={inf.avatar_url}
-                              alt=""
-                              className="hidden group-hover:block absolute z-50 left-10 top-0 w-48 h-48 rounded-lg object-cover border-2 border-gold shadow-2xl"
-                            />
-                          </div>
+                          <HoverCard openDelay={150}>
+                            <HoverCardTrigger asChild>
+                              <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border cursor-pointer" />
+                            </HoverCardTrigger>
+                            <HoverCardContent side="right" className="w-64 p-2 bg-card border-border">
+                              <img src={inf.avatar_url} alt={inf.full_name || ""} className="w-full h-60 rounded-lg object-cover" />
+                              <p className="text-sm font-medium text-foreground mt-2">{inf.full_name}</p>
+                            </HoverCardContent>
+                          </HoverCard>
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-secondary" />
                         )}
@@ -220,6 +233,25 @@ const AdminInfluencers = () => {
                         <Button variant="ghost" size="sm" onClick={() => { setWarningTarget(inf.user_id); setWarningOpen(true); }} className="text-muted-foreground hover:text-warning h-7 px-2" title="Send Warning">
                           <AlertTriangle className="w-4 h-4" />
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-card border-border">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete influencer?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This permanently deletes {inf.full_name || "this influencer"} and all related data. This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteInfluencer(inf.user_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </td>
                   </tr>

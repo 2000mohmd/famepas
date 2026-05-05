@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,6 +69,16 @@ const AdminVenues = () => {
   const setApprovalStatus = async (id: string, status: string) => {
     await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
     fetchVenues();
+  };
+
+  const deleteVenue = async (id: string, name: string) => {
+    const { error } = await supabase.functions.invoke("delete-user", { body: { venue_id: id } });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `${name} deleted` });
+      fetchVenues();
+    }
   };
 
   const handleCreateVenue = async () => {
@@ -249,6 +260,25 @@ const AdminVenues = () => {
                         <Button variant="ghost" size="sm" onClick={() => toggleActive(venue.id, venue.is_active)} className="text-muted-foreground hover:text-gold h-7 text-xs">
                           {venue.is_active ? "Deactivate" : "Activate"}
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-card border-border">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete venue?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This permanently deletes {venue.name} and its owner account. This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteVenue(venue.id, venue.name)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </td>
                   </tr>
