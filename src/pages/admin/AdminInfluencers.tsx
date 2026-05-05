@@ -125,12 +125,15 @@ const AdminInfluencers = () => {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Newest First</SelectItem>
               <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="followers">Most Followers</SelectItem>
+              <SelectItem value="followers">Most IG Followers</SelectItem>
+              <SelectItem value="tiktok">Most TikTok Followers</SelectItem>
+              <SelectItem value="score">Highest Score</SelectItem>
               <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="name_desc">Name Z-A</SelectItem>
             </SelectContent>
           </Select>
         </div>
