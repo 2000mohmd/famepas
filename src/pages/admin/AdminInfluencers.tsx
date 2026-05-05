@@ -46,7 +46,7 @@ const AdminInfluencers = () => {
     const ids = roles.map(r => r.user_id);
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, is_verified, is_suspended, phone, created_at, avatar_url")
+      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, phone, created_at, avatar_url")
       .in("user_id", ids)
       .order("created_at", { ascending: false });
     setInfluencers((data as any) ?? []);
