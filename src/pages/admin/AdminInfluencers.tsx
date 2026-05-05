@@ -19,12 +19,15 @@ interface Influencer {
   tiktok_handle: string | null;
   followers_count: number | null;
   tiktok_followers: number | null;
+  influencer_score: number | null;
   is_verified: boolean;
   is_suspended: boolean;
   phone: string | null;
   created_at: string;
   avatar_url: string | null;
 }
+
+const stripAt = (h: string | null) => (h ? h.replace(/^@+/, "") : "");
 
 const AdminInfluencers = () => {
   const { user } = useAuth();
