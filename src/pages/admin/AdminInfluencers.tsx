@@ -166,7 +166,14 @@ const AdminInfluencers = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         {inf.avatar_url ? (
-                          <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                          <div className="relative group">
+                            <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                            <img
+                              src={inf.avatar_url}
+                              alt=""
+                              className="hidden group-hover:block absolute z-50 left-10 top-0 w-48 h-48 rounded-lg object-cover border-2 border-gold shadow-2xl"
+                            />
+                          </div>
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-secondary" />
                         )}
@@ -179,8 +186,16 @@ const AdminInfluencers = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-gold text-sm">{inf.instagram_handle ? `@${inf.instagram_handle}` : "—"}</td>
-                    <td className="p-4 text-muted-foreground text-sm">{inf.tiktok_handle ? `@${inf.tiktok_handle}` : "—"}</td>
+                    <td className="p-4 text-sm">
+                      {inf.instagram_handle ? (
+                        <a href={`https://instagram.com/${stripAt(inf.instagram_handle)}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">@{stripAt(inf.instagram_handle)}</a>
+                      ) : "—"}
+                    </td>
+                    <td className="p-4 text-sm">
+                      {inf.tiktok_handle ? (
+                        <a href={`https://tiktok.com/@${stripAt(inf.tiktok_handle)}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-gold hover:underline">@{stripAt(inf.tiktok_handle)}</a>
+                      ) : "—"}
+                    </td>
                     <td className="p-4 text-muted-foreground text-sm">
                       {inf.followers_count ? `IG: ${inf.followers_count.toLocaleString()}` : ""}
                       {inf.tiktok_followers ? ` / TK: ${inf.tiktok_followers.toLocaleString()}` : ""}
