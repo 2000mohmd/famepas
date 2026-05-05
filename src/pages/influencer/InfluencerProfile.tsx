@@ -46,10 +46,14 @@ const InfluencerProfile = () => {
   });
   const [nicheInput, setNicheInput] = useState("");
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
+  const [nicheOptions, setNicheOptions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city").then(({ data }) => {
       setLocations((data as any[]) ?? []);
+    });
+    supabase.from("niches" as any).select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+      setNicheOptions((data as any[]) ?? []);
     });
   }, []);
 
