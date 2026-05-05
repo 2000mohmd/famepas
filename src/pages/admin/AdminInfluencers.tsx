@@ -19,12 +19,15 @@ interface Influencer {
   tiktok_handle: string | null;
   followers_count: number | null;
   tiktok_followers: number | null;
+  influencer_score: number | null;
   is_verified: boolean;
   is_suspended: boolean;
   phone: string | null;
   created_at: string;
   avatar_url: string | null;
 }
+
+const stripAt = (h: string | null) => (h ? h.replace(/^@+/, "") : "");
 
 const AdminInfluencers = () => {
   const { user } = useAuth();
@@ -43,7 +46,7 @@ const AdminInfluencers = () => {
     const ids = roles.map(r => r.user_id);
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, is_verified, is_suspended, phone, created_at, avatar_url")
+      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, phone, created_at, avatar_url")
       .in("user_id", ids)
       .order("created_at", { ascending: false });
     setInfluencers((data as any) ?? []);
@@ -102,7 +105,10 @@ const AdminInfluencers = () => {
   if (sortBy === "newest") filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   else if (sortBy === "oldest") filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   else if (sortBy === "followers") filtered.sort((a, b) => (b.followers_count || 0) - (a.followers_count || 0));
+  else if (sortBy === "tiktok") filtered.sort((a, b) => (b.tiktok_followers || 0) - (a.tiktok_followers || 0));
+  else if (sortBy === "score") filtered.sort((a, b) => (b.influencer_score || 0) - (a.influencer_score || 0));
   else if (sortBy === "name") filtered.sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+  else if (sortBy === "name_desc") filtered.sort((a, b) => (b.full_name || "").localeCompare(a.full_name || ""));
 
   return (
     <DashboardLayout type="admin">
@@ -125,12 +131,15 @@ const AdminInfluencers = () => {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Newest First</SelectItem>
               <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="followers">Most Followers</SelectItem>
+              <SelectItem value="followers">Most IG Followers</SelectItem>
+              <SelectItem value="tiktok">Most TikTok Followers</SelectItem>
+              <SelectItem value="score">Highest Score</SelectItem>
               <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="name_desc">Name Z-A</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -157,7 +166,14 @@ const AdminInfluencers = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         {inf.avatar_url ? (
-                          <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                          <div className="relative group">
+                            <img src={inf.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
+                            <img
+                              src={inf.avatar_url}
+                              alt=""
+                              className="hidden group-hover:block absolute z-50 left-10 top-0 w-48 h-48 rounded-lg object-cover border-2 border-gold shadow-2xl"
+                            />
+                          </div>
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-secondary" />
                         )}
@@ -170,8 +186,16 @@ const AdminInfluencers = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-gold text-sm">{inf.instagram_handle ? `@${inf.instagram_handle}` : "—"}</td>
-                    <td className="p-4 text-muted-foreground text-sm">{inf.tiktok_handle ? `@${inf.tiktok_handle}` : "—"}</td>
+                    <td className="p-4 text-sm">
+                      {inf.instagram_handle ? (
+                        <a href={`https://instagram.com/${stripAt(inf.instagram_handle)}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">@{stripAt(inf.instagram_handle)}</a>
+                      ) : "—"}
+                    </td>
+                    <td className="p-4 text-sm">
+                      {inf.tiktok_handle ? (
+                        <a href={`https://tiktok.com/@${stripAt(inf.tiktok_handle)}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-gold hover:underline">@{stripAt(inf.tiktok_handle)}</a>
+                      ) : "—"}
+                    </td>
                     <td className="p-4 text-muted-foreground text-sm">
                       {inf.followers_count ? `IG: ${inf.followers_count.toLocaleString()}` : ""}
                       {inf.tiktok_followers ? ` / TK: ${inf.tiktok_followers.toLocaleString()}` : ""}

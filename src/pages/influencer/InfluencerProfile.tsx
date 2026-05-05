@@ -46,10 +46,14 @@ const InfluencerProfile = () => {
   });
   const [nicheInput, setNicheInput] = useState("");
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
+  const [nicheOptions, setNicheOptions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city").then(({ data }) => {
       setLocations((data as any[]) ?? []);
+    });
+    supabase.from("niches" as any).select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+      setNicheOptions((data as any[]) ?? []);
     });
   }, []);
 
@@ -262,13 +266,23 @@ const InfluencerProfile = () => {
           <CardHeader><CardTitle>Niches</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2">
-              <Input value={nicheInput} onChange={(e) => setNicheInput(e.target.value)} placeholder="Add niche (e.g. Food, Fashion)" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addNiche())} />
-              <Button variant="outline" onClick={addNiche}>Add</Button>
+              <select
+                value={nicheInput}
+                onChange={(e) => setNicheInput(e.target.value)}
+                className="flex-1 rounded-md bg-background border border-border p-2 text-sm text-foreground"
+              >
+                <option value="">Select a niche...</option>
+                {nicheOptions.filter(n => !form.niche.includes(n.name)).map(n => (
+                  <option key={n.id} value={n.name}>{n.name}</option>
+                ))}
+              </select>
+              <Button variant="outline" onClick={addNiche} disabled={!nicheInput}>Add</Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.niche.map((n) => (
                 <Badge key={n} variant="secondary" className="cursor-pointer" onClick={() => removeNiche(n)}>{n} ×</Badge>
               ))}
+              {form.niche.length === 0 && <p className="text-xs text-muted-foreground">No niches selected yet</p>}
             </div>
           </CardContent>
         </Card>

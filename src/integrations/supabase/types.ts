@@ -525,6 +525,27 @@ export type Database = {
           },
         ]
       }
+      niches: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       offer_redemptions: {
         Row: {
           created_at: string
@@ -533,6 +554,7 @@ export type Database = {
           offer_id: string
           qr_code: string | null
           qr_expires_at: string | null
+          qr_token: string | null
           qr_used_at: string | null
           redeemed_at: string | null
           status: string
@@ -544,6 +566,7 @@ export type Database = {
           offer_id: string
           qr_code?: string | null
           qr_expires_at?: string | null
+          qr_token?: string | null
           qr_used_at?: string | null
           redeemed_at?: string | null
           status?: string
@@ -555,6 +578,7 @@ export type Database = {
           offer_id?: string
           qr_code?: string | null
           qr_expires_at?: string | null
+          qr_token?: string | null
           qr_used_at?: string | null
           redeemed_at?: string | null
           status?: string
