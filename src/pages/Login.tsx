@@ -181,19 +181,35 @@ const Login = () => {
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-muted-foreground text-sm">Email</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" required className="bg-secondary border-border focus:border-gold/50 focus:ring-gold/20" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-muted-foreground text-sm">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="bg-secondary border-border focus:border-gold/50 focus:ring-gold/20" />
-                </div>
-                <Button type="submit" disabled={isLoading} className="w-full gradient-gold text-accent-foreground font-semibold hover:opacity-90 transition-opacity">
-                  {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
+              {otpRequired ? (
+                <form onSubmit={handleVerifyOtp} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-sm">Verification code</Label>
+                    <Input value={otpCode} onChange={(e) => setOtpCode(e.target.value)} placeholder="6-digit code" required maxLength={6} className="bg-secondary border-border text-center tracking-widest text-lg" />
+                    <p className="text-xs text-muted-foreground">We sent a code to {pendingCreds?.email}. It expires in 10 minutes.</p>
+                  </div>
+                  <Button type="submit" disabled={isLoading} className="w-full gradient-gold text-accent-foreground font-semibold">
+                    {isLoading ? "Verifying..." : "Verify & Sign In"}
+                  </Button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }}>
+                    Cancel
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-muted-foreground text-sm">Email</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" required className="bg-secondary border-border focus:border-gold/50 focus:ring-gold/20" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-muted-foreground text-sm">Password</Label>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="bg-secondary border-border focus:border-gold/50 focus:ring-gold/20" />
+                  </div>
+                  <Button type="submit" disabled={isLoading} className="w-full gradient-gold text-accent-foreground font-semibold hover:opacity-90 transition-opacity">
+                    {isLoading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              )}
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
