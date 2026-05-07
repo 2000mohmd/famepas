@@ -133,6 +133,10 @@ const Login = () => {
         throw new Error(res.data?.error || res.error?.message || "Signup failed");
       }
 
+      // Send welcome email (don't block on failure)
+      supabase.functions.invoke("send-welcome-email", {
+        body: { email: signupEmail, name: signupRole === "influencer" ? fullName : venueName, role: signupRole },
+      }).catch(() => {});
       // Auto-login
       const { error: loginErr } = await signIn(signupEmail, signupPassword);
       if (loginErr) {
