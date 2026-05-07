@@ -239,6 +239,8 @@ const VenueSettings = () => {
             </div>
           </div>
 
+          <TwoFactorToggle userId={user?.id} />
+
           <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
             Save Settings
           </Button>
