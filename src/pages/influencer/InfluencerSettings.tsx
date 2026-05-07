@@ -24,6 +24,25 @@ const InfluencerSettings = () => {
     enabled: !!user,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile-2fa", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("two_factor_enabled").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const [twoFA, setTwoFA] = useState(false);
+  useEffect(() => { if (profile) setTwoFA(!!profile.two_factor_enabled); }, [profile]);
+
+  const toggle2FA = async (v: boolean) => {
+    setTwoFA(v);
+    const { error } = await supabase.from("profiles").update({ two_factor_enabled: v }).eq("user_id", user!.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setTwoFA(!v); }
+    else toast({ title: v ? "Two-factor login enabled" : "Two-factor login disabled" });
+  };
+
   const [form, setForm] = useState({
     notification_invitations: true,
     notification_messages: true,
