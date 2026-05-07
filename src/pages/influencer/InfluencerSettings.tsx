@@ -131,6 +131,19 @@ const InfluencerSettings = () => {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader><CardTitle>Security</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Two-factor login (email code)</Label>
+                <p className="text-xs text-muted-foreground">Require a 6-digit code sent to your email on every sign-in.</p>
+              </div>
+              <Switch checked={twoFA} onCheckedChange={toggle2FA} />
+            </div>
+          </CardContent>
+        </Card>
+
         <Button className="w-full" onClick={() => updateSettings.mutate()} disabled={updateSettings.isPending}>
           <Save className="w-4 h-4 mr-2" /> {updateSettings.isPending ? "Saving..." : "Save Settings"}
         </Button>
