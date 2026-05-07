@@ -423,6 +423,39 @@ export type Database = {
           },
         ]
       }
+      login_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       media_kits: {
         Row: {
           audience_demographics: Json | null
@@ -687,6 +720,7 @@ export type Database = {
           social_links: Json | null
           tiktok_followers: number | null
           tiktok_handle: string | null
+          two_factor_enabled: boolean
           updated_at: string
           user_id: string
         }
@@ -712,6 +746,7 @@ export type Database = {
           social_links?: Json | null
           tiktok_followers?: number | null
           tiktok_handle?: string | null
+          two_factor_enabled?: boolean
           updated_at?: string
           user_id: string
         }
@@ -737,6 +772,7 @@ export type Database = {
           social_links?: Json | null
           tiktok_followers?: number | null
           tiktok_handle?: string | null
+          two_factor_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
