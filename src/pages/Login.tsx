@@ -62,14 +62,44 @@ const Login = () => {
     fetchOptions();
   }, []);
 
+  const [otpRequired, setOtpRequired] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [pendingCreds, setPendingCreds] = useState<{ email: string; password: string } | null>(null);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await signIn(email, password);
-    setIsLoading(false);
-    if (error) {
-      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    try {
+      // Check if 2FA is enabled for this email
+      const otpRes = await supabase.functions.invoke("login-otp", { body: { action: "send", email } });
+      if (otpRes.data?.twoFactor) {
+        setPendingCreds({ email, password });
+        setOtpRequired(true);
+        toast({ title: "Verification code sent", description: "Check your email for the 6-digit code." });
+        setIsLoading(false);
+        return;
+      }
+      const { error } = await signIn(email, password);
+      if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingCreds) return;
+    setIsLoading(true);
+    const verify = await supabase.functions.invoke("login-otp", { body: { action: "verify", email: pendingCreds.email, code: otpCode } });
+    if (verify.error || verify.data?.error) {
+      toast({ title: "Invalid code", description: verify.data?.error || "Try again", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+    const { error } = await signIn(pendingCreds.email, pendingCreds.password);
+    setIsLoading(false);
+    if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    else { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
