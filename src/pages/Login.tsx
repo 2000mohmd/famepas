@@ -106,54 +106,51 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const body: any = {
-        email: signupEmail,
-        password: signupPassword,
+      const metadata: any = {
         role: signupRole,
+        full_name: signupRole === "influencer" ? fullName : `${venueName} Owner`,
       };
       if (signupRole === "influencer") {
-        body.full_name = fullName;
-        body.phone = phone;
-        body.instagram_handle = instagramHandle;
-        body.tiktok_handle = tiktokHandle;
-        body.tiktok_followers = parseInt(tiktokFollowers) || 0;
-        body.social_links = {
+        metadata.phone = phone;
+        metadata.instagram_handle = instagramHandle;
+        metadata.tiktok_handle = tiktokHandle;
+        metadata.tiktok_followers = parseInt(tiktokFollowers) || 0;
+        metadata.social_links = {
           instagram: instagramHandle ? `https://instagram.com/${instagramHandle}` : "",
           tiktok: tiktokHandle ? `https://tiktok.com/@${tiktokHandle}` : "",
           youtube: youtubeLink || "",
         };
       } else {
-        body.venue_name = venueName;
-        body.venue_category = venueCategory;
-        body.venue_city = venueCity;
+        metadata.venue_name = venueName;
+        metadata.venue_category = venueCategory;
+        metadata.venue_city = venueCity;
       }
 
-      const res = await supabase.functions.invoke("signup-user", { body });
-      if (res.error || res.data?.error) {
-        throw new Error(res.data?.error || res.error?.message || "Signup failed");
-      }
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: { data: metadata, emailRedirectTo: `${window.location.origin}/login` },
+      });
+      if (error) throw error;
 
-      // Auto-login first so the welcome email request carries a valid user JWT
-      const { error: loginErr } = await signIn(signupEmail, signupPassword);
-      if (loginErr) {
-        toast({ title: "Account created! Please sign in.", description: "Your account was created successfully." });
-      } else {
-        // Send welcome email (don't block on failure)
-        supabase.functions.invoke("send-welcome-email", {
-          body: { email: signupEmail, name: signupRole === "influencer" ? fullName : venueName, role: signupRole },
-        }).catch(() => {});
-        // Upload avatar after login if file was selected
-        if (avatarFile && signupRole === "influencer" && res.data?.user?.id) {
-          const ext = avatarFile.name.split(".").pop();
-          const filePath = `${res.data.user.id}/avatar.${ext}`;
-          const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, avatarFile, { upsert: true });
-          if (!uploadErr) {
-            const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-            await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", res.data.user.id);
-          }
+      // Upload avatar (best-effort) — uses session if email auto-confirmed; otherwise skipped
+      if (avatarFile && signupRole === "influencer" && data.user?.id && data.session) {
+        const ext = avatarFile.name.split(".").pop();
+        const filePath = `${data.user.id}/avatar.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, avatarFile, { upsert: true });
+        if (!uploadErr) {
+          const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+          await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", data.user.id);
         }
-        toast({ title: "Welcome!", description: "Your account has been created." });
       }
+
+      // Sign out any auto-created session — user must verify email AND be approved by admin
+      await supabase.auth.signOut();
+
+      toast({
+        title: "Check your email",
+        description: "We sent you a verification link. After verifying, an admin will review and approve your account before you can sign in.",
+      });
     } catch (err: any) {
       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
     } finally {
