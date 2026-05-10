@@ -118,7 +118,8 @@ const AdminInfluencers = () => {
   // Status filter
   if (statusFilter === "verified") filtered = filtered.filter(i => i.is_verified);
   else if (statusFilter === "suspended") filtered = filtered.filter(i => i.is_suspended);
-  else if (statusFilter === "active") filtered = filtered.filter(i => !i.is_suspended && !i.is_verified);
+  else if (statusFilter === "pending") filtered = filtered.filter(i => i.approval_status === "pending");
+  else if (statusFilter === "active") filtered = filtered.filter(i => !i.is_suspended && !i.is_verified && i.approval_status === "approved");
 
   // Sort
   if (sortBy === "newest") filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
