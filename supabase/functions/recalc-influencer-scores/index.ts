@@ -6,10 +6,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Weighted formula: 35% delivery, 25% venue rating, 20% punctuality, 10% engagement, 10% (1 - cancellation rate)
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // Require admin JWT to prevent abuse
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data: claims, error: claimsErr } = await userClient.auth.getClaims(
+    authHeader.replace("Bearer ", ""),
+  );
+  if (claimsErr || !claims?.claims) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const callerId = (claims.claims as any).sub as string;
+  const { data: adminRole } = await supa
+    .from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin").maybeSingle();
+  if (!adminRole) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const { data: influencers } = await supa
     .from("user_roles")
@@ -27,15 +55,12 @@ serve(async (req) => {
     const completed = bookings?.filter(b => b.status === "completed").length || 0;
     const cancelled = bookings?.filter(b => b.status === "cancelled" || b.status === "no_show").length || 0;
 
-    // Delivery rate: deliverables submitted vs completed bookings
-    const completedIds = bookings?.filter(b => b.status === "completed").map((_, i) => i) || [];
     const { count: deliverablesCount } = await supa
       .from("deliverables")
       .select("*", { count: "exact", head: true })
       .eq("influencer_id", user_id);
     const delivery = completed > 0 ? Math.min(1, (deliverablesCount || 0) / completed) : 0.5;
 
-    // Punctuality: checked in within 15 min of scheduled
     const punctualBookings = bookings?.filter(b => {
       if (!b.checked_in_at || !b.scheduled_date) return false;
       const diff = Math.abs(new Date(b.checked_in_at).getTime() - new Date(b.scheduled_date).getTime());
@@ -43,7 +68,6 @@ serve(async (req) => {
     }).length || 0;
     const punctuality = completed > 0 ? punctualBookings / completed : 0.5;
 
-    // Venue rating
     const { data: ratings } = await supa
       .from("reviews")
       .select("rating")
@@ -53,7 +77,6 @@ serve(async (req) => {
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length / 5
       : 0.5;
 
-    // Engagement
     const { data: profile } = await supa
       .from("profiles")
       .select("engagement_rate, followers_count")
