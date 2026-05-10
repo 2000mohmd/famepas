@@ -37,13 +37,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRole((data?.role as UserRole) ?? null);
   };
 
+  // Enforces email verification + admin approval for ANY session (password or OAuth)
+  const enforceApproval = async (sess: Session): Promise<boolean> => {
+    if (!sess.user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      alert("Please verify your email before signing in.");
+      return false;
+    }
+    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", sess.user.id).maybeSingle();
+    if (roleRow?.role === "admin") return true;
+    const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", sess.user.id).maybeSingle();
+    if (profile?.approval_status !== "approved") {
+      await supabase.auth.signOut();
+      alert(profile?.approval_status === "rejected"
+        ? "Your account application was rejected. Please contact support."
+        : "Your account is pending admin approval. You'll be notified once approved.");
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchRole(session.user.id), 0);
+          // Defer to avoid deadlock; give the new-user trigger a moment for OAuth signups
+          if (event === "SIGNED_IN") {
+            setTimeout(async () => {
+              await new Promise(r => setTimeout(r, 400));
+              const ok = await enforceApproval(session);
+              if (ok) fetchRole(session.user.id);
+            }, 0);
+          } else {
+            setTimeout(() => fetchRole(session.user.id), 0);
+          }
         } else {
           setRole(null);
         }
