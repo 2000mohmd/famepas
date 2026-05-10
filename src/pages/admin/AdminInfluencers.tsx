@@ -223,14 +223,26 @@ const AdminInfluencers = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
+                        {inf.approval_status === "pending" && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">Pending</Badge>}
+                        {inf.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Rejected</Badge>}
                         {inf.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">Verified</Badge>}
                         {inf.is_suspended && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Suspended</Badge>}
-                        {!inf.is_verified && !inf.is_suspended && <Badge variant="secondary" className="text-xs w-fit">Active</Badge>}
+                        {inf.approval_status === "approved" && !inf.is_verified && !inf.is_suspended && <Badge variant="secondary" className="text-xs w-fit">Active</Badge>}
                       </div>
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
+                        {inf.approval_status === "pending" && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="text-success hover:bg-success/10 h-7 px-2" title="Approve">
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 px-2" title="Reject">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => toggleVerified(inf.user_id, inf.is_verified)} className="text-muted-foreground hover:text-gold h-7 px-2" title={inf.is_verified ? "Remove verification" : "Verify"}>
                           {inf.is_verified ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                         </Button>
