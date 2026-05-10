@@ -1091,6 +1091,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_profiles_basic: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          badge: string
+          city: string
+          country: string
+          full_name: string
+          instagram_handle: string
+          is_verified: boolean
+          tiktok_handle: string
+          user_id: string
+        }[]
+      }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_admin_permission: {
         Args: { _permission: string; _user_id: string }
