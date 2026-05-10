@@ -699,6 +699,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: string
           audience_demographics: Json | null
           avatar_url: string | null
           badge: string | null
@@ -725,6 +726,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approval_status?: string
           audience_demographics?: Json | null
           avatar_url?: string | null
           badge?: string | null
@@ -751,6 +753,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approval_status?: string
           audience_demographics?: Json | null
           avatar_url?: string | null
           badge?: string | null
@@ -1118,6 +1121,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       is_venue_owner: { Args: { _venue_id: string }; Returns: boolean }
     }
     Enums: {

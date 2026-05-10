@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2 } from "lucide-react";
+import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ interface Influencer {
   influencer_score: number | null;
   is_verified: boolean;
   is_suspended: boolean;
+  approval_status: string | null;
   phone: string | null;
   created_at: string;
   avatar_url: string | null;
@@ -48,7 +49,7 @@ const AdminInfluencers = () => {
     const ids = roles.map(r => r.user_id);
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, phone, created_at, avatar_url")
+      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, approval_status, phone, created_at, avatar_url")
       .in("user_id", ids)
       .order("created_at", { ascending: false });
     setInfluencers((data as any) ?? []);
@@ -86,6 +87,12 @@ const AdminInfluencers = () => {
     }
   };
 
+  const setApprovalStatus = async (userId: string, status: "approved" | "rejected") => {
+    const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: status === "approved" ? "Influencer approved" : "Influencer rejected" }); fetchInfluencers(); }
+  };
+
   const sendWarning = async () => {
     if (!warningTarget || !warningMessage.trim() || !user) return;
     const { error } = await supabase.from("influencer_warnings" as any).insert({
@@ -111,7 +118,8 @@ const AdminInfluencers = () => {
   // Status filter
   if (statusFilter === "verified") filtered = filtered.filter(i => i.is_verified);
   else if (statusFilter === "suspended") filtered = filtered.filter(i => i.is_suspended);
-  else if (statusFilter === "active") filtered = filtered.filter(i => !i.is_suspended && !i.is_verified);
+  else if (statusFilter === "pending") filtered = filtered.filter(i => i.approval_status === "pending");
+  else if (statusFilter === "active") filtered = filtered.filter(i => !i.is_suspended && !i.is_verified && i.approval_status === "approved");
 
   // Sort
   if (sortBy === "newest") filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -137,6 +145,7 @@ const AdminInfluencers = () => {
             <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending Approval</SelectItem>
               <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="suspended">Suspended</SelectItem>
@@ -216,14 +225,26 @@ const AdminInfluencers = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
+                        {inf.approval_status === "pending" && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">Pending</Badge>}
+                        {inf.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Rejected</Badge>}
                         {inf.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">Verified</Badge>}
                         {inf.is_suspended && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Suspended</Badge>}
-                        {!inf.is_verified && !inf.is_suspended && <Badge variant="secondary" className="text-xs w-fit">Active</Badge>}
+                        {inf.approval_status === "approved" && !inf.is_verified && !inf.is_suspended && <Badge variant="secondary" className="text-xs w-fit">Active</Badge>}
                       </div>
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
+                        {inf.approval_status === "pending" && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="text-success hover:bg-success/10 h-7 px-2" title="Approve">
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 px-2" title="Reject">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button variant="ghost" size="sm" onClick={() => toggleVerified(inf.user_id, inf.is_verified)} className="text-muted-foreground hover:text-gold h-7 px-2" title={inf.is_verified ? "Remove verification" : "Verify"}>
                           {inf.is_verified ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                         </Button>
