@@ -73,7 +73,7 @@ const VenueMessages = () => {
       const userIds = [...threadMap.keys()];
       if (userIds.length === 0) { setThreads([]); return; }
 
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
+      const { data: profiles } = await supabase.rpc("get_public_profiles_basic" as any, { _user_ids: userIds });
 
       const threadList: Thread[] = userIds.map(uid => ({
         user_id: uid,

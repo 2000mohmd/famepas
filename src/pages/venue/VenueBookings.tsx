@@ -40,7 +40,7 @@ const VenueBookings = () => {
     const offerIds = [...new Set(data.filter(b => b.offer_id).map(b => b.offer_id!))];
 
     const [profRes, offRes] = await Promise.all([
-      infIds.length > 0 ? supabase.from("profiles").select("user_id, full_name").in("user_id", infIds) : { data: [] },
+      infIds.length > 0 ? supabase.rpc("get_public_profiles_basic" as any, { _user_ids: infIds }) : { data: [] },
       offerIds.length > 0 ? supabase.from("offers").select("id, title").in("id", offerIds) : { data: [] },
     ]);
 
