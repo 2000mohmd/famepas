@@ -87,6 +87,12 @@ const AdminInfluencers = () => {
     }
   };
 
+  const setApprovalStatus = async (userId: string, status: "approved" | "rejected") => {
+    const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: status === "approved" ? "Influencer approved" : "Influencer rejected" }); fetchInfluencers(); }
+  };
+
   const sendWarning = async () => {
     if (!warningTarget || !warningMessage.trim() || !user) return;
     const { error } = await supabase.from("influencer_warnings" as any).insert({
