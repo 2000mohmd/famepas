@@ -178,7 +178,13 @@ serve(async (req) => {
       if (city) query = query.ilike("venues.city", `%${city}%`);
       if (offer_type) query = query.eq("offer_type", offer_type);
       if (min_followers) query = query.lte("min_followers", parseInt(min_followers));
-      if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+      if (search) {
+        // Sanitize: strip PostgREST operator characters to prevent filter injection
+        const safe = search.replace(/[,()%*]/g, "").slice(0, 80);
+        if (safe) {
+          query = query.ilike("title", `%${safe}%`);
+        }
+      }
 
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) return errorResponse(error.message);
@@ -396,6 +402,8 @@ serve(async (req) => {
     if (path === "/messages" && method === "GET") {
       const partner_id = url.searchParams.get("partner_id");
       if (!partner_id) return errorResponse("partner_id required");
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!UUID_RE.test(partner_id)) return errorResponse("Invalid partner_id", 400);
 
       const { data, error } = await supabase.from("messages")
         .select("*")

@@ -28,12 +28,19 @@ serve(async (req) => {
       });
     }
 
-    // Look up user
+    // Look up user (do NOT reveal existence to caller)
     const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const user = list?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      // Uniform response to prevent user enumeration
+      console.warn("login-otp: unknown email attempted", email);
+      if (action === "verify") {
+        return new Response(JSON.stringify({ error: "Invalid or expired code" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, twoFactor: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -106,7 +113,21 @@ serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1);
       const row = rows?.[0];
-      if (!row || row.code_hash !== codeHash) {
+      const MAX_ATTEMPTS = 5;
+      if (!row) {
+        return new Response(JSON.stringify({ error: "Invalid or expired code" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if ((row.attempts ?? 0) >= MAX_ATTEMPTS) {
+        // Lock the code by consuming it
+        await supabase.from("login_otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", row.id);
+        return new Response(JSON.stringify({ error: "Too many attempts. Request a new code." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (row.code_hash !== codeHash) {
+        await supabase.from("login_otp_codes").update({ attempts: (row.attempts ?? 0) + 1 }).eq("id", row.id);
         return new Response(JSON.stringify({ error: "Invalid or expired code" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
