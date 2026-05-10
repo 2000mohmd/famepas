@@ -144,6 +144,7 @@ const AdminInfluencers = () => {
             <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending Approval</SelectItem>
               <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="suspended">Suspended</SelectItem>
