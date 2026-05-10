@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2 } from "lucide-react";
+import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ interface Influencer {
   influencer_score: number | null;
   is_verified: boolean;
   is_suspended: boolean;
+  approval_status: string | null;
   phone: string | null;
   created_at: string;
   avatar_url: string | null;
