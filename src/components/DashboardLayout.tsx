@@ -43,6 +43,7 @@ const venueLinks = [
   { to: "/venue/redemptions", icon: Users, label: "Redemptions" },
   { to: "/venue/messages", icon: MessageSquare, label: "Messages" },
   { to: "/venue/events", icon: CalendarDays, label: "Events" },
+  { to: "/venue/event-attendees", icon: Users, label: "Event Attendees" },
   { to: "/venue/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/venue/settings", icon: Settings, label: "Settings" },
 ];
