@@ -60,6 +60,16 @@ const AdminOffers = () => {
   else if (statusFilter === "inactive") filtered = filtered.filter(o => !o.is_active);
   if (venueStatusFilter === "active") filtered = filtered.filter(o => o.venues?.is_active);
   else if (venueStatusFilter === "inactive") filtered = filtered.filter(o => o.venues && !o.venues.is_active);
+  filtered = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "created_asc": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "title_asc": return (a.title || "").localeCompare(b.title || "");
+      case "title_desc": return (b.title || "").localeCompare(a.title || "");
+      case "redemptions_desc": return (b.current_redemptions || 0) - (a.current_redemptions || 0);
+      case "redemptions_asc": return (a.current_redemptions || 0) - (b.current_redemptions || 0);
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  });
 
   const activeOffers = offers.filter(o => o.is_active).length;
   const inactiveOffers = offers.filter(o => !o.is_active).length;
