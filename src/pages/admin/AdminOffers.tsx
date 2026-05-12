@@ -26,12 +26,13 @@ const AdminOffers = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [venueStatusFilter, setVenueStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created_desc");
   const { toast } = useToast();
 
   const fetchOffers = async () => {
     const { data } = await supabase
       .from("offers")
-      .select("id, title, offer_type, is_active, current_redemptions, max_redemptions, cover_image_url, image_url, venues(name, logo_url, is_active)")
+      .select("id, title, offer_type, is_active, current_redemptions, max_redemptions, cover_image_url, image_url, created_at, venues(name, logo_url, is_active)")
       .order("created_at", { ascending: false });
     setOffers((data as any) ?? []);
   };
