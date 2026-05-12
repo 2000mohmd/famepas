@@ -101,6 +101,17 @@ const AdminOffers = () => {
               <SelectItem value="inactive">Inactive venues</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Newest first</SelectItem>
+              <SelectItem value="created_asc">Oldest first</SelectItem>
+              <SelectItem value="title_asc">Title (A–Z)</SelectItem>
+              <SelectItem value="title_desc">Title (Z–A)</SelectItem>
+              <SelectItem value="redemptions_desc">Most redeemed</SelectItem>
+              <SelectItem value="redemptions_asc">Least redeemed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
