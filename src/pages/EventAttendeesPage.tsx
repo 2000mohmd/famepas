@@ -52,7 +52,7 @@ const EventAttendeesPage = ({ type }: Props) => {
       ? await supabase.rpc("get_public_profiles_basic", { _user_ids: userIds })
       : { data: [] as any[] } as any;
     const eventMap = new Map((events ?? []).map((e: any) => [e.id, e]));
-    const profMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+    const profMap = new Map(((profiles ?? []) as any[]).map((p: any) => [p.user_id, p]));
     setRows(list.map(r => ({
       ...r,
       event_title: eventMap.get(r.event_id)?.title,
