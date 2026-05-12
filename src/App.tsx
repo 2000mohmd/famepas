@@ -21,6 +21,8 @@ import AdminLocations from "./pages/admin/AdminLocations";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminModeration from "./pages/admin/AdminModeration";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminRedemptions from "./pages/admin/AdminRedemptions";
+import EventAttendeesPage from "./pages/EventAttendeesPage";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
 import VenueDiscover from "./pages/venue/VenueDiscover";
