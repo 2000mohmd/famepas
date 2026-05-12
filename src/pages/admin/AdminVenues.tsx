@@ -213,6 +213,16 @@ const AdminVenues = () => {
               {allCities.map(c => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Newest first</SelectItem>
+              <SelectItem value="created_asc">Oldest first</SelectItem>
+              <SelectItem value="name_asc">Name (A–Z)</SelectItem>
+              <SelectItem value="name_desc">Name (Z–A)</SelectItem>
+              <SelectItem value="status">Approval status</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
