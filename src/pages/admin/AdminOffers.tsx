@@ -17,6 +17,7 @@ interface Offer {
   max_redemptions: number | null;
   cover_image_url: string | null;
   image_url: string | null;
+  created_at: string;
   venues: { name: string; logo_url: string | null; is_active: boolean } | null;
 }
 
