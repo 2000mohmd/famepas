@@ -96,6 +96,7 @@ const App = () => (
             <Route path="/venue/redemptions" element={<ProtectedRoute allowedRoles={["venue"]}><VenueRedemptions /></ProtectedRoute>} />
             <Route path="/venue/messages" element={<ProtectedRoute allowedRoles={["venue"]}><VenueMessages /></ProtectedRoute>} />
             <Route path="/venue/events" element={<ProtectedRoute allowedRoles={["venue"]}><VenueEvents /></ProtectedRoute>} />
+            <Route path="/venue/event-attendees" element={<ProtectedRoute allowedRoles={["venue"]}><EventAttendeesPage type="venue" /></ProtectedRoute>} />
             <Route path="/venue/analytics" element={<ProtectedRoute allowedRoles={["venue"]}><VenueAnalytics /></ProtectedRoute>} />
             <Route path="/venue/settings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueSettings /></ProtectedRoute>} />
 
