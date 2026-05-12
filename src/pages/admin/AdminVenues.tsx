@@ -30,6 +30,7 @@ const AdminVenues = () => {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created_desc");
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newVenue, setNewVenue] = useState({ name: "", category: "", city: "", email: "", password: "" });
@@ -59,6 +60,15 @@ const AdminVenues = () => {
   let filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
   if (categoryFilter !== "all") filtered = filtered.filter(v => v.category === categoryFilter);
   if (cityFilter !== "all") filtered = filtered.filter(v => v.city === cityFilter);
+  filtered = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "created_asc": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "name_asc": return a.name.localeCompare(b.name);
+      case "name_desc": return b.name.localeCompare(a.name);
+      case "status": return (a.approval_status || "").localeCompare(b.approval_status || "");
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  });
   const allCities = [...new Set(venues.map(v => v.city).filter(Boolean))].sort();
 
   const toggleActive = async (id: string, active: boolean) => {
@@ -201,6 +211,16 @@ const AdminVenues = () => {
             <SelectContent>
               <SelectItem value="all">All Cities</SelectItem>
               {allCities.map(c => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Newest first</SelectItem>
+              <SelectItem value="created_asc">Oldest first</SelectItem>
+              <SelectItem value="name_asc">Name (A–Z)</SelectItem>
+              <SelectItem value="name_desc">Name (Z–A)</SelectItem>
+              <SelectItem value="status">Approval status</SelectItem>
             </SelectContent>
           </Select>
         </div>

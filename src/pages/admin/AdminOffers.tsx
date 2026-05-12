@@ -17,6 +17,7 @@ interface Offer {
   max_redemptions: number | null;
   cover_image_url: string | null;
   image_url: string | null;
+  created_at: string;
   venues: { name: string; logo_url: string | null; is_active: boolean } | null;
 }
 
@@ -25,12 +26,13 @@ const AdminOffers = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [venueStatusFilter, setVenueStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("created_desc");
   const { toast } = useToast();
 
   const fetchOffers = async () => {
     const { data } = await supabase
       .from("offers")
-      .select("id, title, offer_type, is_active, current_redemptions, max_redemptions, cover_image_url, image_url, venues(name, logo_url, is_active)")
+      .select("id, title, offer_type, is_active, current_redemptions, max_redemptions, cover_image_url, image_url, created_at, venues(name, logo_url, is_active)")
       .order("created_at", { ascending: false });
     setOffers((data as any) ?? []);
   };
@@ -58,6 +60,16 @@ const AdminOffers = () => {
   else if (statusFilter === "inactive") filtered = filtered.filter(o => !o.is_active);
   if (venueStatusFilter === "active") filtered = filtered.filter(o => o.venues?.is_active);
   else if (venueStatusFilter === "inactive") filtered = filtered.filter(o => o.venues && !o.venues.is_active);
+  filtered = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "created_asc": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "title_asc": return (a.title || "").localeCompare(b.title || "");
+      case "title_desc": return (b.title || "").localeCompare(a.title || "");
+      case "redemptions_desc": return (b.current_redemptions || 0) - (a.current_redemptions || 0);
+      case "redemptions_asc": return (a.current_redemptions || 0) - (b.current_redemptions || 0);
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  });
 
   const activeOffers = offers.filter(o => o.is_active).length;
   const inactiveOffers = offers.filter(o => !o.is_active).length;
@@ -87,6 +99,17 @@ const AdminOffers = () => {
               <SelectItem value="all">All venues</SelectItem>
               <SelectItem value="active">Active venues</SelectItem>
               <SelectItem value="inactive">Inactive venues</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_desc">Newest first</SelectItem>
+              <SelectItem value="created_asc">Oldest first</SelectItem>
+              <SelectItem value="title_asc">Title (A–Z)</SelectItem>
+              <SelectItem value="title_desc">Title (Z–A)</SelectItem>
+              <SelectItem value="redemptions_desc">Most redeemed</SelectItem>
+              <SelectItem value="redemptions_asc">Least redeemed</SelectItem>
             </SelectContent>
           </Select>
         </div>

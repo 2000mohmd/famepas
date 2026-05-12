@@ -238,6 +238,33 @@ export type Database = {
           },
         ]
       }
+      event_attendees: {
+        Row: {
+          checked_in_at: string | null
+          created_at: string
+          event_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string

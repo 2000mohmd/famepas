@@ -24,6 +24,8 @@ const adminLinks = [
   { to: "/admin/influencers", icon: Users, label: "Influencers" },
   { to: "/admin/offers", icon: Tag, label: "Offers" },
   { to: "/admin/events", icon: CalendarDays, label: "Events" },
+  { to: "/admin/redemptions", icon: Tag, label: "Offer Attendance" },
+  { to: "/admin/event-attendees", icon: Users, label: "Event Attendees" },
   { to: "/admin/categories", icon: FolderTree, label: "Categories" },
   { to: "/admin/locations", icon: MapPin, label: "Locations" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
@@ -41,6 +43,7 @@ const venueLinks = [
   { to: "/venue/redemptions", icon: Users, label: "Redemptions" },
   { to: "/venue/messages", icon: MessageSquare, label: "Messages" },
   { to: "/venue/events", icon: CalendarDays, label: "Events" },
+  { to: "/venue/event-attendees", icon: Users, label: "Event Attendees" },
   { to: "/venue/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/venue/settings", icon: Settings, label: "Settings" },
 ];
