@@ -314,7 +314,109 @@ const VenueSettings = () => {
             </div>
           </div>
 
+          {/* Organization */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Organization</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Organization Name</Label>
+                <Input value={form.organization_name} onChange={e => setForm(f => ({ ...f, organization_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Legal Name</Label>
+                <Input value={form.organization_legal_name} onChange={e => setForm(f => ({ ...f, organization_legal_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Tax ID</Label>
+                <Input value={form.organization_tax_id} onChange={e => setForm(f => ({ ...f, organization_tax_id: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Country</Label>
+                <Input value={form.organization_country} onChange={e => setForm(f => ({ ...f, organization_country: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+            </div>
+          </div>
+
+          {/* Brand */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Brand</Label>
+            <div>
+              <Label className="text-muted-foreground text-xs">Brand Name</Label>
+              <Input value={form.brand_name} onChange={e => setForm(f => ({ ...f, brand_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Brand Description</Label>
+              <Input value={form.brand_description} onChange={e => setForm(f => ({ ...f, brand_description: e.target.value }))} className="bg-secondary border-border mt-1" />
+            </div>
+          </div>
+
+          {/* Establishment details */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Establishment Details</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Type</Label>
+                <Select value={form.venue_type} onValueChange={val => setForm(f => ({ ...f, venue_type: val }))}>
+                  <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="physical">Physical</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Timezone</Label>
+                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="Asia/Dubai" className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Address Line 1</Label>
+                <Input value={form.address_line1} onChange={e => setForm(f => ({ ...f, address_line1: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Address Line 2</Label>
+                <Input value={form.address_line2} onChange={e => setForm(f => ({ ...f, address_line2: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">ZIP / Postal Code</Label>
+                <Input value={form.zip_code} onChange={e => setForm(f => ({ ...f, zip_code: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Contact Person</Label>
+                <Input value={form.contact_person_name} onChange={e => setForm(f => ({ ...f, contact_person_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Contact Phone</Label>
+                <Input value={form.contact_phone} onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">WhatsApp Number</Label>
+                <Input value={form.whatsapp_phone} onChange={e => setForm(f => ({ ...f, whatsapp_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Gallery */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Photo Gallery</Label>
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              {photos.map(p => (
+                <div key={p.id} className="relative">
+                  <img src={p.url} alt="Venue" className="w-full h-24 object-cover rounded-lg border border-border" />
+                  <button type="button" onClick={() => handlePhotoDelete(p.id)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground mt-1">{uploadingPhoto ? "Uploading..." : "Add photo"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+              </label>
+            </div>
+          </div>
+
           <TwoFactorToggle userId={user?.id} />
+
 
           <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
             Save Settings
