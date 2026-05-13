@@ -14,13 +14,21 @@ const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [venue, setVenue] = useState<any>(null);
+  const [organization, setOrganization] = useState<any>(null);
+  const [brand, setBrand] = useState<any>(null);
+  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
   const [form, setForm] = useState({
     name: "", description: "", category: "dining", address: "", city: "", country: "",
     phone: "", email: "", website: "", latitude: "", longitude: "",
     logo_url: "", cover_image_url: "",
+    venue_type: "physical", address_line1: "", address_line2: "", zip_code: "",
+    timezone: "", contact_person_name: "", contact_phone: "", whatsapp_phone: "",
+    organization_name: "", organization_legal_name: "", organization_tax_id: "", organization_country: "",
+    brand_name: "", brand_description: "",
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
 
@@ -38,28 +46,50 @@ const VenueSettings = () => {
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchAll = async () => {
       const { data } = await supabase.from("venues").select("*").eq("owner_id", user.id).maybeSingle();
       if (data) {
         setVenue(data);
+        const v: any = data;
+
+        // Load brand + organization
+        let brandRow: any = null; let orgRow: any = null;
+        if (v.brand_id) {
+          const { data: b } = await supabase.from("brands").select("*").eq("id", v.brand_id).maybeSingle();
+          brandRow = b;
+          if (b?.organization_id) {
+            const { data: o } = await supabase.from("organizations").select("*").eq("id", b.organization_id).maybeSingle();
+            orgRow = o;
+          }
+        }
+        setBrand(brandRow);
+        setOrganization(orgRow);
+
+        // Load photos
+        const { data: ph } = await supabase.from("venue_photos").select("id, url").eq("venue_id", v.id).order("position");
+        setPhotos((ph as any[]) ?? []);
+
         setForm({
-          name: data.name || "",
-          description: data.description || "",
-          category: data.category || "dining",
-          address: data.address || "",
-          city: data.city || "",
-          country: (data as any).country || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          website: data.website || "",
-          latitude: data.latitude?.toString() || "",
-          longitude: data.longitude?.toString() || "",
-          logo_url: data.logo_url || "",
-          cover_image_url: data.cover_image_url || "",
+          name: v.name || "", description: v.description || "", category: v.category || "dining",
+          address: v.address || "", city: v.city || "", country: v.country || "",
+          phone: v.phone || "", email: v.email || "", website: v.website || "",
+          latitude: v.latitude?.toString() || "", longitude: v.longitude?.toString() || "",
+          logo_url: v.logo_url || "", cover_image_url: v.cover_image_url || "",
+          venue_type: v.venue_type || "physical",
+          address_line1: v.address_line1 || "", address_line2: v.address_line2 || "",
+          zip_code: v.zip_code || "", timezone: v.timezone || "",
+          contact_person_name: v.contact_person_name || "",
+          contact_phone: v.contact_phone || "", whatsapp_phone: v.whatsapp_phone || "",
+          organization_name: orgRow?.name || "",
+          organization_legal_name: orgRow?.legal_name || "",
+          organization_tax_id: orgRow?.tax_id || "",
+          organization_country: orgRow?.country || "",
+          brand_name: brandRow?.name || "",
+          brand_description: brandRow?.description || "",
         });
       }
     };
-    fetch();
+    fetchAll();
   }, [user]);
 
   const handleCityChange = (city: string) => {
@@ -98,6 +128,31 @@ const VenueSettings = () => {
     setter(false);
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !venue) return;
+    setUploadingPhoto(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/photo-${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("venue-photos").upload(filePath, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("venue-photos").getPublicUrl(filePath);
+      const { data: inserted } = await supabase.from("venue_photos").insert({
+        venue_id: venue.id, url: publicUrl, position: photos.length,
+      }).select("id, url").single();
+      if (inserted) setPhotos(p => [...p, inserted as any]);
+    }
+    setUploadingPhoto(false);
+    e.target.value = "";
+  };
+
+  const handlePhotoDelete = async (id: string) => {
+    await supabase.from("venue_photos").delete().eq("id", id);
+    setPhotos(p => p.filter(x => x.id !== id));
+  };
+
   const handleSave = async () => {
     if (!venue) return;
     const lat = form.latitude ? parseFloat(form.latitude) : null;
@@ -107,20 +162,39 @@ const VenueSettings = () => {
       return;
     }
     const { error } = await supabase.from("venues").update({
-      name: form.name,
-      description: form.description,
-      category: form.category,
-      address: form.address,
-      city: form.city,
-      country: form.country,
-      phone: form.phone,
-      email: form.email,
-      website: form.website,
-      latitude: lat,
-      longitude: lng,
-      logo_url: form.logo_url || null,
-      cover_image_url: form.cover_image_url || null,
+      name: form.name, description: form.description, category: form.category,
+      address: form.address, city: form.city, country: form.country,
+      phone: form.phone, email: form.email, website: form.website,
+      latitude: lat, longitude: lng,
+      logo_url: form.logo_url || null, cover_image_url: form.cover_image_url || null,
+      venue_type: form.venue_type,
+      address_line1: form.address_line1 || null,
+      address_line2: form.address_line2 || null,
+      zip_code: form.zip_code || null,
+      timezone: form.timezone || null,
+      contact_person_name: form.contact_person_name || null,
+      contact_phone: form.contact_phone || null,
+      whatsapp_phone: form.whatsapp_phone || null,
+      signup_completed: true,
     } as any).eq("id", venue.id);
+
+    // Update organization
+    if (organization?.id) {
+      await supabase.from("organizations").update({
+        name: form.organization_name || organization.name,
+        legal_name: form.organization_legal_name || null,
+        tax_id: form.organization_tax_id || null,
+        country: form.organization_country || null,
+      }).eq("id", organization.id);
+    }
+    // Update brand
+    if (brand?.id) {
+      await supabase.from("brands").update({
+        name: form.brand_name || brand.name,
+        description: form.brand_description || null,
+      }).eq("id", brand.id);
+    }
+
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -240,7 +314,109 @@ const VenueSettings = () => {
             </div>
           </div>
 
+          {/* Organization */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Organization</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Organization Name</Label>
+                <Input value={form.organization_name} onChange={e => setForm(f => ({ ...f, organization_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Legal Name</Label>
+                <Input value={form.organization_legal_name} onChange={e => setForm(f => ({ ...f, organization_legal_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Tax ID</Label>
+                <Input value={form.organization_tax_id} onChange={e => setForm(f => ({ ...f, organization_tax_id: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Country</Label>
+                <Input value={form.organization_country} onChange={e => setForm(f => ({ ...f, organization_country: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+            </div>
+          </div>
+
+          {/* Brand */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Brand</Label>
+            <div>
+              <Label className="text-muted-foreground text-xs">Brand Name</Label>
+              <Input value={form.brand_name} onChange={e => setForm(f => ({ ...f, brand_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Brand Description</Label>
+              <Input value={form.brand_description} onChange={e => setForm(f => ({ ...f, brand_description: e.target.value }))} className="bg-secondary border-border mt-1" />
+            </div>
+          </div>
+
+          {/* Establishment details */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Establishment Details</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Type</Label>
+                <Select value={form.venue_type} onValueChange={val => setForm(f => ({ ...f, venue_type: val }))}>
+                  <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="physical">Physical</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Timezone</Label>
+                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="Asia/Dubai" className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Address Line 1</Label>
+                <Input value={form.address_line1} onChange={e => setForm(f => ({ ...f, address_line1: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Address Line 2</Label>
+                <Input value={form.address_line2} onChange={e => setForm(f => ({ ...f, address_line2: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">ZIP / Postal Code</Label>
+                <Input value={form.zip_code} onChange={e => setForm(f => ({ ...f, zip_code: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Contact Person</Label>
+                <Input value={form.contact_person_name} onChange={e => setForm(f => ({ ...f, contact_person_name: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">Contact Phone</Label>
+                <Input value={form.contact_phone} onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-xs">WhatsApp Number</Label>
+                <Input value={form.whatsapp_phone} onChange={e => setForm(f => ({ ...f, whatsapp_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Gallery */}
+          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
+            <Label className="text-foreground font-semibold">Photo Gallery</Label>
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+              {photos.map(p => (
+                <div key={p.id} className="relative">
+                  <img src={p.url} alt="Venue" className="w-full h-24 object-cover rounded-lg border border-border" />
+                  <button type="button" onClick={() => handlePhotoDelete(p.id)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
+                <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground mt-1">{uploadingPhoto ? "Uploading..." : "Add photo"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+              </label>
+            </div>
+          </div>
+
           <TwoFactorToggle userId={user?.id} />
+
 
           <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
             Save Settings
