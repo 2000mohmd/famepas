@@ -14,13 +14,21 @@ const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [venue, setVenue] = useState<any>(null);
+  const [organization, setOrganization] = useState<any>(null);
+  const [brand, setBrand] = useState<any>(null);
+  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
   const [form, setForm] = useState({
     name: "", description: "", category: "dining", address: "", city: "", country: "",
     phone: "", email: "", website: "", latitude: "", longitude: "",
     logo_url: "", cover_image_url: "",
+    venue_type: "physical", address_line1: "", address_line2: "", zip_code: "",
+    timezone: "", contact_person_name: "", contact_phone: "", whatsapp_phone: "",
+    organization_name: "", organization_legal_name: "", organization_tax_id: "", organization_country: "",
+    brand_name: "", brand_description: "",
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
 
