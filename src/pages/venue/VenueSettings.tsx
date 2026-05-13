@@ -128,6 +128,31 @@ const VenueSettings = () => {
     setter(false);
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !venue) return;
+    setUploadingPhoto(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/photo-${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("venue-photos").upload(filePath, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from("venue-photos").getPublicUrl(filePath);
+      const { data: inserted } = await supabase.from("venue_photos").insert({
+        venue_id: venue.id, url: publicUrl, position: photos.length,
+      }).select("id, url").single();
+      if (inserted) setPhotos(p => [...p, inserted as any]);
+    }
+    setUploadingPhoto(false);
+    e.target.value = "";
+  };
+
+  const handlePhotoDelete = async (id: string) => {
+    await supabase.from("venue_photos").delete().eq("id", id);
+    setPhotos(p => p.filter(x => x.id !== id));
+  };
+
   const handleSave = async () => {
     if (!venue) return;
     const lat = form.latitude ? parseFloat(form.latitude) : null;
@@ -137,20 +162,39 @@ const VenueSettings = () => {
       return;
     }
     const { error } = await supabase.from("venues").update({
-      name: form.name,
-      description: form.description,
-      category: form.category,
-      address: form.address,
-      city: form.city,
-      country: form.country,
-      phone: form.phone,
-      email: form.email,
-      website: form.website,
-      latitude: lat,
-      longitude: lng,
-      logo_url: form.logo_url || null,
-      cover_image_url: form.cover_image_url || null,
+      name: form.name, description: form.description, category: form.category,
+      address: form.address, city: form.city, country: form.country,
+      phone: form.phone, email: form.email, website: form.website,
+      latitude: lat, longitude: lng,
+      logo_url: form.logo_url || null, cover_image_url: form.cover_image_url || null,
+      venue_type: form.venue_type,
+      address_line1: form.address_line1 || null,
+      address_line2: form.address_line2 || null,
+      zip_code: form.zip_code || null,
+      timezone: form.timezone || null,
+      contact_person_name: form.contact_person_name || null,
+      contact_phone: form.contact_phone || null,
+      whatsapp_phone: form.whatsapp_phone || null,
+      signup_completed: true,
     } as any).eq("id", venue.id);
+
+    // Update organization
+    if (organization?.id) {
+      await supabase.from("organizations").update({
+        name: form.organization_name || organization.name,
+        legal_name: form.organization_legal_name || null,
+        tax_id: form.organization_tax_id || null,
+        country: form.organization_country || null,
+      }).eq("id", organization.id);
+    }
+    // Update brand
+    if (brand?.id) {
+      await supabase.from("brands").update({
+        name: form.brand_name || brand.name,
+        description: form.brand_description || null,
+      }).eq("id", brand.id);
+    }
+
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
