@@ -108,6 +108,44 @@ export type Database = {
           },
         ]
       }
+      brands: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -724,6 +762,39 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          country: string | null
+          created_at: string
+          id: string
+          legal_name: string | null
+          name: string
+          owner_id: string
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          legal_name?: string | null
+          name: string
+          owner_id: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          id?: string
+          legal_name?: string | null
+          name?: string
+          owner_id?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approval_status: string
@@ -979,12 +1050,49 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_photos: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          url: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          url: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          url?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_photos_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address: string | null
+          address_line1: string | null
+          address_line2: string | null
           approval_status: string
+          brand_id: string | null
           category: string
           city: string | null
+          contact_person_name: string | null
+          contact_phone: string | null
           country: string | null
           cover_image_url: string | null
           created_at: string
@@ -998,14 +1106,24 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          signup_completed: boolean
+          timezone: string | null
           updated_at: string
+          venue_type: string
           website: string | null
+          whatsapp_phone: string | null
+          zip_code: string | null
         }
         Insert: {
           address?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
           approval_status?: string
+          brand_id?: string | null
           category?: string
           city?: string | null
+          contact_person_name?: string | null
+          contact_phone?: string | null
           country?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1019,14 +1137,24 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          signup_completed?: boolean
+          timezone?: string | null
           updated_at?: string
+          venue_type?: string
           website?: string | null
+          whatsapp_phone?: string | null
+          zip_code?: string | null
         }
         Update: {
           address?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
           approval_status?: string
+          brand_id?: string | null
           category?: string
           city?: string | null
+          contact_person_name?: string | null
+          contact_phone?: string | null
           country?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1040,10 +1168,23 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          signup_completed?: boolean
+          timezone?: string | null
           updated_at?: string
+          venue_type?: string
           website?: string | null
+          whatsapp_phone?: string | null
+          zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "venues_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       withdrawal_requests: {
         Row: {
