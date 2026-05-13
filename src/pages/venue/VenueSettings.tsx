@@ -46,28 +46,50 @@ const VenueSettings = () => {
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchAll = async () => {
       const { data } = await supabase.from("venues").select("*").eq("owner_id", user.id).maybeSingle();
       if (data) {
         setVenue(data);
+        const v: any = data;
+
+        // Load brand + organization
+        let brandRow: any = null; let orgRow: any = null;
+        if (v.brand_id) {
+          const { data: b } = await supabase.from("brands").select("*").eq("id", v.brand_id).maybeSingle();
+          brandRow = b;
+          if (b?.organization_id) {
+            const { data: o } = await supabase.from("organizations").select("*").eq("id", b.organization_id).maybeSingle();
+            orgRow = o;
+          }
+        }
+        setBrand(brandRow);
+        setOrganization(orgRow);
+
+        // Load photos
+        const { data: ph } = await supabase.from("venue_photos").select("id, url").eq("venue_id", v.id).order("position");
+        setPhotos((ph as any[]) ?? []);
+
         setForm({
-          name: data.name || "",
-          description: data.description || "",
-          category: data.category || "dining",
-          address: data.address || "",
-          city: data.city || "",
-          country: (data as any).country || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          website: data.website || "",
-          latitude: data.latitude?.toString() || "",
-          longitude: data.longitude?.toString() || "",
-          logo_url: data.logo_url || "",
-          cover_image_url: data.cover_image_url || "",
+          name: v.name || "", description: v.description || "", category: v.category || "dining",
+          address: v.address || "", city: v.city || "", country: v.country || "",
+          phone: v.phone || "", email: v.email || "", website: v.website || "",
+          latitude: v.latitude?.toString() || "", longitude: v.longitude?.toString() || "",
+          logo_url: v.logo_url || "", cover_image_url: v.cover_image_url || "",
+          venue_type: v.venue_type || "physical",
+          address_line1: v.address_line1 || "", address_line2: v.address_line2 || "",
+          zip_code: v.zip_code || "", timezone: v.timezone || "",
+          contact_person_name: v.contact_person_name || "",
+          contact_phone: v.contact_phone || "", whatsapp_phone: v.whatsapp_phone || "",
+          organization_name: orgRow?.name || "",
+          organization_legal_name: orgRow?.legal_name || "",
+          organization_tax_id: orgRow?.tax_id || "",
+          organization_country: orgRow?.country || "",
+          brand_name: brandRow?.name || "",
+          brand_description: brandRow?.description || "",
         });
       }
     };
-    fetch();
+    fetchAll();
   }, [user]);
 
   const handleCityChange = (city: string) => {
