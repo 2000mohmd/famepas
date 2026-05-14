@@ -23,7 +23,7 @@ const VenueOffersModal = ({ venueId, onClose }: Props) => {
   const { data: venue } = useQuery({
     queryKey: ["public-venue", venueId],
     queryFn: async () => {
-      const { data } = await supabase.from("venues").select("*").eq("id", venueId!).single();
+      const { data } = await supabase.from("venues").select("id, owner_id, brand_id, name, description, category, address, city, country, latitude, longitude, website, logo_url, cover_image_url, is_active, approval_status, venue_type, created_at").eq("id", venueId!).single();
       return data;
     },
     enabled: !!venueId,

@@ -18,7 +18,7 @@ const VenuesSection = ({ categoryFilter, onVenueClick }: Props) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("venues")
-        .select("*")
+        .select("id, owner_id, brand_id, name, description, category, address, city, country, latitude, longitude, website, logo_url, cover_image_url, is_active, approval_status, venue_type, created_at")
         .eq("is_active", true)
         .eq("approval_status", "approved")
         .order("created_at", { ascending: false });
