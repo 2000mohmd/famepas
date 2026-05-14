@@ -26,6 +26,7 @@ const InfluencerExplore = () => {
   const [search, setSearch] = useState(searchParams.get("venue") || "");
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title_asc" | "title_desc" | "slots_desc" | "followers_asc" | "followers_desc">("newest");
   const [countryFilter, setCountryFilter] = useState<"my" | "all">("my");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -55,7 +56,7 @@ const InfluencerExplore = () => {
   });
 
   const { data: offers } = useQuery({
-    queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry],
+    queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("offers")
@@ -83,6 +84,16 @@ const InfluencerExplore = () => {
       if (categoryFilter !== "all") {
         filtered = filtered.filter((o: any) => o.venues?.category === categoryFilter);
       }
+      const sorters: Record<string, (a: any, b: any) => number> = {
+        newest: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        oldest: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        title_asc: (a, b) => (a.title || "").localeCompare(b.title || ""),
+        title_desc: (a, b) => (b.title || "").localeCompare(a.title || ""),
+        slots_desc: (a, b) => ((b.max_redemptions ?? 0) - (b.current_redemptions ?? 0)) - ((a.max_redemptions ?? 0) - (a.current_redemptions ?? 0)),
+        followers_asc: (a, b) => (a.min_followers ?? 0) - (b.min_followers ?? 0),
+        followers_desc: (a, b) => (b.min_followers ?? 0) - (a.min_followers ?? 0),
+      };
+      filtered = [...filtered].sort(sorters[sortBy]);
       return filtered;
     },
   });
@@ -179,6 +190,18 @@ const InfluencerExplore = () => {
             <SelectContent>
               <SelectItem value="my" disabled={!myCountry}>My country{myCountry ? ` (${myCountry})` : " — set in profile"}</SelectItem>
               <SelectItem value="all">All countries</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="title_asc">Title (A–Z)</SelectItem>
+              <SelectItem value="title_desc">Title (Z–A)</SelectItem>
+              <SelectItem value="slots_desc">Most slots left</SelectItem>
+              <SelectItem value="followers_asc">Min followers (low)</SelectItem>
+              <SelectItem value="followers_desc">Min followers (high)</SelectItem>
             </SelectContent>
           </Select>
         </div>
