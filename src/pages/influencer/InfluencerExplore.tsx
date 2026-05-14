@@ -56,7 +56,7 @@ const InfluencerExplore = () => {
   });
 
   const { data: offers } = useQuery({
-    queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry],
+    queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry, sortBy],
     queryFn: async () => {
       let query = supabase
         .from("offers")
