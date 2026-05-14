@@ -192,6 +192,18 @@ const InfluencerExplore = () => {
               <SelectItem value="all">All countries</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="title_asc">Title (A–Z)</SelectItem>
+              <SelectItem value="title_desc">Title (Z–A)</SelectItem>
+              <SelectItem value="slots_desc">Most slots left</SelectItem>
+              <SelectItem value="followers_asc">Min followers (low)</SelectItem>
+              <SelectItem value="followers_desc">Min followers (high)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {!myCountry && countryFilter === "my" && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
