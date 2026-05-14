@@ -196,14 +196,34 @@ const InfluencerDashboard = () => {
             <Button variant="link" className="text-gold" onClick={() => navigate("/influencer/explore")}>View All →</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentOffers?.map((offer: any) => (
-              <Card key={offer.id} className="hover:border-gold/30 transition-colors">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{offer.title}</CardTitle>
-                    <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
+            {recentOffers?.map((offer: any) => {
+              const cover = offer.image_url || offer.venues?.cover_image_url || offer.venues?.image_url;
+              return (
+              <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
+                {cover ? (
+                  <img src={cover} alt={offer.title} className="w-full h-32 object-cover" />
+                ) : (
+                  <div className="w-full h-32 bg-secondary flex items-center justify-center">
+                    <Send className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{offer.venues?.name} • {offer.venues?.city}</p>
+                )}
+                <CardHeader className="pb-2">
+                  <div className="flex items-start gap-3">
+                    {offer.venues?.logo_url ? (
+                      <img src={offer.venues.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <Star className="w-5 h-5 text-gold" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <CardTitle className="text-base truncate">{offer.title}</CardTitle>
+                        <Badge variant="outline" className="capitalize flex-shrink-0">{offer.offer_type}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{offer.venues?.name} • {offer.venues?.city}</p>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{offer.description}</p>
@@ -213,7 +233,8 @@ const InfluencerDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
