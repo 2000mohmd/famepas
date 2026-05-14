@@ -84,6 +84,16 @@ const InfluencerExplore = () => {
       if (categoryFilter !== "all") {
         filtered = filtered.filter((o: any) => o.venues?.category === categoryFilter);
       }
+      const sorters: Record<string, (a: any, b: any) => number> = {
+        newest: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        oldest: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        title_asc: (a, b) => (a.title || "").localeCompare(b.title || ""),
+        title_desc: (a, b) => (b.title || "").localeCompare(a.title || ""),
+        slots_desc: (a, b) => ((b.max_redemptions ?? 0) - (b.current_redemptions ?? 0)) - ((a.max_redemptions ?? 0) - (a.current_redemptions ?? 0)),
+        followers_asc: (a, b) => (a.min_followers ?? 0) - (b.min_followers ?? 0),
+        followers_desc: (a, b) => (b.min_followers ?? 0) - (a.min_followers ?? 0),
+      };
+      filtered = [...filtered].sort(sorters[sortBy]);
       return filtered;
     },
   });
