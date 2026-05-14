@@ -26,6 +26,7 @@ const InfluencerExplore = () => {
   const [search, setSearch] = useState(searchParams.get("venue") || "");
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title_asc" | "title_desc" | "slots_desc" | "followers_asc" | "followers_desc">("newest");
   const [countryFilter, setCountryFilter] = useState<"my" | "all">("my");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
