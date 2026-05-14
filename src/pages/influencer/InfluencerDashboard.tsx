@@ -45,7 +45,7 @@ const InfluencerDashboard = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(name, city, logo_url)")
+        .select("*, venues(name, city, logo_url, image_url, cover_image_url)")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(5);
