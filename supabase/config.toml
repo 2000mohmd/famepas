@@ -3,14 +3,17 @@ project_id = "dvauueqtqrveqcckfrjx"
 [functions.signup-user]
 verify_jwt = false
 
+[functions.google-maps-key]
+verify_jwt = false
+
+[functions.send-auth-email]
+verify_jwt = false
+
 [functions.send-welcome-email]
 verify_jwt = false
 
 [functions.login-otp]
 verify_jwt = false
 
-[functions.send-auth-email]
-verify_jwt = false
-
-[functions.google-maps-key]
+[functions.chatbot]
 verify_jwt = false

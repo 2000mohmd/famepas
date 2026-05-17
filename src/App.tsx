@@ -29,7 +29,7 @@ import VenueDiscover from "./pages/venue/VenueDiscover";
 import VenueInvitations from "./pages/venue/VenueInvitations";
 import VenueBookings from "./pages/venue/VenueBookings";
 import VenueRedemptions from "./pages/venue/VenueRedemptions";
-import VenueMessages from "./pages/venue/VenueMessages";
+
 import VenueEvents from "./pages/venue/VenueEvents";
 import VenueAnalytics from "./pages/venue/VenueAnalytics";
 import VenueSettings from "./pages/venue/VenueSettings";
@@ -37,7 +37,7 @@ import InfluencerDashboard from "./pages/influencer/InfluencerDashboard";
 import InfluencerExplore from "./pages/influencer/InfluencerExplore";
 import InfluencerInvitations from "./pages/influencer/InfluencerInvitations";
 import InfluencerBookings from "./pages/influencer/InfluencerBookings";
-import InfluencerMessages from "./pages/influencer/InfluencerMessages";
+
 import InfluencerEarnings from "./pages/influencer/InfluencerEarnings";
 import InfluencerProfile from "./pages/influencer/InfluencerProfile";
 import InfluencerReviews from "./pages/influencer/InfluencerReviews";
@@ -94,7 +94,7 @@ const App = () => (
             <Route path="/venue/invitations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueInvitations /></ProtectedRoute>} />
             <Route path="/venue/bookings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBookings /></ProtectedRoute>} />
             <Route path="/venue/redemptions" element={<ProtectedRoute allowedRoles={["venue"]}><VenueRedemptions /></ProtectedRoute>} />
-            <Route path="/venue/messages" element={<ProtectedRoute allowedRoles={["venue"]}><VenueMessages /></ProtectedRoute>} />
+            
             <Route path="/venue/events" element={<ProtectedRoute allowedRoles={["venue"]}><VenueEvents /></ProtectedRoute>} />
             <Route path="/venue/event-attendees" element={<ProtectedRoute allowedRoles={["venue"]}><EventAttendeesPage type="venue" /></ProtectedRoute>} />
             <Route path="/venue/analytics" element={<ProtectedRoute allowedRoles={["venue"]}><VenueAnalytics /></ProtectedRoute>} />
@@ -106,7 +106,7 @@ const App = () => (
             <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
             <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
             <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
-            <Route path="/influencer/messages" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerMessages /></ProtectedRoute>} />
+            
             <Route path="/influencer/earnings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerEarnings /></ProtectedRoute>} />
             <Route path="/influencer/profile" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerProfile /></ProtectedRoute>} />
             <Route path="/influencer/reviews" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerReviews /></ProtectedRoute>} />
