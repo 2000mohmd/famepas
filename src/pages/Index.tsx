@@ -7,6 +7,7 @@ import OffersSection from "@/components/public/OffersSection";
 import MapSection from "@/components/public/MapSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
+import ChatbotWidget from "@/components/public/ChatbotWidget";
 
 const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -22,6 +23,7 @@ const Index = () => {
       <MapSection onVenueClick={setSelectedVenueId} />
       <Footer />
       <VenueOffersModal venueId={selectedVenueId} onClose={() => setSelectedVenueId(null)} />
+      <ChatbotWidget />
     </div>
   );
 };
