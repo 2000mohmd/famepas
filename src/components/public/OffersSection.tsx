@@ -54,7 +54,7 @@ const OffersSection = ({ categoryFilter, onVenueClick }: Props) => {
               <div
                 key={offer.id}
                 onClick={() => offer.venues?.id && onVenueClick(offer.venues.id)}
-                className="group rounded-2xl bg-card border border-border hover:border-accent/40 transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-1"
+                className="group premium-card rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden hover:-translate-y-1"
               >
                 {(offer.cover_image_url || offer.image_url) ? (
                   <div className="relative h-44 overflow-hidden">
