@@ -4,7 +4,7 @@ import HeroSlider from "@/components/public/HeroSlider";
 import CategoriesSection from "@/components/public/CategoriesSection";
 import VenuesSection from "@/components/public/VenuesSection";
 import OffersSection from "@/components/public/OffersSection";
-import MapSection from "@/components/public/MapSection";
+import TopInfluencersSection from "@/components/public/TopInfluencersSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
 import ChatbotWidget from "@/components/public/ChatbotWidget";
@@ -19,8 +19,8 @@ const Index = () => {
       <HeroSlider />
       <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
       <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <TopInfluencersSection />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
-      <MapSection onVenueClick={setSelectedVenueId} />
       <Footer />
       <VenueOffersModal venueId={selectedVenueId} onClose={() => setSelectedVenueId(null)} />
       <ChatbotWidget />
