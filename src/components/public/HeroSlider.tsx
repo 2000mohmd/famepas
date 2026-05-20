@@ -46,15 +46,15 @@ const HeroSlider = () => {
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <Button size="lg" className="gradient-purple text-white hover:opacity-90 rounded-full px-8 h-12 gap-2 shadow-lg shadow-primary/30" asChild>
-              <Link to="/explore">Discover <ArrowRight className="w-4 h-4" /></Link>
+            <Button size="lg" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-full px-8 h-12 gap-2 shadow-lg shadow-primary/30" asChild>
+              <Link to="/venues">Discover <ArrowRight className="w-4 h-4" /></Link>
             </Button>
             <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-border bg-card/40 backdrop-blur-sm hover:bg-card" asChild>
               <Link to="/login">Get Started</Link>
             </Button>
             <button className="inline-flex items-center gap-2 px-2 text-sm text-foreground/80 hover:text-foreground transition-colors">
-              <span className="w-9 h-9 rounded-full gradient-purple flex items-center justify-center shadow-lg shadow-primary/30">
-                <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+              <span className="w-9 h-9 rounded-full gradient-gold flex items-center justify-center shadow-lg shadow-primary/30">
+                <Play className="w-3.5 h-3.5 text-accent-foreground fill-current ml-0.5" />
               </span>
               Watch a video
             </button>
