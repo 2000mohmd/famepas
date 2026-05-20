@@ -28,9 +28,9 @@ const HeroSlider = () => {
       <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-primary/30 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-purple-glow/25 blur-[140px] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center my-[70px]">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center my-[40px]">
         {/* LEFT — copy */}
-        <div className="space-y-7 my-[1000px]">
+        <div className="space-y-7 my-0">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass">
             <Sparkles className="w-4 h-4 text-gold" />
             <span className="text-xs font-semibold text-foreground/90 tracking-wider uppercase">The Premium Creator Marketplace</span>
