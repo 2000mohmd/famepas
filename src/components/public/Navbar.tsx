@@ -8,8 +8,8 @@ import famepassLogo from "@/assets/famepass-logo.png";
 const navLinks = [
   { label: "Venues", href: "/venues" },
   { label: "Offers", href: "/offers" },
+  { label: "Influencers", href: "/influencers" },
   { label: "Categories", href: "/categories" },
-  { label: "Explore Map", href: "/explore" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -24,21 +24,18 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg border border-gold/30" />
-          <span className="font-display font-bold text-lg text-foreground">
-            Fame<span className="text-gold">Pass</span>
-          </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
+        <Link to="/" className="flex items-center">
+          <img src={famepassLogo} alt="FamePass — Exclusive Access" className="h-12 w-auto object-contain" />
         </Link>
 
-        <div className="hidden lg:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-7">
           {navLinks.map((l) => (
             <Link
               key={l.label}
               to={l.href}
               className={`text-sm font-medium transition-colors ${
-                location.pathname === l.href ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                location.pathname === l.href ? "text-gold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {l.label}
@@ -48,11 +45,11 @@ const Navbar = () => {
 
         <div className="flex items-center gap-3">
           {user ? (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl">
+            <Button asChild size="sm" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-xl font-semibold">
               <Link to={dashboardPath}>Dashboard</Link>
             </Button>
           ) : (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl">
+            <Button asChild size="sm" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-xl font-semibold">
               <Link to="/login">Sign In</Link>
             </Button>
           )}
@@ -71,7 +68,7 @@ const Navbar = () => {
                 to={l.href}
                 onClick={() => setMobileOpen(false)}
                 className={`block text-sm font-medium py-2.5 px-3 rounded-lg transition-colors ${
-                  location.pathname === l.href ? "text-accent bg-accent/10" : "text-muted-foreground hover:text-foreground hover:bg-card"
+                  location.pathname === l.href ? "text-gold bg-accent/10" : "text-muted-foreground hover:text-foreground hover:bg-card"
                 }`}
               >
                 {l.label}

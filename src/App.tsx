@@ -47,7 +47,7 @@ import InfluencerHome from "./pages/influencer/InfluencerHome";
 import VenuesPage from "./pages/public/VenuesPage";
 import OffersPage from "./pages/public/OffersPage";
 import CategoriesPage from "./pages/public/CategoriesPage";
-import ExplorePage from "./pages/public/ExplorePage";
+import InfluencersPage from "./pages/public/InfluencersPage";
 import AboutPage from "./pages/public/AboutPage";
 import ContactPage from "./pages/public/ContactPage";
 
@@ -66,7 +66,7 @@ const App = () => (
             <Route path="/venues" element={<VenuesPage />} />
             <Route path="/offers" element={<OffersPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/influencers" element={<InfluencersPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
