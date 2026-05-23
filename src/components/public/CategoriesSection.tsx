@@ -16,53 +16,39 @@ const CategoriesSection = ({ selected, onSelect }: Props) => {
   });
 
   return (
-    <section id="categories" className="py-20 bg-background relative">
-      {/* Subtle background accent */}
-      <div className="absolute inset-0 bg-gradient-to-b from-card/20 to-transparent pointer-events-none" />
-
+    <section id="categories" className="py-24 relative">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <p className="text-accent text-sm font-semibold tracking-widest uppercase mb-3">Explore</p>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-            Browse by <span className="text-gold">Category</span>
+        <div className="max-w-3xl mb-14">
+          <h2 className="font-display font-normal leading-[1.05] tracking-tight text-4xl sm:text-5xl lg:text-6xl">
+            Browse by <span className="italic gradient-text">Category</span>
           </h2>
-          <p className="text-muted-foreground mt-4 max-w-lg mx-auto text-base">
-            Explore venues and offers across different categories
+          <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
+            Explore venues and offers across every vertical — from beauty to wellness, dining to lifestyle.
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => onSelect(null)}
-            className={`group px-7 py-5 rounded-2xl border transition-all duration-300 flex items-center justify-center min-w-[130px] hover:scale-105 ${
+            className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-all ${
               !selected
-                ? "bg-accent/15 border-accent/40 shadow-lg shadow-accent/10 scale-105"
-                : "bg-card border-border hover:border-accent/30"
+                ? "bg-gold text-accent-foreground border-gold"
+                : "glass border-border hover:border-gold/40 text-foreground/80"
             }`}
           >
-            <span className="text-sm font-semibold text-foreground">All</span>
+            All
           </button>
           {categories?.map((cat: any) => (
             <button
               key={cat.id}
               onClick={() => onSelect(cat.name)}
-              className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 flex flex-col items-center gap-2 w-[150px] h-[140px] hover:scale-105 ${
+              className={`px-5 py-2.5 rounded-full border text-sm font-medium capitalize transition-all ${
                 selected === cat.name
-                  ? "border-accent/60 shadow-lg shadow-accent/20 scale-105"
-                  : "border-border hover:border-accent/40"
+                  ? "bg-gold text-accent-foreground border-gold"
+                  : "glass border-border hover:border-gold/40 text-foreground/80"
               }`}
             >
-              {cat.image_url ? (
-                <>
-                  <img src={cat.image_url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-                </>
-              ) : (
-                <div className="absolute inset-0 bg-card" />
-              )}
-              <div className="relative flex items-end justify-center h-full p-4 text-center">
-                <span className="text-sm font-semibold text-foreground capitalize leading-tight">{cat.name}</span>
-              </div>
+              {cat.name}
             </button>
           ))}
         </div>

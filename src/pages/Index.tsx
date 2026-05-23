@@ -5,6 +5,8 @@ import CategoriesSection from "@/components/public/CategoriesSection";
 import VenuesSection from "@/components/public/VenuesSection";
 import OffersSection from "@/components/public/OffersSection";
 import TopInfluencersSection from "@/components/public/TopInfluencersSection";
+import PlatformSection from "@/components/public/PlatformSection";
+import CtaSection from "@/components/public/CtaSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
 import ChatbotWidget from "@/components/public/ChatbotWidget";
@@ -17,10 +19,12 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSlider />
+      <PlatformSection />
       <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
       <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
       <TopInfluencersSection />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <CtaSection />
       <Footer />
       <VenueOffersModal venueId={selectedVenueId} onClose={() => setSelectedVenueId(null)} />
       <ChatbotWidget />
