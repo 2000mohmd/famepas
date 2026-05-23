@@ -3,7 +3,7 @@ import { Search, Send, CheckCircle2, Eye, MessageCircle, Calendar, TrendingUp } 
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import heroVenue from "@/assets/hero-venue.jpg";
+import heroInfluencer from "@/assets/hero-influencer.jpg";
 
 const chips = ["LA-Based", "Age Range: 25-35", "Beauty", "Wellness"];
 
@@ -22,7 +22,7 @@ const HeroSlider = () => {
     },
   });
 
-  const featuredImg = (featured as any)?.cover_image_url || (featured as any)?.image_url || heroVenue;
+  const featuredImg = heroInfluencer;
 
   return (
     <section className="relative overflow-hidden pt-28 pb-20 lg:pb-28">
@@ -34,8 +34,7 @@ const HeroSlider = () => {
         {/* LEFT — editorial headline */}
         <div className="space-y-8">
           <h1 className="font-display font-normal leading-[1.02] tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
-            Commerce at<br />
-            Scale. <span className="italic gradient-text font-normal">Built on Trust</span>
+            The Premium Creator <span className="italic gradient-text font-normal">Marketplace</span> for Exclusive Venue Partnerships
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-md leading-relaxed">

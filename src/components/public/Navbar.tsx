@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import famepassLogo from "@/assets/famepass-logo.png";
+
 
 const navLinks = [
   { label: "Venues", href: "/venues" },
@@ -26,7 +26,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
         <Link to="/" className="flex items-center">
-          <img src={famepassLogo} alt="FamePass — Exclusive Access" className="h-12 w-auto object-contain" />
+          <span className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            Fame<span className="gradient-text italic">Pass</span>
+          </span>
         </Link>
 
         <div className="hidden lg:flex items-center gap-7">
