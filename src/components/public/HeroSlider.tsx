@@ -3,7 +3,7 @@ import { Search, Send, CheckCircle2, Eye, MessageCircle, Calendar, TrendingUp } 
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import heroVenue from "@/assets/hero-venue.jpg";
+import heroInfluencer from "@/assets/hero-influencer.jpg";
 
 const chips = ["LA-Based", "Age Range: 25-35", "Beauty", "Wellness"];
 
