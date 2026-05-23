@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, Play, ArrowRight } from "lucide-react";
+import { Search, Send, CheckCircle2, Eye, MessageCircle, Calendar, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import heroVenue from "@/assets/hero-venue.jpg";
+
+const chips = ["LA-Based", "Age Range: 25-35", "Beauty", "Wellness"];
 
 const HeroSlider = () => {
   const { data: featured } = useQuery({
@@ -23,99 +25,171 @@ const HeroSlider = () => {
   const featuredImg = (featured as any)?.cover_image_url || (featured as any)?.image_url || heroVenue;
 
   return (
-    <section className="relative min-h-[92vh] flex items-center overflow-hidden pt-24 pb-12">
-      {/* Ambient glow orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-primary/30 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-purple-glow/25 blur-[140px] pointer-events-none" />
+    <section className="relative overflow-hidden pt-28 pb-20 lg:pb-28">
+      {/* Ambient glows */}
+      <div className="absolute top-0 -left-32 w-[500px] h-[500px] rounded-full bg-primary/20 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-purple-glow/15 blur-[160px] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center my-[40px]">
-        {/* LEFT — copy */}
-        <div className="space-y-7 my-0">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass">
-            <Sparkles className="w-4 h-4 text-gold" />
-            <span className="text-xs font-semibold text-foreground/90 tracking-wider uppercase">The Premium Creator Marketplace</span>
-          </div>
-
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold leading-[1.05] tracking-tight">
-            Discover, Book<br />
-            and Earn with <span className="gradient-text">Top Venues</span>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+        {/* LEFT — editorial headline */}
+        <div className="space-y-8">
+          <h1 className="font-display font-normal leading-[1.02] tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
+            Commerce at<br />
+            Scale. <span className="italic gradient-text font-normal">Built on Trust</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-muted-foreground max-w-lg leading-relaxed">
-            The largest curated marketplace connecting elite influencers with premium venues for exclusive offers and unforgettable experiences.
+          <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+            Ditch the gamble with creators and start building with FamePass, the system that takes the chaos out of the campaign.
           </p>
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Button size="lg" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-full px-8 h-12 gap-2 shadow-lg shadow-primary/30" asChild>
-              <Link to="/venues">Discover <ArrowRight className="w-4 h-4" /></Link>
+          <div className="pt-2">
+            <Button
+              size="lg"
+              className="gradient-gold text-accent-foreground hover:opacity-90 rounded-full px-10 h-14 text-base font-semibold shadow-xl shadow-primary/30"
+              asChild
+            >
+              <Link to="/venues">Discover Venues</Link>
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-border bg-card/40 backdrop-blur-sm hover:bg-card" asChild>
-              <Link to="/login">Get Started</Link>
-            </Button>
-            <button className="inline-flex items-center gap-2 px-2 text-sm text-foreground/80 hover:text-foreground transition-colors">
-              <span className="w-9 h-9 rounded-full gradient-gold flex items-center justify-center shadow-lg shadow-primary/30">
-                <Play className="w-3.5 h-3.5 text-accent-foreground fill-current ml-0.5" />
-              </span>
-              Watch a video
-            </button>
-          </div>
-
-          {/* Stats card */}
-          <div className="inline-flex divide-x divide-border/60 rounded-2xl glass px-2 py-4 mt-2">
-            {[
-              { v: "50+", l: "Venues" },
-              { v: "200+", l: "Offers" },
-              { v: "1K+", l: "Influencers" },
-            ].map((s) => (
-              <div key={s.l} className="px-6">
-                <p className="text-2xl font-display font-bold gradient-text">{s.v}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{s.l}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-4 pt-2">
-            <div className="flex -space-x-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="w-9 h-9 rounded-full border-2 border-background bg-gradient-to-br from-primary to-purple-glow" />
-              ))}
-            </div>
-            <div>
-              <p className="font-bold text-foreground"><span className="text-muted-foreground font-normal text-sm">Active Members</span></p>
-            </div>
           </div>
         </div>
 
-        {/* RIGHT — featured floating card */}
-        <div className="relative hidden lg:block">
-          <div className="absolute inset-0 gradient-purple blur-3xl opacity-30 rounded-[3rem]" />
-          <div className="relative aspect-[4/5] max-w-md mx-auto rounded-[2rem] overflow-hidden premium-card p-3 glow-purple">
-            <div className="relative h-full w-full rounded-[1.5rem] overflow-hidden">
-              <img src={featuredImg} alt="Featured" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+        {/* RIGHT — composite mockup */}
+        <div className="relative">
+          {/* Filter chips row */}
+          <div className="flex flex-wrap gap-2 justify-end mb-4">
+            {chips.map((c) => (
+              <span key={c} className="px-3.5 py-1.5 rounded-full glass text-xs font-medium text-foreground/80 border border-gold/20">
+                {c}
+              </span>
+            ))}
+          </div>
 
-              {/* Top badge */}
-              <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass">
-                <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-                <span className="text-xs font-semibold">Featured</span>
-              </div>
+          {/* AI search bar */}
+          <div className="glass rounded-full px-4 py-3 flex items-center gap-2 mb-4 max-w-md ml-auto">
+            <Search className="w-4 h-4 text-gold flex-shrink-0" />
+            <span className="text-xs text-muted-foreground truncate">a day in a life influencer with a casual tone and bright...</span>
+          </div>
 
-              {/* Bottom info card */}
-              <div className="absolute bottom-4 left-4 right-4 rounded-2xl glass p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Latest Offer</p>
-                  <p className="font-display font-bold text-foreground truncate max-w-[180px]">
-                    {(featured as any)?.title || "Premium Experience"}
-                  </p>
+          <div className="grid grid-cols-5 gap-3">
+            {/* Big image card */}
+            <div className="col-span-3 relative aspect-[3/4] rounded-3xl overflow-hidden premium-card p-2">
+              <div className="relative h-full w-full rounded-2xl overflow-hidden">
+                <img src={featuredImg} alt="Featured creator" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+
+                {/* Top creator pill */}
+                <div className="absolute top-3 left-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass">
+                  <div className="w-6 h-6 rounded-full gradient-purple" />
+                  <span className="text-xs font-semibold">Madison Blake</span>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Value</p>
-                  <p className="font-display font-bold text-gold">
-                    ${(featured as any)?.discount_value || "—"}
-                  </p>
+
+                {/* Mention badge */}
+                <div className="absolute top-1/2 left-3 -translate-y-4 inline-flex items-center gap-2 px-3 py-2 rounded-2xl glass">
+                  <div className="w-7 h-7 rounded-full gradient-gold" />
+                  <div>
+                    <p className="text-[10px] font-semibold text-gold">@madisonblake</p>
+                    <p className="text-[9px] text-muted-foreground">mentioned you in their post</p>
+                  </div>
+                </div>
+
+                {/* Invite button */}
+                <div className="absolute bottom-20 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass border border-gold/30">
+                  <Send className="w-3 h-3 text-gold" />
+                  <span className="text-[10px] font-semibold">Invite to Campaign</span>
+                </div>
+
+                {/* Bottom stats */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[10px] text-foreground/90">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1"><Eye className="w-3 h-3" /> 15.8k</span>
+                    <span className="inline-flex items-center gap-1"><MessageCircle className="w-3 h-3" /> 3.5k</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-[10px] text-foreground/80">
+                  <Calendar className="w-3 h-3" /> May 11, 2026
                 </div>
               </div>
             </div>
+
+            {/* Right column stack */}
+            <div className="col-span-2 space-y-3">
+              {/* Send brief */}
+              <div className="premium-card rounded-2xl p-3">
+                <div className="flex -space-x-2 mb-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-7 h-7 rounded-full border-2 border-card bg-gradient-to-br from-primary to-purple-glow" />
+                  ))}
+                </div>
+                <button className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/60 text-[11px] font-semibold">
+                  <Send className="w-3 h-3 text-gold" /> Send Brief
+                </button>
+              </div>
+
+              {/* Order conditions */}
+              <div className="premium-card rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold">Order Conditions</p>
+                  <span className="text-[9px] text-success inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5" /> Fulfilled
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[9px] text-foreground/80">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-success flex-shrink-0" />
+                    <span>Select maximum of 2 products</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[9px] text-foreground/80">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-success flex-shrink-0" />
+                    <span>Total cart value up to $100</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payout */}
+              <div className="premium-card rounded-2xl p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full gradient-gold" />
+                    <span className="text-[10px] font-semibold">@amberlee</span>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground">Standard (10%)</span>
+                </div>
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-[9px] text-success font-medium">
+                  Generate Promo Code
+                </div>
+              </div>
+
+              {/* Social stats */}
+              <div className="premium-card rounded-2xl p-3">
+                <p className="text-[10px] font-semibold mb-2">Social Stats</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Engagements</p>
+                    <p className="text-sm font-display font-bold gradient-text inline-flex items-center gap-1">
+                      123K <TrendingUp className="w-3 h-3 text-gold" />
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Reach</p>
+                    <p className="text-sm font-display font-bold gradient-text inline-flex items-center gap-1">
+                      456K <TrendingUp className="w-3 h-3 text-gold" />
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust strip */}
+      <div className="relative mt-20 lg:mt-28 py-10 bg-card/40 border-y border-border backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-muted-foreground mb-6">Trusted by premium venues & top creators</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-60">
+            {["FamePass", "Elite Venues", "Top Creators", "Premium Brands", "VIP Access", "Exclusive"].map((b) => (
+              <span key={b} className="font-display text-lg text-muted-foreground/80 tracking-wide">{b}</span>
+            ))}
           </div>
         </div>
       </div>
