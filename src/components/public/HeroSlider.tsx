@@ -34,8 +34,7 @@ const HeroSlider = () => {
         {/* LEFT — editorial headline */}
         <div className="space-y-8">
           <h1 className="font-display font-normal leading-[1.02] tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
-            Commerce at<br />
-            Scale. <span className="italic gradient-text font-normal">Built on Trust</span>
+            The Premium Creator <span className="italic gradient-text font-normal">Marketplace</span> for Exclusive Venue Partnerships
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
