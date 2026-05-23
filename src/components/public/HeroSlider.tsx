@@ -22,7 +22,7 @@ const HeroSlider = () => {
     },
   });
 
-  const featuredImg = (featured as any)?.cover_image_url || (featured as any)?.image_url || heroVenue;
+  const featuredImg = heroInfluencer;
 
   return (
     <section className="relative overflow-hidden pt-28 pb-20 lg:pb-28">
