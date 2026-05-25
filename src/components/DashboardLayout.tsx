@@ -15,6 +15,8 @@ import {
   CreditCard,
   ShieldAlert,
   MessageSquare,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.png";
 
@@ -32,11 +34,14 @@ const adminLinks = [
   { to: "/admin/billing", icon: CreditCard, label: "Billing" },
   { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
   { to: "/admin/users", icon: Users, label: "Admin Users" },
+  { to: "/admin/chatbot", icon: Bot, label: "Train Chatbot" },
+  { to: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
 const venueLinks = [
   { to: "/venue", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/venue/offers", icon: Tag, label: "My Offers" },
+  { to: "/venue/briefs", icon: Sparkles, label: "Briefs" },
   { to: "/venue/discover", icon: Users, label: "Discover" },
   { to: "/venue/invitations", icon: Send, label: "Invitations" },
   { to: "/venue/bookings", icon: CalendarDays, label: "Bookings" },
