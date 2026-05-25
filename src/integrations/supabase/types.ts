@@ -146,6 +146,44 @@ export type Database = {
           },
         ]
       }
+      brief_matches: {
+        Row: {
+          brief_id: string
+          created_at: string
+          id: string
+          influencer_id: string
+          invited: boolean
+          reasoning: string | null
+          score: number
+        }
+        Insert: {
+          brief_id: string
+          created_at?: string
+          id?: string
+          influencer_id: string
+          invited?: boolean
+          reasoning?: string | null
+          score?: number
+        }
+        Update: {
+          brief_id?: string
+          created_at?: string
+          id?: string
+          influencer_id?: string
+          invited?: boolean
+          reasoning?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brief_matches_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "venue_briefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -170,6 +208,48 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+        }
+        Relationships: []
+      }
+      chatbot_knowledge: {
+        Row: {
+          answer: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          doc_content: string | null
+          doc_title: string | null
+          entry_type: string
+          id: string
+          is_active: boolean
+          question: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_content?: string | null
+          doc_title?: string | null
+          entry_type?: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_content?: string | null
+          doc_title?: string | null
+          entry_type?: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -433,6 +513,7 @@ export type Database = {
       }
       invitations: {
         Row: {
+          brief_id: string | null
           created_at: string
           expires_at: string | null
           id: string
@@ -446,6 +527,7 @@ export type Database = {
           venue_id: string
         }
         Insert: {
+          brief_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -459,6 +541,7 @@ export type Database = {
           venue_id: string
         }
         Update: {
+          brief_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -795,6 +878,30 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approval_status: string
@@ -1047,6 +1154,66 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      venue_briefs: {
+        Row: {
+          budget: number | null
+          category: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          deadline: string | null
+          deliverables: string | null
+          description: string
+          id: string
+          is_active: boolean
+          max_followers: number | null
+          min_followers: number | null
+          niches: string[] | null
+          status: string
+          title: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          budget?: number | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          max_followers?: number | null
+          min_followers?: number | null
+          niches?: string[] | null
+          status?: string
+          title: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          budget?: number | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          max_followers?: number | null
+          min_followers?: number | null
+          niches?: string[] | null
+          status?: string
+          title?: string
+          updated_at?: string
+          venue_id?: string
         }
         Relationships: []
       }
