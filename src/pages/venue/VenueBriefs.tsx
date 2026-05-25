@@ -23,6 +23,9 @@ type Brief = {
   deadline: string | null;
   status: string;
   created_at: string;
+  image_url: string | null;
+  requirements: string | null;
+  category: string | null;
 };
 
 type Match = {
@@ -34,7 +37,7 @@ type Match = {
   profile?: any;
 };
 
-const emptyForm = { title: "", description: "", city: "", niches: "", min_followers: "", budget: "", deliverables: "", deadline: "" };
+const emptyForm = { title: "", description: "", city: "", category: "", niches: "", min_followers: "", budget: "", deliverables: "", requirements: "", deadline: "", image_url: "" };
 
 const VenueBriefs = () => {
   const { user } = useAuth();
