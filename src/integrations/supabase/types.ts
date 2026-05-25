@@ -1168,10 +1168,12 @@ export type Database = {
           deliverables: string | null
           description: string
           id: string
+          image_url: string | null
           is_active: boolean
           max_followers: number | null
           min_followers: number | null
           niches: string[] | null
+          requirements: string | null
           status: string
           title: string
           updated_at: string
@@ -1187,10 +1189,12 @@ export type Database = {
           deliverables?: string | null
           description: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
+          requirements?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -1206,10 +1210,12 @@ export type Database = {
           deliverables?: string | null
           description?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
+          requirements?: string | null
           status?: string
           title?: string
           updated_at?: string
