@@ -265,18 +265,33 @@ const VenueBriefs = () => {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Post a Brief</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label>Title *</Label>
+                <Label>Cover image</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {form.image_url && <img src={form.image_url} alt="" className="w-20 h-20 rounded-lg object-cover border border-border" />}
+                  <Input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
+                </div>
+              </div>
+              <div>
+                <Label>Title / Name *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Launch campaign for new rooftop lounge" />
               </div>
               <div>
                 <Label>Description *</Label>
                 <Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you need, the vibe, the audience..." />
               </div>
+              <div>
+                <Label>Requirements</Label>
+                <Textarea rows={3} value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} placeholder="Must follow brand guidelines, tag @venue, use #hashtag, attend on opening night..." />
+              </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Category</Label>
+                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Dining, Nightlife, Spa..." />
+                </div>
                 <div>
                   <Label>City</Label>
                   <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Dubai" />
@@ -286,12 +301,12 @@ const VenueBriefs = () => {
                   <Input type="number" value={form.min_followers} onChange={(e) => setForm({ ...form, min_followers: e.target.value })} placeholder="10000" />
                 </div>
                 <div>
-                  <Label>Niches (comma separated)</Label>
-                  <Input value={form.niches} onChange={(e) => setForm({ ...form, niches: e.target.value })} placeholder="food, lifestyle" />
-                </div>
-                <div>
                   <Label>Budget ($)</Label>
                   <Input type="number" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} placeholder="500" />
+                </div>
+                <div className="col-span-2">
+                  <Label>Niches (comma separated)</Label>
+                  <Input value={form.niches} onChange={(e) => setForm({ ...form, niches: e.target.value })} placeholder="food, lifestyle" />
                 </div>
               </div>
               <div>
