@@ -192,15 +192,34 @@ const VenueBriefs = () => {
             return (
               <div key={b.id} className="gradient-card rounded-xl border border-border p-5">
                 <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
-                  <div className="min-w-0">
-                    <h3 className="font-display text-xl font-bold text-foreground">{b.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{b.description}</p>
-                    <div className="flex gap-2 mt-3 flex-wrap text-xs">
-                      {b.city && <Badge variant="secondary">{b.city}</Badge>}
-                      {(b.niches ?? []).map((n) => <Badge key={n} variant="secondary">{n}</Badge>)}
-                      {b.min_followers ? <Badge variant="secondary">{b.min_followers.toLocaleString()}+ followers</Badge> : null}
-                      {b.budget ? <Badge className="bg-gold/20 text-gold border-gold/30">${b.budget}</Badge> : null}
-                      <Badge>{b.status}</Badge>
+                  <div className="flex gap-4 min-w-0 flex-1">
+                    {b.image_url && (
+                      <img src={b.image_url} alt={b.title} className="w-28 h-28 rounded-lg object-cover shrink-0 border border-border" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display text-xl font-bold text-foreground">{b.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{b.description}</p>
+                      {b.requirements && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Requirements</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.requirements}</p>
+                        </div>
+                      )}
+                      {b.deliverables && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Deliverables</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.deliverables}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-3 flex-wrap text-xs">
+                        {b.category && <Badge variant="secondary">{b.category}</Badge>}
+                        {b.city && <Badge variant="secondary">{b.city}</Badge>}
+                        {(b.niches ?? []).map((n) => <Badge key={n} variant="secondary">{n}</Badge>)}
+                        {b.min_followers ? <Badge variant="secondary">{b.min_followers.toLocaleString()}+ followers</Badge> : null}
+                        {b.budget ? <Badge className="bg-gold/20 text-gold border-gold/30">${b.budget}</Badge> : null}
+                        {b.deadline && <Badge variant="secondary">Due {new Date(b.deadline).toLocaleDateString()}</Badge>}
+                        <Badge>{b.status}</Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
