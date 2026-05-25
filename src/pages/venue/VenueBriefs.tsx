@@ -92,11 +92,14 @@ const VenueBriefs = () => {
       title: form.title,
       description: form.description,
       city: form.city || null,
+      category: form.category || null,
       niches: form.niches ? form.niches.split(",").map((s) => s.trim()).filter(Boolean) : [],
       min_followers: form.min_followers ? parseInt(form.min_followers) : 0,
       budget: form.budget ? parseFloat(form.budget) : 0,
       deliverables: form.deliverables || null,
+      requirements: form.requirements || null,
       deadline: form.deadline || null,
+      image_url: form.image_url || null,
     };
     const { error } = await supabase.from("venue_briefs").insert(payload);
     setSaving(false);
