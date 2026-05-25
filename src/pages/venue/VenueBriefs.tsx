@@ -138,6 +138,16 @@ const VenueBriefs = () => {
     loadAll();
   };
 
+  const uploadImage = async (file: File) => {
+    if (!venueId) return;
+    const ext = file.name.split(".").pop();
+    const path = `${venueId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("brief-images").upload(path, file, { upsert: true });
+    if (error) return toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    const { data } = supabase.storage.from("brief-images").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: data.publicUrl }));
+  };
+
   const remove = async (id: string) => {
     if (!confirm("Delete this brief?")) return;
     await supabase.from("venue_briefs").delete().eq("id", id);
