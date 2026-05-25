@@ -21,10 +21,13 @@ import AdminLocations from "./pages/admin/AdminLocations";
 import AdminBilling from "./pages/admin/AdminBilling";
 import AdminModeration from "./pages/admin/AdminModeration";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminChatbot from "./pages/admin/AdminChatbot";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminRedemptions from "./pages/admin/AdminRedemptions";
 import EventAttendeesPage from "./pages/EventAttendeesPage";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
+import VenueBriefs from "./pages/venue/VenueBriefs";
 import VenueDiscover from "./pages/venue/VenueDiscover";
 import VenueInvitations from "./pages/venue/VenueInvitations";
 import VenueBookings from "./pages/venue/VenueBookings";
@@ -86,10 +89,13 @@ const App = () => (
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling /></ProtectedRoute>} />
             <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDashboard /></ProtectedRoute>} />
             <Route path="/venue/offers" element={<ProtectedRoute allowedRoles={["venue"]}><VenueOffers /></ProtectedRoute>} />
+            <Route path="/venue/briefs" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefs /></ProtectedRoute>} />
             <Route path="/venue/discover" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDiscover /></ProtectedRoute>} />
             <Route path="/venue/invitations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueInvitations /></ProtectedRoute>} />
             <Route path="/venue/bookings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBookings /></ProtectedRoute>} />
