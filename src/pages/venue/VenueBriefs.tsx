@@ -23,6 +23,9 @@ type Brief = {
   deadline: string | null;
   status: string;
   created_at: string;
+  image_url: string | null;
+  requirements: string | null;
+  category: string | null;
 };
 
 type Match = {
@@ -34,7 +37,7 @@ type Match = {
   profile?: any;
 };
 
-const emptyForm = { title: "", description: "", city: "", niches: "", min_followers: "", budget: "", deliverables: "", deadline: "" };
+const emptyForm = { title: "", description: "", city: "", category: "", niches: "", min_followers: "", budget: "", deliverables: "", requirements: "", deadline: "", image_url: "" };
 
 const VenueBriefs = () => {
   const { user } = useAuth();
@@ -89,11 +92,14 @@ const VenueBriefs = () => {
       title: form.title,
       description: form.description,
       city: form.city || null,
+      category: form.category || null,
       niches: form.niches ? form.niches.split(",").map((s) => s.trim()).filter(Boolean) : [],
       min_followers: form.min_followers ? parseInt(form.min_followers) : 0,
       budget: form.budget ? parseFloat(form.budget) : 0,
       deliverables: form.deliverables || null,
+      requirements: form.requirements || null,
       deadline: form.deadline || null,
+      image_url: form.image_url || null,
     };
     const { error } = await supabase.from("venue_briefs").insert(payload);
     setSaving(false);
@@ -130,6 +136,16 @@ const VenueBriefs = () => {
     await supabase.from("brief_matches").update({ invited: true }).eq("id", match.id);
     toast({ title: "Invitation sent" });
     loadAll();
+  };
+
+  const uploadImage = async (file: File) => {
+    if (!venueId) return;
+    const ext = file.name.split(".").pop();
+    const path = `${venueId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("brief-images").upload(path, file, { upsert: true });
+    if (error) return toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    const { data } = supabase.storage.from("brief-images").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: data.publicUrl }));
   };
 
   const remove = async (id: string) => {
@@ -176,15 +192,34 @@ const VenueBriefs = () => {
             return (
               <div key={b.id} className="gradient-card rounded-xl border border-border p-5">
                 <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
-                  <div className="min-w-0">
-                    <h3 className="font-display text-xl font-bold text-foreground">{b.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{b.description}</p>
-                    <div className="flex gap-2 mt-3 flex-wrap text-xs">
-                      {b.city && <Badge variant="secondary">{b.city}</Badge>}
-                      {(b.niches ?? []).map((n) => <Badge key={n} variant="secondary">{n}</Badge>)}
-                      {b.min_followers ? <Badge variant="secondary">{b.min_followers.toLocaleString()}+ followers</Badge> : null}
-                      {b.budget ? <Badge className="bg-gold/20 text-gold border-gold/30">${b.budget}</Badge> : null}
-                      <Badge>{b.status}</Badge>
+                  <div className="flex gap-4 min-w-0 flex-1">
+                    {b.image_url && (
+                      <img src={b.image_url} alt={b.title} className="w-28 h-28 rounded-lg object-cover shrink-0 border border-border" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display text-xl font-bold text-foreground">{b.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{b.description}</p>
+                      {b.requirements && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Requirements</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.requirements}</p>
+                        </div>
+                      )}
+                      {b.deliverables && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">Deliverables</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{b.deliverables}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-3 flex-wrap text-xs">
+                        {b.category && <Badge variant="secondary">{b.category}</Badge>}
+                        {b.city && <Badge variant="secondary">{b.city}</Badge>}
+                        {(b.niches ?? []).map((n) => <Badge key={n} variant="secondary">{n}</Badge>)}
+                        {b.min_followers ? <Badge variant="secondary">{b.min_followers.toLocaleString()}+ followers</Badge> : null}
+                        {b.budget ? <Badge className="bg-gold/20 text-gold border-gold/30">${b.budget}</Badge> : null}
+                        {b.deadline && <Badge variant="secondary">Due {new Date(b.deadline).toLocaleDateString()}</Badge>}
+                        <Badge>{b.status}</Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
@@ -230,18 +265,33 @@ const VenueBriefs = () => {
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Post a Brief</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label>Title *</Label>
+                <Label>Cover image</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  {form.image_url && <img src={form.image_url} alt="" className="w-20 h-20 rounded-lg object-cover border border-border" />}
+                  <Input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
+                </div>
+              </div>
+              <div>
+                <Label>Title / Name *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Launch campaign for new rooftop lounge" />
               </div>
               <div>
                 <Label>Description *</Label>
                 <Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What you need, the vibe, the audience..." />
               </div>
+              <div>
+                <Label>Requirements</Label>
+                <Textarea rows={3} value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} placeholder="Must follow brand guidelines, tag @venue, use #hashtag, attend on opening night..." />
+              </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Category</Label>
+                  <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Dining, Nightlife, Spa..." />
+                </div>
                 <div>
                   <Label>City</Label>
                   <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Dubai" />
@@ -251,12 +301,12 @@ const VenueBriefs = () => {
                   <Input type="number" value={form.min_followers} onChange={(e) => setForm({ ...form, min_followers: e.target.value })} placeholder="10000" />
                 </div>
                 <div>
-                  <Label>Niches (comma separated)</Label>
-                  <Input value={form.niches} onChange={(e) => setForm({ ...form, niches: e.target.value })} placeholder="food, lifestyle" />
-                </div>
-                <div>
                   <Label>Budget ($)</Label>
                   <Input type="number" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} placeholder="500" />
+                </div>
+                <div className="col-span-2">
+                  <Label>Niches (comma separated)</Label>
+                  <Input value={form.niches} onChange={(e) => setForm({ ...form, niches: e.target.value })} placeholder="food, lifestyle" />
                 </div>
               </div>
               <div>
