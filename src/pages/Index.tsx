@@ -6,6 +6,8 @@ import VenuesSection from "@/components/public/VenuesSection";
 import OffersSection from "@/components/public/OffersSection";
 import TopInfluencersSection from "@/components/public/TopInfluencersSection";
 import PlatformSection from "@/components/public/PlatformSection";
+import ProgramsSection from "@/components/public/ProgramsSection";
+import TeamSection from "@/components/public/TeamSection";
 import CtaSection from "@/components/public/CtaSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
@@ -20,8 +22,10 @@ const Index = () => {
       <Navbar />
       <HeroSlider />
       <PlatformSection />
+      <ProgramsSection />
       <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
       <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <TeamSection />
       <TopInfluencersSection />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
       <CtaSection />

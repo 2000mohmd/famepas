@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
-import famepassLogo from "@/assets/famepass-logo.png";
 
 const Footer = () => (
   <footer className="py-16 bg-card/50 border-t border-border">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
         <div className="space-y-4">
-          <img src={famepassLogo} alt="FamePass — Exclusive Access" className="h-14 w-auto object-contain" />
+          <Link to="/" className="inline-flex items-center">
+            <span className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+              Fame<span className="gradient-text italic">Pass</span>
+            </span>
+          </Link>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
             Connecting influencers with premium venues for exclusive collaborations and unforgettable experiences.
           </p>
