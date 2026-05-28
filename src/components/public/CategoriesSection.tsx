@@ -165,10 +165,10 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
         <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 mb-14">
           <div className="max-w-2xl">
             <h3 className="font-display font-normal leading-[1.05] tracking-tight text-3xl sm:text-4xl">
-              {selected ? `${selected} Venues` : "Featured Venues"}
+              {selected ? `${selected} Venues` : <>All <span className="italic gradient-text">Venues</span></>}
             </h3>
             <p className="text-muted-foreground mt-3 text-lg leading-relaxed">
-              {selected ? `Handpicked ${selected} venues open to creator collaborations.` : "A curated selection of premium venues ready for collaboration."}
+              {selected ? `Handpicked ${selected} venues open to creator collaborations.` : "Browse every venue or pick a category above to narrow down."}
             </p>
           </div>
           <div className="relative w-full lg:w-80">
