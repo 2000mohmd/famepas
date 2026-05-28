@@ -129,7 +129,7 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
         </div>
 
         {/* Category pills with icons */}
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-14">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8">
           <button
             onClick={() => onSelect(null)}
             className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full border text-sm font-semibold transition-all ${
@@ -161,17 +161,8 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
           })}
         </div>
 
-        {/* Venues Grid (merged from Featured Venues) */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 mb-14">
-          <div className="max-w-2xl">
-            <h3 className="font-display font-normal leading-[1.05] tracking-tight text-3xl sm:text-4xl">
-              {selected ? `${selected} Venues` : <>All <span className="italic gradient-text">Venues</span></>}
-            </h3>
-            <p className="text-muted-foreground mt-3 text-lg leading-relaxed">
-              {selected ? `Handpicked ${selected} venues open to creator collaborations.` : "Browse every venue or pick a category above to narrow down."}
-            </p>
-          </div>
-          <div className="relative w-full lg:w-80">
+        <div className="flex justify-center mb-14">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or city..."
