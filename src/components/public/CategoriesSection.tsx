@@ -15,12 +15,10 @@ import {
   Building2,
   MapPin,
   ArrowRight,
-  Search,
 } from "lucide-react";
 import { useState, type ComponentType } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -57,7 +55,6 @@ const getIcon = (name: string) => {
 
 const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
   const [tab, setTab] = useState<"categories" | "campaigns">("categories");
-  const [search, setSearch] = useState("");
 
   const { data: categories } = useQuery({
     queryKey: ["public-categories"],
@@ -91,9 +88,7 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
   });
 
   const filtered = (venues?.filter((v) => {
-    const matchCat = !selected || v.category === selected;
-    const matchSearch = !search || v.name.toLowerCase().includes(search.toLowerCase()) || v.city?.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    return !selected || v.category === selected;
   }) ?? []).slice(0, 8);
 
   return (
@@ -129,7 +124,7 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
         </div>
 
         {/* Category pills with icons */}
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-14">
           <button
             onClick={() => onSelect(null)}
             className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full border text-sm font-semibold transition-all ${
@@ -159,18 +154,6 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
               </button>
             );
           })}
-        </div>
-
-        <div className="flex justify-center mb-14">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or city..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-11 glass border-border rounded-full h-12"
-            />
-          </div>
         </div>
 
         {filtered.length === 0 ? (
