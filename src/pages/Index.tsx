@@ -2,7 +2,6 @@ import { useState } from "react";
 import Navbar from "@/components/public/Navbar";
 import HeroSlider from "@/components/public/HeroSlider";
 import CategoriesSection from "@/components/public/CategoriesSection";
-import VenuesSection from "@/components/public/VenuesSection";
 import OffersSection from "@/components/public/OffersSection";
 import TopInfluencersSection from "@/components/public/TopInfluencersSection";
 import PlatformSection from "@/components/public/PlatformSection";
@@ -23,8 +22,11 @@ const Index = () => {
       <HeroSlider />
       <PlatformSection />
       <ProgramsSection />
-      <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
-      <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <CategoriesSection
+        selected={categoryFilter}
+        onSelect={setCategoryFilter}
+        onVenueClick={setSelectedVenueId}
+      />
       <TeamSection />
       <TopInfluencersSection />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
