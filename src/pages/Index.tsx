@@ -22,8 +22,10 @@ const Index = () => {
       <Navbar />
       <HeroSlider />
       <PlatformSection />
+      <ProgramsSection />
       <CategoriesSection selected={categoryFilter} onSelect={setCategoryFilter} />
       <VenuesSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      <TeamSection />
       <TopInfluencersSection />
       <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
       <CtaSection />
