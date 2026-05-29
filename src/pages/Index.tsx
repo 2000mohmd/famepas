@@ -7,11 +7,14 @@ import TopInfluencersSection from "@/components/public/TopInfluencersSection";
 import PlatformSection from "@/components/public/PlatformSection";
 import ProgramsSection from "@/components/public/ProgramsSection";
 import TeamSection from "@/components/public/TeamSection";
+import StatsSection from "@/components/public/StatsSection";
+import TestimonialsSection from "@/components/public/TestimonialsSection";
 import CtaSection from "@/components/public/CtaSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
 import ChatbotWidget from "@/components/public/ChatbotWidget";
 import { useReveal } from "@/hooks/useReveal";
+import { useMagnetic } from "@/hooks/useMagnetic";
 
 const Divider = () => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,11 +26,14 @@ const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   useReveal();
+  useMagnetic();
 
   return (
     <div className="min-h-screen bg-background relative">
       <Navbar />
       <HeroSlider />
+      <Divider />
+      <div className="reveal"><StatsSection /></div>
       <Divider />
       <div className="reveal"><PlatformSection /></div>
       <Divider />
@@ -40,6 +46,8 @@ const Index = () => {
           onVenueClick={setSelectedVenueId}
         />
       </div>
+      <Divider />
+      <div className="reveal"><TestimonialsSection /></div>
       <Divider />
       <div className="reveal"><TeamSection /></div>
       <Divider />

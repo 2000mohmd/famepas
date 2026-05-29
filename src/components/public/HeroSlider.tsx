@@ -46,6 +46,7 @@ const HeroSlider = () => {
             <Button
               size="lg"
               className="gradient-gold text-accent-foreground hover:opacity-95 rounded-full px-10 h-14 text-base font-semibold btn-lift group"
+              data-magnetic
               asChild
             >
               <Link to="/venues">

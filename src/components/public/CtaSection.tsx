@@ -17,7 +17,7 @@ const CtaSection = () => (
             Join FamePass and unlock a curated network of venues and creators built on trust, transparency, and results.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-full px-10 h-14 text-base font-semibold shadow-xl shadow-primary/30">
+            <Button asChild size="lg" data-magnetic className="gradient-gold text-accent-foreground hover:opacity-95 rounded-full px-10 h-14 text-base font-semibold btn-lift">
               <Link to="/login">Get Started <ArrowRight className="w-4 h-4 ml-2" /></Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-full px-10 h-14 text-base border-border glass hover:border-gold/40">
