@@ -45,7 +45,7 @@ const VenuesSection = ({ categoryFilter, onVenueClick }: Props) => {
   }) ?? []).slice(0, 8);
 
   return (
-    <section id="venues" className="py-24 relative">
+    <section id="venues" className="py-32 relative">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 mb-14">
           <div className="max-w-2xl">
