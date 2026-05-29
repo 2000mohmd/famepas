@@ -25,29 +25,33 @@ const HeroSlider = () => {
   const featuredImg = heroInfluencer;
 
   return (
-    <section className="relative overflow-hidden pt-28 pb-20 lg:pb-28">
-      {/* Ambient glows */}
-      <div className="absolute top-0 -left-32 w-[500px] h-[500px] rounded-full bg-primary/20 blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-purple-glow/15 blur-[160px] pointer-events-none" />
+    <section className="relative overflow-hidden pt-36 pb-28 lg:pb-40">
+      {/* Ambient glows — softer, single accent */}
+      <div className="absolute top-10 -left-32 w-[520px] h-[520px] rounded-full bg-primary/10 blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[640px] h-[640px] rounded-full bg-purple-glow/10 blur-[180px] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-16 lg:gap-12 items-center">
         {/* LEFT — editorial headline */}
-        <div className="space-y-8">
-          <h1 className="font-display font-normal leading-[1.02] tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
+        <div className="space-y-10">
+          <p className="text-gold text-xs font-semibold tracking-[0.3em] uppercase">— FamePass Marketplace</p>
+          <h1 className="font-display font-normal leading-[0.98] tracking-[-0.03em] text-5xl sm:text-6xl lg:text-7xl xl:text-[6rem]">
             The Premium Creator <span className="italic gradient-text font-normal">Marketplace</span> for Exclusive Venue Partnerships
           </h1>
 
-          <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+          <p className="text-lg text-muted-foreground/90 max-w-md leading-[1.75]">
             Ditch the gamble with creators and start building with FamePass, the system that takes the chaos out of the campaign.
           </p>
 
           <div className="pt-2">
             <Button
               size="lg"
-              className="gradient-gold text-accent-foreground hover:opacity-90 rounded-full px-10 h-14 text-base font-semibold shadow-xl shadow-primary/30"
+              className="gradient-gold text-accent-foreground hover:opacity-95 rounded-full px-10 h-14 text-base font-semibold btn-lift group"
               asChild
             >
-              <Link to="/venues">Discover Venues</Link>
+              <Link to="/venues">
+                Discover Venues
+                <span className="inline-block transition-transform group-hover:translate-x-1 ml-1">→</span>
+              </Link>
             </Button>
           </div>
         </div>
