@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 const CtaSection = () => (
-  <section className="py-32 relative">
+  <section className="py-16 relative">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="relative overflow-hidden rounded-[2.5rem] gradient-purple p-12 lg:p-20 text-center glow-purple">
         <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-gold/20 blur-3xl pointer-events-none" />

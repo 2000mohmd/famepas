@@ -25,7 +25,7 @@ const HeroSlider = () => {
   const featuredImg = heroInfluencer;
 
   return (
-    <section className="relative overflow-hidden pt-36 pb-28 lg:pb-40">
+    <section className="relative overflow-hidden pt-24 pb-16 lg:pb-20">
       {/* Ambient glows — softer, single accent */}
       <div className="absolute top-10 -left-32 w-[520px] h-[520px] rounded-full bg-primary/10 blur-[160px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[640px] h-[640px] rounded-full bg-purple-glow/10 blur-[180px] pointer-events-none" />
