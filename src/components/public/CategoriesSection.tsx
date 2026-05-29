@@ -92,7 +92,7 @@ const CategoriesSection = ({ selected, onSelect, onVenueClick }: Props) => {
   }) ?? []).slice(0, 8);
 
   return (
-    <section id="categories" className="py-24 relative">
+    <section id="categories" className="py-32 relative">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center max-w-3xl mx-auto mb-10">

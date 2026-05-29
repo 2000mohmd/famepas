@@ -16,7 +16,7 @@ const TopInfluencersSection = () => {
   if (!influencers || influencers.length === 0) return null;
 
   return (
-    <section className="py-24 relative">
+    <section className="py-32 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mb-14">
           <h2 className="font-display font-normal leading-[1.05] tracking-tight text-4xl sm:text-5xl lg:text-6xl">

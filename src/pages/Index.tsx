@@ -11,26 +11,44 @@ import CtaSection from "@/components/public/CtaSection";
 import VenueOffersModal from "@/components/public/VenueOffersModal";
 import Footer from "@/components/public/Footer";
 import ChatbotWidget from "@/components/public/ChatbotWidget";
+import { useReveal } from "@/hooks/useReveal";
+
+const Divider = () => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="hairline" />
+  </div>
+);
 
 const Index = () => {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+  useReveal();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Navbar />
       <HeroSlider />
-      <PlatformSection />
-      <ProgramsSection />
-      <CategoriesSection
-        selected={categoryFilter}
-        onSelect={setCategoryFilter}
-        onVenueClick={setSelectedVenueId}
-      />
-      <TeamSection />
-      <TopInfluencersSection />
-      <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
-      <CtaSection />
+      <Divider />
+      <div className="reveal"><PlatformSection /></div>
+      <Divider />
+      <div className="reveal"><ProgramsSection /></div>
+      <Divider />
+      <div className="reveal">
+        <CategoriesSection
+          selected={categoryFilter}
+          onSelect={setCategoryFilter}
+          onVenueClick={setSelectedVenueId}
+        />
+      </div>
+      <Divider />
+      <div className="reveal"><TeamSection /></div>
+      <Divider />
+      <div className="reveal"><TopInfluencersSection /></div>
+      <Divider />
+      <div className="reveal">
+        <OffersSection categoryFilter={categoryFilter} onVenueClick={setSelectedVenueId} />
+      </div>
+      <div className="reveal"><CtaSection /></div>
       <Footer />
       <VenueOffersModal venueId={selectedVenueId} onClose={() => setSelectedVenueId(null)} />
       <ChatbotWidget />
