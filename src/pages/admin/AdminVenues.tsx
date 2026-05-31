@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Eye } from "lucide-react";
+import VenueDetailDialog from "@/components/admin/VenueDetailDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,8 @@ const AdminVenues = () => {
   const [newVenue, setNewVenue] = useState({ name: "", category: "", city: "", email: "", password: "" });
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchVenues = async () => {
@@ -271,6 +274,9 @@ const AdminVenues = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-1 flex-wrap">
+                        <Button variant="ghost" size="sm" onClick={() => { setDetailId(venue.id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View details">
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         {venue.approval_status === "pending" && (
                           <>
                             <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="text-success hover:bg-success/10 h-7 text-xs">Approve</Button>
@@ -307,6 +313,14 @@ const AdminVenues = () => {
             </tbody>
           </table>
         </div>
+
+        <VenueDetailDialog
+          venueId={detailId}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          onApprove={(id) => setApprovalStatus(id, "approved")}
+          onReject={(id) => setApprovalStatus(id, "rejected")}
+        />
       </div>
     </DashboardLayout>
   );

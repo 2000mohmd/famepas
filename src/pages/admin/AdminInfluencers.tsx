@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X } from "lucide-react";
+import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X, Eye } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import InfluencerDetailDialog from "@/components/admin/InfluencerDetailDialog";
 
 interface Influencer {
   user_id: string;
@@ -41,6 +42,8 @@ const AdminInfluencers = () => {
   const [warningOpen, setWarningOpen] = useState(false);
   const [warningTarget, setWarningTarget] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState("");
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchInfluencers = async () => {
@@ -235,6 +238,9 @@ const AdminInfluencers = () => {
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4">
                       <div className="flex gap-1 flex-wrap">
+                        <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View profile">
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         {inf.approval_status === "pending" && (
                           <>
                             <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="text-success hover:bg-success/10 h-7 px-2" title="Approve">
@@ -307,6 +313,14 @@ const AdminInfluencers = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <InfluencerDetailDialog
+          userId={detailUserId}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          onApprove={(id) => setApprovalStatus(id, "approved")}
+          onReject={(id) => setApprovalStatus(id, "rejected")}
+        />
       </div>
     </DashboardLayout>
   );
