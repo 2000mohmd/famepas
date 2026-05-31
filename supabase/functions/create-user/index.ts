@@ -27,22 +27,34 @@ serve(async (req) => {
 
     const { email, password, role, venue_name, venue_category, venue_city, full_name, permissions } = await req.json();
 
+    // Pass role + venue fields in user_metadata so the handle_new_user trigger
+    // assigns the correct role and creates the profile/venue rows. Admins are
+    // auto-approved by the trigger; we activate venues below.
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: full_name || (venue_name ? `${venue_name} Owner` : email) },
+      user_metadata: {
+        full_name: full_name || (venue_name ? `${venue_name} Owner` : email),
+        role,
+        ...(venue_name ? { venue_name, venue_category: venue_category || "dining", venue_city: venue_city || null } : {}),
+      },
     });
     if (createError) return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const userId = newUser.user.id;
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
+
+    // Admin-created accounts skip the approval queue.
+    await supabaseAdmin.from("profiles").update({ approval_status: "approved" }).eq("user_id", userId);
 
     let venue = null;
     if (role === "venue" && venue_name) {
-      const { data: venueData } = await supabaseAdmin.from("venues").insert({
-        name: venue_name, category: venue_category || "dining", city: venue_city || null, email, owner_id: userId,
-      }).select().single();
+      const { data: venueData } = await supabaseAdmin
+        .from("venues")
+        .update({ approval_status: "approved", is_active: true })
+        .eq("owner_id", userId)
+        .select()
+        .maybeSingle();
       venue = venueData;
     }
 
