@@ -75,7 +75,7 @@ const VenueCampaignCreate = () => {
       setCategories((catRes.data as any) ?? []);
 
       if (editing && id) {
-        const { data: c } = await supabase.from("campaigns").select("*").eq("id", id).maybeSingle();
+        const { data: c }: any = await sb.from("campaigns").select("*").eq("id", id).maybeSingle();
         if (c) {
           setTitle(c.title ?? "");
           setDescription(c.description ?? "");
