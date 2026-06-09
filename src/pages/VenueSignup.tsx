@@ -42,6 +42,15 @@ const DEFAULT_CATEGORIES = [
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
+const getPasswordChecks = (value: string) => ({
+  length: value.length >= 8,
+  uppercase: /[A-Z]/.test(value),
+  lowercase: /[a-z]/.test(value),
+  number: /\d/.test(value),
+});
+
+const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
+
 /* ---------- shared light-mode UI primitives ---------- */
 
 const Page = ({ children }: { children: React.ReactNode }) => (
