@@ -174,7 +174,7 @@ const Login = () => {
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signup" onClick={() => navigate("/signup/business")}>Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
@@ -237,6 +237,13 @@ const Login = () => {
                   Sign in with Apple
                 </Button>
               </div>
+
+              <p className="mt-5 text-center text-sm text-muted-foreground">
+                New business?{" "}
+                <button type="button" onClick={() => navigate("/signup/business")} className="font-semibold text-gold hover:underline">
+                  Create a venue account
+                </button>
+              </p>
             </TabsContent>
 
             <TabsContent value="signup">
