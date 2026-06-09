@@ -160,9 +160,10 @@ const VenueCampaignCreate = () => {
       is_draft: mode === "draft",
       status: mode === "live" ? (startDate && new Date(startDate) > new Date() ? "scheduled" : "active") : "scheduled",
     };
+    const sb: any = supabase;
     const { error } = editing
-      ? await supabase.from("campaigns").update(payload).eq("id", id!)
-      : await supabase.from("campaigns").insert(payload);
+      ? await sb.from("campaigns").update(payload).eq("id", id!)
+      : await sb.from("campaigns").insert(payload);
     setSaving(false);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: mode === "draft" ? "Saved to drafts" : "Campaign is live" });
