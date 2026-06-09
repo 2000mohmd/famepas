@@ -183,3 +183,113 @@
     transform: translateY(0);
   }
 }
+
+/* ============================================================
+   Dashboard light theme (scoped) — Joli-inspired
+   Applied via <div class="dashboard-shell"> wrapper on dashboards.
+   Public website keeps its dark cinematic theme.
+   ============================================================ */
+.dashboard-shell {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 8%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 8%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 8%;
+
+  --primary: 340 82% 52%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 18 100% 97%;
+  --secondary-foreground: 240 10% 12%;
+
+  --muted: 30 30% 96%;
+  --muted-foreground: 240 5% 45%;
+
+  --accent: 340 82% 52%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 75% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 30 15% 90%;
+  --input: 30 15% 90%;
+  --ring: 340 82% 52%;
+
+  --radius: 0.75rem;
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 240 8% 28%;
+  --sidebar-primary: 340 82% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 18 100% 97%;
+  --sidebar-accent-foreground: 340 82% 52%;
+  --sidebar-border: 30 15% 92%;
+  --sidebar-ring: 340 82% 52%;
+
+  /* Brand token overrides so existing dashboard pages render light/pink */
+  --gold: 340 82% 52%;
+  --gold-light: 340 82% 62%;
+  --gold-dark: 340 75% 42%;
+  --success: 142 55% 42%;
+  --warning: 38 92% 50%;
+
+  background-color: hsl(30 30% 98%);
+  color: hsl(240 10% 8%);
+  background-image: none;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Remove film grain & remap typography for dashboards */
+.dashboard-shell h1,
+.dashboard-shell h2,
+.dashboard-shell h3,
+.dashboard-shell h4,
+.dashboard-shell h5,
+.dashboard-shell h6 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Remap legacy utility classes used across dashboard pages */
+.dashboard-shell .gradient-card {
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(30 15% 92%);
+  box-shadow: 0 1px 2px hsl(240 10% 8% / 0.04);
+}
+.dashboard-shell .gradient-purple {
+  background: linear-gradient(135deg, hsl(340 82% 52%), hsl(340 75% 42%));
+  color: hsl(0 0% 100%);
+}
+.dashboard-shell .gradient-gold {
+  background: linear-gradient(135deg, hsl(340 82% 56%), hsl(340 75% 42%));
+  color: hsl(0 0% 100%);
+}
+.dashboard-shell .gradient-text {
+  background: linear-gradient(135deg, hsl(340 82% 52%), hsl(340 70% 40%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dashboard-shell .text-gold { color: hsl(340 82% 52%); }
+.dashboard-shell .border-gold { border-color: hsl(340 82% 52% / 0.4); }
+.dashboard-shell .glow-purple,
+.dashboard-shell .glow-gold { box-shadow: 0 8px 24px -12px hsl(340 82% 52% / 0.35); }
+.dashboard-shell .glass {
+  background: hsl(0 0% 100% / 0.85);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid hsl(30 15% 92%);
+}
+.dashboard-shell .premium-card {
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(30 15% 92%);
+  box-shadow: 0 1px 2px hsl(240 10% 8% / 0.04);
+}
+.dashboard-shell .premium-card::before { display: none; }
+.dashboard-shell .premium-card:hover {
+  border-color: hsl(340 82% 52% / 0.35);
+  box-shadow: 0 8px 24px -12px hsl(340 82% 52% / 0.18);
+}
