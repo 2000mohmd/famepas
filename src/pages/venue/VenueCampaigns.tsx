@@ -180,37 +180,6 @@ const VenueCampaigns = () => {
         )}
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Campaign{modalDate && ` — ${new Date(modalDate).toLocaleDateString()}`}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Title</Label>
-              <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Summer launch" />
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Start date</Label>
-                <Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
-              </div>
-              <div>
-                <Label>End date</Label>
-                <Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button onClick={createCampaign} style={{ background: "#e8547a" }} className="text-white">Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
