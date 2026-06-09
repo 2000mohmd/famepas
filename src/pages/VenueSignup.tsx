@@ -316,7 +316,7 @@ const VenueSignup = () => {
             <Field label="Email">
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
-            <Field label="Password" hint="At least 6 characters">
+            <Field label="Password" hint="Use a stronger password now so you do not have to come back later">
               <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
             </Field>
             <div className="grid grid-cols-2 gap-2 mb-5 text-xs text-slate-600">
