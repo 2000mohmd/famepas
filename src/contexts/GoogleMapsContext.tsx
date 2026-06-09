@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useJsApiLoader } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 
+const GOOGLE_MAPS_LIBRARIES = ["places"] as const;
+
 interface GoogleMapsContextType {
   isLoaded: boolean;
   apiKey: string | null;
@@ -15,6 +17,7 @@ const MapsLoader = ({ apiKey, children }: { apiKey: string; children: ReactNode 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: apiKey,
     id: "google-map-script",
+    libraries: GOOGLE_MAPS_LIBRARIES as any,
   });
 
   return (
