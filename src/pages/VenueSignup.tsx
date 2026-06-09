@@ -21,6 +21,13 @@ type Step =
   | "location-details"
   | "done";
 
+type PlaceSuggestion = {
+  placeId: string;
+  mainText: string;
+  secondaryText: string;
+  description: string;
+};
+
 const HEAR_OPTIONS = [
   "Instagram", "TikTok", "LinkedIn", "Google/Bing etc.",
   "Podcast", "Friend/Colleague", "FamePass Influencer",
