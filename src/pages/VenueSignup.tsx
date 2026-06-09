@@ -167,9 +167,7 @@ const VenueSignup = () => {
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [locationEmail, setLocationEmail] = useState("");
-  const [hours, setHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>(
-    Object.fromEntries(DAYS.map(d => [d, { open: "10:00", close: "18:00", closed: false }])) as any
-  );
+  const [hours, setHours] = useState<OpeningHours>(createDefaultHours);
   const [editHours, setEditHours] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -177,36 +175,36 @@ const VenueSignup = () => {
   // load categories from db (fallback to defaults)
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
-      if (data && data.length) setCategories(data.map((c: any) => c.name));
+      if (data && data.length) setCategories(data.map((c) => c.name));
     });
   }, []);
 
   // google places autocomplete
-  const autocompleteSession = useRef<any>(null);
+  const autocompleteSession = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   useEffect(() => {
-    if (isLoaded && (window as any).google?.maps?.places && !autocompleteSession.current) {
+    if (isLoaded && window.google?.maps?.places && !autocompleteSession.current) {
       autocompleteSession.current = new google.maps.places.AutocompleteSessionToken();
     }
   }, [isLoaded]);
 
   useEffect(() => {
     if (addressQuery.trim().length < 3) { setSuggestions([]); setLocationSearchStatus(""); return; }
-    if (!isLoaded || !(window as any).google?.maps?.places?.AutocompleteSuggestion) {
+    if (!isLoaded || !window.google?.maps?.places?.AutocompleteSuggestion) {
       setLocationSearchStatus("Address search is still loading…");
       return;
     }
     const t = setTimeout(() => {
       setLocationSearchStatus("Searching…");
-      (google.maps.places as any).AutocompleteSuggestion.fetchAutocompleteSuggestions({
+      google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: addressQuery.trim(),
         sessionToken: autocompleteSession.current,
-      }).then(({ suggestions: results }: any) => {
-        const mapped = (results ?? []).map((item: any) => {
+      }).then(({ suggestions: results }) => {
+        const mapped = (results ?? []).map((item) => {
           const prediction = item.placePrediction;
           return {
-            placeId: prediction?.placeId ?? prediction?.place_id ?? "",
-            mainText: prediction?.mainText?.text ?? prediction?.structuredFormat?.mainText?.text ?? prediction?.text?.text ?? "Location",
-            secondaryText: prediction?.secondaryText?.text ?? prediction?.structuredFormat?.secondaryText?.text ?? "",
+            placeId: prediction?.placeId ?? "",
+            mainText: prediction?.mainText?.text ?? prediction?.text?.text ?? "Location",
+            secondaryText: prediction?.secondaryText?.text ?? "",
             description: prediction?.text?.text ?? [prediction?.mainText?.text, prediction?.secondaryText?.text].filter(Boolean).join(", "),
           };
         }).filter((item: PlaceSuggestion) => item.placeId || item.description);
