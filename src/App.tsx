@@ -35,6 +35,7 @@ import VenueRedemptions from "./pages/venue/VenueRedemptions";
 import VenueReports from "./pages/venue/VenueReports";
 import VenueContent from "./pages/venue/VenueContent";
 import VenueCampaigns from "./pages/venue/VenueCampaigns";
+import VenueCampaignCreate from "./pages/venue/VenueCampaignCreate";
 import VenueLocations from "./pages/venue/VenueLocations";
 import AdminCulturalEvents from "./pages/admin/AdminCulturalEvents";
 
