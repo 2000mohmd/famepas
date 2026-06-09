@@ -277,10 +277,10 @@ const VenueCampaignCreate = () => {
               <Switch checked={inviteOnly} onCheckedChange={setInviteOnly} />
             </div>
           </div>
-        </Card>
+        </SectionCard>
 
         {/* INSTAGRAM OFFERS */}
-        <Card title="Instagram Offers" action={<button className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
+        <SectionCard title="Instagram Offers" action={<button className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
               <Instagram className="w-4 h-4 text-white" />
@@ -352,7 +352,7 @@ const VenueCampaignCreate = () => {
               <Checkbox checked={allowPostOrReel} onCheckedChange={(v) => setAllowPostOrReel(!!v)} /> Allow Instagram Post or Instagram Reel
             </label>
           </div>
-        </Card>
+        </SectionCard>
 
         {/* TIKTOK */}
         {!tkEnabled ? (
@@ -360,7 +360,7 @@ const VenueCampaignCreate = () => {
             <Plus className="w-4 h-4" /> Add TikTok Offers
           </button>
         ) : (
-          <Card title="TikTok Offers" action={<button onClick={() => { setTkEnabled(false); setTkOffers([]); }} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
+          <SectionCard title="TikTok Offers" action={<button onClick={() => { setTkEnabled(false); setTkOffers([]); }} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-md bg-black flex items-center justify-center"><Music2 className="w-4 h-4 text-white" /></div>
               <div>
@@ -383,11 +383,11 @@ const VenueCampaignCreate = () => {
             <Button variant="outline" size="sm" onClick={() => setTkOffers([...tkOffers, { min_followers: "", max_followers: "", max_guests: "1", offer: "" }])}>
               + Add Offer
             </Button>
-          </Card>
+          </SectionCard>
         )}
 
         {/* AVAILABILITY */}
-        <Card title="Availability Options">
+        <SectionCard title="Availability Options">
           <Label className="text-sm font-semibold">Availability Type</Label>
           <div className="grid grid-cols-3 gap-3 mt-3 mb-5">
             {[
@@ -474,10 +474,10 @@ const VenueCampaignCreate = () => {
             </div>
             <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
           </div>
-        </Card>
+        </SectionCard>
 
         {/* APPROVAL */}
-        <Card title="Approval Settings">
+        <SectionCard title="Approval Settings">
           <Label className="text-sm font-semibold">Approval Type</Label>
           <p className="text-xs text-muted-foreground mb-3">Choose how you'd like to approve influencer applications</p>
           <div className="grid grid-cols-3 gap-3 mb-5">
@@ -510,7 +510,7 @@ const VenueCampaignCreate = () => {
             </div>
             <Switch checked={autoApproveTop} onCheckedChange={setAutoApproveTop} />
           </div>
-        </Card>
+        </SectionCard>
       </div>
 
       {/* Sticky footer */}
