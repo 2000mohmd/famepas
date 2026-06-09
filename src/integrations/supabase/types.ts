@@ -227,43 +227,106 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          age_limit: number | null
+          age_restricted: boolean | null
+          allow_post_or_reel: boolean | null
+          approval_type: string | null
+          auto_approve_top: boolean | null
+          availability_type: string | null
+          available_days: string[] | null
+          booking_limits: boolean | null
+          content_focus: string | null
           cover_image_url: string | null
+          cover_images: string[] | null
+          cover_video_url: string | null
           created_at: string
+          deliverables: Json | null
           description: string | null
+          dietary_options: string[] | null
           end_date: string | null
+          handles: string[] | null
           id: string
+          instagram_offers: Json | null
+          invite_only: boolean | null
+          is_draft: boolean | null
           location_id: string | null
+          require_phone: boolean | null
+          required_days_notice: number | null
           start_date: string | null
           status: string
+          tiktok_offers: Json | null
           title: string
           updated_at: string
           venue_id: string
+          visible_before_start: boolean | null
         }
         Insert: {
+          age_limit?: number | null
+          age_restricted?: boolean | null
+          allow_post_or_reel?: boolean | null
+          approval_type?: string | null
+          auto_approve_top?: boolean | null
+          availability_type?: string | null
+          available_days?: string[] | null
+          booking_limits?: boolean | null
+          content_focus?: string | null
           cover_image_url?: string | null
+          cover_images?: string[] | null
+          cover_video_url?: string | null
           created_at?: string
+          deliverables?: Json | null
           description?: string | null
+          dietary_options?: string[] | null
           end_date?: string | null
+          handles?: string[] | null
           id?: string
+          instagram_offers?: Json | null
+          invite_only?: boolean | null
+          is_draft?: boolean | null
           location_id?: string | null
+          require_phone?: boolean | null
+          required_days_notice?: number | null
           start_date?: string | null
           status?: string
+          tiktok_offers?: Json | null
           title: string
           updated_at?: string
           venue_id: string
+          visible_before_start?: boolean | null
         }
         Update: {
+          age_limit?: number | null
+          age_restricted?: boolean | null
+          allow_post_or_reel?: boolean | null
+          approval_type?: string | null
+          auto_approve_top?: boolean | null
+          availability_type?: string | null
+          available_days?: string[] | null
+          booking_limits?: boolean | null
+          content_focus?: string | null
           cover_image_url?: string | null
+          cover_images?: string[] | null
+          cover_video_url?: string | null
           created_at?: string
+          deliverables?: Json | null
           description?: string | null
+          dietary_options?: string[] | null
           end_date?: string | null
+          handles?: string[] | null
           id?: string
+          instagram_offers?: Json | null
+          invite_only?: boolean | null
+          is_draft?: boolean | null
           location_id?: string | null
+          require_phone?: boolean | null
+          required_days_notice?: number | null
           start_date?: string | null
           status?: string
+          tiktok_offers?: Json | null
           title?: string
           updated_at?: string
           venue_id?: string
+          visible_before_start?: boolean | null
         }
         Relationships: [
           {

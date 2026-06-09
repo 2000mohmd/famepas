@@ -35,6 +35,7 @@ import VenueRedemptions from "./pages/venue/VenueRedemptions";
 import VenueReports from "./pages/venue/VenueReports";
 import VenueContent from "./pages/venue/VenueContent";
 import VenueCampaigns from "./pages/venue/VenueCampaigns";
+import VenueCampaignCreate from "./pages/venue/VenueCampaignCreate";
 import VenueLocations from "./pages/venue/VenueLocations";
 import AdminCulturalEvents from "./pages/admin/AdminCulturalEvents";
 
@@ -103,6 +104,8 @@ const App = () => (
             <Route path="/venue/dashboard" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDashboard /></ProtectedRoute>} />
             <Route path="/venue/content" element={<ProtectedRoute allowedRoles={["venue"]}><VenueContent /></ProtectedRoute>} />
             <Route path="/venue/campaigns" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaigns /></ProtectedRoute>} />
+            <Route path="/venue/campaigns/new" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaignCreate /></ProtectedRoute>} />
+            <Route path="/venue/campaigns/:id/edit" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaignCreate /></ProtectedRoute>} />
             <Route path="/venue/locations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueLocations /></ProtectedRoute>} />
             <Route path="/venue/offers" element={<ProtectedRoute allowedRoles={["venue"]}><VenueOffers /></ProtectedRoute>} />
             <Route path="/venue/briefs" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefs /></ProtectedRoute>} />
