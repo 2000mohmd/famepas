@@ -192,7 +192,7 @@ const VenueSignup = () => {
     }
     const t = setTimeout(() => {
       setLocationSearchStatus("Searching…");
-      google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+      (google.maps.places as any).AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: addressQuery.trim(),
         sessionToken: autocompleteSession.current,
       }).then(({ suggestions: results }: any) => {
@@ -219,6 +219,9 @@ const VenueSignup = () => {
     const order: Step[] = ["account","details","hear","brand","location-search","location-details"];
     return order.indexOf(step);
   }, [step]);
+
+  const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
+  const passwordReady = useMemo(() => isStrongPassword(password), [password]);
 
   const toggle = (arr: string[], v: string, setter: (a: string[]) => void) => {
     setter(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
