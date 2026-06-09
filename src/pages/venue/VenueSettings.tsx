@@ -5,423 +5,190 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Info, Bell, Instagram } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, ImagePlus, X } from "lucide-react";
-import TwoFactorToggle from "@/components/TwoFactorToggle";
+
+type Tab = "integrations" | "team" | "profile" | "messaging" | "billing" | "compliance";
+
+const tabs: { key: Tab; label: string }[] = [
+  { key: "integrations", label: "Integrations" },
+  { key: "team", label: "Team" },
+  { key: "profile", label: "Profile" },
+  { key: "messaging", label: "Messaging" },
+  { key: "billing", label: "Billing" },
+  { key: "compliance", label: "Compliance" },
+];
 
 const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [tab, setTab] = useState<Tab>("integrations");
+  const [venueId, setVenueId] = useState<string | null>(null);
   const [venue, setVenue] = useState<any>(null);
-  const [organization, setOrganization] = useState<any>(null);
-  const [brand, setBrand] = useState<any>(null);
-  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
-  const [form, setForm] = useState({
-    name: "", description: "", category: "dining", address: "", city: "", country: "",
-    phone: "", email: "", website: "", latitude: "", longitude: "",
-    logo_url: "", cover_image_url: "",
-    venue_type: "physical", address_line1: "", address_line2: "", zip_code: "",
-    timezone: "", contact_person_name: "", contact_phone: "", whatsapp_phone: "",
-    organization_name: "", organization_legal_name: "", organization_tax_id: "", organization_country: "",
-    brand_name: "", brand_description: "",
-  });
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [locations, setLocations] = useState<{ id: string; city: string; country: string | null }[]>([]);
+  const [socials, setSocials] = useState<any[]>([]);
+  const [bookingInt, setBookingInt] = useState<any[]>([]);
+  const [igHandle, setIgHandle] = useState("");
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      const [catRes, locRes] = await Promise.all([
-        supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("service_locations").select("id, city, country").eq("is_active", true).order("city"),
-      ]);
-      setCategories((catRes.data as any[]) ?? []);
-      setLocations((locRes.data as any[]) ?? []);
-    };
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
+  const load = async () => {
     if (!user) return;
-    const fetchAll = async () => {
-      const { data } = await supabase.from("venues").select("*").eq("owner_id", user.id).maybeSingle();
-      if (data) {
-        setVenue(data);
-        const v: any = data;
+    const { data: v } = await supabase.from("venues").select("*").eq("owner_id", user.id).maybeSingle();
+    if (!v) return;
+    setVenue(v);
+    setVenueId(v.id);
+    const [sRes, bRes] = await Promise.all([
+      supabase.from("social_integrations").select("*").eq("venue_id", v.id),
+      supabase.from("booking_platform_integrations").select("*").eq("venue_id", v.id),
+    ]);
+    setSocials(sRes.data ?? []);
+    setBookingInt(bRes.data ?? []);
+  };
+  useEffect(() => { load(); }, [user]);
 
-        // Load brand + organization
-        let brandRow: any = null; let orgRow: any = null;
-        if (v.brand_id) {
-          const { data: b } = await supabase.from("brands").select("*").eq("id", v.brand_id).maybeSingle();
-          brandRow = b;
-          if (b?.organization_id) {
-            const { data: o } = await supabase.from("organizations").select("*").eq("id", b.organization_id).maybeSingle();
-            orgRow = o;
-          }
-        }
-        setBrand(brandRow);
-        setOrganization(orgRow);
+  const findSocial = (p: string) => socials.find(s => s.platform === p);
+  const findBooking = (p: string) => bookingInt.find(b => b.platform === p);
 
-        // Load photos
-        const { data: ph } = await supabase.from("venue_photos").select("id, url").eq("venue_id", v.id).order("position");
-        setPhotos((ph as any[]) ?? []);
-
-        setForm({
-          name: v.name || "", description: v.description || "", category: v.category || "dining",
-          address: v.address || "", city: v.city || "", country: v.country || "",
-          phone: v.phone || "", email: v.email || "", website: v.website || "",
-          latitude: v.latitude?.toString() || "", longitude: v.longitude?.toString() || "",
-          logo_url: v.logo_url || "", cover_image_url: v.cover_image_url || "",
-          venue_type: v.venue_type || "physical",
-          address_line1: v.address_line1 || "", address_line2: v.address_line2 || "",
-          zip_code: v.zip_code || "", timezone: v.timezone || "",
-          contact_person_name: v.contact_person_name || "",
-          contact_phone: v.contact_phone || "", whatsapp_phone: v.whatsapp_phone || "",
-          organization_name: orgRow?.name || "",
-          organization_legal_name: orgRow?.legal_name || "",
-          organization_tax_id: orgRow?.tax_id || "",
-          organization_country: orgRow?.country || "",
-          brand_name: brandRow?.name || "",
-          brand_description: brandRow?.description || "",
-        });
-      }
-    };
-    fetchAll();
-  }, [user]);
-
-  const handleCityChange = (city: string) => {
-    const loc = locations.find(l => l.city === city);
-    setForm(f => ({ ...f, city, country: loc?.country || f.country }));
+  const connectSocial = async (platform: "instagram" | "tiktok", handle: string) => {
+    if (!venueId || !handle) return;
+    const { error } = await supabase.from("social_integrations").upsert({
+      venue_id: venueId, platform, handle, status: "connected",
+    }, { onConflict: "venue_id,platform" });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: `${platform} connected` }); load(); }
   };
 
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast({ title: "Geolocation not supported", variant: "destructive" });
-      return;
+  const disconnectSocial = async (platform: string) => {
+    if (!venueId) return;
+    await supabase.from("social_integrations").delete().eq("venue_id", venueId).eq("platform", platform);
+    toast({ title: "Disconnected" }); load();
+  };
+
+  const toggleNotify = async (platform: string) => {
+    if (!venueId) return;
+    const existing = findBooking(platform);
+    if (existing?.status === "notify_me") {
+      await supabase.from("booking_platform_integrations").delete().eq("id", existing.id);
+    } else {
+      await supabase.from("booking_platform_integrations").upsert({
+        venue_id: venueId, platform, status: "notify_me",
+      }, { onConflict: "venue_id,platform" });
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm(f => ({ ...f, latitude: pos.coords.latitude.toFixed(6), longitude: pos.coords.longitude.toFixed(6) }));
-        toast({ title: "Location captured" });
-      },
-      () => toast({ title: "Could not get location", variant: "destructive" })
+    toast({ title: "Updated" }); load();
+  };
+
+  const SocialRow = ({ platform, label, color }: any) => {
+    const s = findSocial(platform);
+    return (
+      <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ background: color }}>
+            {label[0]}
+          </div>
+          <div>
+            <p className="font-medium text-foreground">{label}</p>
+            <p className="text-xs text-muted-foreground">{s ? `@${s.handle}` : "Not connected"}</p>
+          </div>
+        </div>
+        {s?.status === "connected" ? (
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-sm" style={{ color: "#16a34a" }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: "#16a34a" }} /> Connected
+            </span>
+            <Button size="sm" variant="ghost" onClick={() => disconnectSocial(platform)}>Disconnect</Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Input placeholder="@handle" className="w-32 h-9" onChange={e => platform === "instagram" ? setIgHandle(e.target.value) : null} />
+            <Button size="sm" onClick={() => connectSocial(platform, platform === "instagram" ? igHandle : "user")} variant="outline">Connect</Button>
+          </div>
+        )}
+      </div>
     );
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: "logo" | "cover") => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    const setter = kind === "logo" ? setUploadingLogo : setUploadingCover;
-    setter(true);
-    const ext = file.name.split(".").pop();
-    const filePath = `${user.id}/${kind}-${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-    } else {
-      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      setForm(f => ({ ...f, [kind === "logo" ? "logo_url" : "cover_image_url"]: publicUrl }));
-    }
-    setter(false);
-  };
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !venue) return;
-    setUploadingPhoto(true);
-    const ext = file.name.split(".").pop();
-    const filePath = `${user.id}/photo-${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("venue-photos").upload(filePath, file);
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-    } else {
-      const { data: { publicUrl } } = supabase.storage.from("venue-photos").getPublicUrl(filePath);
-      const { data: inserted } = await supabase.from("venue_photos").insert({
-        venue_id: venue.id, url: publicUrl, position: photos.length,
-      }).select("id, url").single();
-      if (inserted) setPhotos(p => [...p, inserted as any]);
-    }
-    setUploadingPhoto(false);
-    e.target.value = "";
-  };
-
-  const handlePhotoDelete = async (id: string) => {
-    await supabase.from("venue_photos").delete().eq("id", id);
-    setPhotos(p => p.filter(x => x.id !== id));
-  };
-
-  const handleSave = async () => {
-    if (!venue) return;
-    const lat = form.latitude ? parseFloat(form.latitude) : null;
-    const lng = form.longitude ? parseFloat(form.longitude) : null;
-    if ((form.latitude && isNaN(lat!)) || (form.longitude && isNaN(lng!))) {
-      toast({ title: "Invalid coordinates", variant: "destructive" });
-      return;
-    }
-    const { error } = await supabase.from("venues").update({
-      name: form.name, description: form.description, category: form.category,
-      address: form.address, city: form.city, country: form.country,
-      phone: form.phone, email: form.email, website: form.website,
-      latitude: lat, longitude: lng,
-      logo_url: form.logo_url || null, cover_image_url: form.cover_image_url || null,
-      venue_type: form.venue_type,
-      address_line1: form.address_line1 || null,
-      address_line2: form.address_line2 || null,
-      zip_code: form.zip_code || null,
-      timezone: form.timezone || null,
-      contact_person_name: form.contact_person_name || null,
-      contact_phone: form.contact_phone || null,
-      whatsapp_phone: form.whatsapp_phone || null,
-      signup_completed: true,
-    } as any).eq("id", venue.id);
-
-    // Update organization
-    if (organization?.id) {
-      await supabase.from("organizations").update({
-        name: form.organization_name || organization.name,
-        legal_name: form.organization_legal_name || null,
-        tax_id: form.organization_tax_id || null,
-        country: form.organization_country || null,
-      }).eq("id", organization.id);
-    }
-    // Update brand
-    if (brand?.id) {
-      await supabase.from("brands").update({
-        name: form.brand_name || brand.name,
-        description: form.brand_description || null,
-      }).eq("id", brand.id);
-    }
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Settings saved!" });
-    }
+  const BookingRow = ({ platform, label, color, hasNotify }: any) => {
+    const b = findBooking(platform);
+    return (
+      <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ background: color }}>
+            {label.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <p className="font-medium text-foreground">{label}</p>
+            <p className="text-xs text-muted-foreground">{b?.status === "connected" ? "Connected" : b?.status === "notify_me" ? "You'll be notified" : "Not connected"}</p>
+          </div>
+        </div>
+        {hasNotify ? (
+          <Button size="sm" variant="outline" onClick={() => toggleNotify(platform)}>
+            <Bell className="w-3 h-3 mr-1.5" />
+            {b?.status === "notify_me" ? "Notifying" : "Notify me"}
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline">Connect</Button>
+        )}
+      </div>
+    );
   };
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in max-w-2xl">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Venue <span className="text-gold">Settings</span></h1>
-        <p className="text-muted-foreground mb-8">Update your venue information and map location</p>
+      <div className="animate-fade-in">
+        <h1 className="text-[28px] font-bold text-foreground mb-6">Settings</h1>
 
-        <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
-          {/* Logo + Cover */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground text-sm">Logo</Label>
-              {form.logo_url ? (
-                <div className="relative mt-1 w-28 h-28">
-                  <img src={form.logo_url} alt="Logo" className="w-28 h-28 rounded-full object-cover border border-border" />
-                  <button type="button" onClick={() => setForm(f => ({ ...f, logo_url: "" }))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-1">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <label className="mt-1 flex flex-col items-center justify-center w-28 h-28 rounded-full border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
-                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground mt-1">{uploadingLogo ? "Uploading..." : "Logo"}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} disabled={uploadingLogo} />
-                </label>
-              )}
-            </div>
-            <div>
-              <Label className="text-muted-foreground text-sm">Cover Image</Label>
-              {form.cover_image_url ? (
-                <div className="relative mt-1">
-                  <img src={form.cover_image_url} alt="Cover" className="w-full h-28 rounded-lg object-cover border border-border" />
-                  <button type="button" onClick={() => setForm(f => ({ ...f, cover_image_url: "" }))} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <label className="mt-1 flex flex-col items-center justify-center w-full h-28 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
-                  <ImagePlus className="w-6 h-6 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground mt-1">{uploadingCover ? "Uploading..." : "Upload cover"}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "cover")} disabled={uploadingCover} />
-                </label>
-              )}
-            </div>
-          </div>
-
-          {[
-            { label: "Venue Name", key: "name" },
-            { label: "Description", key: "description" },
-            { label: "Address", key: "address" },
-            { label: "Phone", key: "phone" },
-            { label: "Email", key: "email" },
-            { label: "Website", key: "website" },
-          ].map(({ label, key }) => (
-            <div key={key}>
-              <Label className="text-muted-foreground text-sm">{label}</Label>
-              <Input
-                value={(form as any)[key]}
-                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                className="bg-secondary border-border mt-1"
-              />
-            </div>
+        <div className="flex gap-6 border-b border-border mb-8">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`pb-3 px-1 text-sm font-medium ${tab === t.key ? "border-b-2 text-foreground" : "text-muted-foreground"}`}
+              style={tab === t.key ? { borderColor: "#e8547a" } : undefined}
+            >
+              {t.label}
+            </button>
           ))}
-          <div>
-            <Label className="text-muted-foreground text-sm">Category</Label>
-            <Select value={form.category} onValueChange={val => setForm(f => ({ ...f, category: val }))}>
-              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {categories.map(c => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                ))}
-                {categories.length === 0 && <SelectItem value="dining">Dining</SelectItem>}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-muted-foreground text-sm">City</Label>
-            <Select value={form.city} onValueChange={handleCityChange}>
-              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {locations.map(l => (
-                  <SelectItem key={l.id} value={l.city}>{l.city}{l.country ? ` (${l.country})` : ""}</SelectItem>
-                ))}
-                {locations.length === 0 && <SelectItem value="other">Other</SelectItem>}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-muted-foreground text-sm">Country</Label>
-            <Input value={form.country} readOnly className="bg-secondary/50 border-border mt-1" placeholder="Auto-set from city" />
-          </div>
-
-          {/* Map Coordinates */}
-          <div className="border border-gold/20 bg-gold/5 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground font-semibold flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gold" /> Map Location
-              </Label>
-              <Button type="button" size="sm" variant="outline" onClick={useCurrentLocation}>Use My Location</Button>
-            </div>
-            <p className="text-xs text-muted-foreground">Required to show your venue on the explore map. You can also paste coordinates from Google Maps.</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-muted-foreground text-xs">Latitude</Label>
-                <Input value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))} placeholder="25.2048" className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Longitude</Label>
-                <Input value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))} placeholder="55.2708" className="bg-secondary border-border mt-1" />
-              </div>
-            </div>
-          </div>
-
-          {/* Organization */}
-          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
-            <Label className="text-foreground font-semibold">Organization</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-muted-foreground text-xs">Organization Name</Label>
-                <Input value={form.organization_name} onChange={e => setForm(f => ({ ...f, organization_name: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Legal Name</Label>
-                <Input value={form.organization_legal_name} onChange={e => setForm(f => ({ ...f, organization_legal_name: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Tax ID</Label>
-                <Input value={form.organization_tax_id} onChange={e => setForm(f => ({ ...f, organization_tax_id: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Country</Label>
-                <Input value={form.organization_country} onChange={e => setForm(f => ({ ...f, organization_country: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-            </div>
-          </div>
-
-          {/* Brand */}
-          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
-            <Label className="text-foreground font-semibold">Brand</Label>
-            <div>
-              <Label className="text-muted-foreground text-xs">Brand Name</Label>
-              <Input value={form.brand_name} onChange={e => setForm(f => ({ ...f, brand_name: e.target.value }))} className="bg-secondary border-border mt-1" />
-            </div>
-            <div>
-              <Label className="text-muted-foreground text-xs">Brand Description</Label>
-              <Input value={form.brand_description} onChange={e => setForm(f => ({ ...f, brand_description: e.target.value }))} className="bg-secondary border-border mt-1" />
-            </div>
-          </div>
-
-          {/* Establishment details */}
-          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
-            <Label className="text-foreground font-semibold">Establishment Details</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-muted-foreground text-xs">Type</Label>
-                <Select value={form.venue_type} onValueChange={val => setForm(f => ({ ...f, venue_type: val }))}>
-                  <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="physical">Physical</SelectItem>
-                    <SelectItem value="online">Online</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Timezone</Label>
-                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} placeholder="Asia/Dubai" className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Address Line 1</Label>
-                <Input value={form.address_line1} onChange={e => setForm(f => ({ ...f, address_line1: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Address Line 2</Label>
-                <Input value={form.address_line2} onChange={e => setForm(f => ({ ...f, address_line2: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">ZIP / Postal Code</Label>
-                <Input value={form.zip_code} onChange={e => setForm(f => ({ ...f, zip_code: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Contact Person</Label>
-                <Input value={form.contact_person_name} onChange={e => setForm(f => ({ ...f, contact_person_name: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">Contact Phone</Label>
-                <Input value={form.contact_phone} onChange={e => setForm(f => ({ ...f, contact_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-              <div>
-                <Label className="text-muted-foreground text-xs">WhatsApp Number</Label>
-                <Input value={form.whatsapp_phone} onChange={e => setForm(f => ({ ...f, whatsapp_phone: e.target.value }))} className="bg-secondary border-border mt-1" />
-              </div>
-            </div>
-          </div>
-
-          {/* Photo Gallery */}
-          <div className="border border-border bg-secondary/30 rounded-lg p-4 space-y-3">
-            <Label className="text-foreground font-semibold">Photo Gallery</Label>
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-              {photos.map(p => (
-                <div key={p.id} className="relative">
-                  <img src={p.url} alt="Venue" className="w-full h-24 object-cover rounded-lg border border-border" />
-                  <button type="button" onClick={() => handlePhotoDelete(p.id)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-gold/40 bg-secondary/40">
-                <ImagePlus className="w-5 h-5 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground mt-1">{uploadingPhoto ? "Uploading..." : "Add photo"}</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
-              </label>
-            </div>
-          </div>
-
-          <TwoFactorToggle userId={user?.id} />
-
-
-          <Button onClick={handleSave} className="gradient-gold text-accent-foreground font-semibold">
-            Save Settings
-          </Button>
         </div>
+
+        {tab === "integrations" && (
+          <div className="space-y-6">
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <div className="mb-4">
+                <h2 className="font-semibold text-foreground">Social Profiles</h2>
+                <p className="text-xs text-muted-foreground">Content tracking and advanced analytics</p>
+              </div>
+              <SocialRow platform="instagram" label="Instagram" color="#E4405F" />
+              <SocialRow platform="tiktok" label="TikTok" color="#000" />
+            </div>
+
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <div className="mb-4 flex items-center gap-1.5">
+                <div>
+                  <h2 className="font-semibold text-foreground">Booking Platforms</h2>
+                  <p className="text-xs text-muted-foreground">Live availability and instant booking updates</p>
+                </div>
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <BookingRow platform="access_collins" label="Access Collins" color="#0ea5e9" />
+              <BookingRow platform="resdiary" label="ResDiary" color="#7c3aed" />
+              <BookingRow platform="opentable" label="OpenTable" color="#da3743" hasNotify />
+              <BookingRow platform="sevenrooms" label="Sevenrooms" color="#1f2937" hasNotify />
+            </div>
+          </div>
+        )}
+
+        {tab === "profile" && venue && (
+          <div className="bg-white border border-border rounded-2xl p-6 space-y-4 max-w-2xl">
+            <div><Label>Venue name</Label><Input defaultValue={venue.name} /></div>
+            <div><Label>City</Label><Input defaultValue={venue.city ?? ""} /></div>
+            <div><Label>Email</Label><Input defaultValue={venue.email ?? ""} /></div>
+            <Button style={{ background: "#e8547a" }} className="text-white">Save</Button>
+          </div>
+        )}
+
+        {tab !== "integrations" && tab !== "profile" && (
+          <div className="bg-white border border-border rounded-2xl p-16 text-center">
+            <p className="text-muted-foreground">{tabs.find(t => t.key === tab)?.label} settings coming soon</p>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
