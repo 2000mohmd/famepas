@@ -68,10 +68,8 @@ const VenueCampaignCreate = () => {
       const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
       if (!v) return;
       setVenueId(v.id);
-      const [locRes, catRes] = await Promise.all([
-        supabase.from("service_locations").select("id,name").eq("venue_id", v.id),
-        supabase.from("categories").select("id,name"),
-      ]);
+      const locRes: any = await supabase.from("service_locations").select("id,name").eq("venue_id", v.id);
+      const catRes: any = await supabase.from("categories").select("id,name");
       setLocations((locRes.data as any) ?? []);
       setCategories((catRes.data as any) ?? []);
 
