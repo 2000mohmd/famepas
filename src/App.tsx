@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GoogleMapsProvider } from "@/contexts/GoogleMapsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -81,7 +81,7 @@ const App = () => (
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/signup" element={<VenueSignup />} />
+            <Route path="/signup" element={<Navigate to="/signup/business" replace />} />
             <Route path="/signup/business" element={<VenueSignup />} />
 
             {/* Admin Routes */}
