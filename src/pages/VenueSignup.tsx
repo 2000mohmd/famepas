@@ -21,6 +21,15 @@ type Step =
   | "location-details"
   | "done";
 
+type PlaceSuggestion = {
+  placeId: string;
+  mainText: string;
+  secondaryText: string;
+  description: string;
+};
+
+type OpeningHours = Record<string, { open: string; close: string; closed: boolean }>;
+
 const HEAR_OPTIONS = [
   "Instagram", "TikTok", "LinkedIn", "Google/Bing etc.",
   "Podcast", "Friend/Colleague", "FamePass Influencer",
@@ -34,6 +43,18 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+const getPasswordChecks = (value: string) => ({
+  length: value.length >= 8,
+  uppercase: /[A-Z]/.test(value),
+  lowercase: /[a-z]/.test(value),
+  number: /\d/.test(value),
+});
+
+const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
+
+const createDefaultHours = (): OpeningHours =>
+  Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
 
 /* ---------- shared light-mode UI primitives ---------- */
 
@@ -141,13 +162,12 @@ const VenueSignup = () => {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
 
   const [addressQuery, setAddressQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [locationSearchStatus, setLocationSearchStatus] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [locationEmail, setLocationEmail] = useState("");
-  const [hours, setHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>(
-    Object.fromEntries(DAYS.map(d => [d, { open: "10:00", close: "18:00", closed: false }])) as any
-  );
+  const [hours, setHours] = useState<OpeningHours>(createDefaultHours);
   const [editHours, setEditHours] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -155,27 +175,45 @@ const VenueSignup = () => {
   // load categories from db (fallback to defaults)
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
-      if (data && data.length) setCategories(data.map((c: any) => c.name));
+      if (data && data.length) setCategories(data.map((c) => c.name));
     });
   }, []);
 
   // google places autocomplete
-  const acService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const autocompleteSession = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   useEffect(() => {
-    if (isLoaded && (window as any).google?.maps?.places) {
-      acService.current = new google.maps.places.AutocompleteService();
+    if (isLoaded && window.google?.maps?.places && !autocompleteSession.current) {
+      autocompleteSession.current = new google.maps.places.AutocompleteSessionToken();
     }
   }, [isLoaded]);
 
   useEffect(() => {
-    if (!acService.current || addressQuery.length < 3) { setSuggestions([]); return; }
+    if (addressQuery.trim().length < 3) { setSuggestions([]); setLocationSearchStatus(""); return; }
+    if (!isLoaded || !window.google?.maps?.places?.AutocompleteSuggestion) {
+      setLocationSearchStatus("Address search is still loading…");
+      return;
+    }
     const t = setTimeout(() => {
-      acService.current!.getPlacePredictions({ input: addressQuery }, (preds) => {
-        setSuggestions(preds ?? []);
-      });
+      setLocationSearchStatus("Searching…");
+      google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input: addressQuery.trim(),
+        sessionToken: autocompleteSession.current,
+      }).then(({ suggestions: results }) => {
+        const mapped = (results ?? []).map((item) => {
+          const prediction = item.placePrediction;
+          return {
+            placeId: prediction?.placeId ?? "",
+            mainText: prediction?.mainText?.text ?? prediction?.text?.text ?? "Location",
+            secondaryText: prediction?.secondaryText?.text ?? "",
+            description: prediction?.text?.text ?? [prediction?.mainText?.text, prediction?.secondaryText?.text].filter(Boolean).join(", "),
+          };
+        }).filter((item: PlaceSuggestion) => item.placeId || item.description);
+        setSuggestions(mapped);
+        setLocationSearchStatus(mapped.length ? "" : "No matching locations found");
+      }).catch(() => setLocationSearchStatus("Location search is unavailable. You can enter the address manually."));
     }, 250);
     return () => clearTimeout(t);
-  }, [addressQuery]);
+  }, [addressQuery, isLoaded]);
 
   // sync email to confirm screen
   useEffect(() => { if (email && !locationEmail) setLocationEmail(email); }, [email, locationEmail]);
@@ -184,6 +222,9 @@ const VenueSignup = () => {
     const order: Step[] = ["account","details","hear","brand","location-search","location-details"];
     return order.indexOf(step);
   }, [step]);
+
+  const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
+  const passwordReady = useMemo(() => isStrongPassword(password), [password]);
 
   const toggle = (arr: string[], v: string, setter: (a: string[]) => void) => {
     setter(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
@@ -218,8 +259,8 @@ const VenueSignup = () => {
       if (error) throw error;
       await supabase.auth.signOut();
       setStep("done");
-    } catch (e: any) {
-      toast({ title: "Signup failed", description: e.message, variant: "destructive" });
+    } catch (e) {
+      toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -278,10 +319,25 @@ const VenueSignup = () => {
             <Field label="Email">
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
-            <Field label="Password" hint="At least 6 characters">
+            <Field label="Password" hint="Use a stronger password now so you do not have to come back later">
               <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
             </Field>
-            <PrimaryButton disabled={!email || password.length < 6} onClick={() => setStep("details")}>Next</PrimaryButton>
+            <div className="grid grid-cols-2 gap-2 mb-5 text-xs text-slate-600">
+              {[
+                ["length", "8+ characters"],
+                ["uppercase", "Uppercase letter"],
+                ["lowercase", "Lowercase letter"],
+                ["number", "Number"],
+              ].map(([key, label]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-[#ec4178]" : "bg-slate-200"}`}>
+                    {passwordChecks[key as keyof typeof passwordChecks] && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                  </span>
+                  {label}
+                </div>
+              ))}
+            </div>
+            <PrimaryButton disabled={!email || !passwordReady} onClick={() => setStep("details")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -382,20 +438,23 @@ const VenueSignup = () => {
               <div className="mt-2 border border-slate-100 rounded-lg overflow-hidden">
                 {suggestions.map(s => (
                   <button
-                    key={s.place_id}
+                    key={s.placeId || s.description}
                     onClick={() => {
                       setLocationAddress(s.description);
-                      setLocationName(s.structured_formatting?.main_text ?? "");
+                      setLocationName(s.mainText);
+                      setAddressQuery(s.description);
+                      setSuggestions([]);
                       setStep("location-details");
                     }}
                     className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-[#fff0f5] flex items-center gap-2 border-b border-slate-100 last:border-0"
                   >
                     <MapPin className="w-4 h-4 text-[#ec4178] shrink-0" />
-                    {s.description}
+                    <span><span className="block font-medium text-slate-800">{s.mainText}</span>{s.secondaryText && <span className="block text-xs text-slate-500">{s.secondaryText}</span>}</span>
                   </button>
                 ))}
               </div>
             )}
+            {locationSearchStatus && <p className="text-xs text-slate-400 mt-2">{locationSearchStatus}</p>}
             {!isLoaded && (
               <p className="text-xs text-slate-400 mt-2">Loading address search…</p>
             )}
