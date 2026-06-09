@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import VenueSignup from "./pages/VenueSignup";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminVenues from "./pages/admin/AdminVenues";
 import AdminInfluencers from "./pages/admin/AdminInfluencers";
@@ -80,6 +81,8 @@ const App = () => (
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/signup" element={<VenueSignup />} />
+            <Route path="/signup/business" element={<VenueSignup />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
