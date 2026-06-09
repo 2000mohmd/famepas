@@ -181,15 +181,7 @@ const VenueCampaignCreate = () => {
     navigate("/venue/campaigns");
   };
 
-  const Card = ({ title, children, action }: any) => (
-    <div className="bg-white border border-border rounded-2xl p-6 mb-5">
-      <div className="flex items-start justify-between mb-5">
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </div>
-  );
+
 
   return (
     <DashboardLayout type="venue">
