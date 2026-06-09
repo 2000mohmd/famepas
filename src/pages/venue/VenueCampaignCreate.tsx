@@ -18,6 +18,17 @@ type OfferRow = { min_followers: string; max_followers: string; max_guests: stri
 const DIETARY = ["Gluten-free", "Halal", "Vegan", "Vegetarian"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const SectionCard = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
+  <div className="bg-white border border-border rounded-2xl p-6 mb-5">
+    <div className="flex items-start justify-between mb-5">
+      <h2 className="text-lg font-bold text-foreground">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </div>
+);
+
+
 const VenueCampaignCreate = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -170,15 +181,7 @@ const VenueCampaignCreate = () => {
     navigate("/venue/campaigns");
   };
 
-  const Card = ({ title, children, action }: any) => (
-    <div className="bg-white border border-border rounded-2xl p-6 mb-5">
-      <div className="flex items-start justify-between mb-5">
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </div>
-  );
+
 
   return (
     <DashboardLayout type="venue">
@@ -188,7 +191,8 @@ const VenueCampaignCreate = () => {
         </button>
 
         {/* CAMPAIGN DETAILS */}
-        <Card title="Campaign Details">
+        <SectionCard title="Campaign Details">
+
           <div className="space-y-5">
             <div>
               <Label className="text-sm font-semibold">Campaign Name</Label>
@@ -265,10 +269,10 @@ const VenueCampaignCreate = () => {
               <Switch checked={inviteOnly} onCheckedChange={setInviteOnly} />
             </div>
           </div>
-        </Card>
+        </SectionCard>
 
         {/* INSTAGRAM OFFERS */}
-        <Card title="Instagram Offers" action={<button className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
+        <SectionCard title="Instagram Offers" action={<button className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
               <Instagram className="w-4 h-4 text-white" />
@@ -340,7 +344,7 @@ const VenueCampaignCreate = () => {
               <Checkbox checked={allowPostOrReel} onCheckedChange={(v) => setAllowPostOrReel(!!v)} /> Allow Instagram Post or Instagram Reel
             </label>
           </div>
-        </Card>
+        </SectionCard>
 
         {/* TIKTOK */}
         {!tkEnabled ? (
@@ -348,7 +352,7 @@ const VenueCampaignCreate = () => {
             <Plus className="w-4 h-4" /> Add TikTok Offers
           </button>
         ) : (
-          <Card title="TikTok Offers" action={<button onClick={() => { setTkEnabled(false); setTkOffers([]); }} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
+          <SectionCard title="TikTok Offers" action={<button onClick={() => { setTkEnabled(false); setTkOffers([]); }} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-md bg-black flex items-center justify-center"><Music2 className="w-4 h-4 text-white" /></div>
               <div>
@@ -371,11 +375,11 @@ const VenueCampaignCreate = () => {
             <Button variant="outline" size="sm" onClick={() => setTkOffers([...tkOffers, { min_followers: "", max_followers: "", max_guests: "1", offer: "" }])}>
               + Add Offer
             </Button>
-          </Card>
+          </SectionCard>
         )}
 
         {/* AVAILABILITY */}
-        <Card title="Availability Options">
+        <SectionCard title="Availability Options">
           <Label className="text-sm font-semibold">Availability Type</Label>
           <div className="grid grid-cols-3 gap-3 mt-3 mb-5">
             {[
@@ -462,10 +466,10 @@ const VenueCampaignCreate = () => {
             </div>
             <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
           </div>
-        </Card>
+        </SectionCard>
 
         {/* APPROVAL */}
-        <Card title="Approval Settings">
+        <SectionCard title="Approval Settings">
           <Label className="text-sm font-semibold">Approval Type</Label>
           <p className="text-xs text-muted-foreground mb-3">Choose how you'd like to approve influencer applications</p>
           <div className="grid grid-cols-3 gap-3 mb-5">
@@ -498,7 +502,7 @@ const VenueCampaignCreate = () => {
             </div>
             <Switch checked={autoApproveTop} onCheckedChange={setAutoApproveTop} />
           </div>
-        </Card>
+        </SectionCard>
       </div>
 
       {/* Sticky footer */}
