@@ -13,6 +13,7 @@ type CulturalEvent = { id: string; title: string; start_date: string; end_date: 
 const VenueCampaigns = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [venueId, setVenueId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [culturalEvents, setCulturalEvents] = useState<CulturalEvent[]>([]);
@@ -21,47 +22,22 @@ const VenueCampaigns = () => {
   const [scheduledOpen, setScheduledOpen] = useState(true);
   const [pausedOpen, setPausedOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 5, 1));
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalDate, setModalDate] = useState<string>("");
-  const [form, setForm] = useState({ title: "", description: "", start_date: "", end_date: "" });
 
   const load = async () => {
     if (!user) return;
     const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
     if (!venue) return;
     setVenueId(venue.id);
-    const [cRes, eRes] = await Promise.all([
-      supabase.from("campaigns").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false }),
-      supabase.from("cultural_events").select("*").order("start_date"),
-    ]);
+    const sb: any = supabase;
+    const cRes = await sb.from("campaigns").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false });
+    const eRes = await sb.from("cultural_events").select("*").order("start_date");
     setCampaigns((cRes.data as any) ?? []);
     setCulturalEvents((eRes.data as any) ?? []);
   };
 
   useEffect(() => { load(); }, [user]);
 
-  const openNew = (date?: string) => {
-    setModalDate(date ?? "");
-    setForm({ title: "", description: "", start_date: date ?? "", end_date: date ?? "" });
-    setModalOpen(true);
-  };
-
-  const createCampaign = async () => {
-    if (!venueId || !form.title) return;
-    const status = form.start_date && new Date(form.start_date) <= new Date() ? "active" : "scheduled";
-    const { error } = await supabase.from("campaigns").insert({
-      venue_id: venueId,
-      title: form.title,
-      description: form.description || null,
-      start_date: form.start_date || null,
-      end_date: form.end_date || null,
-      status,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Campaign created" });
-    setModalOpen(false);
-    load();
-  };
+  const openNew = (_date?: string) => navigate("/venue/campaigns/new");
 
   const active = campaigns.filter(c => c.status === "active");
   const scheduled = campaigns.filter(c => c.status === "scheduled");
