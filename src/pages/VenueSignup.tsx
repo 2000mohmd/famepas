@@ -157,7 +157,8 @@ const VenueSignup = () => {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
 
   const [addressQuery, setAddressQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [locationSearchStatus, setLocationSearchStatus] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [locationEmail, setLocationEmail] = useState("");
@@ -176,22 +177,40 @@ const VenueSignup = () => {
   }, []);
 
   // google places autocomplete
-  const acService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const autocompleteSession = useRef<any>(null);
   useEffect(() => {
-    if (isLoaded && (window as any).google?.maps?.places) {
-      acService.current = new google.maps.places.AutocompleteService();
+    if (isLoaded && (window as any).google?.maps?.places && !autocompleteSession.current) {
+      autocompleteSession.current = new google.maps.places.AutocompleteSessionToken();
     }
   }, [isLoaded]);
 
   useEffect(() => {
-    if (!acService.current || addressQuery.length < 3) { setSuggestions([]); return; }
+    if (addressQuery.trim().length < 3) { setSuggestions([]); setLocationSearchStatus(""); return; }
+    if (!isLoaded || !(window as any).google?.maps?.places?.AutocompleteSuggestion) {
+      setLocationSearchStatus("Address search is still loading…");
+      return;
+    }
     const t = setTimeout(() => {
-      acService.current!.getPlacePredictions({ input: addressQuery }, (preds) => {
-        setSuggestions(preds ?? []);
-      });
+      setLocationSearchStatus("Searching…");
+      google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input: addressQuery.trim(),
+        sessionToken: autocompleteSession.current,
+      }).then(({ suggestions: results }: any) => {
+        const mapped = (results ?? []).map((item: any) => {
+          const prediction = item.placePrediction;
+          return {
+            placeId: prediction?.placeId ?? prediction?.place_id ?? "",
+            mainText: prediction?.mainText?.text ?? prediction?.structuredFormat?.mainText?.text ?? prediction?.text?.text ?? "Location",
+            secondaryText: prediction?.secondaryText?.text ?? prediction?.structuredFormat?.secondaryText?.text ?? "",
+            description: prediction?.text?.text ?? [prediction?.mainText?.text, prediction?.secondaryText?.text].filter(Boolean).join(", "),
+          };
+        }).filter((item: PlaceSuggestion) => item.placeId || item.description);
+        setSuggestions(mapped);
+        setLocationSearchStatus(mapped.length ? "" : "No matching locations found");
+      }).catch(() => setLocationSearchStatus("Location search is unavailable. You can enter the address manually."));
     }, 250);
     return () => clearTimeout(t);
-  }, [addressQuery]);
+  }, [addressQuery, isLoaded]);
 
   // sync email to confirm screen
   useEffect(() => { if (email && !locationEmail) setLocationEmail(email); }, [email, locationEmail]);
