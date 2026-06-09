@@ -38,6 +38,47 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_platform_integrations: {
+        Row: {
+          config: Json | null
+          connected_at: string | null
+          created_at: string
+          id: string
+          platform: string
+          status: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          config?: Json | null
+          connected_at?: string | null
+          created_at?: string
+          id?: string
+          platform: string
+          status?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          config?: Json | null
+          connected_at?: string | null
+          created_at?: string
+          id?: string
+          platform?: string
+          status?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_platform_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           checked_in_at: string | null
@@ -184,6 +225,63 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          location_id: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location_id?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location_id?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "service_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -249,6 +347,45 @@ export type Database = {
           id?: string
           is_active?: boolean
           question?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cultural_events: {
+        Row: {
+          category: string | null
+          color: string | null
+          created_at: string
+          end_date: string
+          has_notification: boolean
+          id: string
+          region: string | null
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          end_date: string
+          has_notification?: boolean
+          id?: string
+          region?: string | null
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          end_date?: string
+          has_notification?: boolean
+          id?: string
+          region?: string | null
+          start_date?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -776,6 +913,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          campaign_id: string | null
           cover_image_url: string | null
           created_at: string
           current_redemptions: number
@@ -796,6 +934,7 @@ export type Database = {
           venue_id: string
         }
         Insert: {
+          campaign_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
@@ -816,6 +955,7 @@ export type Database = {
           venue_id: string
         }
         Update: {
+          campaign_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
@@ -836,6 +976,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "offers_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offers_venue_id_fkey"
             columns: ["venue_id"]
@@ -1100,6 +1247,50 @@ export type Database = {
         }
         Relationships: []
       }
+      social_integrations: {
+        Row: {
+          access_token: string | null
+          connected_at: string
+          created_at: string
+          handle: string | null
+          id: string
+          platform: string
+          status: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string
+          created_at?: string
+          handle?: string | null
+          id?: string
+          platform: string
+          status?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string
+          created_at?: string
+          handle?: string | null
+          id?: string
+          platform?: string
+          status?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_tiers: {
         Row: {
           commission_pct: number
@@ -1173,6 +1364,7 @@ export type Database = {
           max_followers: number | null
           min_followers: number | null
           niches: string[] | null
+          pipeline_stage: string
           requirements: string | null
           status: string
           title: string
@@ -1194,6 +1386,7 @@ export type Database = {
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
+          pipeline_stage?: string
           requirements?: string | null
           status?: string
           title: string
@@ -1215,6 +1408,7 @@ export type Database = {
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
+          pipeline_stage?: string
           requirements?: string | null
           status?: string
           title?: string
