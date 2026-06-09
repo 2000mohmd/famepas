@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TabsContent } from "@/components/ui/tabs";
 import famepassLogo from "@/assets/famepass-logo.png";
 
 const Login = () => {
@@ -171,13 +170,8 @@ const Login = () => {
             <p className="text-muted-foreground text-sm mt-1">Management Portal</p>
           </div>
 
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" onClick={() => navigate("/signup/business")}>Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
+          <div className="w-full">
+            <TabsContent value="signin" forceMount className="mt-0">
               {otpRequired ? (
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
@@ -245,127 +239,7 @@ const Login = () => {
                 </button>
               </p>
             </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">I am a...</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button type="button" variant={signupRole === "influencer" ? "default" : "outline"} className={signupRole === "influencer" ? "gradient-gold text-accent-foreground" : "border-border"} onClick={() => setSignupRole("influencer")}>
-                      Influencer
-                    </Button>
-                    <Button type="button" variant={signupRole === "venue" ? "default" : "outline"} className={signupRole === "venue" ? "gradient-gold text-accent-foreground" : "border-border"} onClick={() => setSignupRole("venue")}>
-                      Venue
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">Email</Label>
-                  <Input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} placeholder="your@email.com" required className="bg-secondary border-border" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-sm">Password</Label>
-                  <Input type="password" value={signupPassword} onChange={e => setSignupPassword(e.target.value)} placeholder="Min 6 characters" required className="bg-secondary border-border" />
-                </div>
-
-                {signupRole === "influencer" && (
-                  <>
-                    {/* Avatar upload */}
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-sm">Profile Photo</Label>
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border bg-secondary flex items-center justify-center shrink-0">
-                          {avatarPreview ? (
-                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Photo</span>
-                          )}
-                        </div>
-                        <label className="flex-1 flex flex-col items-center justify-center h-16 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-gold/40 transition-colors bg-secondary/50">
-                          <span className="text-xs text-muted-foreground">{avatarFile ? avatarFile.name : "Click to upload"}</span>
-                          <input type="file" accept="image/*" onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setAvatarFile(file);
-                              setAvatarPreview(URL.createObjectURL(file));
-                            }
-                          }} className="hidden" />
-                        </label>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-sm">Full Name</Label>
-                      <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" required className="bg-secondary border-border" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-sm">Phone Number</Label>
-                      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+971..." className="bg-secondary border-border" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">Instagram Handle</Label>
-                        <Input value={instagramHandle} onChange={e => setInstagramHandle(e.target.value)} placeholder="@handle" className="bg-secondary border-border" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">TikTok Handle</Label>
-                        <Input value={tiktokHandle} onChange={e => setTiktokHandle(e.target.value)} placeholder="@handle" className="bg-secondary border-border" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">TikTok Followers</Label>
-                        <Input type="number" value={tiktokFollowers} onChange={e => setTiktokFollowers(e.target.value)} placeholder="0" className="bg-secondary border-border" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">YouTube Link</Label>
-                        <Input value={youtubeLink} onChange={e => setYoutubeLink(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {signupRole === "venue" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-sm">Venue Name</Label>
-                      <Input value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="e.g. Sky Lounge" required className="bg-secondary border-border" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">Category</Label>
-                        <Select value={venueCategory} onValueChange={setVenueCategory}>
-                          <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select..." /></SelectTrigger>
-                          <SelectContent>
-                            {categories.map(c => (
-                              <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                            ))}
-                            {categories.length === 0 && <SelectItem value="dining">Dining</SelectItem>}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-muted-foreground text-sm">City</Label>
-                        <Select value={venueCity} onValueChange={setVenueCity}>
-                          <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select..." /></SelectTrigger>
-                          <SelectContent>
-                            {locations.map(l => (
-                              <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
-                            ))}
-                            {locations.length === 0 && <SelectItem value="other">Other</SelectItem>}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <Button type="submit" disabled={isLoading} className="w-full gradient-gold text-accent-foreground font-semibold hover:opacity-90 transition-opacity">
-                  {isLoading ? "Creating account..." : "Sign Up"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
       </div>
     </div>
