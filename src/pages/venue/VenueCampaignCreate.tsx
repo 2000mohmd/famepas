@@ -199,7 +199,8 @@ const VenueCampaignCreate = () => {
         </button>
 
         {/* CAMPAIGN DETAILS */}
-        <Card title="Campaign Details">
+        <SectionCard title="Campaign Details">
+
           <div className="space-y-5">
             <div>
               <Label className="text-sm font-semibold">Campaign Name</Label>
