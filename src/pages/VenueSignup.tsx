@@ -259,8 +259,8 @@ const VenueSignup = () => {
       if (error) throw error;
       await supabase.auth.signOut();
       setStep("done");
-    } catch (e: any) {
-      toast({ title: "Signup failed", description: e.message, variant: "destructive" });
+    } catch (e) {
+      toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
