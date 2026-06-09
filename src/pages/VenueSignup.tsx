@@ -319,7 +319,22 @@ const VenueSignup = () => {
             <Field label="Password" hint="At least 6 characters">
               <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
             </Field>
-            <PrimaryButton disabled={!email || password.length < 6} onClick={() => setStep("details")}>Next</PrimaryButton>
+            <div className="grid grid-cols-2 gap-2 mb-5 text-xs text-slate-600">
+              {[
+                ["length", "8+ characters"],
+                ["uppercase", "Uppercase letter"],
+                ["lowercase", "Lowercase letter"],
+                ["number", "Number"],
+              ].map(([key, label]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-[#ec4178]" : "bg-slate-200"}`}>
+                    {passwordChecks[key as keyof typeof passwordChecks] && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                  </span>
+                  {label}
+                </div>
+              ))}
+            </div>
+            <PrimaryButton disabled={!email || !passwordReady} onClick={() => setStep("details")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -420,20 +435,23 @@ const VenueSignup = () => {
               <div className="mt-2 border border-slate-100 rounded-lg overflow-hidden">
                 {suggestions.map(s => (
                   <button
-                    key={s.place_id}
+                    key={s.placeId || s.description}
                     onClick={() => {
                       setLocationAddress(s.description);
-                      setLocationName(s.structured_formatting?.main_text ?? "");
+                      setLocationName(s.mainText);
+                      setAddressQuery(s.description);
+                      setSuggestions([]);
                       setStep("location-details");
                     }}
                     className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-[#fff0f5] flex items-center gap-2 border-b border-slate-100 last:border-0"
                   >
                     <MapPin className="w-4 h-4 text-[#ec4178] shrink-0" />
-                    {s.description}
+                    <span><span className="block font-medium text-slate-800">{s.mainText}</span>{s.secondaryText && <span className="block text-xs text-slate-500">{s.secondaryText}</span>}</span>
                   </button>
                 ))}
               </div>
             )}
+            {locationSearchStatus && <p className="text-xs text-slate-400 mt-2">{locationSearchStatus}</p>}
             {!isLoaded && (
               <p className="text-xs text-slate-400 mt-2">Loading address search…</p>
             )}
