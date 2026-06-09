@@ -66,62 +66,6 @@ const Login = () => {
     else { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const metadata: any = {
-        role: signupRole,
-        full_name: signupRole === "influencer" ? fullName : `${venueName} Owner`,
-      };
-      if (signupRole === "influencer") {
-        metadata.phone = phone;
-        metadata.instagram_handle = instagramHandle;
-        metadata.tiktok_handle = tiktokHandle;
-        metadata.tiktok_followers = parseInt(tiktokFollowers) || 0;
-        metadata.social_links = {
-          instagram: instagramHandle ? `https://instagram.com/${instagramHandle}` : "",
-          tiktok: tiktokHandle ? `https://tiktok.com/@${tiktokHandle}` : "",
-          youtube: youtubeLink || "",
-        };
-      } else {
-        metadata.venue_name = venueName;
-        metadata.venue_category = venueCategory;
-        metadata.venue_city = venueCity;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
-        options: { data: metadata, emailRedirectTo: `${window.location.origin}/login` },
-      });
-      if (error) throw error;
-
-      // Upload avatar (best-effort) — uses session if email auto-confirmed; otherwise skipped
-      if (avatarFile && signupRole === "influencer" && data.user?.id && data.session) {
-        const ext = avatarFile.name.split(".").pop();
-        const filePath = `${data.user.id}/avatar.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("avatars").upload(filePath, avatarFile, { upsert: true });
-        if (!uploadErr) {
-          const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-          await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", data.user.id);
-        }
-      }
-
-      // Sign out any auto-created session — user must verify email AND be approved by admin
-      await supabase.auth.signOut();
-
-      toast({
-        title: "Check your email",
-        description: "We sent you a verification link. After verifying, an admin will review and approve your account before you can sign in.",
-      });
-    } catch (err: any) {
-      toast({ title: "Signup failed", description: err.message, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background overflow-auto py-8">
       <div className="fixed inset-0 gradient-purple opacity-20 pointer-events-none" />
@@ -136,7 +80,7 @@ const Login = () => {
           </div>
 
           <div className="w-full">
-            <TabsContent value="signin" forceMount className="mt-0">
+            <div className="mt-0">
               {otpRequired ? (
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
@@ -203,7 +147,7 @@ const Login = () => {
                   Create a venue account
                 </button>
               </p>
-            </TabsContent>
+            </div>
           </div>
         </div>
       </div>
