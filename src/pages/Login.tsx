@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
-import { TabsContent } from "@/components/ui/tabs";
 import famepassLogo from "@/assets/famepass-logo.png";
 
 const Login = () => {
@@ -26,40 +25,6 @@ const Login = () => {
       else navigate("/", { replace: true });
     }
   }, [user, role, navigate]);
-
-  // Signup state
-  const [signupRole, setSignupRole] = useState<"venue" | "influencer">("influencer");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  // Influencer fields
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [instagramHandle, setInstagramHandle] = useState("");
-  const [tiktokHandle, setTiktokHandle] = useState("");
-  const [tiktokFollowers, setTiktokFollowers] = useState("");
-  const [youtubeLink, setYoutubeLink] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState("");
-  // Venue fields
-  const [venueName, setVenueName] = useState("");
-  const [venueCategory, setVenueCategory] = useState("");
-  const [venueCity, setVenueCity] = useState("");
-
-  // Dynamic categories and locations
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [locations, setLocations] = useState<{ id: string; city: string }[]>([]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      const [catRes, locRes] = await Promise.all([
-        supabase.from("categories").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("service_locations").select("id, city").eq("is_active", true).order("city"),
-      ]);
-      setCategories((catRes.data as any[]) ?? []);
-      setLocations((locRes.data as any[]) ?? []);
-    };
-    fetchOptions();
-  }, []);
 
   const [otpRequired, setOtpRequired] = useState(false);
   const [otpCode, setOtpCode] = useState("");
