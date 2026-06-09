@@ -28,6 +28,8 @@ type PlaceSuggestion = {
   description: string;
 };
 
+type OpeningHours = Record<string, { open: string; close: string; closed: boolean }>;
+
 const HEAR_OPTIONS = [
   "Instagram", "TikTok", "LinkedIn", "Google/Bing etc.",
   "Podcast", "Friend/Colleague", "FamePass Influencer",
@@ -50,6 +52,9 @@ const getPasswordChecks = (value: string) => ({
 });
 
 const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
+
+const createDefaultHours = (): OpeningHours =>
+  Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
 
 /* ---------- shared light-mode UI primitives ---------- */
 
