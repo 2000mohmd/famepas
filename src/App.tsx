@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VenueSignup from "./pages/VenueSignup";
+import InfluencerSignup from "./pages/InfluencerSignup";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminVenues from "./pages/admin/AdminVenues";
 import AdminInfluencers from "./pages/admin/AdminInfluencers";
