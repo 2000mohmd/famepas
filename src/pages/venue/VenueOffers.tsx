@@ -94,14 +94,11 @@ const VenueOffers = () => {
       toast({ title: "Title is required", variant: "destructive" });
       return;
     }
-    if (!form.cover_image_url) {
-      toast({ title: "Cover image required", description: "Please upload a cover image for your offer", variant: "destructive" });
-      return;
-    }
     if (!form.requirements.trim()) {
       toast({ title: "Requirements required", description: "Please specify deliverables for influencers", variant: "destructive" });
       return;
     }
+    const coverImageUrl = form.cover_image_url || null;
     const { error } = await supabase.from("offers").insert({
       venue_id: venueId,
       title: form.title,
@@ -109,8 +106,8 @@ const VenueOffers = () => {
       offer_type: form.offer_type,
       discount_value: form.discount_value ? Number(form.discount_value) : null,
       requirements: form.requirements,
-      image_url: form.cover_image_url, // backward compat
-      cover_image_url: form.cover_image_url,
+      image_url: coverImageUrl, // backward compat
+      cover_image_url: coverImageUrl,
       gallery_urls: form.gallery_urls,
       min_followers: form.min_followers ? Number(form.min_followers) : null,
       max_redemptions: form.max_redemptions ? Number(form.max_redemptions) : null,
@@ -157,7 +154,7 @@ const VenueOffers = () => {
 
                 {/* Cover image */}
                 <div>
-                  <Label className="text-muted-foreground">Cover Image *</Label>
+                  <Label className="text-muted-foreground">Cover Image <span className="text-xs">(optional for testing)</span></Label>
                   <div className="mt-1">
                     {form.cover_image_url ? (
                       <div className="relative">
