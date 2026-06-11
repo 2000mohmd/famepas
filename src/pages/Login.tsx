@@ -147,6 +147,12 @@ const Login = () => {
                   Create a venue account
                 </button>
               </p>
+              <p className="mt-2 text-center text-sm text-muted-foreground">
+                Are you a creator?{" "}
+                <button type="button" onClick={() => navigate("/signup/influencer")} className="font-semibold text-gold hover:underline">
+                  Join as a content creator
+                </button>
+              </p>
             </div>
           </div>
         </div>
