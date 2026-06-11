@@ -18,6 +18,8 @@ serve(async (req) => {
     const {
       email, password, role, full_name, phone,
       instagram_handle, tiktok_handle, tiktok_followers, social_links,
+      // influencer profile extras
+      bio, city, country, niche, followers_count,
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
       // mobile hierarchy
