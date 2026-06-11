@@ -57,10 +57,17 @@ serve(async (req) => {
 
     if (role === "influencer") {
       await new Promise(r => setTimeout(r, 500));
-      const profileData = {
+      const profileData: Record<string, unknown> = {
         user_id: userId, full_name: full_name || null, phone: phone || null,
         instagram_handle: instagram_handle || null, tiktok_handle: tiktok_handle || null,
         tiktok_followers: tiktok_followers || 0, social_links: social_links || {},
+        bio: bio || null,
+        city: city || null,
+        country: country || null,
+        niche: Array.isArray(niche) ? niche : (niche ? [niche] : null),
+        followers_count: followers_count || 0,
+        // Auto-approve influencers during development so they can immediately access the app
+        approval_status: "approved",
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
