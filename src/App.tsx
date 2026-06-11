@@ -84,6 +84,8 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/signup" element={<Navigate to="/signup/business" replace />} />
             <Route path="/signup/business" element={<VenueSignup />} />
+            <Route path="/signup/influencer" element={<InfluencerSignup />} />
+            <Route path="/signup/creator" element={<Navigate to="/signup/influencer" replace />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
