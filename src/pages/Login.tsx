@@ -142,15 +142,9 @@ const Login = () => {
               </div>
 
               <p className="mt-5 text-center text-sm text-muted-foreground">
-                New business?{" "}
-                <button type="button" onClick={() => navigate("/signup/business")} className="font-semibold text-gold hover:underline">
-                  Create a venue account
-                </button>
-              </p>
-              <p className="mt-2 text-center text-sm text-muted-foreground">
-                Are you a creator?{" "}
-                <button type="button" onClick={() => navigate("/signup/influencer")} className="font-semibold text-gold hover:underline">
-                  Join as a content creator
+                New to FamePass?{" "}
+                <button type="button" onClick={() => navigate("/signup")} className="font-semibold text-gold hover:underline">
+                  Create an account
                 </button>
               </p>
             </div>
