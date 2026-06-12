@@ -278,7 +278,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={2} total={4} />
+          <BackBar onBack={() => setStep("account")} step={2} total={5} />
           <Card>
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
             <Field label="Full name">
@@ -298,7 +298,7 @@ const InfluencerSignup = () => {
             <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
             </Field>
-            <PrimaryButton disabled={!profileReady} onClick={() => setStep("socials")}>
+            <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
           </Card>
@@ -306,6 +306,55 @@ const InfluencerSignup = () => {
       </Page>
     );
   }
+
+  if (step === "photo") {
+    const onFile = (f: File | null) => {
+      setAvatarFile(f);
+      if (f) {
+        const url = URL.createObjectURL(f);
+        setAvatarPreview(url);
+      } else {
+        setAvatarPreview("");
+      }
+    };
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <BackBar onBack={() => setStep("profile")} step={3} total={5} />
+          <Card>
+            <Heading title="Add a profile photo" sub="Optional, but creators with a photo get 3× more matches." />
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="w-32 h-32 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-slate-400 text-sm">No photo</span>
+                )}
+              </div>
+              <label className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-slate-200 cursor-pointer hover:border-[#ec4178] text-sm font-medium text-slate-700">
+                {avatarFile ? "Change photo" : "Upload photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              {avatarFile && (
+                <button onClick={() => onFile(null)} className="text-xs text-slate-500 hover:text-[#ec4178]">
+                  Remove
+                </button>
+              )}
+            </div>
+            <PrimaryButton onClick={() => setStep("socials")}>
+              {avatarFile ? "Continue" : "Skip for now"} <ChevronRight className="inline w-4 h-4 ml-1" />
+            </PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
+
 
   if (step === "socials") {
     return (
