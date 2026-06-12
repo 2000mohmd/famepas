@@ -47,9 +47,17 @@ serve(async (req) => {
       user_metadata: { full_name: full_name || (venue_name ? `${venue_name} Owner` : email) },
     });
     if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const msg = createError.message || "";
+      const isDuplicate = /already been registered|already registered|email_exists|duplicate/i.test(msg);
+      return new Response(
+        JSON.stringify({
+          error: isDuplicate
+            ? "This email is already registered. Please sign in instead."
+            : msg,
+          code: isDuplicate ? "email_exists" : "signup_error",
+        }),
+        { status: isDuplicate ? 409 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     const userId = newUser.user.id;
 
