@@ -52,7 +52,7 @@ const Navbar = () => {
             </Button>
           ) : (
             <Button asChild size="sm" className="gradient-gold text-accent-foreground hover:opacity-90 rounded-xl font-semibold">
-              <Link to="/login">Sign In</Link>
+              <Link to="/welcome">Sign In</Link>
             </Button>
           )}
           <button className="lg:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
