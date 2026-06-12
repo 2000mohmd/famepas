@@ -120,6 +120,10 @@ const InfluencerSignup = () => {
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
 
+  // avatar
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
   // socials
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
@@ -170,14 +174,34 @@ const InfluencerSignup = () => {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      // Immediately sign in so AuthContext picks up the session and routes to /influencer
+      // Sign in so we have an authed session for avatar upload & routing
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
 
+      // Optional avatar upload (best-effort, non-blocking on failure)
+      if (avatarFile) {
+        try {
+          const { data: ures } = await supabase.auth.getUser();
+          const uid = ures.user?.id;
+          if (uid) {
+            const ext = avatarFile.name.split(".").pop() || "jpg";
+            const path = `${uid}/avatar.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("avatars")
+              .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+            if (!upErr) {
+              const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+              await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid);
+            }
+          }
+        } catch (e) {
+          console.warn("Avatar upload skipped:", e);
+        }
+      }
+
       setStep("done");
       toast({ title: "Welcome to FamePass!", description: "Your creator account is ready." });
-      // Give AuthContext a tick to set role, then route
-      setTimeout(() => navigate("/influencer/home", { replace: true }), 600);
+      setTimeout(() => navigate("/influencer/explore", { replace: true }), 600);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Please try again.";
       const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
