@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import VenueSignup from "./pages/VenueSignup";
 import InfluencerSignup from "./pages/InfluencerSignup";
+import Welcome from "./pages/Welcome";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminVenues from "./pages/admin/AdminVenues";
 import AdminInfluencers from "./pages/admin/AdminInfluencers";
@@ -82,7 +83,8 @@ const App = () => (
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/signup" element={<Navigate to="/signup/business" replace />} />
+            <Route path="/signup" element={<Welcome />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/signup/business" element={<VenueSignup />} />
             <Route path="/signup/influencer" element={<InfluencerSignup />} />
             <Route path="/signup/creator" element={<Navigate to="/signup/influencer" replace />} />

@@ -290,19 +290,10 @@ const VenueSignup = () => {
               </div>
               <ChevronRight className="w-5 h-5 text-slate-400" />
             </button>
-            <button
-              onClick={() => navigate("/signup/influencer")}
-              className="w-full p-4 rounded-xl border border-slate-200 hover:border-[#ec4178] transition flex items-center gap-4 text-left bg-white"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#fff0f5] flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-[#ec4178]" />
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-slate-900">I'm a Content Creator</div>
-                <div className="text-sm text-slate-500">Create a free creator account</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              Looking to create a creator account?{" "}
+              <button onClick={() => navigate("/signup")} className="text-[#ec4178] font-semibold hover:underline">Go back</button>
+            </p>
           </Card>
         </div>
       </Page>

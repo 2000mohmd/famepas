@@ -10,7 +10,7 @@ import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-reac
    Route: /signup/influencer
    ============================================================ */
 
-type Step = "account" | "profile" | "socials" | "niche" | "done";
+type Step = "account" | "profile" | "photo" | "socials" | "niche" | "done";
 
 const NICHES = [
   "Food & Dining", "Travel", "Fashion", "Beauty", "Fitness",
@@ -120,6 +120,10 @@ const InfluencerSignup = () => {
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
 
+  // avatar
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
   // socials
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
@@ -170,14 +174,34 @@ const InfluencerSignup = () => {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      // Immediately sign in so AuthContext picks up the session and routes to /influencer
+      // Sign in so we have an authed session for avatar upload & routing
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
 
+      // Optional avatar upload (best-effort, non-blocking on failure)
+      if (avatarFile) {
+        try {
+          const { data: ures } = await supabase.auth.getUser();
+          const uid = ures.user?.id;
+          if (uid) {
+            const ext = avatarFile.name.split(".").pop() || "jpg";
+            const path = `${uid}/avatar.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("avatars")
+              .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+            if (!upErr) {
+              const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+              await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid);
+            }
+          }
+        } catch (e) {
+          console.warn("Avatar upload skipped:", e);
+        }
+      }
+
       setStep("done");
       toast({ title: "Welcome to FamePass!", description: "Your creator account is ready." });
-      // Give AuthContext a tick to set role, then route
-      setTimeout(() => navigate("/influencer/home", { replace: true }), 600);
+      setTimeout(() => navigate("/influencer/explore", { replace: true }), 600);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Please try again.";
       const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
@@ -202,7 +226,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => navigate("/login")} step={1} total={4} />
+          <BackBar onBack={() => navigate("/login")} step={1} total={5} />
           <Card>
             <Heading title="Create your creator account" sub="Join FamePass and start collaborating with brands." />
             <Field label="Email">
@@ -254,7 +278,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={2} total={4} />
+          <BackBar onBack={() => setStep("account")} step={2} total={5} />
           <Card>
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
             <Field label="Full name">
@@ -274,7 +298,7 @@ const InfluencerSignup = () => {
             <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
             </Field>
-            <PrimaryButton disabled={!profileReady} onClick={() => setStep("socials")}>
+            <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
           </Card>
@@ -283,11 +307,60 @@ const InfluencerSignup = () => {
     );
   }
 
+  if (step === "photo") {
+    const onFile = (f: File | null) => {
+      setAvatarFile(f);
+      if (f) {
+        const url = URL.createObjectURL(f);
+        setAvatarPreview(url);
+      } else {
+        setAvatarPreview("");
+      }
+    };
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <BackBar onBack={() => setStep("profile")} step={3} total={5} />
+          <Card>
+            <Heading title="Add a profile photo" sub="Optional, but creators with a photo get 3× more matches." />
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="w-32 h-32 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-slate-400 text-sm">No photo</span>
+                )}
+              </div>
+              <label className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-slate-200 cursor-pointer hover:border-[#ec4178] text-sm font-medium text-slate-700">
+                {avatarFile ? "Change photo" : "Upload photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              {avatarFile && (
+                <button onClick={() => onFile(null)} className="text-xs text-slate-500 hover:text-[#ec4178]">
+                  Remove
+                </button>
+              )}
+            </div>
+            <PrimaryButton onClick={() => setStep("socials")}>
+              {avatarFile ? "Continue" : "Skip for now"} <ChevronRight className="inline w-4 h-4 ml-1" />
+            </PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
+
+
   if (step === "socials") {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("profile")} step={3} total={4} />
+          <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
             <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
             <Field label="Instagram handle">
@@ -315,7 +388,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("socials")} step={4} total={4} />
+          <BackBar onBack={() => setStep("socials")} step={5} total={5} />
           <Card>
             <Heading title="Pick your content niches" sub="Choose all that apply — we'll match you with relevant offers." />
             <div className="flex flex-wrap gap-2 mb-6">
