@@ -226,7 +226,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => navigate("/login")} step={1} total={4} />
+          <BackBar onBack={() => navigate("/login")} step={1} total={5} />
           <Card>
             <Heading title="Create your creator account" sub="Join FamePass and start collaborating with brands." />
             <Field label="Email">
@@ -360,7 +360,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("profile")} step={3} total={4} />
+          <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
             <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
             <Field label="Instagram handle">
@@ -388,7 +388,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("socials")} step={4} total={4} />
+          <BackBar onBack={() => setStep("socials")} step={5} total={5} />
           <Card>
             <Heading title="Pick your content niches" sub="Choose all that apply — we'll match you with relevant offers." />
             <div className="flex flex-wrap gap-2 mb-6">
