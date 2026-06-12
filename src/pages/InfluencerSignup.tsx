@@ -10,7 +10,7 @@ import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-reac
    Route: /signup/influencer
    ============================================================ */
 
-type Step = "account" | "profile" | "socials" | "niche" | "done";
+type Step = "account" | "profile" | "photo" | "socials" | "niche" | "done";
 
 const NICHES = [
   "Food & Dining", "Travel", "Fashion", "Beauty", "Fitness",
