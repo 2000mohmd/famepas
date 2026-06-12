@@ -179,11 +179,18 @@ const InfluencerSignup = () => {
       // Give AuthContext a tick to set role, then route
       setTimeout(() => navigate("/influencer/home", { replace: true }), 600);
     } catch (e) {
+      const message = e instanceof Error ? e.message : "Please try again.";
+      const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
       toast({
-        title: "Signup failed",
-        description: e instanceof Error ? e.message : "Please try again.",
+        title: isDuplicate ? "Email already registered" : "Signup failed",
+        description: isDuplicate
+          ? "An account with this email already exists. Redirecting you to sign in..."
+          : message,
         variant: "destructive",
       });
+      if (isDuplicate) {
+        setTimeout(() => navigate("/login", { replace: true }), 1500);
+      }
     } finally {
       setSubmitting(false);
     }
