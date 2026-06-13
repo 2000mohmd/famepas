@@ -166,10 +166,26 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
     })();
   }, [type, user, location.pathname]);
 
+  const isInfluencer = type === "influencer";
+
   return (
     <div className="dashboard-shell flex min-h-screen">
+      {/* Mobile backdrop (influencer only) */}
+      {isInfluencer && mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden" style={{ background: "#1a1625" }}>
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 ${
+          isInfluencer
+            ? (mobileOpen ? "translate-x-0" : "-translate-x-full") + " md:translate-x-0"
+            : ""
+        }`}
+        style={{ background: "#1a1625" }}
+      >
         <div className="flex items-center gap-2.5 px-4 py-4">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
             <Sparkles className="w-4 h-4 text-white" />
