@@ -138,6 +138,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
 
+  // Mobile sidebar (influencer only)
+  const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
   // Onboarding progress (venue only): instagram connected? has a campaign?
   const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string } | null>(null);
   const [venueName, setVenueName] = useState<string>("");
