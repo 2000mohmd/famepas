@@ -430,7 +430,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={2} total={6} />
+          <BackBar onBack={() => setStep("check-inbox")} step={2} total={6} />
           <Card>
             <Heading title="Confirm your details" />
             <Field label="First Name">
