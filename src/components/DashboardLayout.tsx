@@ -25,6 +25,8 @@ import {
   Film,
   Sparkle,
   CalendarRange,
+  Menu,
+  X,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.png";
 
@@ -136,6 +138,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
 
+  // Mobile sidebar (influencer only)
+  const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
   // Onboarding progress (venue only): instagram connected? has a campaign?
   const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string } | null>(null);
   const [venueName, setVenueName] = useState<string>("");
@@ -160,10 +166,26 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
     })();
   }, [type, user, location.pathname]);
 
+  const isInfluencer = type === "influencer";
+
   return (
     <div className="dashboard-shell flex min-h-screen">
+      {/* Mobile backdrop (influencer only) */}
+      {isInfluencer && mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden" style={{ background: "#1a1625" }}>
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 ${
+          isInfluencer
+            ? (mobileOpen ? "translate-x-0" : "-translate-x-full") + " md:translate-x-0"
+            : ""
+        }`}
+        style={{ background: "#1a1625" }}
+      >
         <div className="flex items-center gap-2.5 px-4 py-4">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
             <Sparkles className="w-4 h-4 text-white" />
@@ -266,17 +288,30 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       </aside>
 
       {/* Main */}
-      <main className="ml-[220px] flex-1 min-w-0" style={{ background: "#fdf8f8" }}>
-        <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-end px-6">
+      <main
+        className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
+        style={{ background: "#fdf8f8" }}
+      >
+        <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
+          {isInfluencer ? (
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          ) : null}
+          <div className="hidden md:block" />
           <button
             onClick={signOut}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all"
           >
             <LogOut className="w-4 h-4" />
             Logout
           </button>
         </header>
-        <div className="p-8">{children}</div>
+        <div className="p-4 md:p-8">{children}</div>
       </main>
     </div>
   );
