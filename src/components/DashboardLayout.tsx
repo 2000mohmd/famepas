@@ -288,17 +288,30 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       </aside>
 
       {/* Main */}
-      <main className="ml-[220px] flex-1 min-w-0" style={{ background: "#fdf8f8" }}>
-        <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-end px-6">
+      <main
+        className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
+        style={{ background: "#fdf8f8" }}
+      >
+        <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
+          {isInfluencer ? (
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          ) : null}
+          <div className="hidden md:block" />
           <button
             onClick={signOut}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all"
           >
             <LogOut className="w-4 h-4" />
             Logout
           </button>
         </header>
-        <div className="p-8">{children}</div>
+        <div className="p-4 md:p-8">{children}</div>
       </main>
     </div>
   );
