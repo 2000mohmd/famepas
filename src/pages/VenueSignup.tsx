@@ -150,7 +150,9 @@ const VenueSignup = () => {
   const { toast } = useToast();
   const { isLoaded } = useGoogleMaps();
 
-  const [step, setStep] = useState<Step>("welcome");
+  const [step, setStep] = useState<Step>("account");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [sendingResend, setSendingResend] = useState(false);
 
   // form state
   const [email, setEmail] = useState("");
