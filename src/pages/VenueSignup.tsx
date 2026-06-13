@@ -238,30 +238,43 @@ const VenueSignup = () => {
     setSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role: "venue",
-            full_name: fullName,
-            venue_name: brandName,
-            venue_category: brandCategories[0] ?? "",
-            venue_city: locationAddress.split(",").slice(-2, -1)[0]?.trim() ?? "",
-            signup_source: hear,
-            location: {
-              name: locationName,
-              address: locationAddress,
-              email: locationEmail,
-              hours,
-            },
-          },
-          emailRedirectTo: `${window.location.origin}/login`,
+      const cityGuess = locationAddress.split(",").slice(-2, -1)[0]?.trim() ?? "";
+      const { data, error } = await supabase.functions.invoke("signup-user", {
+        body: {
+          email,
+          password,
+          role: "venue",
+          full_name: fullName,
+          venue_name: brandName,
+          venue_category: brandCategories[0] ?? "dining",
+          venue_city: cityGuess,
+          address_line1: locationAddress,
+          contact_person_name: fullName,
+          signup_completed: true,
+          organization_name: brandName,
+          brand_name: brandName,
         },
       });
-      if (error) throw error;
-      await supabase.auth.signOut();
-      setStep("done");
+      if (error) {
+        let parsed: any = null;
+        try { parsed = await (error as any).context?.json?.(); } catch { /* ignore */ }
+        const msg = parsed?.error || (error as any).message || "Signup failed";
+        if (parsed?.code === "email_exists") {
+          toast({ title: "Email already registered", description: "Please sign in instead." });
+          navigate("/login");
+          return;
+        }
+        throw new Error(msg);
+      }
+      // Sign the new user in and route to the venue dashboard
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInErr) {
+        toast({ title: "Account created", description: "Please sign in to continue." });
+        navigate("/login");
+        return;
+      }
+      toast({ title: "Welcome to FamePass!", description: "Your business is all set up." });
+      navigate("/venue/dashboard");
     } catch (e) {
       toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
@@ -269,54 +282,71 @@ const VenueSignup = () => {
     }
   };
 
+  const handleResend = async () => {
+    if (!email) return;
+    setSendingResend(true);
+    try {
+      // Informational only — actual verification email is sent once the wizard completes.
+      await new Promise(r => setTimeout(r, 600));
+      toast({ title: "We'll resend the link", description: `A fresh confirmation will be sent to ${email} after you finish setup.` });
+    } finally {
+      setSendingResend(false);
+    }
+  };
+
+  const handleSocial = async (provider: "google" | "facebook") => {
+    if (provider === "facebook") {
+      toast({ title: "Facebook sign-in coming soon", description: "Please continue with Google or email." });
+      return;
+    }
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/venue/dashboard` });
+    if (result.error) {
+      toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
+    }
+  };
+
   /* ============ render per step ============ */
 
-  if (step === "welcome") {
+  if (step === "account") {
+    const passwordsMatch = password.length > 0 && password === confirmPassword;
     return (
       <Page>
-        <div className="w-full max-w-xl">
-          <div className="text-center mb-8">
-            <img src={famepassLogo} className="w-14 h-14 mx-auto mb-4 rounded-xl" alt="" />
+        <div className="w-full max-w-md">
+          <div className="text-center mb-6">
+            <img src={famepassLogo} className="w-12 h-12 mx-auto mb-3 rounded-xl" alt="" />
           </div>
           <Card>
-            <Heading title="Welcome to FamePass 👋" sub="To get started, let us know what best describes you" />
-            <button
-              onClick={() => setStep("account")}
-              className="w-full mb-3 p-4 rounded-xl border border-slate-200 hover:border-[#ec4178] transition flex items-center gap-4 text-left bg-white"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#fff0f5] flex items-center justify-center">
-                <Store className="w-6 h-6 text-[#ec4178]" />
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-slate-900">I'm a Business</div>
-                <div className="text-sm text-slate-500">Login or create a free account</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
-            <p className="mt-4 text-center text-sm text-slate-500">
-              Looking to create a creator account?{" "}
-              <button onClick={() => navigate("/signup")} className="text-[#ec4178] font-semibold hover:underline">Go back</button>
-            </p>
-          </Card>
-        </div>
-      </Page>
-    );
-  }
+            <Heading title="Create your FamePass business account" />
+            <div className="space-y-2.5 mb-5">
+              <button
+                type="button"
+                onClick={() => handleSocial("google")}
+                className="w-full h-12 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-800 font-medium flex items-center justify-center gap-2 transition"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign up with Google
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSocial("facebook")}
+                className="w-full h-12 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-800 font-medium flex items-center justify-center gap-2 transition"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.77l-.44 2.89h-2.33v6.99A10 10 0 0 0 22 12z"/></svg>
+                Sign up with Facebook
+              </button>
+            </div>
 
-  if (step === "account") {
-    return (
-      <Page>
-        <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("welcome")} step={1} total={6} />
-          <Card>
-            <Heading title="Create your account" sub="We'll use this to sign you in" />
+            <div className="flex items-center gap-3 text-xs text-slate-400 mb-5">
+              <div className="h-px flex-1 bg-slate-200" />OR<div className="h-px flex-1 bg-slate-200" />
+            </div>
+
             <Field label="Email">
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
-            <Field label="Password" hint="Use a stronger password now so you do not have to come back later">
-              <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+            <Field label="Password">
+              <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" />
             </Field>
-            <div className="grid grid-cols-2 gap-2 mb-5 text-xs text-slate-600">
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-slate-600">
               {[
                 ["length", "8+ characters"],
                 ["uppercase", "Uppercase letter"],
@@ -331,7 +361,65 @@ const VenueSignup = () => {
                 </div>
               ))}
             </div>
-            <PrimaryButton disabled={!email || !passwordReady} onClick={() => setStep("details")}>Next</PrimaryButton>
+            <Field label="Confirm password">
+              <TextInput type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
+              {confirmPassword.length > 0 && !passwordsMatch && (
+                <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+              )}
+            </Field>
+            <PrimaryButton
+              disabled={!email || !passwordReady || !passwordsMatch}
+              onClick={() => setStep("check-inbox")}
+            >
+              Create Account
+            </PrimaryButton>
+            <p className="mt-4 text-center text-xs text-slate-500">
+              By continuing you agree to FamePass's <Link to="/privacy-policy" className="text-[#ec4178] hover:underline">Privacy Policy</Link> and Terms of Service.
+            </p>
+          </Card>
+          <p className="mt-5 text-center text-sm text-slate-500">
+            Already have an account?{" "}
+            <button onClick={() => navigate("/login")} className="text-[#ec4178] font-semibold hover:underline">Log in</button>
+          </p>
+        </div>
+      </Page>
+    );
+  }
+
+  if (step === "check-inbox") {
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <BackBar onBack={() => setStep("account")} step={1} total={6} />
+          <Card className="text-center">
+            <div className="w-16 h-16 rounded-full bg-[#fff0f5] mx-auto flex items-center justify-center mb-4">
+              <Mail className="w-7 h-7 text-[#ec4178]" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Check your inbox</h1>
+            <p className="text-slate-500 mt-2 text-sm">
+              We'll send a confirmation link to your email. Please check your inbox at{" "}
+              <span className="font-semibold text-slate-800">{email}</span>
+            </p>
+            <div className="grid grid-cols-3 gap-3 my-6">
+              {[
+                { label: "Open Gmail", href: "https://mail.google.com" },
+                { label: "Open Outlook", href: "https://outlook.live.com/mail" },
+                { label: "Open Yahoo", href: "https://mail.yahoo.com" },
+              ].map((m) => (
+                <a key={m.label} href={m.href} target="_blank" rel="noreferrer"
+                  className="h-12 rounded-lg border border-slate-200 hover:border-[#ec4178] text-sm font-medium text-slate-700 flex items-center justify-center transition">
+                  {m.label}
+                </a>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">
+              Can't find the email? Try your spam folder.<br />
+              Still no luck?{" "}
+              <button onClick={handleResend} disabled={sendingResend} className="text-[#ec4178] font-medium hover:underline inline-flex items-center gap-1">
+                {sendingResend && <RefreshCw className="w-3 h-3 animate-spin" />} Resend email
+              </button>
+            </p>
+            <PrimaryButton className="mt-6" onClick={() => setStep("details")}>Continue setup</PrimaryButton>
           </Card>
         </div>
       </Page>
