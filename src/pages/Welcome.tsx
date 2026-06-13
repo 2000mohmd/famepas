@@ -128,7 +128,7 @@ const Welcome = () => {
             <ArrowRight className="w-4 h-4 ml-1" />
           </button>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/signup/business")}
             className="w-full h-14 rounded-2xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
           >
             <Store className="w-5 h-5 text-[#f5b86b]" /> I'm a Business
