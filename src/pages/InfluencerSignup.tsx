@@ -171,7 +171,18 @@ const InfluencerSignup = () => {
           social_links,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // supabase.functions.invoke wraps non-2xx responses in FunctionsHttpError
+        // whose .message is generic. Read the JSON body from .context to surface
+        // the real error (e.g. "email_exists").
+        let parsed: any = null;
+        try { parsed = await (error as any).context?.json?.(); } catch { /* ignore */ }
+        const msg = parsed?.error || (error as any).message || "Signup failed";
+        const code = parsed?.code;
+        const err = new Error(msg);
+        (err as any).code = code;
+        throw err;
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
 
       // Sign in so we have an authed session for avatar upload & routing
