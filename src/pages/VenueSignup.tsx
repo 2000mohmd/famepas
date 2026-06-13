@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import famepassLogo from "@/assets/famepass-logo.png";
-import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil } from "lucide-react";
+import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail, RefreshCw } from "lucide-react";
 
 /* ============================================================
    Joli-style light-mode business signup wizard
@@ -12,8 +13,8 @@ import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil } from
    ============================================================ */
 
 type Step =
-  | "welcome"
   | "account"
+  | "check-inbox"
   | "details"
   | "hear"
   | "brand"
