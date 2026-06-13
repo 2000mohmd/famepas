@@ -25,6 +25,8 @@ import {
   Film,
   Sparkle,
   CalendarRange,
+  Menu,
+  X,
 } from "lucide-react";
 import famepassLogo from "@/assets/famepass-logo.png";
 
