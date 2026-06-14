@@ -81,18 +81,24 @@ const VenueSettings = () => {
     setVenue(v);
     setPName(v.name || "");
     setPDesc(v.description || "");
+    setPLogo(v.logo_url || null);
+    setPCats(v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
 
-    const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
     setProfile(prof);
 
-    const [sRes, tplRes, tierRes] = await Promise.all([
+    const [sRes, tplRes, tierRes, catRes, invRes] = await Promise.all([
       supabase.from("social_integrations").select("*").eq("venue_id", v.id),
       supabase.from("venue_message_templates").select("*").eq("venue_id", v.id).order("created_at"),
       supabase.from("subscription_tiers").select("*").eq("is_active", true).order("price"),
+      supabase.from("categories").select("*").order("name"),
+      supabase.from("venue_team_invites").select("*").eq("venue_id", v.id).order("created_at"),
     ]);
     setSocials(sRes.data ?? []);
     setTemplates(tplRes.data ?? []);
     setTiers(tierRes.data ?? []);
+    setAllCats(catRes.data ?? []);
+    setInvites(invRes.data ?? []);
   };
   useEffect(() => { load(); }, [user]);
 
