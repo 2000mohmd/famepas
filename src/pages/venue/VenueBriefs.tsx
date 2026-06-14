@@ -4,26 +4,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { Plus, Clipboard, Star, Film, CheckCircle2, Check } from "lucide-react";
+import { Plus, Clipboard, Star, Film, CheckCircle2, Check, Calendar, ImageIcon, Loader2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 type Stage = "draft" | "matching" | "in_progress" | "review" | "complete";
 
+const PINK = "#e8547a";
+
 const VenueBriefs = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [stage, setStage] = useState<Stage>("draft");
   const [briefs, setBriefs] = useState<any[]>([]);
+  const [matchCounts, setMatchCounts] = useState<Record<string, number>>({});
+  const [working, setWorking] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = async () => {
     if (!user) return;
-    (async () => {
-      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
-      if (!venue) return;
-      const { data } = await supabase.from("venue_briefs").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false });
-      setBriefs(data ?? []);
-    })();
-  }, [user]);
+    const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+    if (!venue) return;
+    const { data } = await supabase.from("venue_briefs").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false });
+    const list = data ?? [];
+    setBriefs(list);
+    if (list.length) {
+      const { data: m } = await supabase.from("brief_matches").select("brief_id").in("brief_id", list.map(b => b.id));
+      const counts: Record<string, number> = {};
+      (m ?? []).forEach((row: any) => { counts[row.brief_id] = (counts[row.brief_id] ?? 0) + 1; });
+      setMatchCounts(counts);
+    }
+  };
+
+  useEffect(() => { load(); }, [user]);
 
   const counts: Record<Stage, number> = {
     draft: briefs.filter(b => (b.pipeline_stage ?? "draft") === "draft").length,
@@ -43,15 +56,78 @@ const VenueBriefs = () => {
 
   const filtered = briefs.filter(b => (b.pipeline_stage ?? "draft") === stage);
 
+  const setLive = async (b: any) => {
+    setWorking(b.id);
+    const { error } = await supabase.from("venue_briefs").update({ pipeline_stage: "matching", is_active: true, status: "open" }).eq("id", b.id);
+    if (error) { setWorking(null); toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    // Kick off matching (best-effort)
+    try { await supabase.functions.invoke("match-brief", { body: { brief_id: b.id } }); } catch {}
+    setWorking(null);
+    toast({ title: "Brief is live", description: "We're matching influencers now." });
+    load();
+  };
+
+  const advance = async (b: any, next: Stage, msg: string) => {
+    setWorking(b.id);
+    const { error } = await supabase.from("venue_briefs").update({ pipeline_stage: next }).eq("id", b.id);
+    setWorking(null);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: msg });
+    load();
+  };
+
+  const stageActions = (b: any) => {
+    const id = b.id;
+    const busy = working === id;
+    switch (b.pipeline_stage ?? "draft") {
+      case "draft":
+        return <>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/venue/briefs/${id}/edit`)}>Edit</Button>
+          <Button size="sm" disabled={busy} onClick={() => setLive(b)} className="bg-green-600 hover:bg-green-700 text-white">
+            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "▶ Set Live"}
+          </Button>
+        </>;
+      case "matching":
+        return <>
+          <span className="text-xs text-muted-foreground">{matchCounts[id] ?? 0} matches</span>
+          <Button size="sm" disabled={busy} onClick={() => advance(b, "in_progress", "Moved to In Progress")} style={{ background: PINK }} className="text-white hover:opacity-90">
+            In Progress <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        </>;
+      case "in_progress":
+        return <Button size="sm" disabled={busy} onClick={() => advance(b, "review", "Sent to Review")} style={{ background: PINK }} className="text-white hover:opacity-90">
+          Send to Review <ArrowRight className="w-3.5 h-3.5 ml-1" />
+        </Button>;
+      case "review":
+        return <Button size="sm" disabled={busy} onClick={() => advance(b, "complete", "Marked Complete")} className="bg-green-600 hover:bg-green-700 text-white">
+          <Check className="w-3.5 h-3.5 mr-1" /> Mark Complete
+        </Button>;
+      case "complete":
+        return <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700"><Check className="w-3.5 h-3.5" /> Completed</span>;
+    }
+  };
+
+  const stageBadge = (s: string) => {
+    const map: Record<string, { bg: string; color: string; label: string }> = {
+      draft: { bg: "#f1f5f9", color: "#475569", label: "Draft" },
+      matching: { bg: "#fef3c7", color: "#92400e", label: "Matching" },
+      in_progress: { bg: "#dbeafe", color: "#1e40af", label: "In Progress" },
+      review: { bg: "#fce7f3", color: "#9d174d", label: "In Review" },
+      complete: { bg: "#dcfce7", color: "#166534", label: "Complete" },
+    };
+    const s2 = map[s] ?? map.draft;
+    return <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: s2.bg, color: s2.color }}>{s2.label}</span>;
+  };
+
   return (
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <h1 className="text-[28px] font-bold text-foreground">Briefs</h1>
-            <a href="#" className="text-sm font-medium" style={{ color: "#e8547a" }}>How does it work?</a>
+            <a href="#" className="text-sm font-medium" style={{ color: PINK }}>How does it work?</a>
           </div>
-          <Button onClick={() => navigate("/venue/briefs/new")} style={{ background: "#e8547a" }} className="text-white hover:opacity-90">
+          <Button onClick={() => navigate("/venue/briefs/new")} style={{ background: PINK }} className="text-white hover:opacity-90">
             <Plus className="w-4 h-4 mr-1.5" /> New Brief
           </Button>
         </div>
@@ -65,9 +141,9 @@ const VenueBriefs = () => {
                 key={s.key}
                 onClick={() => setStage(s.key)}
                 className={`bg-white border rounded-xl p-4 text-left transition-all ${isActive ? "border-2" : "border-border hover:border-pink-200"}`}
-                style={isActive ? { borderColor: "#e8547a" } : undefined}
+                style={isActive ? { borderColor: PINK } : undefined}
               >
-                <Icon className="w-5 h-5 mb-2" style={{ color: isActive ? "#e8547a" : "#94a3b8" }} />
+                <Icon className="w-5 h-5 mb-2" style={{ color: isActive ? PINK : "#94a3b8" }} />
                 <p className="text-sm font-semibold text-foreground">{s.label}</p>
                 <p className="text-xs text-muted-foreground">{counts[s.key]} items</p>
               </button>
@@ -80,16 +156,41 @@ const VenueBriefs = () => {
             icon={<ClipboardIllustration />}
             title="Start here or pick up where you left off"
             description="Create your first brief or jump back into your drafts"
-            action={<Button onClick={() => navigate("/venue/briefs/new")} style={{ background: "#e8547a" }} className="text-white hover:opacity-90"><Plus className="w-4 h-4 mr-1.5" /> Create a brief</Button>}
+            action={<Button onClick={() => navigate("/venue/briefs/new")} style={{ background: PINK }} className="text-white hover:opacity-90"><Plus className="w-4 h-4 mr-1.5" /> Create a brief</Button>}
           />
         ) : (
-          <div className="space-y-2">
-            {filtered.map(b => (
-              <div key={b.id} className="bg-white border border-border rounded-xl p-4">
-                <p className="font-medium text-foreground">{b.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{b.description?.slice(0, 120)}</p>
-              </div>
-            ))}
+          <div className="grid gap-3">
+            {filtered.map(b => {
+              const cover = b.cover_image_url || b.image_url;
+              const spec = Array.isArray(b.deliverables_spec) ? b.deliverables_spec : [];
+              const totalQty = spec.reduce((s: number, d: any) => s + (Number(d.quantity) || 0), 0);
+              return (
+                <div key={b.id} className="bg-white border border-border rounded-2xl overflow-hidden flex hover:shadow-md transition-shadow">
+                  <div className="w-40 h-32 bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    {cover ? <img src={cover} alt={b.title} className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 text-muted-foreground" />}
+                  </div>
+                  <div className="flex-1 p-4 flex flex-col">
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground truncate">{b.title}</h3>
+                          {stageBadge(b.pipeline_stage ?? "draft")}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{b.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                      {b.deadline && <span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" /> Due {new Date(b.deadline).toLocaleDateString()}</span>}
+                      {spec.length > 0 && <span className="inline-flex items-center gap-1"><Film className="w-3 h-3" /> {totalQty} deliverable{totalQty !== 1 ? "s" : ""}</span>}
+                      {b.budget != null && <span>${b.budget}</span>}
+                    </div>
+                    <div className="mt-auto pt-3 flex items-center justify-end gap-2">
+                      {stageActions(b)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
