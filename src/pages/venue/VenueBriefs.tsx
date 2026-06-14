@@ -22,6 +22,41 @@ const VenueBriefs = () => {
   const [briefs, setBriefs] = useState<any[]>([]);
   const [matchCounts, setMatchCounts] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null);
+  const [matchesFor, setMatchesFor] = useState<any | null>(null);
+  const [matches, setMatches] = useState<any[]>([]);
+  const [matchesLoading, setMatchesLoading] = useState(false);
+
+  const openMatches = async (b: any) => {
+    setMatchesFor(b);
+    setMatchesLoading(true);
+    const { data: rows } = await supabase
+      .from("brief_matches").select("*").eq("brief_id", b.id).order("score", { ascending: false });
+    const list = rows ?? [];
+    if (list.length) {
+      const ids = list.map((r: any) => r.influencer_id);
+      const { data: profs } = await supabase.rpc("get_public_profiles_basic", { _user_ids: ids });
+      const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      setMatches(list.map((r: any) => ({ ...r, profile: map.get(r.influencer_id) })));
+    } else setMatches([]);
+    setMatchesLoading(false);
+  };
+
+  const approveMatch = async (m: any) => {
+    if (!matchesFor) return;
+    const { error } = await supabase.from("invitations").insert({
+      venue_id: matchesFor.venue_id,
+      influencer_id: m.influencer_id,
+      brief_id: matchesFor.id,
+      status: "accepted",
+      message: `Approved for brief: ${matchesFor.title}`,
+    });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("brief_matches").update({ invited: true }).eq("id", m.id);
+    await supabase.from("venue_briefs").update({ pipeline_stage: "in_progress" }).eq("id", matchesFor.id);
+    toast({ title: `Approved ${m.profile?.full_name ?? "influencer"}`, description: "Brief moved to In Progress." });
+    setMatchesFor(null);
+    load();
+  };
 
   const load = async () => {
     if (!user) return;
@@ -91,9 +126,9 @@ const VenueBriefs = () => {
         </>;
       case "matching":
         return <>
-          <span className="text-xs text-muted-foreground">{matchCounts[id] ?? 0} matches</span>
-          <Button size="sm" disabled={busy} onClick={() => advance(b, "in_progress", "Moved to In Progress")} style={{ background: PINK }} className="text-white hover:opacity-90">
-            In Progress <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          <span className="text-xs text-muted-foreground">{matchCounts[b.id] ?? 0} matches</span>
+          <Button size="sm" variant="outline" onClick={() => openMatches(b)}>
+            <Users className="w-3.5 h-3.5 mr-1" /> View Matches
           </Button>
         </>;
       case "in_progress":
@@ -196,6 +231,50 @@ const VenueBriefs = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={!!matchesFor} onOpenChange={(o) => !o && setMatchesFor(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Matched Influencers — {matchesFor?.title}</DialogTitle>
+          </DialogHeader>
+          {matchesLoading ? (
+            <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+          ) : matches.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No matches yet. The AI is still ranking influencers — check back in a moment.</p>
+          ) : (
+            <div className="space-y-2">
+              {matches.map(m => {
+                const p = m.profile || {};
+                return (
+                  <div key={m.id} className="flex items-center gap-3 p-3 border border-border rounded-xl">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={p.avatar_url} />
+                      <AvatarFallback>{(p.full_name ?? "?").slice(0, 1)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground truncate">{p.full_name ?? "Influencer"}</p>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: PINK }}>{m.score}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{m.reasoning}</p>
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-1">
+                        {p.instagram_handle && <span className="inline-flex items-center gap-0.5"><Instagram className="w-3 h-3" />@{p.instagram_handle}</span>}
+                        {p.tiktok_handle && <span className="inline-flex items-center gap-0.5"><Music2 className="w-3 h-3" />@{p.tiktok_handle}</span>}
+                        {p.city && <span>{p.city}</span>}
+                      </div>
+                    </div>
+                    {m.invited ? (
+                      <span className="text-xs font-medium text-green-700 inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Approved</span>
+                    ) : (
+                      <Button size="sm" onClick={() => approveMatch(m)} style={{ background: PINK }} className="text-white hover:opacity-90">Approve</Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
