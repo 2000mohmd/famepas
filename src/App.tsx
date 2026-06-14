@@ -102,25 +102,27 @@ const App = () => (
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><VenueReports /></ProtectedRoute>} />
-            <Route path="/venue/dashboard" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDashboard /></ProtectedRoute>} />
             <Route path="/venue/content" element={<ProtectedRoute allowedRoles={["venue"]}><VenueContent /></ProtectedRoute>} />
             <Route path="/venue/campaigns" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaigns /></ProtectedRoute>} />
             <Route path="/venue/campaigns/new" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaignCreate /></ProtectedRoute>} />
             <Route path="/venue/campaigns/:id/edit" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaignCreate /></ProtectedRoute>} />
-            <Route path="/venue/locations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueLocations /></ProtectedRoute>} />
-            <Route path="/venue/offers" element={<ProtectedRoute allowedRoles={["venue"]}><VenueOffers /></ProtectedRoute>} />
+            <Route path="/venue/bookings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBookings /></ProtectedRoute>} />
             <Route path="/venue/briefs" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefs /></ProtectedRoute>} />
             <Route path="/venue/briefs/new" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefCreate /></ProtectedRoute>} />
             <Route path="/venue/briefs/:id/edit" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefCreate /></ProtectedRoute>} />
-            <Route path="/venue/discover" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDiscover /></ProtectedRoute>} />
-            <Route path="/venue/invitations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueInvitations /></ProtectedRoute>} />
-            <Route path="/venue/bookings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBookings /></ProtectedRoute>} />
-            <Route path="/venue/redemptions" element={<ProtectedRoute allowedRoles={["venue"]}><VenueRedemptions /></ProtectedRoute>} />
-            
-            <Route path="/venue/events" element={<ProtectedRoute allowedRoles={["venue"]}><VenueEvents /></ProtectedRoute>} />
-            <Route path="/venue/event-attendees" element={<ProtectedRoute allowedRoles={["venue"]}><EventAttendeesPage type="venue" /></ProtectedRoute>} />
-            <Route path="/venue/analytics" element={<ProtectedRoute allowedRoles={["venue"]}><VenueAnalytics /></ProtectedRoute>} />
+            <Route path="/venue/locations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueLocations /></ProtectedRoute>} />
             <Route path="/venue/settings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueSettings /></ProtectedRoute>} />
+
+            {/* Legacy venue paths → redirect to Reports */}
+            <Route path="/venue/dashboard" element={<Navigate to="/venue" replace />} />
+            <Route path="/venue/offers" element={<Navigate to="/venue/campaigns" replace />} />
+            <Route path="/venue/discover" element={<Navigate to="/venue" replace />} />
+            <Route path="/venue/invitations" element={<Navigate to="/venue/bookings" replace />} />
+            <Route path="/venue/redemptions" element={<Navigate to="/venue/bookings" replace />} />
+            <Route path="/venue/events" element={<Navigate to="/venue" replace />} />
+            <Route path="/venue/event-attendees" element={<Navigate to="/venue" replace />} />
+            <Route path="/venue/analytics" element={<Navigate to="/venue" replace />} />
+
 
             {/* Influencer Routes */}
             <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
