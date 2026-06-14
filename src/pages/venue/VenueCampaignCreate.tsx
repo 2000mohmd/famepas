@@ -177,6 +177,9 @@ const VenueCampaignCreate = () => {
       booking_limits: bookingLimits,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
+      cover_video_url: coverVideoUrl || null,
+      cover_images: coverImages,
+      cover_image_url: coverImages[0] || null,
       is_draft: mode === "draft",
       status: mode === "live" ? (startDate && new Date(startDate) > new Date() ? "scheduled" : "active") : "scheduled",
     };
