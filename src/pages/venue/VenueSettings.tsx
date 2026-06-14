@@ -247,10 +247,7 @@ const VenueSettings = () => {
               color="linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"
               logo={<IGLogo />} handle={igHandle} setHandle={setIgHandle}
             />
-            <SocialRow
-              platform="tiktok" label="TikTok" color="#000"
-              logo={<TikTokLogo />} handle={ttHandle} setHandle={setTtHandle}
-            />
+            <TikTokConnectRow venue={venue} social={findSocial("tiktok")} onChange={load} logo={<TikTokLogo />} />
           </div>
         )}
 
