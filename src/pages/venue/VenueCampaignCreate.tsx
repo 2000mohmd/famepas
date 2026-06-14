@@ -223,6 +223,7 @@ const VenueCampaignCreate = () => {
     if (urls.length) setCoverImages([...coverImages, ...urls]);
   };
 
+  return (
     <DashboardLayout type="venue">
       <div className="max-w-3xl mx-auto pb-28 animate-fade-in">
         <button onClick={() => navigate("/venue/campaigns")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-5">
@@ -246,14 +247,33 @@ const VenueCampaignCreate = () => {
             </div>
             <div>
               <Label className="text-sm font-semibold">Upload Images</Label>
-              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign</p>
-              <div className="flex gap-3">
-                <button type="button" className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a]">
-                  <Video className="w-5 h-5" /> Choose video
-                </button>
-                <button type="button" className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a]">
-                  <ImageIcon className="w-5 h-5" /> Choose images
-                </button>
+              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign {uploading && <span className="text-[#e8547a]">(uploading…)</span>}</p>
+              <div className="flex gap-3 flex-wrap">
+                <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a] cursor-pointer overflow-hidden relative">
+                  {coverVideoUrl ? (
+                    <>
+                      <video src={coverVideoUrl} className="w-full h-full object-cover" />
+                      <button type="button" onClick={(e) => { e.preventDefault(); setCoverVideoUrl(""); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                    </>
+                  ) : (
+                    <>
+                      <Video className="w-5 h-5" /> Choose video
+                    </>
+                  )}
+                  <input type="file" accept="video/*" className="hidden" onChange={e => onPickVideo(e.target.files?.[0])} />
+                </label>
+                {coverImages.map((url, i) => (
+                  <div key={url} className="w-32 h-24 rounded-xl overflow-hidden relative border border-border">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setCoverImages(coverImages.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                  </div>
+                ))}
+                {coverImages.length < 5 && (
+                  <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a] cursor-pointer">
+                    <ImageIcon className="w-5 h-5" /> Choose images
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={e => onPickImages(e.target.files)} />
+                  </label>
+                )}
               </div>
             </div>
             <div>
