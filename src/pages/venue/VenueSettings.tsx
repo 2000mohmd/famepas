@@ -119,10 +119,31 @@ const VenueSettings = () => {
     toast({ title: "Disconnected" }); load();
   };
 
+  const uploadLogo = async (file: File) => {
+    if (!venue) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${venue.id}/logo-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("venue-photos").upload(path, file, { upsert: true });
+    if (upErr) {
+      toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: pub } = supabase.storage.from("venue-photos").getPublicUrl(path);
+    setPLogo(pub.publicUrl);
+    await supabase.from("venues").update({ logo_url: pub.publicUrl }).eq("id", venue.id);
+    setUploading(false);
+    toast({ title: "Logo updated" });
+  };
+
   const saveProfile = async () => {
     if (!venue) return;
     const { error } = await supabase.from("venues").update({
-      name: pName, description: pDesc,
+      name: pName,
+      description: pDesc,
+      logo_url: pLogo,
+      category: pCats[0] || "dining",
     }).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else toast({ title: "Profile saved" });
@@ -144,10 +165,27 @@ const VenueSettings = () => {
     load();
   };
 
-  const sendInvite = () => {
-    if (!inviteEmail) return;
+  const sendInvite = async () => {
+    if (!inviteEmail || !venue) return;
+    const { error } = await supabase.from("venue_team_invites").insert({
+      venue_id: venue.id, email: inviteEmail, invited_by: user?.id, status: "pending",
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Invite sent", description: `An invitation has been sent to ${inviteEmail}.` });
     setInviteEmail("");
+    load();
+  };
+
+  const removeInvite = async (id: string) => {
+    await supabase.from("venue_team_invites").delete().eq("id", id);
+    load();
+  };
+
+  const toggleCat = (name: string) => {
+    setPCats(prev => prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]);
   };
 
   const SocialRow = ({ platform, label, color, logo, handle, setHandle }: any) => {
