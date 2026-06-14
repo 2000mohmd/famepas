@@ -79,13 +79,17 @@ const VenueCampaignCreate = () => {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
-      if (!v) return;
-      setVenueId(v.id);
+      // Pull all the owner's venues so they can pick a campaign location
+      const { data: ownerVenues } = await supabase
+        .from("venues").select("id, name")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: true });
+      const list = ownerVenues ?? [];
+      if (!list.length) return;
+      setVenueId(list[0].id);
       const sb: any = supabase;
-      const locRes = await sb.from("service_locations").select("id,name").eq("venue_id", v.id);
       const catRes = await sb.from("categories").select("id,name");
-      setLocations((locRes.data as any) ?? []);
+      setLocations(list.map(v => ({ id: v.id, name: v.name })));
       setCategories((catRes.data as any) ?? []);
 
       if (editing && id) {
