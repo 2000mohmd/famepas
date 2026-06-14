@@ -32,15 +32,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole((data?.role as UserRole) ?? null);
+      .eq("user_id", userId);
+    const roles = (data?.map((row) => row.role) ?? []) as UserRole[];
+    const nextRole = roles.includes("admin") ? "admin" : roles.includes("venue") ? "venue" : roles.includes("influencer") ? "influencer" : null;
+    setRole(nextRole);
   };
 
   const checkApproved = async (userId: string): Promise<{ ok: boolean; status?: string }> => {
-    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
-    if (roleRow?.role === "admin") return { ok: true };
-    if (roleRow?.role === "venue") {
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (roleRows?.map((row) => row.role) ?? []) as UserRole[];
+    if (roles.includes("admin")) return { ok: true };
+    if (roles.includes("venue")) {
       const { data: venues } = await supabase.from("venues").select("approval_status").eq("owner_id", userId);
       if (venues && venues.length > 0) {
         if (venues.some((v: any) => v.approval_status === "approved")) return { ok: true };
