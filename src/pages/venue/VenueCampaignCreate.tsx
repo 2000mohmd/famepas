@@ -76,7 +76,7 @@ const VenueCampaignCreate = () => {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
+      const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!v) return;
       setVenueId(v.id);
       const sb: any = supabase;

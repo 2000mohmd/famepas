@@ -38,7 +38,7 @@ const VenueOffers = () => {
 
   const fetchData = async () => {
     if (!user) return;
-    const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
+    const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
     if (!venue) return;
     setVenueId(venue.id);
     const { data } = await supabase.from("offers").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false });

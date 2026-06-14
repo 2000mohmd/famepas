@@ -34,7 +34,7 @@ const EventAttendeesPage = ({ type }: Props) => {
     if (type === "venue") {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) { setRows([]); return; }
       eventQuery = eventQuery.eq("venue_id", venue.id);
     }

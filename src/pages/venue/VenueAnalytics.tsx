@@ -15,7 +15,7 @@ const VenueAnalytics = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       setVenueId(venue.id);
 
