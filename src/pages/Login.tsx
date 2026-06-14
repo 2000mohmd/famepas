@@ -169,6 +169,11 @@ const Login = () => {
                       className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20 transition"
                     />
                   </div>
+                  <div className="flex justify-end -mt-2">
+                    <Link to="/forgot-password" className="text-sm font-semibold text-[#ec4178] hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
                   <button
                     type="submit"
                     disabled={isLoading}

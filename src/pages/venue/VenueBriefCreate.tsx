@@ -89,10 +89,12 @@ const VenueBriefCreate = () => {
   }, [user, id, editing]);
 
   const uploadCover = async (file: File) => {
-    if (!venue) return;
+    if (!venue) { toast({ title: "Loading venue…", description: "Please wait a moment and try again.", variant: "destructive" }); return; }
     setUploading(true);
-    const path = `${venue.id}/briefs/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("brief-images").upload(path, file, { upsert: true });
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const safe = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${venue.id}/briefs/${safe}`;
+    const { error } = await supabase.storage.from("brief-images").upload(path, file, { upsert: true, contentType: file.type });
     setUploading(false);
     if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return; }
     setCoverUrl(supabase.storage.from("brief-images").getPublicUrl(path).data.publicUrl);
