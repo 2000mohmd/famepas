@@ -49,6 +49,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from("venues")
       .select("approval_status,is_active,signup_completed")
       .eq("owner_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     return Boolean(
