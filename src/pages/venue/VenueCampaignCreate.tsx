@@ -119,6 +119,8 @@ const VenueCampaignCreate = () => {
           setBookingLimits((c as any).booking_limits ?? false);
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
+          setCoverVideoUrl((c as any).cover_video_url ?? "");
+          setCoverImages((c as any).cover_images ?? []);
         }
       }
     })();
