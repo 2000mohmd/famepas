@@ -37,19 +37,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRole((data?.role as UserRole) ?? null);
   };
 
-  // Enforces email verification + admin approval for ANY session (password or OAuth)
+  const checkApproved = async (userId: string): Promise<{ ok: boolean; status?: string }> => {
+    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+    if (roleRow?.role === "admin") return { ok: true };
+    if (roleRow?.role === "venue") {
+      const { data: venues } = await supabase.from("venues").select("approval_status").eq("owner_id", userId);
+      if (venues && venues.length > 0) {
+        if (venues.some((v: any) => v.approval_status === "approved")) return { ok: true };
+        if (venues.every((v: any) => v.approval_status === "rejected")) return { ok: false, status: "rejected" };
+        return { ok: false, status: "pending" };
+      }
+    }
+    const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", userId).maybeSingle();
+    if (profile?.approval_status === "approved") return { ok: true };
+    return { ok: false, status: profile?.approval_status ?? "pending" };
+  };
+
   const enforceApproval = async (sess: Session): Promise<boolean> => {
     if (!sess.user.email_confirmed_at) {
       await supabase.auth.signOut();
       alert("Please verify your email before signing in.");
       return false;
     }
-    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", sess.user.id).maybeSingle();
-    if (roleRow?.role === "admin") return true;
-    const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", sess.user.id).maybeSingle();
-    if (profile?.approval_status !== "approved") {
+    const res = await checkApproved(sess.user.id);
+    if (!res.ok) {
       await supabase.auth.signOut();
-      alert(profile?.approval_status === "rejected"
+      alert(res.status === "rejected"
         ? "Your account application was rejected. Please contact support."
         : "Your account is pending admin approval. You'll be notified once approved.");
       return false;
