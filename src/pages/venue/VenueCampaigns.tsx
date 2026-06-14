@@ -162,6 +162,14 @@ const VenueCampaigns = () => {
                 {cells.map((cell, i) => {
                   if (!cell) return <div key={i} className="aspect-square border-r border-b border-border/40 bg-muted/20" />;
                   const todayCell = isToday(cell.day);
+                  const dayCampaigns = campaigns.filter(c => {
+                    if (!c.start_date) return false;
+                    const s = new Date(c.start_date);
+                    const e = c.end_date ? new Date(c.end_date) : s;
+                    const cur = new Date(cell.date);
+                    return cur >= new Date(s.getFullYear(), s.getMonth(), s.getDate())
+                        && cur <= new Date(e.getFullYear(), e.getMonth(), e.getDate());
+                  });
                   return (
                     <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-pink-50" : ""}`}>
                       <div className="flex items-center justify-between">
@@ -172,6 +180,25 @@ const VenueCampaigns = () => {
                           <button onClick={() => openNew(cell.date)} className="w-5 h-5 rounded text-white text-xs flex items-center justify-center" style={{ background: "#e8547a" }}>
                             <Plus className="w-3 h-3" />
                           </button>
+                        )}
+                      </div>
+                      <div className="mt-1 space-y-0.5 overflow-hidden">
+                        {dayCampaigns.slice(0, 2).map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}
+                            title={c.title}
+                            className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded truncate"
+                            style={{
+                              background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9",
+                              color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569",
+                            }}
+                          >
+                            {c.title}
+                          </button>
+                        ))}
+                        {dayCampaigns.length > 2 && (
+                          <span className="text-[9px] text-muted-foreground">+{dayCampaigns.length - 2} more</span>
                         )}
                       </div>
                     </div>
