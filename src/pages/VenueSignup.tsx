@@ -255,16 +255,33 @@ const VenueSignup = () => {
           brand_name: brandName,
         },
       });
+      // Parse possible error payload from edge function (supabase-js may surface non-2xx as error)
+      let parsed: any = data ?? null;
       if (error) {
-        let parsed: any = null;
-        try { parsed = await (error as any).context?.json?.(); } catch { /* ignore */ }
-        const msg = parsed?.error || (error as any).message || "Signup failed";
-        if (parsed?.code === "email_exists") {
-          toast({ title: "Email already registered", description: "Please sign in instead." });
-          navigate("/login");
-          return;
-        }
-        throw new Error(msg);
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.json === "function") parsed = await ctx.json();
+          else if (ctx && typeof ctx.text === "function") {
+            const t = await ctx.text();
+            try { parsed = JSON.parse(t); } catch { parsed = { error: t }; }
+          }
+        } catch { /* ignore */ }
+      }
+      if (parsed?.code === "email_exists" || /already registered|already been registered/i.test(parsed?.error || "")) {
+        toast({
+          title: "Email already registered",
+          description: "Please sign in with this email instead.",
+        });
+        navigate("/login");
+        return;
+      }
+      if (error || parsed?.error) {
+        toast({
+          title: "Signup failed",
+          description: parsed?.error || (error as any)?.message || "Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
       // Sign the new user in and route to the venue dashboard
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
