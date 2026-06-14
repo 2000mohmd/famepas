@@ -51,7 +51,7 @@ const VenueBriefs = () => {
             <h1 className="text-[28px] font-bold text-foreground">Briefs</h1>
             <a href="#" className="text-sm font-medium" style={{ color: "#e8547a" }}>How does it work?</a>
           </div>
-          <Button style={{ background: "#e8547a" }} className="text-white hover:opacity-90">
+          <Button onClick={() => navigate("/venue/briefs/new")} style={{ background: "#e8547a" }} className="text-white hover:opacity-90">
             <Plus className="w-4 h-4 mr-1.5" /> New Brief
           </Button>
         </div>
