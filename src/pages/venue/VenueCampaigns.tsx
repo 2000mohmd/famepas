@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type Campaign = { id: string; title: string; status: string; start_date: string | null; end_date: string | null };
+type Campaign = { id: string; title: string; status: string; start_date: string | null; end_date: string | null; description?: string | null; cover_image_url?: string | null; cover_video_url?: string | null; cover_images?: string[] | null; deliverables?: any };
 type CulturalEvent = { id: string; title: string; start_date: string; end_date: string; has_notification: boolean; color: string | null };
 
 const VenueCampaigns = () => {
@@ -75,15 +75,36 @@ const VenueCampaigns = () => {
             <p className="text-sm font-medium" style={{ color: "#c2410c" }}>No {title.toLowerCase()} campaigns</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {items.map((c: Campaign) => (
-              <div key={c.id} className="bg-white border border-border rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{c.title}</p>
-                  <p className="text-xs text-muted-foreground">{c.start_date ? new Date(c.start_date).toLocaleDateString() : "No start date"} → {c.end_date ? new Date(c.end_date).toLocaleDateString() : "—"}</p>
+          <div className="grid gap-3">
+            {items.map((c: Campaign) => {
+              const cover = c.cover_image_url || (c.cover_images && c.cover_images[0]);
+              const d = c.deliverables || {};
+              return (
+                <div key={c.id} className="bg-white border border-border rounded-2xl overflow-hidden flex hover:shadow-md transition-shadow">
+                  <div className="w-40 h-32 bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    {c.cover_video_url ? <video src={c.cover_video_url} className="w-full h-full object-cover" muted /> : cover ? <img src={cover} alt={c.title} className="w-full h-full object-cover" /> : <Plus className="w-8 h-8 text-muted-foreground" />}
+                  </div>
+                  <div className="flex-1 p-4 flex flex-col">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-foreground">{c.title}</h3>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9", color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569" }}>
+                        {c.status}
+                      </span>
+                    </div>
+                    {c.description && <p className="text-xs text-muted-foreground line-clamp-2">{c.description}</p>}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                      <span>{c.start_date ? new Date(c.start_date).toLocaleDateString() : "No start"} → {c.end_date ? new Date(c.end_date).toLocaleDateString() : "—"}</span>
+                      {(d.stories || d.reels || d.posts) && (
+                        <span>{d.stories ?? 0} stories · {d.reels ?? 0} reels · {d.posts ?? 0} posts</span>
+                      )}
+                    </div>
+                    <div className="mt-auto pt-3 flex justify-end">
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}>Edit</Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )
       )}
