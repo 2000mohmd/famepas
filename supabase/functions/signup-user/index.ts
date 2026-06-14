@@ -61,7 +61,7 @@ serve(async (req) => {
     }
     const userId = newUser.user.id;
 
-    await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
 
     if (role === "influencer") {
       await new Promise(r => setTimeout(r, 500));
@@ -81,14 +81,10 @@ serve(async (req) => {
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
     } else {
       await new Promise(r => setTimeout(r, 300));
-      const profileData = {
-        user_id: userId,
-        full_name: full_name || (venue_name ? `${venue_name} Owner` : email),
-        phone: phone || contact_phone || null,
-        approval_status: "approved",
-      };
-      const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
-      if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
+      const { data: existing } = await supabaseAdmin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
+      if (!existing) {
+        await supabaseAdmin.from("profiles").insert({ user_id: userId, full_name: venue_name ? `${venue_name} Owner` : email });
+      }
     }
 
     let venue = null;
@@ -125,7 +121,6 @@ serve(async (req) => {
         country: organization_country || null,
         email,
         venue_type: venue_type || "physical",
-        address: address_line1 || null,
         address_line1: address_line1 || null,
         address_line2: address_line2 || null,
         zip_code: zip_code || null,
@@ -140,19 +135,6 @@ serve(async (req) => {
         is_active: true,
       }).select().single();
       venue = venueData;
-
-      if (venue_city) {
-        const { data: locationRow } = await supabaseAdmin
-          .from("service_locations")
-          .select("id")
-          .eq("city", venue_city)
-          .maybeSingle();
-        if (locationRow?.id) {
-          await supabaseAdmin.from("service_locations").update({ country: organization_country || null, is_active: true }).eq("id", locationRow.id);
-        } else {
-          await supabaseAdmin.from("service_locations").insert({ city: venue_city, country: organization_country || null, is_active: true });
-        }
-      }
     }
 
     return new Response(JSON.stringify({ user: newUser.user, venue, organization, brand }), {
