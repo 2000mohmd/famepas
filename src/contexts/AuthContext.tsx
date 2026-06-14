@@ -112,17 +112,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       return { error: { message: "Please verify your email address before signing in. Check your inbox for the verification link." } };
     }
-    // Check admin approval (admins are auto-approved by trigger)
-    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id).maybeSingle();
-    if (roleRow?.role !== "admin") {
-      const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", data.user.id).maybeSingle();
-      if (profile?.approval_status !== "approved") {
-        await supabase.auth.signOut();
-        const msg = profile?.approval_status === "rejected"
-          ? "Your account application was rejected. Please contact support."
-          : "Your account is pending admin approval. You'll be notified once approved.";
-        return { error: { message: msg } };
-      }
+    // Check approval (admins auto-approved; venues approved if any venue is approved)
+    const res = await checkApproved(data.user.id);
+    if (!res.ok) {
+      await supabase.auth.signOut();
+      const msg = res.status === "rejected"
+        ? "Your account application was rejected. Please contact support."
+        : "Your account is pending admin approval. You'll be notified once approved.";
+      return { error: { message: msg } };
     }
     return { error: null };
   };
