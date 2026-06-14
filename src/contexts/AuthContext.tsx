@@ -28,24 +28,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
+  const getPrimaryRole = async (userId: string): Promise<UserRole> => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole((data?.role as UserRole) ?? null);
+      .eq("user_id", userId);
+    const roles = (data ?? []).map((row) => row.role as UserRole);
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("venue")) return "venue";
+    if (roles.includes("influencer")) return "influencer";
+    return null;
   };
 
-  // Enforces email verification + admin approval for ANY session (password or OAuth)
-  const enforceApproval = async (sess: Session): Promise<boolean> => {
+  const fetchRole = async (userId: string) => {
+    setRole(await getPrimaryRole(userId));
+  };
+
+  const isVenueReady = async (userId: string) => {
+    const { data: venue } = await supabase
+      .from("venues")
+      .select("approval_status,is_active,signup_completed")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return Boolean(
+      venue &&
+      venue.approval_status !== "rejected" &&
+      venue.is_active !== false &&
+      venue.signup_completed !== false
+    );
+  };
+
+  // Enforces email verification. Influencers still use approval; venues use active completed onboarding.
+  const enforceAccess = async (sess: Session): Promise<boolean> => {
     if (!sess.user.email_confirmed_at) {
       await supabase.auth.signOut();
       alert("Please verify your email before signing in.");
       return false;
     }
-    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", sess.user.id).maybeSingle();
-    if (roleRow?.role === "admin") return true;
+    const userRole = await getPrimaryRole(sess.user.id);
+    if (userRole === "admin") return true;
+    if (userRole === "venue") {
+      if (await isVenueReady(sess.user.id)) return true;
+      await supabase.auth.signOut();
+      alert("Please complete your business onboarding before accessing the venue dashboard.");
+      return false;
+    }
     const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", sess.user.id).maybeSingle();
     if (profile?.approval_status !== "approved") {
       await supabase.auth.signOut();
@@ -67,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (event === "SIGNED_IN") {
             setTimeout(async () => {
               await new Promise(r => setTimeout(r, 400));
-              const ok = await enforceApproval(session);
+              const ok = await enforceAccess(session);
               if (ok) fetchRole(session.user.id);
             }, 0);
           } else {
@@ -99,9 +129,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       return { error: { message: "Please verify your email address before signing in. Check your inbox for the verification link." } };
     }
-    // Check admin approval (admins are auto-approved by trigger)
-    const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id).maybeSingle();
-    if (roleRow?.role !== "admin") {
+    const userRole = await getPrimaryRole(data.user.id);
+    if (userRole === "venue") {
+      if (!(await isVenueReady(data.user.id))) {
+        await supabase.auth.signOut();
+        return { error: { message: "Please complete your business onboarding before accessing the venue dashboard." } };
+      }
+    } else if (userRole !== "admin") {
       const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", data.user.id).maybeSingle();
       if (profile?.approval_status !== "approved") {
         await supabase.auth.signOut();
