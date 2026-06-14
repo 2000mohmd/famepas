@@ -1417,13 +1417,16 @@ export type Database = {
           category: string | null
           city: string | null
           country: string | null
+          cover_image_url: string | null
           created_at: string
           deadline: string | null
           deliverables: string | null
+          deliverables_spec: Json
           description: string
           id: string
           image_url: string | null
           is_active: boolean
+          location_id: string | null
           max_followers: number | null
           min_followers: number | null
           niches: string[] | null
@@ -1439,13 +1442,16 @@ export type Database = {
           category?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           deadline?: string | null
           deliverables?: string | null
+          deliverables_spec?: Json
           description: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          location_id?: string | null
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
@@ -1461,13 +1467,16 @@ export type Database = {
           category?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string
           deadline?: string | null
           deliverables?: string | null
+          deliverables_spec?: Json
           description?: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          location_id?: string | null
           max_followers?: number | null
           min_followers?: number | null
           niches?: string[] | null
@@ -1478,7 +1487,15 @@ export type Database = {
           updated_at?: string
           venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "venue_briefs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       venue_message_templates: {
         Row: {
