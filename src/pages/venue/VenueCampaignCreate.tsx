@@ -196,13 +196,16 @@ const VenueCampaignCreate = () => {
 
 
   const uploadFile = async (file: File, kind: "video" | "image") => {
-    if (!venueId) return null;
+    if (!venueId) { toast({ title: "Loading venue…", description: "Please wait a moment and try again.", variant: "destructive" }); return null; }
     setUploading(true);
-    const path = `${venueId}/campaigns/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("venue-photos").upload(path, file, { upsert: true });
+    const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase().replace(/[^a-z0-9]/g, "");
+    const safe = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${venueId}/campaigns/${safe}`;
+    const bucket = kind === "image" ? "offer-images" : "venue-photos";
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
     setUploading(false);
     if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return null; }
-    return supabase.storage.from("venue-photos").getPublicUrl(path).data.publicUrl;
+    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
   };
 
   const onPickVideo = async (file?: File | null) => {
