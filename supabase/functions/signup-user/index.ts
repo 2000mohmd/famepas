@@ -55,8 +55,9 @@ serve(async (req) => {
             ? "This email is already registered. Please sign in instead."
             : msg,
           code: isDuplicate ? "email_exists" : "signup_error",
+          should_sign_in: isDuplicate,
         }),
-        { status: isDuplicate ? 409 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: isDuplicate ? 200 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
     const userId = newUser.user.id;
