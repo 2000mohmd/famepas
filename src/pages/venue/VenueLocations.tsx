@@ -50,14 +50,15 @@ const VenueLocations = () => {
       longitude: place.longitude ?? null,
       category: primary?.category ?? "dining",
       brand_id: primary?.brand_id ?? null,
-      approval_status: "pending",
+      approval_status: "approved",
+      is_active: true,
     });
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Location added", description: "Pending admin approval." });
+    toast({ title: "Location added" });
     setOpen(false);
     setName(""); setPlace(null);
     load();

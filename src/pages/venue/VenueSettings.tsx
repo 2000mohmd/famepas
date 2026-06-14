@@ -7,8 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Trash2, Plus, Check } from "lucide-react";
+import { Pencil, Trash2, Plus, Check, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Tab = "integrations" | "team" | "profile" | "messaging" | "billing" | "compliance";
 
@@ -52,6 +57,10 @@ const VenueSettings = () => {
   const [pName, setPName] = useState("");
   const [pDesc, setPDesc] = useState("");
   const [pCancel, setPCancel] = useState(true);
+  const [pLogo, setPLogo] = useState<string | null>(null);
+  const [pCats, setPCats] = useState<string[]>([]);
+  const [allCats, setAllCats] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // template form
   const [tplOpen, setTplOpen] = useState(false);
@@ -61,6 +70,7 @@ const VenueSettings = () => {
 
   // team
   const [inviteEmail, setInviteEmail] = useState("");
+  const [invites, setInvites] = useState<any[]>([]);
 
   const load = async () => {
     if (!user) return;
@@ -71,18 +81,24 @@ const VenueSettings = () => {
     setVenue(v);
     setPName(v.name || "");
     setPDesc(v.description || "");
+    setPLogo(v.logo_url || null);
+    setPCats(v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
 
-    const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
     setProfile(prof);
 
-    const [sRes, tplRes, tierRes] = await Promise.all([
+    const [sRes, tplRes, tierRes, catRes, invRes] = await Promise.all([
       supabase.from("social_integrations").select("*").eq("venue_id", v.id),
       supabase.from("venue_message_templates").select("*").eq("venue_id", v.id).order("created_at"),
       supabase.from("subscription_tiers").select("*").eq("is_active", true).order("price"),
+      supabase.from("categories").select("*").order("name"),
+      supabase.from("venue_team_invites").select("*").eq("venue_id", v.id).order("created_at"),
     ]);
     setSocials(sRes.data ?? []);
     setTemplates(tplRes.data ?? []);
     setTiers(tierRes.data ?? []);
+    setAllCats(catRes.data ?? []);
+    setInvites(invRes.data ?? []);
   };
   useEffect(() => { load(); }, [user]);
 
@@ -103,10 +119,31 @@ const VenueSettings = () => {
     toast({ title: "Disconnected" }); load();
   };
 
+  const uploadLogo = async (file: File) => {
+    if (!venue) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${venue.id}/logo-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("venue-photos").upload(path, file, { upsert: true });
+    if (upErr) {
+      toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: pub } = supabase.storage.from("venue-photos").getPublicUrl(path);
+    setPLogo(pub.publicUrl);
+    await supabase.from("venues").update({ logo_url: pub.publicUrl }).eq("id", venue.id);
+    setUploading(false);
+    toast({ title: "Logo updated" });
+  };
+
   const saveProfile = async () => {
     if (!venue) return;
     const { error } = await supabase.from("venues").update({
-      name: pName, description: pDesc,
+      name: pName,
+      description: pDesc,
+      logo_url: pLogo,
+      category: pCats[0] || "dining",
     }).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else toast({ title: "Profile saved" });
@@ -128,10 +165,27 @@ const VenueSettings = () => {
     load();
   };
 
-  const sendInvite = () => {
-    if (!inviteEmail) return;
+  const sendInvite = async () => {
+    if (!inviteEmail || !venue) return;
+    const { error } = await supabase.from("venue_team_invites").insert({
+      venue_id: venue.id, email: inviteEmail, invited_by: user?.id, status: "pending",
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Invite sent", description: `An invitation has been sent to ${inviteEmail}.` });
     setInviteEmail("");
+    load();
+  };
+
+  const removeInvite = async (id: string) => {
+    await supabase.from("venue_team_invites").delete().eq("id", id);
+    load();
+  };
+
+  const toggleCat = (name: string) => {
+    setPCats(prev => prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]);
   };
 
   const SocialRow = ({ platform, label, color, logo, handle, setHandle }: any) => {
@@ -204,10 +258,10 @@ const VenueSettings = () => {
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl">
             <h2 className="font-semibold text-foreground mb-4">Manage Your Team</h2>
             <div className="flex gap-2 mb-6">
-              <Input placeholder="Enter email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+              <Input placeholder="Enter email address" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
               <Button onClick={sendInvite} style={{ background: PINK }} className="text-white">Invite User</Button>
             </div>
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">
@@ -216,17 +270,52 @@ const VenueSettings = () => {
                   <p className="text-sm text-muted-foreground">{profile?.email || user?.email}</p>
                 </div>
               </div>
+              {invites.map(inv => (
+                <div key={inv.id} className="flex items-center justify-between border-t border-border pt-3">
+                  <div>
+                    <p className="font-medium text-foreground">{inv.email}</p>
+                    <p className="text-xs">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 capitalize">
+                        {inv.status}
+                      </span>
+                    </p>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => removeInvite(inv.id)}>
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {tab === "profile" && venue && (
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-5">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
+                {pLogo ? (
+                  <img src={pLogo} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-6 h-6 text-muted-foreground" />
+                )}
+              </div>
+              <label className="cursor-pointer">
+                <input
+                  type="file" accept="image/*" className="hidden"
+                  onChange={e => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+                />
+                <span className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted">
+                  <Upload className="w-4 h-4" /> {uploading ? "Uploading…" : pLogo ? "Change Logo" : "Upload Logo"}
+                </span>
+              </label>
+            </div>
+
             <div>
               <Label>Brand Name</Label>
               <p className="text-xs text-muted-foreground mb-2">This will be displayed on the app</p>
               <Input value={pName} onChange={e => setPName(e.target.value)} />
             </div>
+
             <div>
               <Label>Description</Label>
               <Textarea
@@ -237,17 +326,44 @@ const VenueSettings = () => {
               />
               <p className="text-xs text-muted-foreground text-right">{pDesc.length}/160</p>
             </div>
+
+            <div>
+              <Label>Categories</Label>
+              <p className="text-xs text-muted-foreground mb-2">Pick all that apply - this helps influencers find you</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between font-normal">
+                    {pCats.length ? `${pCats.length} categories selected` : "Select categories"}
+                    <span>▾</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-2">
+                  {allCats.map(c => (
+                    <label key={c.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
+                      <Checkbox checked={pCats.includes(c.name)} onCheckedChange={() => toggleCat(c.name)} />
+                      <span className="text-sm">{c.name}</span>
+                    </label>
+                  ))}
+                  {allCats.length === 0 && <p className="text-sm text-muted-foreground p-2">No categories yet</p>}
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div>
               <Label>Cancellation Policy</Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Require influencers to contact the venue for any changes within 24hrs of their visit
               </p>
-              <div className="flex items-center gap-3">
-                <Switch checked={pCancel} onCheckedChange={setPCancel} />
-                <span className="text-sm">{pCancel ? "Yes" : "No"}</span>
-              </div>
+              <Select value={pCancel ? "yes" : "no"} onValueChange={v => setPCancel(v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button onClick={saveProfile} style={{ background: PINK }} className="text-white">Save Changes</Button>
+
+            <Button onClick={saveProfile} style={{ background: PINK }} className="text-white w-full">Save</Button>
           </div>
         )}
 
