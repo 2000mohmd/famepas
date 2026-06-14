@@ -18,7 +18,7 @@ const VenueBriefs = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       const { data } = await supabase.from("venue_briefs").select("*").eq("venue_id", venue.id).order("created_at", { ascending: false });
       setBriefs(data ?? []);

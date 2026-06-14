@@ -149,7 +149,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   useEffect(() => {
     if (type !== "venue" || !user) return;
     (async () => {
-      const { data: venue } = await supabase.from("venues").select("id, name").eq("owner_id", user.id).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id, name").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       setVenueName(venue.name);
       const [ig, camp] = await Promise.all([
