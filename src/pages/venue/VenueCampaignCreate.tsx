@@ -195,7 +195,34 @@ const VenueCampaignCreate = () => {
 
 
 
-  return (
+  const uploadFile = async (file: File, kind: "video" | "image") => {
+    if (!venueId) return null;
+    setUploading(true);
+    const path = `${venueId}/campaigns/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("venue-photos").upload(path, file, { upsert: true });
+    setUploading(false);
+    if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return null; }
+    return supabase.storage.from("venue-photos").getPublicUrl(path).data.publicUrl;
+  };
+
+  const onPickVideo = async (file?: File | null) => {
+    if (!file) return;
+    const url = await uploadFile(file, "video");
+    if (url) setCoverVideoUrl(url);
+  };
+
+  const onPickImages = async (files: FileList | null) => {
+    if (!files) return;
+    const slots = Math.max(0, 5 - coverImages.length);
+    const picked = Array.from(files).slice(0, slots);
+    const urls: string[] = [];
+    for (const f of picked) {
+      const u = await uploadFile(f, "image");
+      if (u) urls.push(u);
+    }
+    if (urls.length) setCoverImages([...coverImages, ...urls]);
+  };
+
     <DashboardLayout type="venue">
       <div className="max-w-3xl mx-auto pb-28 animate-fade-in">
         <button onClick={() => navigate("/venue/campaigns")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-5">
