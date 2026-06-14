@@ -450,47 +450,77 @@ export type Database = {
         Row: {
           booking_id: string
           caption: string | null
+          comments: number
           content_type: string
           content_url: string | null
           created_at: string
+          external_post_id: string | null
           feedback: string | null
           id: string
           influencer_id: string
+          likes: number
+          media_url: string | null
+          metrics_updated_at: string | null
           platform: string | null
+          posted_at: string | null
           reviewed_at: string | null
+          saves: number
+          shares: number
           status: string
           submitted_at: string | null
+          thumbnail_url: string | null
           updated_at: string
+          views: number
         }
         Insert: {
           booking_id: string
           caption?: string | null
+          comments?: number
           content_type?: string
           content_url?: string | null
           created_at?: string
+          external_post_id?: string | null
           feedback?: string | null
           id?: string
           influencer_id: string
+          likes?: number
+          media_url?: string | null
+          metrics_updated_at?: string | null
           platform?: string | null
+          posted_at?: string | null
           reviewed_at?: string | null
+          saves?: number
+          shares?: number
           status?: string
           submitted_at?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
+          views?: number
         }
         Update: {
           booking_id?: string
           caption?: string | null
+          comments?: number
           content_type?: string
           content_url?: string | null
           created_at?: string
+          external_post_id?: string | null
           feedback?: string | null
           id?: string
           influencer_id?: string
+          likes?: number
+          media_url?: string | null
+          metrics_updated_at?: string | null
           platform?: string | null
+          posted_at?: string | null
           reviewed_at?: string | null
+          saves?: number
+          shares?: number
           status?: string
           submitted_at?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
+          views?: number
         }
         Relationships: [
           {
@@ -1306,34 +1336,52 @@ export type Database = {
       social_integrations: {
         Row: {
           access_token: string | null
+          avatar_url: string | null
           connected_at: string
           created_at: string
+          display_name: string | null
           handle: string | null
           id: string
+          open_id: string | null
           platform: string
+          refresh_token: string | null
+          scope: string | null
           status: string
+          token_expires_at: string | null
           updated_at: string
           venue_id: string
         }
         Insert: {
           access_token?: string | null
+          avatar_url?: string | null
           connected_at?: string
           created_at?: string
+          display_name?: string | null
           handle?: string | null
           id?: string
+          open_id?: string | null
           platform: string
+          refresh_token?: string | null
+          scope?: string | null
           status?: string
+          token_expires_at?: string | null
           updated_at?: string
           venue_id: string
         }
         Update: {
           access_token?: string | null
+          avatar_url?: string | null
           connected_at?: string
           created_at?: string
+          display_name?: string | null
           handle?: string | null
           id?: string
+          open_id?: string | null
           platform?: string
+          refresh_token?: string | null
+          scope?: string | null
           status?: string
+          token_expires_at?: string | null
           updated_at?: string
           venue_id?: string
         }
