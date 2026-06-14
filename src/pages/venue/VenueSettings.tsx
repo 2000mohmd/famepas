@@ -258,10 +258,10 @@ const VenueSettings = () => {
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl">
             <h2 className="font-semibold text-foreground mb-4">Manage Your Team</h2>
             <div className="flex gap-2 mb-6">
-              <Input placeholder="Enter email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+              <Input placeholder="Enter email address" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
               <Button onClick={sendInvite} style={{ background: PINK }} className="text-white">Invite User</Button>
             </div>
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">
@@ -270,17 +270,52 @@ const VenueSettings = () => {
                   <p className="text-sm text-muted-foreground">{profile?.email || user?.email}</p>
                 </div>
               </div>
+              {invites.map(inv => (
+                <div key={inv.id} className="flex items-center justify-between border-t border-border pt-3">
+                  <div>
+                    <p className="font-medium text-foreground">{inv.email}</p>
+                    <p className="text-xs">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 capitalize">
+                        {inv.status}
+                      </span>
+                    </p>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => removeInvite(inv.id)}>
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {tab === "profile" && venue && (
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-5">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
+                {pLogo ? (
+                  <img src={pLogo} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-6 h-6 text-muted-foreground" />
+                )}
+              </div>
+              <label className="cursor-pointer">
+                <input
+                  type="file" accept="image/*" className="hidden"
+                  onChange={e => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+                />
+                <span className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted">
+                  <Upload className="w-4 h-4" /> {uploading ? "Uploading…" : pLogo ? "Change Logo" : "Upload Logo"}
+                </span>
+              </label>
+            </div>
+
             <div>
               <Label>Brand Name</Label>
               <p className="text-xs text-muted-foreground mb-2">This will be displayed on the app</p>
               <Input value={pName} onChange={e => setPName(e.target.value)} />
             </div>
+
             <div>
               <Label>Description</Label>
               <Textarea
@@ -291,17 +326,44 @@ const VenueSettings = () => {
               />
               <p className="text-xs text-muted-foreground text-right">{pDesc.length}/160</p>
             </div>
+
+            <div>
+              <Label>Categories</Label>
+              <p className="text-xs text-muted-foreground mb-2">Pick all that apply - this helps influencers find you</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between font-normal">
+                    {pCats.length ? `${pCats.length} categories selected` : "Select categories"}
+                    <span>▾</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-2">
+                  {allCats.map(c => (
+                    <label key={c.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
+                      <Checkbox checked={pCats.includes(c.name)} onCheckedChange={() => toggleCat(c.name)} />
+                      <span className="text-sm">{c.name}</span>
+                    </label>
+                  ))}
+                  {allCats.length === 0 && <p className="text-sm text-muted-foreground p-2">No categories yet</p>}
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div>
               <Label>Cancellation Policy</Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Require influencers to contact the venue for any changes within 24hrs of their visit
               </p>
-              <div className="flex items-center gap-3">
-                <Switch checked={pCancel} onCheckedChange={setPCancel} />
-                <span className="text-sm">{pCancel ? "Yes" : "No"}</span>
-              </div>
+              <Select value={pCancel ? "yes" : "no"} onValueChange={v => setPCancel(v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button onClick={saveProfile} style={{ background: PINK }} className="text-white">Save Changes</Button>
+
+            <Button onClick={saveProfile} style={{ background: PINK }} className="text-white w-full">Save</Button>
           </div>
         )}
 
