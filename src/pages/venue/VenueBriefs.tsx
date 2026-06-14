@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { Plus, Clipboard, Star, Film, CheckCircle2, Check, Calendar, ImageIcon, Loader2, ArrowRight } from "lucide-react";
+import { Plus, Clipboard, Star, Film, CheckCircle2, Check, Calendar, ImageIcon, Loader2, ArrowRight, Users, Instagram, Music2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Stage = "draft" | "matching" | "in_progress" | "review" | "complete";
 
