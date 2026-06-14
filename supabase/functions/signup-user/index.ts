@@ -132,8 +132,8 @@ serve(async (req) => {
         latitude: latitude ?? null,
         longitude: longitude ?? null,
         signup_completed: signup_completed ?? true,
-        approval_status: "approved",
-        is_active: true,
+        approval_status: "pending",
+        is_active: false,
       }).select().single();
       venue = venueData;
     }
