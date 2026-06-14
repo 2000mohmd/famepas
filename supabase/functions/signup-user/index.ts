@@ -142,9 +142,16 @@ serve(async (req) => {
       venue = venueData;
 
       if (venue_city) {
-        await supabaseAdmin
+        const { data: locationRow } = await supabaseAdmin
           .from("service_locations")
-          .upsert({ city: venue_city, country: organization_country || null, is_active: true }, { onConflict: "city" });
+          .select("id")
+          .eq("city", venue_city)
+          .maybeSingle();
+        if (locationRow?.id) {
+          await supabaseAdmin.from("service_locations").update({ country: organization_country || null, is_active: true }).eq("id", locationRow.id);
+        } else {
+          await supabaseAdmin.from("service_locations").insert({ city: venue_city, country: organization_country || null, is_active: true });
+        }
       }
     }
 
