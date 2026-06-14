@@ -40,6 +40,9 @@ const VenueCampaignCreate = () => {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [coverVideoUrl, setCoverVideoUrl] = useState<string>("");
+  const [coverImages, setCoverImages] = useState<string[]>([]);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -76,13 +79,17 @@ const VenueCampaignCreate = () => {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
-      if (!v) return;
-      setVenueId(v.id);
+      // Pull all the owner's venues so they can pick a campaign location
+      const { data: ownerVenues } = await supabase
+        .from("venues").select("id, name")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: true });
+      const list = ownerVenues ?? [];
+      if (!list.length) return;
+      setVenueId(list[0].id);
       const sb: any = supabase;
-      const locRes = await sb.from("service_locations").select("id,name").eq("venue_id", v.id);
       const catRes = await sb.from("categories").select("id,name");
-      setLocations((locRes.data as any) ?? []);
+      setLocations(list.map(v => ({ id: v.id, name: v.name })));
       setCategories((catRes.data as any) ?? []);
 
       if (editing && id) {
@@ -112,6 +119,8 @@ const VenueCampaignCreate = () => {
           setBookingLimits((c as any).booking_limits ?? false);
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
+          setCoverVideoUrl((c as any).cover_video_url ?? "");
+          setCoverImages((c as any).cover_images ?? []);
         }
       }
     })();
@@ -168,6 +177,9 @@ const VenueCampaignCreate = () => {
       booking_limits: bookingLimits,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
+      cover_video_url: coverVideoUrl || null,
+      cover_images: coverImages,
+      cover_image_url: coverImages[0] || null,
       is_draft: mode === "draft",
       status: mode === "live" ? (startDate && new Date(startDate) > new Date() ? "scheduled" : "active") : "scheduled",
     };
@@ -182,6 +194,34 @@ const VenueCampaignCreate = () => {
   };
 
 
+
+  const uploadFile = async (file: File, kind: "video" | "image") => {
+    if (!venueId) return null;
+    setUploading(true);
+    const path = `${venueId}/campaigns/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("venue-photos").upload(path, file, { upsert: true });
+    setUploading(false);
+    if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return null; }
+    return supabase.storage.from("venue-photos").getPublicUrl(path).data.publicUrl;
+  };
+
+  const onPickVideo = async (file?: File | null) => {
+    if (!file) return;
+    const url = await uploadFile(file, "video");
+    if (url) setCoverVideoUrl(url);
+  };
+
+  const onPickImages = async (files: FileList | null) => {
+    if (!files) return;
+    const slots = Math.max(0, 5 - coverImages.length);
+    const picked = Array.from(files).slice(0, slots);
+    const urls: string[] = [];
+    for (const f of picked) {
+      const u = await uploadFile(f, "image");
+      if (u) urls.push(u);
+    }
+    if (urls.length) setCoverImages([...coverImages, ...urls]);
+  };
 
   return (
     <DashboardLayout type="venue">
@@ -207,14 +247,33 @@ const VenueCampaignCreate = () => {
             </div>
             <div>
               <Label className="text-sm font-semibold">Upload Images</Label>
-              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign</p>
-              <div className="flex gap-3">
-                <button type="button" className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a]">
-                  <Video className="w-5 h-5" /> Choose video
-                </button>
-                <button type="button" className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a]">
-                  <ImageIcon className="w-5 h-5" /> Choose images
-                </button>
+              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign {uploading && <span className="text-[#e8547a]">(uploading…)</span>}</p>
+              <div className="flex gap-3 flex-wrap">
+                <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a] cursor-pointer overflow-hidden relative">
+                  {coverVideoUrl ? (
+                    <>
+                      <video src={coverVideoUrl} className="w-full h-full object-cover" />
+                      <button type="button" onClick={(e) => { e.preventDefault(); setCoverVideoUrl(""); }} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                    </>
+                  ) : (
+                    <>
+                      <Video className="w-5 h-5" /> Choose video
+                    </>
+                  )}
+                  <input type="file" accept="video/*" className="hidden" onChange={e => onPickVideo(e.target.files?.[0])} />
+                </label>
+                {coverImages.map((url, i) => (
+                  <div key={url} className="w-32 h-24 rounded-xl overflow-hidden relative border border-border">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setCoverImages(coverImages.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                  </div>
+                ))}
+                {coverImages.length < 5 && (
+                  <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#e8547a] cursor-pointer">
+                    <ImageIcon className="w-5 h-5" /> Choose images
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={e => onPickImages(e.target.files)} />
+                  </label>
+                )}
               </div>
             </div>
             <div>

@@ -31,6 +31,7 @@ import EventAttendeesPage from "./pages/EventAttendeesPage";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
 import VenueBriefs from "./pages/venue/VenueBriefs";
+import VenueBriefCreate from "./pages/venue/VenueBriefCreate";
 import VenueDiscover from "./pages/venue/VenueDiscover";
 import VenueInvitations from "./pages/venue/VenueInvitations";
 import VenueBookings from "./pages/venue/VenueBookings";
@@ -117,6 +118,8 @@ const App = () => (
             <Route path="/venue/locations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueLocations /></ProtectedRoute>} />
             <Route path="/venue/offers" element={<ProtectedRoute allowedRoles={["venue"]}><VenueOffers /></ProtectedRoute>} />
             <Route path="/venue/briefs" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefs /></ProtectedRoute>} />
+            <Route path="/venue/briefs/new" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefCreate /></ProtectedRoute>} />
+            <Route path="/venue/briefs/:id/edit" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBriefCreate /></ProtectedRoute>} />
             <Route path="/venue/discover" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDiscover /></ProtectedRoute>} />
             <Route path="/venue/invitations" element={<ProtectedRoute allowedRoles={["venue"]}><VenueInvitations /></ProtectedRoute>} />
             <Route path="/venue/bookings" element={<ProtectedRoute allowedRoles={["venue"]}><VenueBookings /></ProtectedRoute>} />
