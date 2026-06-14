@@ -57,6 +57,10 @@ const VenueSettings = () => {
   const [pName, setPName] = useState("");
   const [pDesc, setPDesc] = useState("");
   const [pCancel, setPCancel] = useState(true);
+  const [pLogo, setPLogo] = useState<string | null>(null);
+  const [pCats, setPCats] = useState<string[]>([]);
+  const [allCats, setAllCats] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // template form
   const [tplOpen, setTplOpen] = useState(false);
@@ -66,6 +70,7 @@ const VenueSettings = () => {
 
   // team
   const [inviteEmail, setInviteEmail] = useState("");
+  const [invites, setInvites] = useState<any[]>([]);
 
   const load = async () => {
     if (!user) return;
