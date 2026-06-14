@@ -41,6 +41,69 @@ const TikTokLogo = () => (
   </svg>
 );
 
+const TikTokConnectRow = ({ venue, social, onChange, logo }: any) => {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState(false);
+
+  // Handle ?tiktok=... callback once on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tiktok");
+    if (!t) return;
+    if (t === "connected") toast({ title: "TikTok connected", description: "Your TikTok account is now linked." });
+    else if (t === "missing_keys") toast({ title: "TikTok not configured", description: "Admin must add TikTok app keys.", variant: "destructive" });
+    else toast({ title: "TikTok error", description: "Could not complete connection.", variant: "destructive" });
+    window.history.replaceState({}, "", window.location.pathname);
+    onChange?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const connect = async () => {
+    if (!venue) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("tiktok-oauth", {
+      body: { action: "initiate", venue_id: venue.id },
+    });
+    setBusy(false);
+    if (error || !data?.url) {
+      toast({ title: "TikTok not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
+      return;
+    }
+    window.location.href = data.url;
+  };
+
+  const disconnect = async () => {
+    if (!venue) return;
+    await supabase.from("social_integrations").delete().eq("venue_id", venue.id).eq("platform", "tiktok");
+    toast({ title: "Disconnected" });
+    onChange?.();
+  };
+
+  return (
+    <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "#000" }}>{logo}</div>
+        <div>
+          <p className="font-medium text-foreground">TikTok</p>
+          <p className="text-xs text-muted-foreground">
+            {social?.status === "connected" ? (social.display_name ? `@${social.display_name}` : "Connected") : "Not connected"}
+          </p>
+        </div>
+      </div>
+      {social?.status === "connected" ? (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+        </div>
+      ) : (
+        <Button size="sm" onClick={connect} disabled={busy} style={{ background: "#000", color: "#fff" }}>
+          {busy ? "Redirecting…" : "Connect TikTok"}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
