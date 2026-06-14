@@ -31,6 +31,7 @@ import EventAttendeesPage from "./pages/EventAttendeesPage";
 import VenueDashboard from "./pages/venue/VenueDashboard";
 import VenueOffers from "./pages/venue/VenueOffers";
 import VenueBriefs from "./pages/venue/VenueBriefs";
+import VenueBriefCreate from "./pages/venue/VenueBriefCreate";
 import VenueDiscover from "./pages/venue/VenueDiscover";
 import VenueInvitations from "./pages/venue/VenueInvitations";
 import VenueBookings from "./pages/venue/VenueBookings";
