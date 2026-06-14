@@ -330,13 +330,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "campaigns_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "service_locations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "campaigns_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
