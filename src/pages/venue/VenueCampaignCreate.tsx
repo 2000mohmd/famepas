@@ -40,6 +40,9 @@ const VenueCampaignCreate = () => {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [coverVideoUrl, setCoverVideoUrl] = useState<string>("");
+  const [coverImages, setCoverImages] = useState<string[]>([]);
 
   // Form state
   const [title, setTitle] = useState("");
