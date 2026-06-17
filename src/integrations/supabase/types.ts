@@ -1837,6 +1837,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_venue_contact: {
+        Args: { _venue_id: string }
+        Returns: {
+          contact_phone: string
+          email: string
+          phone: string
+          whatsapp_phone: string
+        }[]
+      }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_admin_permission: {
         Args: { _permission: string; _user_id: string }
