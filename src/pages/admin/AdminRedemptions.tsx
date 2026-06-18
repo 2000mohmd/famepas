@@ -2,9 +2,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Check, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Row {
   id: string;
@@ -23,9 +25,9 @@ const AdminRedemptions = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchAll = async () => {
+  const fetchAll = async () => {
       const { data: reds } = await supabase
         .from("offer_redemptions")
         .select("id, status, created_at, redeemed_at, offer_id, influencer_id")
@@ -50,8 +52,16 @@ const AdminRedemptions = () => {
         influencer_name: profMap.get(r.influencer_id)?.full_name,
       })));
     };
-    fetchAll();
-  }, []);
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const updateStatus = async (id: string, status: "approved" | "rejected") => {
+    const patch: any = { status };
+    if (status === "approved") patch.redeemed_at = new Date().toISOString();
+    const { error } = await supabase.from("offer_redemptions").update(patch).eq("id", id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: `Redemption ${status}` }); fetchAll(); }
+  };
 
   let filtered = rows.filter(r =>
     (r.offer_title || "").toLowerCase().includes(search.toLowerCase()) ||
