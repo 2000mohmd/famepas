@@ -57,6 +57,7 @@ import CategoriesPage from "./pages/public/CategoriesPage";
 import InfluencersPage from "./pages/public/InfluencersPage";
 import AboutPage from "./pages/public/AboutPage";
 import ContactPage from "./pages/public/ContactPage";
+import ExplorePage from "./pages/public/ExplorePage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/influencers" element={<InfluencersPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
