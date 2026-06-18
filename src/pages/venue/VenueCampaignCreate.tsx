@@ -184,11 +184,52 @@ const VenueCampaignCreate = () => {
       status: mode === "live" ? (startDate && new Date(startDate) > new Date() ? "scheduled" : "active") : "scheduled",
     };
     const sb: any = supabase;
-    const { error } = editing
-      ? await sb.from("campaigns").update(payload).eq("id", id!)
-      : await sb.from("campaigns").insert(payload);
+    let campaignId = id;
+    let saveErr: any = null;
+    if (editing) {
+      const { error } = await sb.from("campaigns").update(payload).eq("id", id!);
+      saveErr = error;
+    } else {
+      const { data: inserted, error } = await sb.from("campaigns").insert(payload).select("id").single();
+      saveErr = error;
+      campaignId = inserted?.id;
+    }
+    if (saveErr) {
+      setSaving(false);
+      toast({ title: "Error", description: saveErr.message, variant: "destructive" });
+      return;
+    }
+
+    // Sync campaign → offers (so influencers and admin can see it).
+    // Offers stays the canonical consumer-facing table; one row per campaign linked via campaign_id.
+    if (campaignId) {
+      const firstIg = igOffers[0];
+      const discountNum = firstIg?.offer ? parseFloat(String(firstIg.offer).replace(/[^0-9.]/g, "")) : null;
+      const offerPayload: any = {
+        venue_id: venueId,
+        campaign_id: campaignId,
+        title,
+        description: description || null,
+        image_url: coverImages[0] || null,
+        cover_image_url: coverImages[0] || null,
+        gallery_urls: coverImages,
+        offer_type: "experience",
+        discount_value: Number.isFinite(discountNum as number) ? discountNum : null,
+        min_followers: firstIg?.min_followers ? parseInt(firstIg.min_followers) : null,
+        starts_at: startDate || new Date().toISOString(),
+        ends_at: endDate || null,
+        is_active: mode === "live" && !inviteOnly,
+        requirements: firstIg?.offer || null,
+      };
+      const { data: existingOffer } = await sb.from("offers").select("id").eq("campaign_id", campaignId).maybeSingle();
+      if (existingOffer?.id) {
+        await sb.from("offers").update(offerPayload).eq("id", existingOffer.id);
+      } else {
+        await sb.from("offers").insert(offerPayload);
+      }
+    }
+
     setSaving(false);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: mode === "draft" ? "Saved to drafts" : "Campaign is live" });
     navigate("/venue/campaigns");
   };
