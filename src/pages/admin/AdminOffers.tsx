@@ -5,8 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, CheckCircle, XCircle, Building2 } from "lucide-react";
+import { Search, CheckCircle, XCircle, Building2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Offer {
   id: string;
@@ -27,6 +31,7 @@ const AdminOffers = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [venueStatusFilter, setVenueStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchOffers = async () => {
@@ -45,11 +50,12 @@ const AdminOffers = () => {
     else { toast({ title: active ? "Offer deactivated" : "Offer approved & activated" }); fetchOffers(); }
   };
 
-  const deleteOffer = async (id: string) => {
-    if (!confirm("Delete this offer permanently?")) return;
-    const { error } = await supabase.from("offers").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from("offers").delete().eq("id", deleteId);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: "Offer deleted" }); fetchOffers(); }
+    setDeleteId(null);
   };
 
   let filtered = offers.filter(o =>
@@ -164,8 +170,8 @@ const AdminOffers = () => {
                         <Button variant="ghost" size="sm" onClick={() => toggleActive(offer.id, offer.is_active)} className="text-muted-foreground hover:text-gold h-7 px-2" title={offer.is_active ? "Deactivate" : "Approve/Activate"}>
                           {offer.is_active ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteOffer(offer.id)} className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete offer">
-                          <XCircle className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(offer.id)} className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete offer">
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </td>
@@ -176,6 +182,19 @@ const AdminOffers = () => {
           </table>
         </div>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this offer?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

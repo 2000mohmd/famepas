@@ -22,9 +22,11 @@ import {
   ChevronRight,
   Megaphone,
   Clipboard,
+  ClipboardCheck,
   Film,
   Sparkle,
   CalendarRange,
+  Home,
   Menu,
   X,
 } from "lucide-react";
@@ -53,7 +55,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Operations",
     items: [
-      { to: "/admin/redemptions", icon: Tag, label: "Offer Attendance" },
+      { to: "/admin/redemptions", icon: ClipboardCheck, label: "Offer Attendance" },
       { to: "/admin/event-attendees", icon: Users, label: "Event Attendees" },
       { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
       { to: "/admin/billing", icon: CreditCard, label: "Billing" },
@@ -102,7 +104,7 @@ const influencerGroups: NavGroup[] = [
     label: "Overview",
     items: [
       { to: "/influencer", icon: LayoutDashboard, label: "Dashboard" },
-      { to: "/influencer/home", icon: Building2, label: "Home" },
+      { to: "/influencer/home", icon: Home, label: "Home" },
       { to: "/influencer/explore", icon: MapPin, label: "Explore" },
     ],
   },

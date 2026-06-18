@@ -2,9 +2,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Check, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Row {
   id: string;
@@ -23,9 +25,9 @@ const AdminRedemptions = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchAll = async () => {
+  const fetchAll = async () => {
       const { data: reds } = await supabase
         .from("offer_redemptions")
         .select("id, status, created_at, redeemed_at, offer_id, influencer_id")
@@ -50,8 +52,16 @@ const AdminRedemptions = () => {
         influencer_name: profMap.get(r.influencer_id)?.full_name,
       })));
     };
-    fetchAll();
-  }, []);
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const updateStatus = async (id: string, status: "approved" | "rejected") => {
+    const patch: any = { status };
+    if (status === "approved") patch.redeemed_at = new Date().toISOString();
+    const { error } = await supabase.from("offer_redemptions").update(patch).eq("id", id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: `Redemption ${status}` }); fetchAll(); }
+  };
 
   let filtered = rows.filter(r =>
     (r.offer_title || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -106,11 +116,12 @@ const AdminRedemptions = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Influencer</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                   <td className="p-4 font-medium text-foreground">{r.offer_title || "—"}</td>
@@ -123,6 +134,20 @@ const AdminRedemptions = () => {
                       r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" :
                       "bg-yellow-500/20 text-yellow-400 border-yellow-400/30"
                     }>{r.status}</Badge>
+                  </td>
+                  <td className="p-4">
+                    {r.status === "pending" ? (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => updateStatus(r.id, "approved")} className="h-7 px-2 text-success hover:text-success" title="Approve">
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => updateStatus(r.id, "rejected")} className="h-7 px-2 text-destructive hover:text-destructive" title="Reject">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
