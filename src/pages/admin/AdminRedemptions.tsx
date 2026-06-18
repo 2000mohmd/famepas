@@ -116,11 +116,12 @@ const AdminRedemptions = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Influencer</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                   <td className="p-4 font-medium text-foreground">{r.offer_title || "—"}</td>
@@ -133,6 +134,20 @@ const AdminRedemptions = () => {
                       r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" :
                       "bg-yellow-500/20 text-yellow-400 border-yellow-400/30"
                     }>{r.status}</Badge>
+                  </td>
+                  <td className="p-4">
+                    {r.status === "pending" ? (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => updateStatus(r.id, "approved")} className="h-7 px-2 text-success hover:text-success" title="Approve">
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => updateStatus(r.id, "rejected")} className="h-7 px-2 text-destructive hover:text-destructive" title="Reject">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
