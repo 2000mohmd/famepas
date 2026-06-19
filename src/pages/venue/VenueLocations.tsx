@@ -9,38 +9,53 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import LocationAutocomplete, { PickedPlace } from "@/components/venue/LocationAutocomplete";
 
 const VenueLocations = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [venues, setVenues] = useState<any[]>([]);
+  const [venue, setVenue] = useState<any>(null);
+  const [locations, setLocations] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [place, setPlace] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data: v } = await supabase
       .from("venues")
       .select("*")
       .eq("owner_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    setVenue(v);
+    if (!v) { setLocations([]); return; }
+    const { data: locs } = await supabase
+      .from("venue_locations" as any)
+      .select("*")
+      .eq("venue_id", v.id)
+      .order("is_primary", { ascending: false })
       .order("created_at", { ascending: true });
-    setVenues(data ?? []);
+    setLocations((locs as any) ?? []);
   };
   useEffect(() => { load(); }, [user]);
 
   const save = async () => {
-    if (!user || !name || !place) {
+    if (!venue || !name || !place) {
       toast({ title: "Missing info", description: "Name and address are required.", variant: "destructive" });
       return;
     }
     setSaving(true);
-    const primary = venues[0];
-    const { error } = await supabase.from("venues").insert({
-      owner_id: user.id,
+    const { error } = await supabase.from("venue_locations" as any).insert({
+      venue_id: venue.id,
       name,
       address: place.address,
       city: place.city ?? null,
@@ -48,11 +63,8 @@ const VenueLocations = () => {
       zip_code: place.zip ?? null,
       latitude: place.latitude ?? null,
       longitude: place.longitude ?? null,
-      category: primary?.category ?? "dining",
-      brand_id: primary?.brand_id ?? null,
-      approval_status: "approved",
-      is_active: true,
-    });
+      is_primary: locations.length === 0,
+    } as any);
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -65,8 +77,8 @@ const VenueLocations = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Remove this location?")) return;
-    const { error } = await supabase.from("venues").delete().eq("id", id);
+    const { error } = await supabase.from("venue_locations" as any).delete().eq("id", id);
+    setConfirmDelete(null);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: "Removed" }); load(); }
   };
@@ -76,35 +88,37 @@ const VenueLocations = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[28px] font-bold text-foreground">Locations</h1>
-          <Button style={{ background: "#e8547a" }} className="text-white hover:opacity-90" onClick={() => setOpen(true)}>
+          <Button style={{ background: "#e8547a" }} className="text-white hover:opacity-90" onClick={() => setOpen(true)} disabled={!venue}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Location
           </Button>
         </div>
 
-        {venues.length === 0 ? (
+        {!venue ? (
+          <div className="bg-white border border-border rounded-2xl p-12 text-center">
+            <p className="text-muted-foreground">Create your venue profile first to add locations.</p>
+          </div>
+        ) : locations.length === 0 ? (
           <div className="bg-white border border-border rounded-2xl p-12 text-center">
             <p className="text-muted-foreground">No locations yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {venues.map(v => (
-              <div key={v.id} className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4">
+            {locations.map(l => (
+              <div key={l.id} className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fce7eb" }}>
                   <MapPin className="w-5 h-5" style={{ color: "#e8547a" }} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">{v.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      v.approval_status === "approved" ? "bg-green-100 text-green-700" :
-                      v.approval_status === "rejected" ? "bg-red-100 text-red-700" :
-                      "bg-yellow-100 text-yellow-700"
-                    }`}>{v.approval_status}</span>
+                    <h3 className="font-semibold text-foreground">{l.name}</h3>
+                    {l.is_primary && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Primary</span>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{v.address || v.city || "No address"}</p>
+                  <p className="text-sm text-muted-foreground">{l.address || l.city || "No address"}</p>
                 </div>
-                {venues.length > 1 && (
-                  <Button size="icon" variant="ghost" onClick={() => remove(v.id)}>
+                {!l.is_primary && (
+                  <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(l.id)}>
                     <Trash2 className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 )}
@@ -135,6 +149,19 @@ const VenueLocations = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove this location?</AlertDialogTitle>
+              <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => confirmDelete && remove(confirmDelete)}>Remove</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

@@ -3,6 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, Heart, MessageCircle, Share2, Film, Ticket, CalendarCheck, TrendingUp } from "lucide-react";
+import {
+  ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { format } from "date-fns";
 
 type Period = "7d" | "30d" | "90d" | "all";
 
@@ -69,6 +74,29 @@ const VenueReports = () => {
     return { views, likes, comments, shares, engagement, posts, byType, redeemed, completed, noShow, totalBookings: bookings.length, totalRedemptions: redemptions.length };
   }, [deliverables, redemptions, bookings]);
 
+  // Time-series: bookings per day
+  const trendData = useMemo(() => {
+    const map: Record<string, { date: string; bookings: number; redemptions: number }> = {};
+    const key = (s: string) => format(new Date(s), "MMM d");
+    bookings.forEach(b => {
+      const k = key(b.created_at);
+      if (!map[k]) map[k] = { date: k, bookings: 0, redemptions: 0 };
+      map[k].bookings += 1;
+    });
+    redemptions.forEach(r => {
+      const k = key(r.created_at);
+      if (!map[k]) map[k] = { date: k, bookings: 0, redemptions: 0 };
+      map[k].redemptions += 1;
+    });
+    return Object.values(map).slice(-30);
+  }, [bookings, redemptions]);
+
+  const typeData = useMemo(() =>
+    Object.entries(m.byType).filter(([, v]) => v > 0).map(([k, v]) => ({ name: k, value: v })),
+    [m.byType]
+  );
+  const pieColors = ["#e8547a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
+
   const Stat = ({ icon: Icon, label, value, sub }: any) => (
     <div className="bg-white border border-border rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
@@ -119,6 +147,63 @@ const VenueReports = () => {
               <Stat icon={TrendingUp} label="Completion rate"
                 value={m.totalBookings ? `${Math.round((m.completed / m.totalBookings) * 100)}%` : "—"} />
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              <div className="bg-white border border-border rounded-2xl p-5">
+                <h3 className="text-sm font-semibold mb-3">Activity trend</h3>
+                {trendData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-8 text-center">No data</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <LineChart data={trendData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="bookings" stroke="#e8547a" strokeWidth={2} />
+                      <Line type="monotone" dataKey="redemptions" stroke="#2a9d8f" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="bg-white border border-border rounded-2xl p-5">
+                <h3 className="text-sm font-semibold mb-3">Content mix</h3>
+                {typeData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-8 text-center">No content yet</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={typeData} dataKey="value" nameKey="name" outerRadius={90} label>
+                        {typeData.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white border border-border rounded-2xl p-5 mb-8">
+              <h3 className="text-sm font-semibold mb-3">Engagement breakdown</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={[
+                  { metric: "Views", value: m.views },
+                  { metric: "Likes", value: m.likes },
+                  { metric: "Comments", value: m.comments },
+                  { metric: "Shares", value: m.shares },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#e8547a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
 
             {deliverables.length === 0 && bookings.length === 0 && (
               <div className="bg-white border border-border rounded-2xl py-12 text-center text-muted-foreground text-sm">
