@@ -3,6 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, Heart, MessageCircle, Share2, Film, Ticket, CalendarCheck, TrendingUp } from "lucide-react";
+import {
+  ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { format } from "date-fns";
 
 type Period = "7d" | "30d" | "90d" | "all";
 
@@ -68,6 +73,29 @@ const VenueReports = () => {
     const noShow = bookings.filter(b => b.status === "no_show").length;
     return { views, likes, comments, shares, engagement, posts, byType, redeemed, completed, noShow, totalBookings: bookings.length, totalRedemptions: redemptions.length };
   }, [deliverables, redemptions, bookings]);
+
+  // Time-series: bookings per day
+  const trendData = useMemo(() => {
+    const map: Record<string, { date: string; bookings: number; redemptions: number }> = {};
+    const key = (s: string) => format(new Date(s), "MMM d");
+    bookings.forEach(b => {
+      const k = key(b.created_at);
+      if (!map[k]) map[k] = { date: k, bookings: 0, redemptions: 0 };
+      map[k].bookings += 1;
+    });
+    redemptions.forEach(r => {
+      const k = key(r.created_at);
+      if (!map[k]) map[k] = { date: k, bookings: 0, redemptions: 0 };
+      map[k].redemptions += 1;
+    });
+    return Object.values(map).slice(-30);
+  }, [bookings, redemptions]);
+
+  const typeData = useMemo(() =>
+    Object.entries(m.byType).filter(([, v]) => v > 0).map(([k, v]) => ({ name: k, value: v })),
+    [m.byType]
+  );
+  const pieColors = ["#e8547a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
 
   const Stat = ({ icon: Icon, label, value, sub }: any) => (
     <div className="bg-white border border-border rounded-2xl p-5">
