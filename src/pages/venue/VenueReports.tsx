@@ -148,6 +148,63 @@ const VenueReports = () => {
                 value={m.totalBookings ? `${Math.round((m.completed / m.totalBookings) * 100)}%` : "—"} />
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              <div className="bg-white border border-border rounded-2xl p-5">
+                <h3 className="text-sm font-semibold mb-3">Activity trend</h3>
+                {trendData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-8 text-center">No data</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <LineChart data={trendData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="bookings" stroke="#e8547a" strokeWidth={2} />
+                      <Line type="monotone" dataKey="redemptions" stroke="#2a9d8f" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div className="bg-white border border-border rounded-2xl p-5">
+                <h3 className="text-sm font-semibold mb-3">Content mix</h3>
+                {typeData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-8 text-center">No content yet</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={typeData} dataKey="value" nameKey="name" outerRadius={90} label>
+                        {typeData.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white border border-border rounded-2xl p-5 mb-8">
+              <h3 className="text-sm font-semibold mb-3">Engagement breakdown</h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={[
+                  { metric: "Views", value: m.views },
+                  { metric: "Likes", value: m.likes },
+                  { metric: "Comments", value: m.comments },
+                  { metric: "Shares", value: m.shares },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#e8547a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+
             {deliverables.length === 0 && bookings.length === 0 && (
               <div className="bg-white border border-border rounded-2xl py-12 text-center text-muted-foreground text-sm">
                 No activity in this date range yet. Once influencers redeem offers and post content, metrics will appear here.
