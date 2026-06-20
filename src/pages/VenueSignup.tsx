@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
-import famepassLogo from "@/assets/famepass-logo.png";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail, RefreshCw } from "lucide-react";
 
 /* ============================================================
@@ -63,7 +62,6 @@ const Page = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
     <header className="px-8 py-6 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
         <span className="font-display text-2xl font-bold text-slate-900">
           Fame<span className="text-[#b8923a]">Pass</span>
         </span>
@@ -324,14 +322,11 @@ const VenueSignup = () => {
 
   /* ============ render per step ============ */
 
-  if (step === "account") {
+    if (step === "account") {
     const passwordsMatch = password.length > 0 && password === confirmPassword;
     return (
       <Page>
         <div className="w-full max-w-md">
-          <div className="text-center mb-6">
-            <img src={famepassLogo} className="w-12 h-12 mx-auto mb-3 rounded-xl" alt="" />
-          </div>
           <Card>
             <Heading title="Create your FamePass business account" />
             <div className="space-y-2.5 mb-5">

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import famepassLogo from "@/assets/famepass-logo.png";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -38,7 +37,6 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
-          <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
           <span className="font-display text-2xl font-bold">Fame<span className="text-[#b8923a]">Pass</span></span>
         </Link>
       </header>

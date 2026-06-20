@@ -30,7 +30,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import famepassLogo from "@/assets/famepass-logo.png";
+
 
 type NavItem = { to: string; icon: any; label: string; badge?: string };
 type NavGroup = { label?: string; items: NavItem[]; badge?: string };

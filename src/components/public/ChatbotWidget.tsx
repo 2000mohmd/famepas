@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import famepassLogo from "@/assets/famepass-logo.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -60,7 +59,6 @@ const ChatbotWidget = () => {
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-8rem)] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden animate-fade-in">
           <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
-            <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg border border-gold/30" />
             <div>
               <h3 className="font-display font-bold text-foreground text-sm">FamePass Assistant</h3>
               <p className="text-xs text-muted-foreground">Ask us anything</p>

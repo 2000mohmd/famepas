@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import famepassLogo from "@/assets/famepass-logo.png";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 
 /* ============================================================
@@ -31,7 +30,6 @@ const Page = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
     <header className="px-6 sm:px-8 py-5 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
         <span className="font-display text-xl sm:text-2xl font-bold text-slate-900">
           Fame<span className="text-[#b8923a]">Pass</span>
         </span>
