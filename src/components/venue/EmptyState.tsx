@@ -32,16 +32,16 @@ export const EmptyState = ({ icon, title, description, action, variant = "defaul
 
 export const ClipboardIllustration = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-    <rect x="32" y="22" width="56" height="72" rx="6" fill="#fce7eb" stroke="#e8547a" strokeWidth="2"/>
-    <rect x="46" y="14" width="28" height="14" rx="3" fill="#e8547a"/>
-    <rect x="44" y="42" width="32" height="3" rx="1.5" fill="#e8547a" opacity="0.4"/>
-    <rect x="44" y="52" width="24" height="3" rx="1.5" fill="#e8547a" opacity="0.3"/>
-    <rect x="44" y="62" width="28" height="3" rx="1.5" fill="#e8547a" opacity="0.3"/>
-    <rect x="22" y="32" width="56" height="72" rx="6" fill="white" stroke="#e8547a" strokeWidth="2"/>
-    <rect x="36" y="24" width="28" height="14" rx="3" fill="#e8547a"/>
-    <rect x="34" y="52" width="32" height="3" rx="1.5" fill="#e8547a" opacity="0.5"/>
-    <rect x="34" y="62" width="24" height="3" rx="1.5" fill="#e8547a" opacity="0.4"/>
-    <rect x="34" y="72" width="28" height="3" rx="1.5" fill="#e8547a" opacity="0.4"/>
-    <rect x="34" y="82" width="20" height="3" rx="1.5" fill="#e8547a" opacity="0.4"/>
+    <rect x="32" y="22" width="56" height="72" rx="6" fill="#fce7eb" stroke="#b8923a" strokeWidth="2"/>
+    <rect x="46" y="14" width="28" height="14" rx="3" fill="#b8923a"/>
+    <rect x="44" y="42" width="32" height="3" rx="1.5" fill="#b8923a" opacity="0.4"/>
+    <rect x="44" y="52" width="24" height="3" rx="1.5" fill="#b8923a" opacity="0.3"/>
+    <rect x="44" y="62" width="28" height="3" rx="1.5" fill="#b8923a" opacity="0.3"/>
+    <rect x="22" y="32" width="56" height="72" rx="6" fill="white" stroke="#b8923a" strokeWidth="2"/>
+    <rect x="36" y="24" width="28" height="14" rx="3" fill="#b8923a"/>
+    <rect x="34" y="52" width="32" height="3" rx="1.5" fill="#b8923a" opacity="0.5"/>
+    <rect x="34" y="62" width="24" height="3" rx="1.5" fill="#b8923a" opacity="0.4"/>
+    <rect x="34" y="72" width="28" height="3" rx="1.5" fill="#b8923a" opacity="0.4"/>
+    <rect x="34" y="82" width="20" height="3" rx="1.5" fill="#b8923a" opacity="0.4"/>
   </svg>
 );

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
-const PINK = "#e8547a";
+const PINK = "#b8923a";
 
 interface Row {
   id: string;
@@ -184,8 +184,8 @@ const VenueBookings = () => {
         {tab === "upcoming" && (
           <div className="flex items-center gap-2 mb-4">
             <div className="flex bg-white border border-border rounded-lg p-1">
-              <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-pink-50 text-[#e8547a]" : "text-muted-foreground"}`}><List className="w-4 h-4" /></button>
-              <button onClick={() => setView("calendar")} className={`p-1.5 rounded ${view === "calendar" ? "bg-pink-50 text-[#e8547a]" : "text-muted-foreground"}`}><CalIcon className="w-4 h-4" /></button>
+              <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "text-muted-foreground"}`}><List className="w-4 h-4" /></button>
+              <button onClick={() => setView("calendar")} className={`p-1.5 rounded ${view === "calendar" ? "bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "text-muted-foreground"}`}><CalIcon className="w-4 h-4" /></button>
             </div>
             {view === "calendar" && (
               <>
@@ -215,7 +215,7 @@ const VenueBookings = () => {
                 if (!cell) return <div key={i} className="min-h-[110px] border-r border-b border-border/40 bg-muted/20" />;
                 const items = rowsByDate[cell.date] ?? [];
                 return (
-                  <div key={i} className={`min-h-[110px] border-r border-b border-border/40 p-2 ${isToday(cell.day) ? "bg-pink-50/40" : ""}`}>
+                  <div key={i} className={`min-h-[110px] border-r border-b border-border/40 p-2 ${isToday(cell.day) ? "bg-[hsl(42_65%_50%_/_0.06)]" : ""}`}>
                     <span className={`text-xs font-medium ${isToday(cell.day) ? "inline-flex w-6 h-6 rounded-full text-white items-center justify-center" : "text-foreground"}`} style={isToday(cell.day) ? { background: PINK } : undefined}>{cell.day}</span>
                     <div className="mt-1 space-y-1">
                       {items.slice(0, 3).map(r => (

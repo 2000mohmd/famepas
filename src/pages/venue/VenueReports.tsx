@@ -95,7 +95,7 @@ const VenueReports = () => {
     Object.entries(m.byType).filter(([, v]) => v > 0).map(([k, v]) => ({ name: k, value: v })),
     [m.byType]
   );
-  const pieColors = ["#e8547a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
+  const pieColors = ["#b8923a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
 
   const Stat = ({ icon: Icon, label, value, sub }: any) => (
     <div className="bg-white border border-border rounded-2xl p-5">
@@ -161,7 +161,7 @@ const VenueReports = () => {
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="bookings" stroke="#e8547a" strokeWidth={2} />
+                      <Line type="monotone" dataKey="bookings" stroke="#b8923a" strokeWidth={2} />
                       <Line type="monotone" dataKey="redemptions" stroke="#2a9d8f" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -199,7 +199,7 @@ const VenueReports = () => {
                   <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#e8547a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#b8923a" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

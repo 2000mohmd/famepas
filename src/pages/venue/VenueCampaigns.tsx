@@ -116,19 +116,19 @@ const VenueCampaigns = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] font-bold text-foreground">Campaigns</h1>
-          <Button onClick={() => openNew()} style={{ background: "#e8547a" }} className="text-white hover:opacity-90">
+          <Button onClick={() => openNew()} style={{ background: "#b8923a" }} className="text-white hover:opacity-90">
             <Plus className="w-4 h-4 mr-1.5" /> New Campaign
           </Button>
         </div>
 
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-6">
-            <button onClick={() => setView("list")} className={`pb-3 px-1 text-sm font-medium ${view === "list" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "list" ? { borderColor: "#e8547a" } : undefined}>
+            <button onClick={() => setView("list")} className={`pb-3 px-1 text-sm font-medium ${view === "list" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "list" ? { borderColor: "#b8923a" } : undefined}>
               List
             </button>
-            <button onClick={() => setView("calendar")} className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "calendar" ? { borderColor: "#e8547a" } : undefined}>
+            <button onClick={() => setView("calendar")} className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "calendar" ? { borderColor: "#b8923a" } : undefined}>
               Calendar
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#e8547a" }}>NEW</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#b8923a" }}>NEW</span>
             </button>
           </div>
         </div>
@@ -149,7 +149,7 @@ const VenueCampaigns = () => {
                 <span className="font-semibold text-foreground ml-2">{monthName}</span>
               </div>
               <div className="flex gap-1 bg-white border border-border rounded-lg p-1">
-                <button className="px-3 py-1 text-xs font-medium rounded text-white" style={{ background: "#e8547a" }}>Monthly</button>
+                <button className="px-3 py-1 text-xs font-medium rounded text-white" style={{ background: "#b8923a" }}>Monthly</button>
                 <button className="px-3 py-1 text-xs font-medium rounded text-muted-foreground">Quarterly</button>
               </div>
             </div>
@@ -171,13 +171,13 @@ const VenueCampaigns = () => {
                         && cur <= new Date(e.getFullYear(), e.getMonth(), e.getDate());
                   });
                   return (
-                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-pink-50" : ""}`}>
+                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-[hsl(42_65%_50%_/_0.10)]" : ""}`}>
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : "text-foreground"}`} style={todayCell ? { background: "#e8547a" } : undefined}>
+                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : "text-foreground"}`} style={todayCell ? { background: "#b8923a" } : undefined}>
                           {cell.day}
                         </span>
                         {todayCell && (
-                          <button onClick={() => openNew(cell.date)} className="w-5 h-5 rounded text-white text-xs flex items-center justify-center" style={{ background: "#e8547a" }}>
+                          <button onClick={() => openNew(cell.date)} className="w-5 h-5 rounded text-white text-xs flex items-center justify-center" style={{ background: "#b8923a" }}>
                             <Plus className="w-3 h-3" />
                           </button>
                         )}
@@ -219,7 +219,7 @@ const VenueCampaigns = () => {
                   .map(e => (
                     <span key={e.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(0,0,0,0.05)", color: "#333" }}>
                       {e.title}
-                      {e.has_notification && <Bell className="w-3 h-3" style={{ color: "#e8547a" }} />}
+                      {e.has_notification && <Bell className="w-3 h-3" style={{ color: "#b8923a" }} />}
                     </span>
                   ))}
               </div>

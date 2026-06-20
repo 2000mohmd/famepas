@@ -51,15 +51,12 @@ const Welcome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0613] text-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[#f7f5f0] text-neutral-900 flex flex-col relative overflow-hidden">
       <header className="px-6 pt-8 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={famepassLogo} alt="FamePass" className="w-10 h-10 rounded-xl" />
-          <span className="font-display text-xl font-bold">
-            Fame<span className="text-[#ec4178]">Pass</span>
-          </span>
-        </div>
-        <button onClick={() => navigate("/login")} className="text-sm text-white/70 hover:text-white">
+        <span className="font-display text-2xl font-semibold tracking-tight text-neutral-900">
+          Fame<span className="italic text-[hsl(38_60%_38%)]">Pass</span>
+        </span>
+        <button onClick={() => navigate("/login")} className="text-sm text-neutral-600 hover:text-neutral-900">
           Sign in
         </button>
       </header>
@@ -86,17 +83,17 @@ const Welcome = () => {
             return (
               <div
                 key={i}
-                className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(236,65,120,0.55)] ring-1 ring-white/10 transition-all duration-700 ease-out"
+                className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(184,146,58,0.35)] ring-1 ring-[hsl(42_15%_88%)] transition-all duration-700 ease-out"
                 style={style}
               >
                 <img src={s.src} alt={s.title} className="w-full h-full object-cover" loading={i === 0 ? undefined : "lazy"} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                 {isActive && (
                   <div className="absolute bottom-5 left-5 right-5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ec4178]/90 text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#b8923a]/90 text-white text-[11px] font-semibold uppercase tracking-wide">
                       <Sparkles className="w-3 h-3" /> {s.tag}
                     </span>
-                    <h3 className="mt-2 text-xl font-bold leading-tight">{s.title}</h3>
+                    <h3 className="mt-2 text-xl font-bold leading-tight text-white">{s.title}</h3>
                   </div>
                 )}
               </div>
@@ -107,38 +104,38 @@ const Welcome = () => {
 
       <div className="flex justify-center gap-1.5 mb-5">
         {SLIDES.map((_, i) => (
-          <span key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#ec4178]" : "w-1.5 bg-white/25"}`} />
+          <span key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#b8923a]" : "w-1.5 bg-neutral-300"}`} />
         ))}
       </div>
 
       <div className="px-6 pb-10">
         <h1 className="text-center text-3xl font-extrabold tracking-tight">
-          Welcome to <span className="bg-gradient-to-r from-[#ec4178] to-[#f5b86b] bg-clip-text text-transparent">FamePass</span>
+          Welcome to <span className="bg-gradient-to-r from-[#b8923a] to-[#e6c878] bg-clip-text text-transparent">FamePass</span>
         </h1>
-        <p className="mt-2 text-center text-sm text-white/60">
+        <p className="mt-2 text-center text-sm text-neutral-500">
           The collab platform connecting venues with creators.
         </p>
 
         <div className="mt-6 space-y-3">
           <button
             onClick={() => setSheetOpen(true)}
-            className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#ec4178] to-[#f5b86b] text-black font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_rgba(236,65,120,0.7)] active:scale-[0.99] transition"
+            className="w-full h-14 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] active:scale-[0.99] transition"
           >
-            <Sparkles className="w-5 h-5" /> I'm an Influencer
+            <Sparkles className="w-5 h-5 text-[#e6c878]" /> I'm an Influencer
             <ArrowRight className="w-4 h-4 ml-1" />
           </button>
           <button
             onClick={() => navigate("/signup/business")}
-            className="w-full h-14 rounded-2xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
+            className="w-full h-14 rounded-2xl bg-white border border-[hsl(42_15%_88%)] text-neutral-900 font-semibold flex items-center justify-center gap-2 hover:border-[hsl(42_65%_50%)] active:scale-[0.99] transition"
           >
-            <Store className="w-5 h-5 text-[#f5b86b]" /> I'm a Business
-            <ArrowRight className="w-4 h-4 ml-1 text-white/60" />
+            <Store className="w-5 h-5 text-[#b8923a]" /> I'm a Business
+            <ArrowRight className="w-4 h-4 ml-1 text-neutral-500" />
           </button>
         </div>
 
-        <p className="mt-5 text-center text-sm text-white/50">
+        <p className="mt-5 text-center text-sm text-neutral-500">
           Already have an account?{" "}
-          <button onClick={() => navigate("/login")} className="text-[#f5b86b] font-semibold hover:underline">
+          <button onClick={() => navigate("/login")} className="text-[hsl(38_60%_38%)] font-semibold hover:underline">
             Sign in
           </button>
         </p>
@@ -154,22 +151,22 @@ const Welcome = () => {
           onClick={() => setSheetOpen(false)}
         />
         <div
-          className={`absolute inset-x-0 bottom-0 bg-[#16101e] rounded-t-3xl border-t border-white/10 shadow-[0_-20px_60px_-20px_rgba(236,65,120,0.6)] transition-transform duration-300 ease-out ${
+          className={`absolute inset-x-0 bottom-0 bg-white rounded-t-3xl border-t border-[hsl(42_15%_88%)] shadow-[0_-20px_60px_-20px_rgba(236,65,120,0.6)] transition-transform duration-300 ease-out ${
             sheetOpen ? "translate-y-0" : "translate-y-full"
           }`}
         >
-          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-white/20" />
+          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-neutral-300" />
           <div className="px-6 pt-4 pb-8 max-w-md mx-auto">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-bold">Join as a Creator</h2>
-                <p className="text-sm text-white/60 mt-1">
+                <p className="text-sm text-neutral-600 mt-1">
                   Continue with social or sign up manually.
                 </p>
               </div>
               <button
                 onClick={() => setSheetOpen(false)}
-                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center hover:bg-white/10"
+                className="w-9 h-9 rounded-full bg-[hsl(42_35%_95%)] border border-[hsl(42_15%_88%)] flex items-center justify-center hover:border-[hsl(42_65%_50%)]"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -179,13 +176,13 @@ const Welcome = () => {
             <div className="mt-5 space-y-2.5">
               <button
                 onClick={() => handleSocial("Instagram")}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(42_78%_68%)] via-[hsl(42_65%_50%)] to-[hsl(38_60%_38%)] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
               >
                 <Instagram className="w-5 h-5" /> Continue with Instagram
               </button>
               <button
                 onClick={() => handleSocial("TikTok")}
-                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-white/15 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-[hsl(42_15%_88%)] active:scale-[0.99] transition"
               >
                 <TikTokIcon /> Continue with TikTok
               </button>
@@ -197,28 +194,28 @@ const Welcome = () => {
               </button>
             </div>
 
-            <div className="my-5 flex items-center gap-3 text-xs text-white/40">
-              <div className="h-px flex-1 bg-white/10" />
+            <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
+              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
               OR
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
             </div>
 
             <div className="space-y-2.5">
               <button
                 onClick={() => { setSheetOpen(false); navigate("/signup/influencer"); }}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#ec4178] to-[#f5b86b] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#b8923a] to-[#e6c878] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
               >
                 <Mail className="w-5 h-5" /> Sign Up
               </button>
               <button
                 onClick={() => { setSheetOpen(false); navigate("/login"); }}
-                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-white border border-[hsl(42_15%_88%)] text-neutral-900 font-semibold flex items-center justify-center gap-2 hover:border-[hsl(42_65%_50%)] active:scale-[0.99] transition"
               >
-                <LogIn className="w-5 h-5 text-[#f5b86b]" /> Login
+                <LogIn className="w-5 h-5 text-[#e6c878]" /> Login
               </button>
             </div>
 
-            <p className="mt-5 text-center text-[11px] text-white/40 leading-relaxed">
+            <p className="mt-5 text-center text-[11px] text-neutral-400 leading-relaxed">
               By continuing you agree to FamePass's Terms & Privacy Policy.
             </p>
           </div>

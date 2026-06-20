@@ -181,33 +181,29 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       )}
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 bg-white border-r border-[hsl(42_15%_90%)] ${
           isInfluencer
             ? (mobileOpen ? "translate-x-0" : "-translate-x-full") + " md:translate-x-0"
             : ""
         }`}
-        style={{ background: "#1a1625" }}
       >
-        <div className="flex items-center gap-2.5 px-4 py-4">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div className="leading-tight">
-            <h2 className="font-semibold text-white text-[15px]">FamePass</h2>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-white/40">{panelLabel}</p>
-          </div>
+        <div className="flex items-center gap-2 px-4 py-5">
+          <span className="font-display text-xl font-semibold tracking-tight text-neutral-900">
+            Fame<span className="italic text-[hsl(38_60%_38%)]">Pass</span>
+          </span>
+          <span className="ml-auto text-[10px] uppercase tracking-[0.15em] text-neutral-500">{panelLabel}</span>
         </div>
 
         {/* Workspace switcher */}
         <div className="px-3 pb-3">
-          <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-white/5 transition-colors">
-            <span className="w-7 h-7 rounded-md bg-white/10 text-white text-xs font-semibold flex items-center justify-center">
+          <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
+            <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
               {(venueName || initials).slice(0, 2).toUpperCase()}
             </span>
-            <span className="flex-1 text-left text-sm font-medium text-white truncate">
+            <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
               {venueName || user?.email?.split("@")[0] || "workspace"}
             </span>
-            <ChevronDown className="w-4 h-4 text-white/50" />
+            <ChevronDown className="w-4 h-4 text-neutral-400" />
           </button>
         </div>
 
@@ -216,11 +212,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             <div key={group.label ?? `g${gi}`}>
               {group.label && (
                 <div className="px-2.5 mb-1.5 flex items-center gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-500">
                     {group.label}
                   </p>
                   {group.badge && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#e8547a" }}>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-neutral-900" style={{ background: "#e6c878" }}>
                       {group.badge}
                     </span>
                   )}
@@ -237,15 +233,15 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                       end={to === "/admin" || to === "/venue" || to === "/influencer"}
                       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                         exactActive || isActive
-                          ? "text-white"
-                          : "text-white/65 hover:text-white hover:bg-white/5"
+                          ? "text-[hsl(38_60%_28%)]"
+                          : "text-neutral-700 hover:text-neutral-900 hover:bg-[hsl(42_35%_95%)]"
                       }`}
-                      style={exactActive ? { background: "rgba(232, 84, 122, 0.18)" } : undefined}
+                      style={exactActive ? { background: "hsl(42 65% 50% / 0.14)" } : undefined}
                     >
                       <Icon className="w-[15px] h-[15px]" />
                       <span className="flex-1">{label}</span>
                       {badge && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#e8547a" }}>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-neutral-900" style={{ background: "#e6c878" }}>
                           {badge}
                         </span>
                       )}
@@ -259,32 +255,32 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
         {/* Onboarding progress card (venue) */}
         {type === "venue" && onboarding && onboarding.done < onboarding.total && (
-          <div className="mx-3 mb-3 rounded-xl p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <div className="mx-3 mb-3 rounded-xl p-3 border border-[hsl(42_15%_88%)]" style={{ background: "hsl(42 35% 95%)" }}>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] text-white/60">{onboarding.total - onboarding.done} steps to go</p>
-              <p className="text-[11px] text-white/40">{onboarding.done}/{onboarding.total}</p>
+              <p className="text-[11px] text-neutral-600">{onboarding.total - onboarding.done} steps to go</p>
+              <p className="text-[11px] text-neutral-400">{onboarding.done}/{onboarding.total}</p>
             </div>
-            <div className="h-1 rounded-full bg-white/10 mb-3 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#e8547a" }} />
+            <div className="h-1 rounded-full bg-white mb-3 overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#b8923a" }} />
             </div>
-            <p className="text-[12px] text-white mb-2.5 leading-tight">Next: {onboarding.next}</p>
-            <NavLink to="/venue/settings" className="block text-center text-[12px] font-semibold py-1.5 rounded-lg text-white" style={{ background: "#e8547a" }}>
+            <p className="text-[12px] text-neutral-800 mb-2.5 leading-tight">Next: {onboarding.next}</p>
+            <NavLink to="/venue/settings" className="block text-center text-[12px] font-semibold py-1.5 rounded-lg text-neutral-900" style={{ background: "#e6c878" }}>
               View Steps
             </NavLink>
           </div>
         )}
 
         {/* User profile */}
-        <div className="p-3 border-t border-white/10">
-          <button onClick={signOut} className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors text-left">
-            <span className="w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
+        <div className="p-3 border-t border-[hsl(42_15%_90%)]">
+          <button onClick={signOut} className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(42_35%_95%)] transition-colors text-left">
+            <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
               {initials}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-white truncate">{user?.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-white/50 truncate">{user?.email}</p>
+              <p className="text-[12px] font-medium text-neutral-800 truncate">{user?.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-white/40" />
+            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
           </button>
         </div>
       </aside>
@@ -292,14 +288,14 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       {/* Main */}
       <main
         className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
-        style={{ background: "#fdf8f8" }}
+        style={{ background: "#f7f5f0" }}
       >
-        <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
+        <header className="sticky top-0 z-30 h-14 border-b border-[hsl(42_15%_90%)] bg-white/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
           {isInfluencer ? (
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
-              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-foreground hover:border-primary/40 hover:text-primary transition-all"
+              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[hsl(42_15%_90%)] bg-white text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -307,7 +303,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           <div className="hidden md:block" />
           <button
             onClick={signOut}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-all"
+            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[hsl(42_15%_90%)] bg-white px-3 py-1.5 text-sm font-medium text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
           >
             <LogOut className="w-4 h-4" />
             Logout
