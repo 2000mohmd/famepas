@@ -72,12 +72,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff5f3] text-slate-900">
+    <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
       <header className="px-8 py-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
           <span className="font-display text-2xl font-bold text-slate-900">
-            Fame<span className="text-[#ec4178]">Pass</span>
+            Fame<span className="text-[#b8923a]">Pass</span>
           </span>
         </Link>
         <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
@@ -104,11 +104,11 @@ const Login = () => {
                     placeholder="6-digit code"
                     required
                     maxLength={6}
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-center tracking-widest text-lg focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20"
+                    className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-center tracking-widest text-lg focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
                   />
                   <p className="text-xs text-slate-500 mt-2">We sent a code to {pendingCreds?.email}. It expires in 10 minutes.</p>
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full h-12 rounded-lg bg-[#ec4178] hover:bg-[#d83669] disabled:opacity-50 text-white font-semibold transition">
+                <button type="submit" disabled={isLoading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold transition">
                   {isLoading ? "Verifying..." : "Verify & Sign In"}
                 </button>
                 <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }}>
@@ -155,7 +155,7 @@ const Login = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@business.com"
                       required
-                      className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20 transition"
+                      className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 transition"
                     />
                   </div>
                   <div>
@@ -166,18 +166,18 @@ const Login = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20 transition"
+                      className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 transition"
                     />
                   </div>
                   <div className="flex justify-end -mt-2">
-                    <Link to="/forgot-password" className="text-sm font-semibold text-[#ec4178] hover:underline">
+                    <Link to="/forgot-password" className="text-sm font-semibold text-[#b8923a] hover:underline">
                       Forgot password?
                     </Link>
                   </div>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 rounded-lg bg-[#ec4178] hover:bg-[#d83669] disabled:opacity-50 text-white font-semibold transition"
+                    className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold transition"
                   >
                     {isLoading ? "Signing in..." : "Sign In"}
                   </button>
@@ -188,7 +188,7 @@ const Login = () => {
 
           <p className="mt-6 text-center text-sm text-slate-600">
             Don't have an account?{" "}
-            <Link to="/signup/business" className="font-semibold text-[#ec4178] hover:underline">
+            <Link to="/signup/business" className="font-semibold text-[#b8923a] hover:underline">
               Create an account
             </Link>
           </p>

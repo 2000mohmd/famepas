@@ -23,7 +23,7 @@ const programs = [
     icon: ShoppingBag,
     title: "Social Commerce",
     description: "Turn every post into a storefront with seamless creator-led shopping.",
-    accent: "from-rose-500/20 to-rose-500/5",
+    accent: "from-[hsl(42_78%_68%_/_0.25)] to-rose-500/5",
   },
   {
     icon: Gift,

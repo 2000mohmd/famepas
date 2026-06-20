@@ -35,11 +35,11 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff5f3] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
           <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
-          <span className="font-display text-2xl font-bold">Fame<span className="text-[#ec4178]">Pass</span></span>
+          <span className="font-display text-2xl font-bold">Fame<span className="text-[#b8923a]">Pass</span></span>
         </Link>
       </header>
       <main className="flex-1 flex justify-center px-4 pb-16">
@@ -54,14 +54,14 @@ const ResetPassword = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2">New password</label>
                   <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20" />
+                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">Confirm new password</label>
                   <input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20" />
+                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
                 </div>
-                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#ec4178] hover:bg-[#d83669] disabled:opacity-50 text-white font-semibold">
+                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
                   {loading ? "Updating..." : "Update password"}
                 </button>
               </form>

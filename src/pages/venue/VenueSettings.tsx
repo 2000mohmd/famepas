@@ -25,7 +25,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "billing", label: "Billing" },
 ];
 
-const PINK = "#e8547a";
+const PINK = "#b8923a";
 
 // Brand logos
 const IGLogo = () => (

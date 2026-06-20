@@ -88,7 +88,7 @@ const VenueLocations = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[28px] font-bold text-foreground">Locations</h1>
-          <Button style={{ background: "#e8547a" }} className="text-white hover:opacity-90" onClick={() => setOpen(true)} disabled={!venue}>
+          <Button style={{ background: "#b8923a" }} className="text-white hover:opacity-90" onClick={() => setOpen(true)} disabled={!venue}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Location
           </Button>
         </div>
@@ -106,7 +106,7 @@ const VenueLocations = () => {
             {locations.map(l => (
               <div key={l.id} className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fce7eb" }}>
-                  <MapPin className="w-5 h-5" style={{ color: "#e8547a" }} />
+                  <MapPin className="w-5 h-5" style={{ color: "#b8923a" }} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ const VenueLocations = () => {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={save} disabled={saving} style={{ background: "#e8547a" }} className="text-white">
+              <Button onClick={save} disabled={saving} style={{ background: "#b8923a" }} className="text-white">
                 {saving ? "Saving…" : "Add Location"}
               </Button>
             </DialogFooter>

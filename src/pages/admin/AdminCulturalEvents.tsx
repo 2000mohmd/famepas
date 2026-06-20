@@ -46,7 +46,7 @@ const AdminCulturalEvents = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] font-bold text-foreground">Cultural Events</h1>
-          <Button onClick={openNew} style={{ background: "#e8547a" }} className="text-white"><Plus className="w-4 h-4 mr-1.5" /> Add Event</Button>
+          <Button onClick={openNew} style={{ background: "#b8923a" }} className="text-white"><Plus className="w-4 h-4 mr-1.5" /> Add Event</Button>
         </div>
 
         <div className="bg-white border border-border rounded-2xl overflow-hidden">
@@ -66,7 +66,7 @@ const AdminCulturalEvents = () => {
                   <td className="p-4 font-medium text-foreground">{e.title}</td>
                   <td className="p-4 text-sm text-muted-foreground">{e.start_date} → {e.end_date}</td>
                   <td className="p-4 text-sm uppercase text-muted-foreground">{e.region}</td>
-                  <td className="p-4">{e.has_notification && <Bell className="w-4 h-4" style={{ color: "#e8547a" }} />}</td>
+                  <td className="p-4">{e.has_notification && <Bell className="w-4 h-4" style={{ color: "#b8923a" }} />}</td>
                   <td className="p-4 text-right">
                     <Button size="sm" variant="ghost" onClick={() => openEdit(e)}><Pencil className="w-3.5 h-3.5" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => remove(e.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
@@ -98,7 +98,7 @@ const AdminCulturalEvents = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save} style={{ background: "#e8547a" }} className="text-white">Save</Button>
+            <Button onClick={save} style={{ background: "#b8923a" }} className="text-white">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

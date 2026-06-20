@@ -25,11 +25,11 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff5f3] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
           <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
-          <span className="font-display text-2xl font-bold">Fame<span className="text-[#ec4178]">Pass</span></span>
+          <span className="font-display text-2xl font-bold">Fame<span className="text-[#b8923a]">Pass</span></span>
         </Link>
       </header>
       <main className="flex-1 flex justify-center px-4 pb-16">
@@ -40,7 +40,7 @@ const ForgotPassword = () => {
             {sent ? (
               <div className="text-sm text-slate-700">
                 <p className="mb-4">✅ If an account exists for <strong>{email}</strong>, a reset link is on its way. Check your inbox (and spam).</p>
-                <Link to="/login" className="text-[#ec4178] font-semibold hover:underline">Back to sign in</Link>
+                <Link to="/login" className="text-[#b8923a] font-semibold hover:underline">Back to sign in</Link>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-5">
@@ -48,13 +48,13 @@ const ForgotPassword = () => {
                   <label className="block text-sm font-semibold mb-2">Email</label>
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@email.com"
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#ec4178] focus:ring-2 focus:ring-[#ec4178]/20" />
+                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
                 </div>
-                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#ec4178] hover:bg-[#d83669] disabled:opacity-50 text-white font-semibold">
+                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
                   {loading ? "Sending..." : "Send reset link"}
                 </button>
                 <p className="text-center text-sm text-slate-600">
-                  <Link to="/login" className="text-[#ec4178] font-semibold hover:underline">Back to sign in</Link>
+                  <Link to="/login" className="text-[#b8923a] font-semibold hover:underline">Back to sign in</Link>
                 </p>
               </form>
             )}

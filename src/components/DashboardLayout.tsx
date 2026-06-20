@@ -189,7 +189,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         style={{ background: "#1a1625" }}
       >
         <div className="flex items-center gap-2.5 px-4 py-4">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #b8923a, #e6c878)" }}>
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div className="leading-tight">
@@ -220,7 +220,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                     {group.label}
                   </p>
                   {group.badge && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#e8547a" }}>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#b8923a" }}>
                       {group.badge}
                     </span>
                   )}
@@ -245,7 +245,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                       <Icon className="w-[15px] h-[15px]" />
                       <span className="flex-1">{label}</span>
                       {badge && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#e8547a" }}>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#b8923a" }}>
                           {badge}
                         </span>
                       )}
@@ -265,10 +265,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               <p className="text-[11px] text-white/40">{onboarding.done}/{onboarding.total}</p>
             </div>
             <div className="h-1 rounded-full bg-white/10 mb-3 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#e8547a" }} />
+              <div className="h-full rounded-full" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#b8923a" }} />
             </div>
             <p className="text-[12px] text-white mb-2.5 leading-tight">Next: {onboarding.next}</p>
-            <NavLink to="/venue/settings" className="block text-center text-[12px] font-semibold py-1.5 rounded-lg text-white" style={{ background: "#e8547a" }}>
+            <NavLink to="/venue/settings" className="block text-center text-[12px] font-semibold py-1.5 rounded-lg text-white" style={{ background: "#b8923a" }}>
               View Steps
             </NavLink>
           </div>
@@ -277,7 +277,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         {/* User profile */}
         <div className="p-3 border-t border-white/10">
           <button onClick={signOut} className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors text-left">
-            <span className="w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e8547a, #f472b6)" }}>
+            <span className="w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #b8923a, #e6c878)" }}>
               {initials}
             </span>
             <div className="flex-1 min-w-0">
@@ -292,7 +292,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       {/* Main */}
       <main
         className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
-        style={{ background: "#fdf8f8" }}
+        style={{ background: "#f7f5f0" }}
       >
         <header className="sticky top-0 z-30 h-14 border-b border-border bg-background/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
           {isInfluencer ? (

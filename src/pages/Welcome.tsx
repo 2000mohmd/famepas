@@ -56,7 +56,7 @@ const Welcome = () => {
         <div className="flex items-center gap-2">
           <img src={famepassLogo} alt="FamePass" className="w-10 h-10 rounded-xl" />
           <span className="font-display text-xl font-bold">
-            Fame<span className="text-[#ec4178]">Pass</span>
+            Fame<span className="text-[#b8923a]">Pass</span>
           </span>
         </div>
         <button onClick={() => navigate("/login")} className="text-sm text-white/70 hover:text-white">
@@ -93,7 +93,7 @@ const Welcome = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                 {isActive && (
                   <div className="absolute bottom-5 left-5 right-5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ec4178]/90 text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#b8923a]/90 text-[11px] font-semibold uppercase tracking-wide">
                       <Sparkles className="w-3 h-3" /> {s.tag}
                     </span>
                     <h3 className="mt-2 text-xl font-bold leading-tight">{s.title}</h3>
@@ -107,13 +107,13 @@ const Welcome = () => {
 
       <div className="flex justify-center gap-1.5 mb-5">
         {SLIDES.map((_, i) => (
-          <span key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#ec4178]" : "w-1.5 bg-white/25"}`} />
+          <span key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-[#b8923a]" : "w-1.5 bg-white/25"}`} />
         ))}
       </div>
 
       <div className="px-6 pb-10">
         <h1 className="text-center text-3xl font-extrabold tracking-tight">
-          Welcome to <span className="bg-gradient-to-r from-[#ec4178] to-[#f5b86b] bg-clip-text text-transparent">FamePass</span>
+          Welcome to <span className="bg-gradient-to-r from-[#b8923a] to-[#e6c878] bg-clip-text text-transparent">FamePass</span>
         </h1>
         <p className="mt-2 text-center text-sm text-white/60">
           The collab platform connecting venues with creators.
@@ -122,7 +122,7 @@ const Welcome = () => {
         <div className="mt-6 space-y-3">
           <button
             onClick={() => setSheetOpen(true)}
-            className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#ec4178] to-[#f5b86b] text-black font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_rgba(236,65,120,0.7)] active:scale-[0.99] transition"
+            className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#b8923a] to-[#e6c878] text-black font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_rgba(236,65,120,0.7)] active:scale-[0.99] transition"
           >
             <Sparkles className="w-5 h-5" /> I'm an Influencer
             <ArrowRight className="w-4 h-4 ml-1" />
@@ -131,14 +131,14 @@ const Welcome = () => {
             onClick={() => navigate("/signup/business")}
             className="w-full h-14 rounded-2xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
           >
-            <Store className="w-5 h-5 text-[#f5b86b]" /> I'm a Business
+            <Store className="w-5 h-5 text-[#e6c878]" /> I'm a Business
             <ArrowRight className="w-4 h-4 ml-1 text-white/60" />
           </button>
         </div>
 
         <p className="mt-5 text-center text-sm text-white/50">
           Already have an account?{" "}
-          <button onClick={() => navigate("/login")} className="text-[#f5b86b] font-semibold hover:underline">
+          <button onClick={() => navigate("/login")} className="text-[#e6c878] font-semibold hover:underline">
             Sign in
           </button>
         </p>
@@ -179,7 +179,7 @@ const Welcome = () => {
             <div className="mt-5 space-y-2.5">
               <button
                 onClick={() => handleSocial("Instagram")}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(42_78%_68%)] via-[hsl(42_65%_50%)] to-[hsl(38_60%_38%)] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
               >
                 <Instagram className="w-5 h-5" /> Continue with Instagram
               </button>
@@ -206,7 +206,7 @@ const Welcome = () => {
             <div className="space-y-2.5">
               <button
                 onClick={() => { setSheetOpen(false); navigate("/signup/influencer"); }}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#ec4178] to-[#f5b86b] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#b8923a] to-[#e6c878] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
               >
                 <Mail className="w-5 h-5" /> Sign Up
               </button>
@@ -214,7 +214,7 @@ const Welcome = () => {
                 onClick={() => { setSheetOpen(false); navigate("/login"); }}
                 className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
               >
-                <LogIn className="w-5 h-5 text-[#f5b86b]" /> Login
+                <LogIn className="w-5 h-5 text-[#e6c878]" /> Login
               </button>
             </div>
 
