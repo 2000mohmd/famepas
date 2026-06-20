@@ -182,7 +182,7 @@ const Welcome = () => {
               </button>
               <button
                 onClick={() => handleSocial("TikTok")}
-                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-white/15 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-[hsl(42_15%_88%)] active:scale-[0.99] transition"
               >
                 <TikTokIcon /> Continue with TikTok
               </button>
@@ -195,9 +195,9 @@ const Welcome = () => {
             </div>
 
             <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
               OR
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
             </div>
 
             <div className="space-y-2.5">
