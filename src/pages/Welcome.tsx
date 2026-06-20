@@ -151,22 +151,22 @@ const Welcome = () => {
           onClick={() => setSheetOpen(false)}
         />
         <div
-          className={`absolute inset-x-0 bottom-0 bg-[#16101e] rounded-t-3xl border-t border-white/10 shadow-[0_-20px_60px_-20px_rgba(236,65,120,0.6)] transition-transform duration-300 ease-out ${
+          className={`absolute inset-x-0 bottom-0 bg-white rounded-t-3xl border-t border-[hsl(42_15%_88%)] shadow-[0_-20px_60px_-20px_rgba(236,65,120,0.6)] transition-transform duration-300 ease-out ${
             sheetOpen ? "translate-y-0" : "translate-y-full"
           }`}
         >
-          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-white/20" />
+          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-neutral-300" />
           <div className="px-6 pt-4 pb-8 max-w-md mx-auto">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-bold">Join as a Creator</h2>
-                <p className="text-sm text-white/60 mt-1">
+                <p className="text-sm text-neutral-600 mt-1">
                   Continue with social or sign up manually.
                 </p>
               </div>
               <button
                 onClick={() => setSheetOpen(false)}
-                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center hover:bg-white/10"
+                className="w-9 h-9 rounded-full bg-[hsl(42_35%_95%)] border border-[hsl(42_15%_88%)] flex items-center justify-center hover:border-[hsl(42_65%_50%)]"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -194,7 +194,7 @@ const Welcome = () => {
               </button>
             </div>
 
-            <div className="my-5 flex items-center gap-3 text-xs text-white/40">
+            <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
               <div className="h-px flex-1 bg-white/10" />
               OR
               <div className="h-px flex-1 bg-white/10" />
@@ -209,13 +209,13 @@ const Welcome = () => {
               </button>
               <button
                 onClick={() => { setSheetOpen(false); navigate("/login"); }}
-                className="w-full h-12 rounded-xl bg-white/[0.06] border border-white/15 text-white font-semibold flex items-center justify-center gap-2 hover:bg-white/10 active:scale-[0.99] transition"
+                className="w-full h-12 rounded-xl bg-white border border-[hsl(42_15%_88%)] text-neutral-900 font-semibold flex items-center justify-center gap-2 hover:border-[hsl(42_65%_50%)] active:scale-[0.99] transition"
               >
                 <LogIn className="w-5 h-5 text-[#e6c878]" /> Login
               </button>
             </div>
 
-            <p className="mt-5 text-center text-[11px] text-white/40 leading-relaxed">
+            <p className="mt-5 text-center text-[11px] text-neutral-400 leading-relaxed">
               By continuing you agree to FamePass's Terms & Privacy Policy.
             </p>
           </div>
