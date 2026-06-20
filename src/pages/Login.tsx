@@ -4,7 +4,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
-import famepassLogo from "@/assets/famepass-logo.png";
 import { UserCheck } from "lucide-react";
 
 const Login = () => {
@@ -75,7 +74,6 @@ const Login = () => {
     <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
       <header className="px-8 py-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src={famepassLogo} alt="FamePass" className="w-9 h-9 rounded-lg" />
           <span className="font-display text-2xl font-bold text-slate-900">
             Fame<span className="text-[#b8923a]">Pass</span>
           </span>
@@ -87,9 +85,6 @@ const Login = () => {
 
       <main className="flex justify-center px-4 pb-16">
         <div className="w-full max-w-xl">
-          <div className="flex justify-center mb-4">
-            <img src={famepassLogo} alt="FamePass" className="w-14 h-14 rounded-xl" />
-          </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-6">Welcome back to FamePass</h1>
