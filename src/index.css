@@ -50,9 +50,8 @@
     --gold: 42 65% 55%;
     --gold-light: 42 78% 72%;
     --gold-dark: 38 55% 38%;
-    --purple: 42 65% 55%;
-    --purple-deep: 42 55% 42%;
-    --purple-glow: 42 78% 65%;
+    /* Note: .gradient-purple / .glow-purple utility classes remain as gold aliases
+       for backwards compatibility with dashboards; no --purple* CSS vars are used. */
     --success: 142 55% 42%;
     --warning: 38 92% 50%;
   }

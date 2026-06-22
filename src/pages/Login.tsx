@@ -17,7 +17,7 @@ const Login = () => {
   useEffect(() => {
     if (user && role) {
       if (role === "admin") navigate("/admin", { replace: true });
-      else if (role === "venue") navigate("/venue/dashboard", { replace: true });
+      else if (role === "venue") navigate("/venue", { replace: true });
       else navigate("/influencer/home", { replace: true });
     }
   }, [user, role, navigate]);
@@ -61,11 +61,7 @@ const Login = () => {
     else { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }
   };
 
-  const handleSocial = async (provider: "google" | "facebook") => {
-    if (provider === "facebook") {
-      toast({ title: "Facebook sign-in coming soon", description: "Please continue with Google or email." });
-      return;
-    }
+  const handleSocial = async () => {
     const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (error) toast({ title: "Google sign-in failed", description: String(error), variant: "destructive" });
   };
@@ -115,7 +111,7 @@ const Login = () => {
                 <div className="space-y-3 mb-6">
                   <button
                     type="button"
-                    onClick={() => handleSocial("google")}
+                    onClick={handleSocial}
                     className="w-full h-12 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-medium flex items-center justify-center gap-2 transition"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -125,14 +121,6 @@ const Login = () => {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                     Sign in with Google
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSocial("facebook")}
-                    className="w-full h-12 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-medium flex items-center justify-center gap-2 transition"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                    Sign in with Facebook
                   </button>
                 </div>
 
