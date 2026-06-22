@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GoogleMapsProvider } from "@/contexts/GoogleMapsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -44,20 +43,12 @@ import InfluencerDashboard from "./pages/influencer/InfluencerDashboard";
 import InfluencerExplore from "./pages/influencer/InfluencerExplore";
 import InfluencerInvitations from "./pages/influencer/InfluencerInvitations";
 import InfluencerBookings from "./pages/influencer/InfluencerBookings";
-
 import InfluencerEarnings from "./pages/influencer/InfluencerEarnings";
 import InfluencerProfile from "./pages/influencer/InfluencerProfile";
 import InfluencerReviews from "./pages/influencer/InfluencerReviews";
 import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
-import VenuesPage from "./pages/public/VenuesPage";
-import OffersPage from "./pages/public/OffersPage";
-import CategoriesPage from "./pages/public/CategoriesPage";
-import InfluencersPage from "./pages/public/InfluencersPage";
-import AboutPage from "./pages/public/AboutPage";
-import ContactPage from "./pages/public/ContactPage";
-import ExplorePage from "./pages/public/ExplorePage";
 
 const queryClient = new QueryClient();
 
@@ -70,14 +61,8 @@ const App = () => (
         <AuthProvider>
           <GoogleMapsProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/venues" element={<VenuesPage />} />
-            <Route path="/offers" element={<OffersPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/influencers" element={<InfluencersPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/explore" element={<ExplorePage />} />
+            {/* Public marketing site is built externally (Framer). App handles auth + dashboards only. */}
+            <Route path="/" element={<Navigate to="/welcome" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -129,14 +114,12 @@ const App = () => (
             <Route path="/venue/event-attendees" element={<Navigate to="/venue" replace />} />
             <Route path="/venue/analytics" element={<Navigate to="/venue" replace />} />
 
-
             {/* Influencer Routes */}
             <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
             <Route path="/influencer/home" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerHome /></ProtectedRoute>} />
             <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
             <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
             <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
-            
             <Route path="/influencer/earnings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerEarnings /></ProtectedRoute>} />
             <Route path="/influencer/profile" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerProfile /></ProtectedRoute>} />
             <Route path="/influencer/reviews" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerReviews /></ProtectedRoute>} />
