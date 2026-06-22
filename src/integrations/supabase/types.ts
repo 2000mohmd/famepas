@@ -90,6 +90,7 @@ export type Database = {
           invitation_id: string | null
           notes: string | null
           offer_id: string | null
+          redemption_id: string | null
           scheduled_date: string
           status: string
           updated_at: string
@@ -105,6 +106,7 @@ export type Database = {
           invitation_id?: string | null
           notes?: string | null
           offer_id?: string | null
+          redemption_id?: string | null
           scheduled_date: string
           status?: string
           updated_at?: string
@@ -120,6 +122,7 @@ export type Database = {
           invitation_id?: string | null
           notes?: string | null
           offer_id?: string | null
+          redemption_id?: string | null
           scheduled_date?: string
           status?: string
           updated_at?: string
@@ -138,6 +141,13 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "offer_redemptions"
             referencedColumns: ["id"]
           },
           {
