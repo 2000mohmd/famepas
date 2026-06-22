@@ -150,7 +150,7 @@ const VenueSettings = () => {
     setProfile(prof);
 
     const [sRes, tplRes, tierRes, catRes, invRes] = await Promise.all([
-      supabase.from("social_integrations").select("*").eq("venue_id", v.id),
+      supabase.from("social_integrations").select("id, venue_id, platform, handle, status, connected_at, account_id, account_name, scope, expires_at, last_synced_at, created_at, updated_at").eq("venue_id", v.id),
       supabase.from("venue_message_templates").select("*").eq("venue_id", v.id).order("created_at"),
       supabase.from("subscription_tiers").select("*").eq("is_active", true).order("price"),
       supabase.from("categories").select("*").order("name"),
