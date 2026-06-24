@@ -145,26 +145,23 @@ const VenueContent = () => {
                       <span className="text-sm font-medium">{p?.full_name || "Influencer"}</span>
                     </div>
                     {d.caption && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{d.caption}</p>}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                      <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{d.views || 0}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
-                      <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
-                    </div>
-                    <div className="flex gap-2 mb-3">
-                      <Input
-                        placeholder="Instagram or TikTok post URL"
-                        value={postUrlInputs[d.id] ?? d.post_url ?? ""}
-                        onChange={(e) => setPostUrlInputs((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                        className="text-xs h-8"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => refreshMetrics(d.id)}
-                        disabled={refreshingId === d.id}
-                      >
-                        {refreshingId === d.id ? "Fetching..." : "Refresh Stats"}
-                      </Button>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{d.views || 0}</span>
+                        <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
+                      </div>
+                      {(d.post_url || d.content_url) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => refreshMetrics(d.id, d.post_url || d.content_url)}
+                          disabled={refreshingId === d.id}
+                        >
+                          {refreshingId === d.id ? "Refreshing…" : "Refresh stats"}
+                        </Button>
+                      )}
                     </div>
                     <div className="mt-auto flex flex-wrap gap-2">
                       {d.content_url && (
