@@ -32,13 +32,22 @@ const AdminAnalytics = () => {
       let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
       if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
+      let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
+      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
+
+      let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
+      if (cityFilter !== "all") venueListQuery = venueListQuery.eq("city", cityFilter);
+
+      let categoriesQuery = supabase.from("venues").select("category");
+      if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
+
       const [venues, influencers, redemptions, offers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
         supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
         supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
         supabase.from("offers").select("id", { count: "exact", head: true }),
-        supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20),
-        supabase.from("venues").select("category"),
+        venueListQuery,
+        categoriesQuery,
       ]);
 
       setStats({
