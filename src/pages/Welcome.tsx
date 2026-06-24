@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles, Store, Instagram, Facebook, X, Mail, LogIn } from "lucide-react";
+import { ArrowRight, Sparkles, Store, X, Mail, LogIn } from "lucide-react";
 import imgHospitality from "@/assets/onboarding-hospitality.jpg";
 import imgCreator from "@/assets/onboarding-creator.jpg";
 import imgNightlife from "@/assets/onboarding-nightlife.jpg";
 import imgInfluencer from "@/assets/hero-influencer.jpg";
 import imgVenue from "@/assets/hero-venue.jpg";
-import { toast } from "@/hooks/use-toast";
 
 const SLIDES = [
   { src: imgHospitality, title: "Discover premium venues",   tag: "Hospitality" },
