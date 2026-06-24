@@ -23,6 +23,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "profile", label: "Profile" },
   { key: "messaging", label: "Messaging" },
   { key: "billing", label: "Billing" },
+  { key: "compliance", label: "Compliance" },
 ];
 
 const PINK = "#b8923a";
