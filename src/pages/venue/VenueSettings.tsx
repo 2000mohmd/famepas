@@ -151,7 +151,14 @@ const VenueSettings = () => {
     setPName(v.name || "");
     setPDesc(v.description || "");
     setPLogo(v.logo_url || null);
-    setPCats(v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
+    const catsArr: string[] = Array.isArray((v as any).categories) && (v as any).categories.length
+      ? (v as any).categories
+      : (v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
+    setPCats(catsArr);
+    setPCancel((v as any).cancellation_policy ?? true);
+    setSelectedTierId((v as any).subscription_tier_id ?? null);
+    setRequireAdDisclosure((v as any).require_ad_disclosure ?? false);
+    setRequireVenueTag((v as any).require_venue_tag ?? false);
 
     const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
     setProfile(prof);
