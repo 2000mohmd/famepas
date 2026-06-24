@@ -69,7 +69,9 @@ const InfluencerSettings = () => {
 
   const updateSettings = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("influencer_settings").update(form).eq("influencer_id", user!.id);
+      const { error } = await supabase
+        .from("influencer_settings")
+        .upsert({ ...form, influencer_id: user!.id }, { onConflict: "influencer_id" });
       if (error) throw error;
     },
     onSuccess: () => {
