@@ -20,6 +20,29 @@ const VenueContent = () => {
   const [loading, setLoading] = useState(true);
   const [rejectFor, setRejectFor] = useState<any | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [postUrlInputs, setPostUrlInputs] = useState<Record<string, string>>({});
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+
+  const refreshMetrics = async (deliverableId: string) => {
+    const url = postUrlInputs[deliverableId] || "";
+    if (!url.includes("instagram.com") && !url.includes("tiktok.com")) {
+      toast({ title: "Please enter a valid Instagram or TikTok post URL", variant: "destructive" });
+      return;
+    }
+    setRefreshingId(deliverableId);
+    try {
+      const { error } = await supabase.functions.invoke("fetch-post-metrics", {
+        body: { deliverable_id: deliverableId, post_url: url },
+      });
+      if (error) throw error;
+      toast({ title: "Stats updated successfully" });
+      load();
+    } catch (err: any) {
+      toast({ title: "Failed to fetch stats", description: err.message, variant: "destructive" });
+    } finally {
+      setRefreshingId(null);
+    }
+  };
 
   const load = async () => {
     if (!user) return;
