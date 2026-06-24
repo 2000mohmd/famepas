@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, QrCode, Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -27,28 +27,27 @@ const InfluencerBookings = () => {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Check-in OTP dialog
+  const [checkInFor, setCheckInFor] = useState<any | null>(null);
+  const [otp, setOtp] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  // Stats editor
+  const [statsFor, setStatsFor] = useState<any | null>(null);
+  const [stats, setStats] = useState({ views: 0, likes: 0, comments: 0, shares: 0 });
+  const [savingStats, setSavingStats] = useState(false);
+
   const { data: bookings } = useQuery({
     queryKey: ["my-bookings", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("bookings")
-        .select("*, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status)")
+        .select("*, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
         .eq("influencer_id", user!.id)
         .order("scheduled_date", { ascending: false });
       return data ?? [];
     },
     enabled: !!user,
-  });
-
-  const checkIn = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("bookings").update({ checked_in_at: new Date().toISOString(), status: "checked_in" }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Checked in successfully!" });
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    },
   });
 
   const completeBooking = useMutation({
@@ -61,6 +60,34 @@ const InfluencerBookings = () => {
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
     },
   });
+
+  const verifyAndCheckIn = async () => {
+    if (!checkInFor) return;
+    const code = otp.trim().toUpperCase();
+    if (!code) return;
+    setVerifyingOtp(true);
+    try {
+      const expected = (checkInFor.offer_redemptions?.qr_code ?? "").toUpperCase();
+      if (!expected) {
+        toast({ title: "No code on file", description: "Ask the venue to provide a check-in code.", variant: "destructive" });
+        return;
+      }
+      if (expected !== code) {
+        toast({ title: "Invalid code", description: "That code doesn't match this booking.", variant: "destructive" });
+        return;
+      }
+      const now = new Date().toISOString();
+      const { error } = await supabase.from("bookings").update({ checked_in_at: now, status: "checked_in" }).eq("id", checkInFor.id);
+      if (error) throw error;
+      toast({ title: "Checked in successfully!" });
+      setCheckInFor(null); setOtp("");
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
@@ -104,6 +131,37 @@ const InfluencerBookings = () => {
     }
   };
 
+  const openStats = (deliverable: any) => {
+    setStatsFor(deliverable);
+    setStats({
+      views: deliverable.views ?? 0,
+      likes: deliverable.likes ?? 0,
+      comments: deliverable.comments ?? 0,
+      shares: deliverable.shares ?? 0,
+    });
+  };
+
+  const saveStats = async () => {
+    if (!statsFor) return;
+    setSavingStats(true);
+    try {
+      const { error } = await supabase.from("deliverables").update({
+        views: Number(stats.views) || 0,
+        likes: Number(stats.likes) || 0,
+        comments: Number(stats.comments) || 0,
+        shares: Number(stats.shares) || 0,
+      }).eq("id", statsFor.id);
+      if (error) throw error;
+      toast({ title: "Stats updated" });
+      setStatsFor(null);
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingStats(false);
+    }
+  };
+
   const upcoming = bookings?.filter((b: any) => ["upcoming", "checked_in"].includes(b.status)) ?? [];
   const past = bookings?.filter((b: any) => ["completed", "no_show", "cancelled"].includes(b.status)) ?? [];
 
@@ -118,8 +176,8 @@ const InfluencerBookings = () => {
   };
 
   const renderBooking = (booking: any) => {
-    const hasDeliverable = (booking.deliverables ?? []).length > 0;
-    const deliverableStatus = booking.deliverables?.[0]?.status;
+    const deliverable = booking.deliverables?.[0];
+    const hasDeliverable = !!deliverable;
     return (
     <Card key={booking.id}>
       <CardContent className="pt-6">
@@ -130,7 +188,7 @@ const InfluencerBookings = () => {
               <Badge className={statusColor(booking.status)}>{booking.status.replace("_", " ")}</Badge>
               {hasDeliverable && (
                 <Badge variant="outline" className="text-xs">
-                  Content: {deliverableStatus}
+                  Content: {deliverable.status}
                 </Badge>
               )}
             </div>
@@ -145,8 +203,8 @@ const InfluencerBookings = () => {
           </div>
           <div className="flex flex-col gap-2 shrink-0">
             {booking.status === "upcoming" && (
-              <Button size="sm" onClick={() => checkIn.mutate(booking.id)}>
-                <QrCode className="w-4 h-4 mr-1" /> Check In
+              <Button size="sm" onClick={() => { setCheckInFor(booking); setOtp(""); }}>
+                <KeyRound className="w-4 h-4 mr-1" /> Check In
               </Button>
             )}
             {booking.status === "checked_in" && (
@@ -159,9 +217,14 @@ const InfluencerBookings = () => {
                 <Upload className="w-4 h-4 mr-1" /> Upload Content
               </Button>
             )}
-            {booking.status === "completed" && deliverableStatus === "rejected" && (
+            {booking.status === "completed" && deliverable?.status === "rejected" && (
               <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
                 <Upload className="w-4 h-4 mr-1" /> Resubmit
+              </Button>
+            )}
+            {hasDeliverable && deliverable.status !== "rejected" && (
+              <Button size="sm" variant="outline" onClick={() => openStats(deliverable)}>
+                <BarChart3 className="w-4 h-4 mr-1" /> Update stats
               </Button>
             )}
           </div>
@@ -199,6 +262,29 @@ const InfluencerBookings = () => {
         </Tabs>
       </div>
 
+      {/* Check-in OTP dialog */}
+      <Dialog open={!!checkInFor} onOpenChange={(o) => { if (!o) { setCheckInFor(null); setOtp(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Check in to your visit</DialogTitle>
+            <DialogDescription>
+              Ask the venue staff for the booking code (shown to them when they verify your visit). Enter it below to confirm you're at the venue.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={otp}
+            onChange={e => setOtp(e.target.value.toUpperCase())}
+            placeholder="e.g. AB12CD34EF56"
+            className="font-mono tracking-wider text-center"
+            maxLength={20}
+          />
+          <Button onClick={verifyAndCheckIn} disabled={verifyingOtp || !otp.trim()} className="w-full">
+            {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Verify & Check In</>}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content upload dialog */}
       <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) resetUpload(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -249,6 +335,34 @@ const InfluencerBookings = () => {
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4 mr-1" /> Submit for review</>}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update stats dialog */}
+      <Dialog open={!!statsFor} onOpenChange={(o) => !o && setStatsFor(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Update post stats</DialogTitle>
+            <DialogDescription>
+              Paste the latest metrics from your post so the venue sees real engagement.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            {(["views", "likes", "comments", "shares"] as const).map(k => (
+              <div key={k}>
+                <Label className="text-xs capitalize">{k}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={stats[k]}
+                  onChange={e => setStats(s => ({ ...s, [k]: Number(e.target.value) }))}
+                />
+              </div>
+            ))}
+          </div>
+          <Button onClick={saveStats} disabled={savingStats} className="w-full">
+            {savingStats ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save stats"}
+          </Button>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
