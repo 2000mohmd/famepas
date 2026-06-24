@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type Campaign = { id: string; title: string; status: string; start_date: string | null; end_date: string | null; description?: string | null; cover_image_url?: string | null; cover_video_url?: string | null; cover_images?: string[] | null; deliverables?: any };
