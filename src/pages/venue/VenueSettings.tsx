@@ -125,6 +125,12 @@ const VenueSettings = () => {
   const [allCats, setAllCats] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  // billing + compliance
+  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const [savingTier, setSavingTier] = useState<string | null>(null);
+  const [requireAdDisclosure, setRequireAdDisclosure] = useState(false);
+  const [requireVenueTag, setRequireVenueTag] = useState(false);
+
   // template form
   const [tplOpen, setTplOpen] = useState(false);
   const [tplTitle, setTplTitle] = useState("");
