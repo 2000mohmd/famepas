@@ -244,6 +244,7 @@ export type Database = {
           auto_approve_top: boolean | null
           availability_type: string | null
           available_days: string[] | null
+          booking_limit_count: number | null
           booking_limits: boolean | null
           content_focus: string | null
           cover_image_url: string | null
@@ -278,6 +279,7 @@ export type Database = {
           auto_approve_top?: boolean | null
           availability_type?: string | null
           available_days?: string[] | null
+          booking_limit_count?: number | null
           booking_limits?: boolean | null
           content_focus?: string | null
           cover_image_url?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           auto_approve_top?: boolean | null
           availability_type?: string | null
           available_days?: string[] | null
+          booking_limit_count?: number | null
           booking_limits?: boolean | null
           content_focus?: string | null
           cover_image_url?: string | null
@@ -1713,6 +1716,8 @@ export type Database = {
           address_line2: string | null
           approval_status: string
           brand_id: string | null
+          cancellation_policy: boolean
+          categories: string[]
           category: string
           city: string | null
           contact_person_name: string | null
@@ -1730,7 +1735,10 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          require_ad_disclosure: boolean
+          require_venue_tag: boolean
           signup_completed: boolean
+          subscription_tier_id: string | null
           timezone: string | null
           updated_at: string
           venue_type: string
@@ -1744,6 +1752,8 @@ export type Database = {
           address_line2?: string | null
           approval_status?: string
           brand_id?: string | null
+          cancellation_policy?: boolean
+          categories?: string[]
           category?: string
           city?: string | null
           contact_person_name?: string | null
@@ -1761,7 +1771,10 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          require_ad_disclosure?: boolean
+          require_venue_tag?: boolean
           signup_completed?: boolean
+          subscription_tier_id?: string | null
           timezone?: string | null
           updated_at?: string
           venue_type?: string
@@ -1775,6 +1788,8 @@ export type Database = {
           address_line2?: string | null
           approval_status?: string
           brand_id?: string | null
+          cancellation_policy?: boolean
+          categories?: string[]
           category?: string
           city?: string | null
           contact_person_name?: string | null
@@ -1792,7 +1807,10 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          require_ad_disclosure?: boolean
+          require_venue_tag?: boolean
           signup_completed?: boolean
+          subscription_tier_id?: string | null
           timezone?: string | null
           updated_at?: string
           venue_type?: string
@@ -1806,6 +1824,13 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venues_subscription_tier_id_fkey"
+            columns: ["subscription_tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
             referencedColumns: ["id"]
           },
         ]
