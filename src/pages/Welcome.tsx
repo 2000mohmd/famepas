@@ -34,14 +34,6 @@ const Welcome = () => {
     }
   }, [sheetOpen]);
 
-  const handleSocial = (provider: string) => {
-    toast({
-      title: `${provider} connection coming soon`,
-      description: "For now, finish your profile manually — you can add your social handle in the next step.",
-    });
-    setSheetOpen(false);
-    navigate("/signup/influencer");
-  };
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-neutral-900 flex flex-col relative overflow-hidden">
