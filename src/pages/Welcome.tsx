@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles, Store, Instagram, Facebook, X, Mail, LogIn } from "lucide-react";
+import { ArrowRight, Sparkles, Store, X, Mail, LogIn } from "lucide-react";
 import imgHospitality from "@/assets/onboarding-hospitality.jpg";
 import imgCreator from "@/assets/onboarding-creator.jpg";
 import imgNightlife from "@/assets/onboarding-nightlife.jpg";
 import imgInfluencer from "@/assets/hero-influencer.jpg";
 import imgVenue from "@/assets/hero-venue.jpg";
-import { toast } from "@/hooks/use-toast";
 
 const SLIDES = [
   { src: imgHospitality, title: "Discover premium venues",   tag: "Hospitality" },
@@ -17,11 +16,6 @@ const SLIDES = [
 ];
 
 // TikTok inline icon (lucide doesn't ship one)
-const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path d="M16.5 3a5.5 5.5 0 0 0 4.5 4.5v3a8.5 8.5 0 0 1-4.5-1.3v6.6a6.3 6.3 0 1 1-6.3-6.3c.35 0 .69.03 1.02.09v3.18a3.2 3.2 0 1 0 2.28 3.06V3h3z"/>
-  </svg>
-);
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -40,14 +34,6 @@ const Welcome = () => {
     }
   }, [sheetOpen]);
 
-  const handleSocial = (provider: string) => {
-    toast({
-      title: `${provider} connection coming soon`,
-      description: "For now, finish your profile manually — you can add your social handle in the next step.",
-    });
-    setSheetOpen(false);
-    navigate("/signup/influencer");
-  };
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-neutral-900 flex flex-col relative overflow-hidden">
@@ -173,33 +159,6 @@ const Welcome = () => {
             </div>
 
             <div className="mt-5 space-y-2.5">
-              <button
-                onClick={() => handleSocial("Instagram")}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(42_78%_68%)] via-[hsl(42_65%_50%)] to-[hsl(38_60%_38%)] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-              >
-                <Instagram className="w-5 h-5" /> Continue with Instagram
-              </button>
-              <button
-                onClick={() => handleSocial("TikTok")}
-                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-[hsl(42_15%_88%)] active:scale-[0.99] transition"
-              >
-                <TikTokIcon /> Continue with TikTok
-              </button>
-              <button
-                onClick={() => handleSocial("Facebook")}
-                className="w-full h-12 rounded-xl bg-[#1877F2] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-              >
-                <Facebook className="w-5 h-5" /> Continue with Facebook
-              </button>
-            </div>
-
-            <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
-              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
-              OR
-              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
-            </div>
-
-            <div className="space-y-2.5">
               <button
                 onClick={() => { setSheetOpen(false); navigate("/signup/influencer"); }}
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-[#b8923a] to-[#e6c878] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"

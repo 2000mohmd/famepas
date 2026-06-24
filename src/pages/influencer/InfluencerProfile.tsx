@@ -232,7 +232,7 @@ const InfluencerProfile = () => {
               </div>
               <div className="space-y-2">
                 <Label>Country</Label>
-                <Input value={form.country} readOnly placeholder="Auto from city" />
+                <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Your country" />
               </div>
             </div>
           </CardContent>

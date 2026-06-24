@@ -18,8 +18,9 @@ const AdminAnalytics = () => {
 
   useEffect(() => {
     const fetchFilters = async () => {
-      const { data } = await supabase.from("service_locations").select("city").eq("is_active", true).order("city");
-      setCities((data ?? []).map((l: any) => l.city));
+      const { data } = await supabase.from("venues").select("city").not("city", "is", null);
+      const unique = Array.from(new Set((data ?? []).map((v: any) => v.city).filter(Boolean))).sort();
+      setCities(unique as string[]);
     };
     fetchFilters();
   }, []);
@@ -31,13 +32,20 @@ const AdminAnalytics = () => {
       let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
       if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
+
+      let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
+      if (cityFilter !== "all") venueListQuery = venueListQuery.eq("city", cityFilter);
+
+      let categoriesQuery = supabase.from("venues").select("category");
+      if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
+
       const [venues, influencers, redemptions, offers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
         supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
         supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
         supabase.from("offers").select("id", { count: "exact", head: true }),
-        supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20),
-        supabase.from("venues").select("category"),
+        venueListQuery,
+        categoriesQuery,
       ]);
 
       setStats({
@@ -55,13 +63,7 @@ const AdminAnalytics = () => {
       const catArr = Object.entries(catMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 6);
       setCategoryStats(catArr);
 
-      // Top venues by offer count (proxy metric since we don't have per-venue redemption counts easily)
-      const venuesToShow = (venueList.data ?? []).slice(0, 5).map((v: any) => ({
-        name: v.name,
-        redemptions: Math.floor(Math.random() * 0), // placeholder - real data needs aggregation
-      }));
-
-      // Fetch actual redemption counts per venue via offers
+      // Top venues by aggregated redemption counts from offers
       const venueIds = (venueList.data ?? []).map((v: any) => v.id);
       if (venueIds.length > 0) {
         const { data: offerData } = await supabase.from("offers").select("venue_id, current_redemptions").in("venue_id", venueIds);
@@ -74,6 +76,8 @@ const AdminAnalytics = () => {
           .sort((a, b) => b.redemptions - a.redemptions)
           .slice(0, 5);
         setTopVenues(ranked);
+      } else {
+        setTopVenues([]);
       }
       setLoading(false);
     };

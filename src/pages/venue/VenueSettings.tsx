@@ -23,6 +23,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "profile", label: "Profile" },
   { key: "messaging", label: "Messaging" },
   { key: "billing", label: "Billing" },
+  { key: "compliance", label: "Compliance" },
 ];
 
 const PINK = "#b8923a";
@@ -124,6 +125,12 @@ const VenueSettings = () => {
   const [allCats, setAllCats] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  // billing + compliance
+  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  const [savingTier, setSavingTier] = useState<string | null>(null);
+  const [requireAdDisclosure, setRequireAdDisclosure] = useState(false);
+  const [requireVenueTag, setRequireVenueTag] = useState(false);
+
   // template form
   const [tplOpen, setTplOpen] = useState(false);
   const [tplTitle, setTplTitle] = useState("");
@@ -144,7 +151,14 @@ const VenueSettings = () => {
     setPName(v.name || "");
     setPDesc(v.description || "");
     setPLogo(v.logo_url || null);
-    setPCats(v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
+    const catsArr: string[] = Array.isArray((v as any).categories) && (v as any).categories.length
+      ? (v as any).categories
+      : (v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
+    setPCats(catsArr);
+    setPCancel((v as any).cancellation_policy ?? true);
+    setSelectedTierId((v as any).subscription_tier_id ?? null);
+    setRequireAdDisclosure((v as any).require_ad_disclosure ?? false);
+    setRequireVenueTag((v as any).require_venue_tag ?? false);
 
     const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
     setProfile(prof);
@@ -206,9 +220,29 @@ const VenueSettings = () => {
       description: pDesc,
       logo_url: pLogo,
       category: pCats[0] || "dining",
-    }).eq("id", venue.id);
+      categories: pCats,
+      cancellation_policy: pCancel,
+    } as any).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else toast({ title: "Profile saved" });
+  };
+
+  const selectTier = async (tierId: string) => {
+    if (!venue) return;
+    setSavingTier(tierId);
+    const { error } = await supabase.from("venues").update({ subscription_tier_id: tierId } as any).eq("id", venue.id);
+    setSavingTier(null);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setSelectedTierId(tierId);
+    toast({ title: "Plan selected" });
+  };
+
+  const updateCompliance = async (field: "require_ad_disclosure" | "require_venue_tag", value: boolean) => {
+    if (!venue) return;
+    if (field === "require_ad_disclosure") setRequireAdDisclosure(value);
+    else setRequireVenueTag(value);
+    const { error } = await supabase.from("venues").update({ [field]: value } as any).eq("id", venue.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
   };
 
   const saveTemplate = async () => {
@@ -235,6 +269,14 @@ const VenueSettings = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
+    }
+    // Best-effort dispatch of an email notification to the invitee
+    try {
+      await supabase.functions.invoke("send-welcome-email", {
+        body: { email: inviteEmail, name: inviteEmail.split("@")[0], role: "venue" },
+      });
+    } catch {
+      /* non-blocking */
     }
     toast({ title: "Invite sent", description: `An invitation has been sent to ${inviteEmail}.` });
     setInviteEmail("");
@@ -479,14 +521,25 @@ const VenueSettings = () => {
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-semibold text-foreground mb-4">Subscription Plans</h2>
               <div className="grid md:grid-cols-3 gap-4">
-                {tiers.map(t => (
-                  <div key={t.id} className="border border-border rounded-xl p-4">
-                    <p className="font-semibold text-foreground">{t.name}</p>
-                    <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
-                    {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
-                    <Button className="w-full" variant="outline">Select</Button>
-                  </div>
-                ))}
+                {tiers.map(t => {
+                  const isSelected = selectedTierId === t.id;
+                  return (
+                    <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-[#b8923a] ring-1 ring-[#b8923a]" : "border-border"}`}>
+                      <p className="font-semibold text-foreground">{t.name}</p>
+                      <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
+                      {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
+                      <Button
+                        className="w-full"
+                        variant={isSelected ? "default" : "outline"}
+                        onClick={() => selectTier(t.id)}
+                        disabled={savingTier === t.id || isSelected}
+                        style={isSelected ? { background: PINK } : undefined}
+                      >
+                        {isSelected ? "Selected" : savingTier === t.id ? "Saving…" : "Select"}
+                      </Button>
+                    </div>
+                  );
+                })}
                 {tiers.length === 0 && <p className="text-sm text-muted-foreground">No plans configured.</p>}
               </div>
             </div>
@@ -504,14 +557,14 @@ const VenueSettings = () => {
                 <p className="font-medium">Require #ad disclosure</p>
                 <p className="text-xs text-muted-foreground">Influencers must include #ad in sponsored posts</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={requireAdDisclosure} onCheckedChange={(v) => updateCompliance("require_ad_disclosure", v)} />
             </div>
             <div className="flex items-center justify-between border border-border rounded-xl p-4">
               <div>
                 <p className="font-medium">Require venue tag</p>
                 <p className="text-xs text-muted-foreground">Posts must tag your venue's social handle</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={requireVenueTag} onCheckedChange={(v) => updateCompliance("require_venue_tag", v)} />
             </div>
           </div>
         )}

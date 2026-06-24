@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, Plus, Trash2, Video, Image as ImageIcon, Instagram, Music2, Minus, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type OfferRow = { min_followers: string; max_followers: string; max_guests: string; offer: string };
@@ -72,6 +73,8 @@ const VenueCampaignCreate = () => {
   const [availableDays, setAvailableDays] = useState<string[]>([...DAYS]);
   const [locationId, setLocationId] = useState<string>("");
   const [bookingLimits, setBookingLimits] = useState(false);
+  const [bookingLimitCount, setBookingLimitCount] = useState<string>("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const [approvalType, setApprovalType] = useState("manual");
   const [autoApproveTop, setAutoApproveTop] = useState(true);
@@ -117,6 +120,7 @@ const VenueCampaignCreate = () => {
           setAvailableDays((c as any).available_days ?? [...DAYS]);
           setLocationId(c.location_id ?? "");
           setBookingLimits((c as any).booking_limits ?? false);
+          setBookingLimitCount((c as any).booking_limit_count?.toString() ?? "");
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
           setCoverVideoUrl((c as any).cover_video_url ?? "");
@@ -175,6 +179,7 @@ const VenueCampaignCreate = () => {
       available_days: availableDays,
       location_id: locationId || null,
       booking_limits: bookingLimits,
+      booking_limit_count: bookingLimits && bookingLimitCount ? parseInt(bookingLimitCount) : null,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
       cover_video_url: coverVideoUrl || null,
@@ -562,12 +567,27 @@ const VenueCampaignCreate = () => {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
-            <div>
-              <p className="text-sm font-semibold">Booking Limits</p>
-              <p className="text-xs text-muted-foreground">Automatically block off availability once limits are reached</p>
+          <div className="p-4 rounded-xl bg-muted/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Booking Limits</p>
+                <p className="text-xs text-muted-foreground">Automatically block off availability once limits are reached</p>
+              </div>
+              <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
             </div>
-            <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
+            {bookingLimits && (
+              <div>
+                <Label className="text-xs font-semibold">Max bookings per week</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={bookingLimitCount}
+                  onChange={(e) => setBookingLimitCount(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="mt-1 max-w-[180px]"
+                />
+              </div>
+            )}
           </div>
         </SectionCard>
 
@@ -610,12 +630,49 @@ const VenueCampaignCreate = () => {
 
       {/* Sticky footer */}
       <div className="fixed bottom-0 left-64 right-0 bg-white border-t border-border px-8 py-3 flex items-center justify-between z-30">
-        <Button variant="outline">Preview</Button>
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>Preview</Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save("draft")} disabled={saving}>Save to Drafts</Button>
           <Button onClick={() => save("live")} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">▶ Set Live</Button>
         </div>
       </div>
+
+      {/* Preview modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Campaign Preview</DialogTitle>
+          </DialogHeader>
+          <div className="rounded-2xl overflow-hidden border border-border bg-white">
+            {coverImages[0] ? (
+              <img src={coverImages[0]} alt={title} className="w-full h-44 object-cover" />
+            ) : (
+              <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground text-sm">No cover image</div>
+            )}
+            <div className="p-4 space-y-3">
+              <h3 className="text-lg font-bold text-foreground">{title || "Untitled campaign"}</h3>
+              {description && <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>}
+              {igOffers[0]?.offer && (
+                <div className="rounded-lg bg-[hsl(42_65%_50%_/_0.10)] border border-[#b8923a]/30 p-3">
+                  <p className="text-xs font-semibold text-[#b8923a] uppercase">Offer</p>
+                  <p className="text-sm text-foreground mt-1">{igOffers[0].offer}</p>
+                  {igOffers[0].min_followers && (
+                    <p className="text-xs text-muted-foreground mt-1">Min followers: {igOffers[0].min_followers}</p>
+                  )}
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">Available days</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableDays.length ? availableDays.map(d => (
+                    <span key={d} className="px-2 py-0.5 rounded-full bg-muted text-xs">{d}</span>
+                  )) : <span className="text-xs text-muted-foreground">None selected</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
