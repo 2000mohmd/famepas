@@ -475,6 +475,7 @@ export type Database = {
           media_url: string | null
           metrics_updated_at: string | null
           platform: string | null
+          post_url: string | null
           posted_at: string | null
           reviewed_at: string | null
           saves: number
@@ -500,6 +501,7 @@ export type Database = {
           media_url?: string | null
           metrics_updated_at?: string | null
           platform?: string | null
+          post_url?: string | null
           posted_at?: string | null
           reviewed_at?: string | null
           saves?: number
@@ -525,6 +527,7 @@ export type Database = {
           media_url?: string | null
           metrics_updated_at?: string | null
           platform?: string | null
+          post_url?: string | null
           posted_at?: string | null
           reviewed_at?: string | null
           saves?: number
