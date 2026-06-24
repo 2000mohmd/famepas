@@ -630,12 +630,49 @@ const VenueCampaignCreate = () => {
 
       {/* Sticky footer */}
       <div className="fixed bottom-0 left-64 right-0 bg-white border-t border-border px-8 py-3 flex items-center justify-between z-30">
-        <Button variant="outline">Preview</Button>
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>Preview</Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save("draft")} disabled={saving}>Save to Drafts</Button>
           <Button onClick={() => save("live")} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">▶ Set Live</Button>
         </div>
       </div>
+
+      {/* Preview modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Campaign Preview</DialogTitle>
+          </DialogHeader>
+          <div className="rounded-2xl overflow-hidden border border-border bg-white">
+            {coverImages[0] ? (
+              <img src={coverImages[0]} alt={title} className="w-full h-44 object-cover" />
+            ) : (
+              <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground text-sm">No cover image</div>
+            )}
+            <div className="p-4 space-y-3">
+              <h3 className="text-lg font-bold text-foreground">{title || "Untitled campaign"}</h3>
+              {description && <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>}
+              {igOffers[0]?.offer && (
+                <div className="rounded-lg bg-[hsl(42_65%_50%_/_0.10)] border border-[#b8923a]/30 p-3">
+                  <p className="text-xs font-semibold text-[#b8923a] uppercase">Offer</p>
+                  <p className="text-sm text-foreground mt-1">{igOffers[0].offer}</p>
+                  {igOffers[0].min_followers && (
+                    <p className="text-xs text-muted-foreground mt-1">Min followers: {igOffers[0].min_followers}</p>
+                  )}
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">Available days</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {availableDays.length ? availableDays.map(d => (
+                    <span key={d} className="px-2 py-0.5 rounded-full bg-muted text-xs">{d}</span>
+                  )) : <span className="text-xs text-muted-foreground">None selected</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
