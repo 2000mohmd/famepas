@@ -47,9 +47,12 @@ const InfluencerEarnings = () => {
 
   const requestWithdrawal = useMutation({
     mutationFn: async () => {
+      const amt = parseFloat(withdrawAmount);
+      if (!Number.isFinite(amt) || amt <= 0) throw new Error("Enter a valid amount");
+      if (amt > Number(balance ?? 0)) throw new Error("Amount exceeds your available balance");
       const { error } = await supabase.from("withdrawal_requests").insert({
         influencer_id: user!.id,
-        amount: parseFloat(withdrawAmount),
+        amount: amt,
         status: "pending",
       });
       if (error) throw error;
