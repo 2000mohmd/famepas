@@ -20,13 +20,11 @@ const VenueContent = () => {
   const [loading, setLoading] = useState(true);
   const [rejectFor, setRejectFor] = useState<any | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [postUrlInputs, setPostUrlInputs] = useState<Record<string, string>>({});
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
-  const refreshMetrics = async (deliverableId: string) => {
-    const url = postUrlInputs[deliverableId] || "";
-    if (!url.includes("instagram.com") && !url.includes("tiktok.com")) {
-      toast({ title: "Please enter a valid Instagram or TikTok post URL", variant: "destructive" });
+  const refreshMetrics = async (deliverableId: string, url?: string | null) => {
+    if (!url || (!url.includes("instagram.com") && !url.includes("tiktok.com"))) {
+      toast({ title: "No Instagram/TikTok post URL on this deliverable", variant: "destructive" });
       return;
     }
     setRefreshingId(deliverableId);
