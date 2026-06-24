@@ -63,13 +63,7 @@ const AdminAnalytics = () => {
       const catArr = Object.entries(catMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 6);
       setCategoryStats(catArr);
 
-      // Top venues by offer count (proxy metric since we don't have per-venue redemption counts easily)
-      const venuesToShow = (venueList.data ?? []).slice(0, 5).map((v: any) => ({
-        name: v.name,
-        redemptions: Math.floor(Math.random() * 0), // placeholder - real data needs aggregation
-      }));
-
-      // Fetch actual redemption counts per venue via offers
+      // Top venues by aggregated redemption counts from offers
       const venueIds = (venueList.data ?? []).map((v: any) => v.id);
       if (venueIds.length > 0) {
         const { data: offerData } = await supabase.from("offers").select("venue_id, current_redemptions").in("venue_id", venueIds);
@@ -82,6 +76,8 @@ const AdminAnalytics = () => {
           .sort((a, b) => b.redemptions - a.redemptions)
           .slice(0, 5);
         setTopVenues(ranked);
+      } else {
+        setTopVenues([]);
       }
       setLoading(false);
     };
