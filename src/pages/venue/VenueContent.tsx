@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Tab = "all" | "submitted" | "approved" | "rejected";
@@ -20,13 +20,11 @@ const VenueContent = () => {
   const [loading, setLoading] = useState(true);
   const [rejectFor, setRejectFor] = useState<any | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [postUrlInputs, setPostUrlInputs] = useState<Record<string, string>>({});
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
-  const refreshMetrics = async (deliverableId: string) => {
-    const url = postUrlInputs[deliverableId] || "";
-    if (!url.includes("instagram.com") && !url.includes("tiktok.com")) {
-      toast({ title: "Please enter a valid Instagram or TikTok post URL", variant: "destructive" });
+  const refreshMetrics = async (deliverableId: string, url?: string | null) => {
+    if (!url || (!url.includes("instagram.com") && !url.includes("tiktok.com"))) {
+      toast({ title: "No Instagram/TikTok post URL on this deliverable", variant: "destructive" });
       return;
     }
     setRefreshingId(deliverableId);
@@ -145,26 +143,23 @@ const VenueContent = () => {
                       <span className="text-sm font-medium">{p?.full_name || "Influencer"}</span>
                     </div>
                     {d.caption && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{d.caption}</p>}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                      <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{d.views || 0}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
-                      <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
-                    </div>
-                    <div className="flex gap-2 mb-3">
-                      <Input
-                        placeholder="Instagram or TikTok post URL"
-                        value={postUrlInputs[d.id] ?? d.post_url ?? ""}
-                        onChange={(e) => setPostUrlInputs((prev) => ({ ...prev, [d.id]: e.target.value }))}
-                        className="text-xs h-8"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => refreshMetrics(d.id)}
-                        disabled={refreshingId === d.id}
-                      >
-                        {refreshingId === d.id ? "Fetching..." : "Refresh Stats"}
-                      </Button>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{d.views || 0}</span>
+                        <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
+                      </div>
+                      {(d.post_url || d.content_url) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => refreshMetrics(d.id, d.post_url || d.content_url)}
+                          disabled={refreshingId === d.id}
+                        >
+                          {refreshingId === d.id ? "Refreshing…" : "Refresh stats"}
+                        </Button>
+                      )}
                     </div>
                     <div className="mt-auto flex flex-wrap gap-2">
                       {d.content_url && (

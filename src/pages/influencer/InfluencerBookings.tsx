@@ -109,18 +109,28 @@ const InfluencerBookings = () => {
         if (upErr) throw upErr;
         mediaUrl = path;
       }
-      const { error } = await supabase.from("deliverables").insert({
+      const url = contentUrl.trim();
+      const { data: inserted, error } = await supabase.from("deliverables").insert({
         booking_id: uploadFor.id,
         influencer_id: user.id,
         content_type: contentType,
         platform,
-        content_url: contentUrl.trim() || null,
+        content_url: url || null,
+        post_url: url || null,
         caption: caption.trim() || null,
         media_url: mediaUrl,
         status: "submitted",
         submitted_at: new Date().toISOString(),
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Auto-fetch real metrics from Instagram/TikTok via RapidAPI
+      if (inserted?.id && url && (url.includes("instagram.com") || url.includes("tiktok.com"))) {
+        supabase.functions.invoke("fetch-post-metrics", {
+          body: { deliverable_id: inserted.id, post_url: url },
+        }).catch(() => { /* metrics best-effort; venue can refresh later */ });
+      }
+
       toast({ title: "Content submitted", description: "The venue will review and approve it." });
       resetUpload();
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
