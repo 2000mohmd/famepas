@@ -18,8 +18,9 @@ const AdminAnalytics = () => {
 
   useEffect(() => {
     const fetchFilters = async () => {
-      const { data } = await supabase.from("service_locations").select("city").eq("is_active", true).order("city");
-      setCities((data ?? []).map((l: any) => l.city));
+      const { data } = await supabase.from("venues").select("city").not("city", "is", null);
+      const unique = Array.from(new Set((data ?? []).map((v: any) => v.city).filter(Boolean))).sort();
+      setCities(unique as string[]);
     };
     fetchFilters();
   }, []);
