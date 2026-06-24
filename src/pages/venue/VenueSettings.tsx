@@ -557,14 +557,14 @@ const VenueSettings = () => {
                 <p className="font-medium">Require #ad disclosure</p>
                 <p className="text-xs text-muted-foreground">Influencers must include #ad in sponsored posts</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={requireAdDisclosure} onCheckedChange={(v) => updateCompliance("require_ad_disclosure", v)} />
             </div>
             <div className="flex items-center justify-between border border-border rounded-xl p-4">
               <div>
                 <p className="font-medium">Require venue tag</p>
                 <p className="text-xs text-muted-foreground">Posts must tag your venue's social handle</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={requireVenueTag} onCheckedChange={(v) => updateCompliance("require_venue_tag", v)} />
             </div>
           </div>
         )}
