@@ -179,6 +179,7 @@ const VenueCampaignCreate = () => {
       available_days: availableDays,
       location_id: locationId || null,
       booking_limits: bookingLimits,
+      booking_limit_count: bookingLimits && bookingLimitCount ? parseInt(bookingLimitCount) : null,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
       cover_video_url: coverVideoUrl || null,
