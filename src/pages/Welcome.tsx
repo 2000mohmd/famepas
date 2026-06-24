@@ -16,11 +16,6 @@ const SLIDES = [
 ];
 
 // TikTok inline icon (lucide doesn't ship one)
-const TikTokIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path d="M16.5 3a5.5 5.5 0 0 0 4.5 4.5v3a8.5 8.5 0 0 1-4.5-1.3v6.6a6.3 6.3 0 1 1-6.3-6.3c.35 0 .69.03 1.02.09v3.18a3.2 3.2 0 1 0 2.28 3.06V3h3z"/>
-  </svg>
-);
 
 const Welcome = () => {
   const navigate = useNavigate();
