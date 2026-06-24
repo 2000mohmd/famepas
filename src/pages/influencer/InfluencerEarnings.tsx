@@ -85,7 +85,10 @@ const InfluencerEarnings = () => {
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Available balance: $ {Number(balance).toFixed(2)}</p>
                 <Input type="number" placeholder="Amount (USD)" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
-                <Button className="w-full" onClick={() => requestWithdrawal.mutate()} disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || requestWithdrawal.isPending}>
+                {withdrawAmount && parseFloat(withdrawAmount) > Number(balance ?? 0) && (
+                  <p className="text-sm text-destructive">Amount exceeds your available balance</p>
+                )}
+                <Button className="w-full" onClick={() => requestWithdrawal.mutate()} disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > Number(balance ?? 0) || requestWithdrawal.isPending}>
                   Submit Request
                 </Button>
               </div>
