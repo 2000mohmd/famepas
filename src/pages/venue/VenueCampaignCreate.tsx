@@ -567,12 +567,27 @@ const VenueCampaignCreate = () => {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
-            <div>
-              <p className="text-sm font-semibold">Booking Limits</p>
-              <p className="text-xs text-muted-foreground">Automatically block off availability once limits are reached</p>
+          <div className="p-4 rounded-xl bg-muted/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Booking Limits</p>
+                <p className="text-xs text-muted-foreground">Automatically block off availability once limits are reached</p>
+              </div>
+              <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
             </div>
-            <Switch checked={bookingLimits} onCheckedChange={setBookingLimits} />
+            {bookingLimits && (
+              <div>
+                <Label className="text-xs font-semibold">Max bookings per week</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={bookingLimitCount}
+                  onChange={(e) => setBookingLimitCount(e.target.value)}
+                  placeholder="e.g. 10"
+                  className="mt-1 max-w-[180px]"
+                />
+              </div>
+            )}
           </div>
         </SectionCard>
 
