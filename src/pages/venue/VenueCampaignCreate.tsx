@@ -73,6 +73,8 @@ const VenueCampaignCreate = () => {
   const [availableDays, setAvailableDays] = useState<string[]>([...DAYS]);
   const [locationId, setLocationId] = useState<string>("");
   const [bookingLimits, setBookingLimits] = useState(false);
+  const [bookingLimitCount, setBookingLimitCount] = useState<string>("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const [approvalType, setApprovalType] = useState("manual");
   const [autoApproveTop, setAutoApproveTop] = useState(true);
