@@ -173,8 +173,6 @@ const Welcome = () => {
             </div>
 
             <div className="mt-5 space-y-2.5">
-
-            <div className="space-y-2.5">
               <button
                 onClick={() => { setSheetOpen(false); navigate("/signup/influencer"); }}
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-[#b8923a] to-[#e6c878] text-black font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
