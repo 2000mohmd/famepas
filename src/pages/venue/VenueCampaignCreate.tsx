@@ -120,6 +120,7 @@ const VenueCampaignCreate = () => {
           setAvailableDays((c as any).available_days ?? [...DAYS]);
           setLocationId(c.location_id ?? "");
           setBookingLimits((c as any).booking_limits ?? false);
+          setBookingLimitCount((c as any).booking_limit_count?.toString() ?? "");
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
           setCoverVideoUrl((c as any).cover_video_url ?? "");
