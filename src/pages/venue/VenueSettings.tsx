@@ -220,9 +220,29 @@ const VenueSettings = () => {
       description: pDesc,
       logo_url: pLogo,
       category: pCats[0] || "dining",
-    }).eq("id", venue.id);
+      categories: pCats,
+      cancellation_policy: pCancel,
+    } as any).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else toast({ title: "Profile saved" });
+  };
+
+  const selectTier = async (tierId: string) => {
+    if (!venue) return;
+    setSavingTier(tierId);
+    const { error } = await supabase.from("venues").update({ subscription_tier_id: tierId } as any).eq("id", venue.id);
+    setSavingTier(null);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setSelectedTierId(tierId);
+    toast({ title: "Plan selected" });
+  };
+
+  const updateCompliance = async (field: "require_ad_disclosure" | "require_venue_tag", value: boolean) => {
+    if (!venue) return;
+    if (field === "require_ad_disclosure") setRequireAdDisclosure(value);
+    else setRequireVenueTag(value);
+    const { error } = await supabase.from("venues").update({ [field]: value } as any).eq("id", venue.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
   };
 
   const saveTemplate = async () => {
@@ -249,6 +269,14 @@ const VenueSettings = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
+    }
+    // Best-effort dispatch of an email notification to the invitee
+    try {
+      await supabase.functions.invoke("send-welcome-email", {
+        body: { email: inviteEmail, name: inviteEmail.split("@")[0], role: "venue" },
+      });
+    } catch {
+      /* non-blocking */
     }
     toast({ title: "Invite sent", description: `An invitation has been sent to ${inviteEmail}.` });
     setInviteEmail("");
