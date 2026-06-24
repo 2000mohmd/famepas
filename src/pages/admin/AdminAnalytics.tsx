@@ -32,8 +32,6 @@ const AdminAnalytics = () => {
       let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
       if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
-      let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
-      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
       let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
       if (cityFilter !== "all") venueListQuery = venueListQuery.eq("city", cityFilter);
