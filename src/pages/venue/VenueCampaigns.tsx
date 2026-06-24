@@ -106,11 +106,32 @@ const VenueCampaigns = () => {
                     {c.cover_video_url ? <video src={c.cover_video_url} className="w-full h-full object-cover" muted /> : cover ? <img src={cover} alt={c.title} className="w-full h-full object-cover" /> : <Plus className="w-8 h-8 text-muted-foreground" />}
                   </div>
                   <div className="flex-1 p-4 flex flex-col">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground">{c.title}</h3>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9", color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569" }}>
-                        {c.status}
-                      </span>
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9", color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569" }}>
+                          {c.status}
+                        </span>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1 rounded hover:bg-muted text-muted-foreground" aria-label="Campaign actions">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}>
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleStatus(c)}>
+                            {c.status === "paused" ? <><Play className="w-4 h-4 mr-2" /> Resume</> : <><Pause className="w-4 h-4 mr-2" /> Pause</>}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteCampaign(c)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     {c.description && <p className="text-xs text-muted-foreground line-clamp-2">{c.description}</p>}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
