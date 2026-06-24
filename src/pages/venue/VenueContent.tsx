@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Tab = "all" | "submitted" | "approved" | "rejected";
