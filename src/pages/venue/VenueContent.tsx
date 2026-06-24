@@ -150,6 +150,22 @@ const VenueContent = () => {
                       <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
                       <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
                     </div>
+                    <div className="flex gap-2 mb-3">
+                      <Input
+                        placeholder="Instagram or TikTok post URL"
+                        value={postUrlInputs[d.id] ?? d.post_url ?? ""}
+                        onChange={(e) => setPostUrlInputs((prev) => ({ ...prev, [d.id]: e.target.value }))}
+                        className="text-xs h-8"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => refreshMetrics(d.id)}
+                        disabled={refreshingId === d.id}
+                      >
+                        {refreshingId === d.id ? "Fetching..." : "Refresh Stats"}
+                      </Button>
+                    </div>
                     <div className="mt-auto flex flex-wrap gap-2">
                       {d.content_url && (
                         <Button size="sm" variant="outline" asChild>
