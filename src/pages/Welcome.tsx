@@ -173,31 +173,6 @@ const Welcome = () => {
             </div>
 
             <div className="mt-5 space-y-2.5">
-              <button
-                onClick={() => handleSocial("Instagram")}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[hsl(42_78%_68%)] via-[hsl(42_65%_50%)] to-[hsl(38_60%_38%)] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-              >
-                <Instagram className="w-5 h-5" /> Continue with Instagram
-              </button>
-              <button
-                onClick={() => handleSocial("TikTok")}
-                className="w-full h-12 rounded-xl bg-black text-white font-semibold flex items-center justify-center gap-2 border border-[hsl(42_15%_88%)] active:scale-[0.99] transition"
-              >
-                <TikTokIcon /> Continue with TikTok
-              </button>
-              <button
-                onClick={() => handleSocial("Facebook")}
-                className="w-full h-12 rounded-xl bg-[#1877F2] text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.99] transition"
-              >
-                <Facebook className="w-5 h-5" /> Continue with Facebook
-              </button>
-            </div>
-
-            <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
-              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
-              OR
-              <div className="h-px flex-1 bg-[hsl(42_15%_88%)]" />
-            </div>
 
             <div className="space-y-2.5">
               <button
