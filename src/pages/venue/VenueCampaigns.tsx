@@ -43,6 +43,23 @@ const VenueCampaigns = () => {
 
   const openNew = (_date?: string) => navigate("/venue/campaigns/new");
 
+  const toggleStatus = async (c: Campaign) => {
+    const next = c.status === "paused" ? "active" : "paused";
+    const { error } = await (supabase as any).from("campaigns").update({ status: next }).eq("id", c.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: next === "paused" ? "Campaign paused" : "Campaign resumed" });
+    load();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCampaign) return;
+    const { error } = await (supabase as any).from("campaigns").delete().eq("id", deleteCampaign.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Campaign deleted" });
+    setDeleteCampaign(null);
+    load();
+  };
+
   const active = campaigns.filter(c => c.status === "active");
   const scheduled = campaigns.filter(c => c.status === "scheduled");
   const paused = campaigns.filter(c => c.status === "paused");
