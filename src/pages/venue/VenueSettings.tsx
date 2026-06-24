@@ -521,14 +521,25 @@ const VenueSettings = () => {
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-semibold text-foreground mb-4">Subscription Plans</h2>
               <div className="grid md:grid-cols-3 gap-4">
-                {tiers.map(t => (
-                  <div key={t.id} className="border border-border rounded-xl p-4">
-                    <p className="font-semibold text-foreground">{t.name}</p>
-                    <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
-                    {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
-                    <Button className="w-full" variant="outline">Select</Button>
-                  </div>
-                ))}
+                {tiers.map(t => {
+                  const isSelected = selectedTierId === t.id;
+                  return (
+                    <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-[#b8923a] ring-1 ring-[#b8923a]" : "border-border"}`}>
+                      <p className="font-semibold text-foreground">{t.name}</p>
+                      <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
+                      {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
+                      <Button
+                        className="w-full"
+                        variant={isSelected ? "default" : "outline"}
+                        onClick={() => selectTier(t.id)}
+                        disabled={savingTier === t.id || isSelected}
+                        style={isSelected ? { background: PINK } : undefined}
+                      >
+                        {isSelected ? "Selected" : savingTier === t.id ? "Saving…" : "Select"}
+                      </Button>
+                    </div>
+                  );
+                })}
                 {tiers.length === 0 && <p className="text-sm text-muted-foreground">No plans configured.</p>}
               </div>
             </div>
