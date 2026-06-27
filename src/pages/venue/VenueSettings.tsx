@@ -347,9 +347,10 @@ const VenueSettings = () => {
               <p className="text-xs text-muted-foreground">Connect your social accounts for content tracking and analytics</p>
             </div>
             <SocialRow
-              platform="instagram" label="Instagram"
+              platform="instagram" label="Instagram (Manual)"
               color="linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"
               logo={<IGLogo />} handle={igHandle} setHandle={setIgHandle}
+              note="Manual handle for display only — no real Instagram API connection yet."
             />
             <TikTokConnectRow venue={venue} social={findSocial("tiktok")} onChange={load} logo={<TikTokLogo />} />
           </div>
