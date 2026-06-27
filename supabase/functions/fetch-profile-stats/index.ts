@@ -121,9 +121,6 @@ serve(async (req) => {
       if (updErr) console.warn("profile update failed:", updErr.message);
     }
 
-    if (Object.keys(updates).length) {
-      await supabase.from("profiles").update(updates).eq("user_id", userId);
-    }
 
     return new Response(
       JSON.stringify({ ok: true, verified: result, flagged, applied: updates }),
