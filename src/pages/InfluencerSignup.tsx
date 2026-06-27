@@ -228,6 +228,21 @@ const InfluencerSignup = () => {
         }
       }
 
+      // Best-effort: verify handles & pull real follower counts via RapidAPI
+      if (igHandle || ttHandle) {
+        try {
+          await supabase.functions.invoke("fetch-profile-stats", {
+            body: {
+              instagram_handle: igHandle,
+              tiktok_handle: ttHandle,
+              self_reported_followers: Number(followers) || 0,
+            },
+          });
+        } catch (e) {
+          console.warn("Profile stats fetch skipped:", e);
+        }
+      }
+
       setStep("done");
       toast({ title: "Welcome to FamePass!", description: "Your creator account is ready." });
       setTimeout(() => navigate("/influencer/explore", { replace: true }), 600);
