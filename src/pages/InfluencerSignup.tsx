@@ -3,6 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
+import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
+
+const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
 
 /* ============================================================
    Joli-style light-mode creator (influencer) signup wizard
