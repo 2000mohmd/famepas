@@ -477,6 +477,7 @@ export type Database = {
           platform: string | null
           post_url: string | null
           posted_at: string | null
+          rejection_note: string | null
           reviewed_at: string | null
           saves: number
           shares: number
@@ -503,6 +504,7 @@ export type Database = {
           platform?: string | null
           post_url?: string | null
           posted_at?: string | null
+          rejection_note?: string | null
           reviewed_at?: string | null
           saves?: number
           shares?: number
@@ -529,6 +531,7 @@ export type Database = {
           platform?: string | null
           post_url?: string | null
           posted_at?: string | null
+          rejection_note?: string | null
           reviewed_at?: string | null
           saves?: number
           shares?: number
