@@ -151,6 +151,19 @@ const VenueSignup = () => {
   const [step, setStep] = useState<Step>("account");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [sendingResend, setSendingResend] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "venue_registration_open")
+        .maybeSingle();
+      const v = data?.value as any;
+      setRegistrationOpen(v === false || v === "false" ? false : true);
+    })();
+  }, []);
 
   // form state
   const [email, setEmail] = useState("");
@@ -317,6 +330,22 @@ const VenueSignup = () => {
   };
 
   /* ============ render per step ============ */
+
+  if (registrationOpen === false) {
+    return (
+      <Page>
+        <div className="w-full max-w-md">
+          <Card>
+            <Heading title="Registrations are closed" />
+            <p className="text-slate-600 mb-6">
+              Venue signups are temporarily disabled. Please check back soon.
+            </p>
+            <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
 
     if (step === "account") {
     const passwordsMatch = password.length > 0 && password === confirmPassword;
