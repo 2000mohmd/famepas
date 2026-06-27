@@ -244,6 +244,22 @@ const InfluencerSignup = () => {
 
   /* ============ steps ============ */
 
+  if (registrationOpen === false) {
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <Card>
+            <Heading
+              title="Registrations are closed"
+              sub="Influencer signups are temporarily disabled. Please check back soon."
+            />
+            <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
+
   if (step === "account") {
     return (
       <Page>
