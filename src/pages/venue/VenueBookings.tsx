@@ -5,12 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
@@ -41,6 +42,12 @@ const VenueBookings = () => {
   const [redeemOpen, setRedeemOpen] = useState<Row | null>(null);
   const [otp, setOtp] = useState("");
   const [redeeming, setRedeeming] = useState(false);
+  const [bookingByRedemption, setBookingByRedemption] = useState<Record<string, { id: string; venue_id: string }>>({});
+  const [reviewedBookings, setReviewedBookings] = useState<Set<string>>(new Set());
+  const [reviewOpen, setReviewOpen] = useState<Row | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -59,6 +66,27 @@ const VenueBookings = () => {
     const pmap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
     const omap = new Map((offers ?? []).map((o: any) => [o.id, o]));
     setRows(list.map((r: any) => ({ ...r, profile: pmap.get(r.influencer_id), offer: omap.get(r.offer_id) })));
+
+    // Look up bookings + existing reviews so we can render "Leave review" / "Reviewed"
+    const redIds = list.map((r: any) => r.id);
+    if (redIds.length) {
+      const { data: bks } = await supabase.from("bookings").select("id, venue_id, redemption_id").in("redemption_id", redIds);
+      const bmap: Record<string, { id: string; venue_id: string }> = {};
+      (bks ?? []).forEach((b: any) => { if (b.redemption_id) bmap[b.redemption_id] = { id: b.id, venue_id: b.venue_id }; });
+      setBookingByRedemption(bmap);
+      const bookingIds = (bks ?? []).map((b: any) => b.id);
+      if (bookingIds.length) {
+        const { data: revs } = await supabase
+          .from("reviews")
+          .select("booking_id")
+          .in("booking_id", bookingIds)
+          .eq("reviewer_id", user.id)
+          .eq("review_type", "venue_to_influencer");
+        setReviewedBookings(new Set((revs ?? []).map((r: any) => r.booking_id)));
+      } else {
+        setReviewedBookings(new Set());
+      }
+    }
   };
 
   useEffect(() => { load(); }, [user]);
@@ -122,7 +150,24 @@ const VenueBookings = () => {
   };
 
   const actions = (r: Row) => {
-    if (isCompleted(r)) return <span className="text-xs text-muted-foreground">{r.redeemed_at && new Date(r.redeemed_at).toLocaleDateString()}</span>;
+    if (isCompleted(r)) {
+      const booking = bookingByRedemption[r.id];
+      const alreadyReviewed = booking ? reviewedBookings.has(booking.id) : false;
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{r.redeemed_at && new Date(r.redeemed_at).toLocaleDateString()}</span>
+          {booking && (
+            alreadyReviewed ? (
+              <Badge variant="outline" className="text-[10px]"><Star className="w-3 h-3 mr-1" />Reviewed</Badge>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => { setReviewOpen(r); setReviewRating(5); setReviewText(""); }}>
+                <Star className="w-3 h-3 mr-1" />Leave review
+              </Button>
+            )
+          )}
+        </div>
+      );
+    }
     switch (r.status) {
       case "pending":
         return <>
@@ -137,6 +182,31 @@ const VenueBookings = () => {
       case "in_progress":
         return <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Verify OTP</Button>;
     }
+  };
+
+  const submitReview = async () => {
+    if (!reviewOpen || !user) return;
+    const booking = bookingByRedemption[reviewOpen.id];
+    if (!booking) {
+      toast({ title: "Cannot review yet", description: "Booking not found for this visit.", variant: "destructive" });
+      return;
+    }
+    setSubmittingReview(true);
+    const { error } = await supabase.from("reviews").insert({
+      reviewer_id: user.id,
+      reviewed_id: reviewOpen.influencer_id,
+      venue_id: booking.venue_id,
+      booking_id: booking.id,
+      rating: reviewRating,
+      review_text: reviewText.trim() || null,
+      review_type: "venue_to_influencer",
+      is_public: true,
+    });
+    setSubmittingReview(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Review submitted", description: "Thanks for your feedback." });
+    setReviewedBookings(prev => new Set(prev).add(booking.id));
+    setReviewOpen(null);
   };
 
   // Calendar
@@ -271,6 +341,23 @@ const VenueBookings = () => {
           <Input value={otp} onChange={e => setOtp(e.target.value.toUpperCase())} placeholder="e.g. AB12CD34EF56" className="font-mono tracking-wider text-center" maxLength={20} />
           <Button onClick={verifyOtp} disabled={redeeming || !otp.trim()} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">
             {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Verify & Complete</>}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!reviewOpen} onOpenChange={(o) => { if (!o) setReviewOpen(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Review {reviewOpen?.profile?.full_name ?? "Influencer"}</DialogTitle></DialogHeader>
+          <div className="flex justify-center gap-1 py-2">
+            {[1, 2, 3, 4, 5].map(n => (
+              <button key={n} type="button" onClick={() => setReviewRating(n)} className="p-1">
+                <Star className={`w-7 h-7 ${n <= reviewRating ? "fill-[#b8923a] text-[#b8923a]" : "text-slate-300"}`} />
+              </button>
+            ))}
+          </div>
+          <Textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Share how the collaboration went (optional)" rows={4} />
+          <Button onClick={submitReview} disabled={submittingReview} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">
+            {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit review"}
           </Button>
         </DialogContent>
       </Dialog>
