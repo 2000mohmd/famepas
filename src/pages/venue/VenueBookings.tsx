@@ -150,7 +150,24 @@ const VenueBookings = () => {
   };
 
   const actions = (r: Row) => {
-    if (isCompleted(r)) return <span className="text-xs text-muted-foreground">{r.redeemed_at && new Date(r.redeemed_at).toLocaleDateString()}</span>;
+    if (isCompleted(r)) {
+      const booking = bookingByRedemption[r.id];
+      const alreadyReviewed = booking ? reviewedBookings.has(booking.id) : false;
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{r.redeemed_at && new Date(r.redeemed_at).toLocaleDateString()}</span>
+          {booking && (
+            alreadyReviewed ? (
+              <Badge variant="outline" className="text-[10px]"><Star className="w-3 h-3 mr-1" />Reviewed</Badge>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => { setReviewOpen(r); setReviewRating(5); setReviewText(""); }}>
+                <Star className="w-3 h-3 mr-1" />Leave review
+              </Button>
+            )
+          )}
+        </div>
+      );
+    }
     switch (r.status) {
       case "pending":
         return <>
@@ -165,6 +182,31 @@ const VenueBookings = () => {
       case "in_progress":
         return <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Verify OTP</Button>;
     }
+  };
+
+  const submitReview = async () => {
+    if (!reviewOpen || !user) return;
+    const booking = bookingByRedemption[reviewOpen.id];
+    if (!booking) {
+      toast({ title: "Cannot review yet", description: "Booking not found for this visit.", variant: "destructive" });
+      return;
+    }
+    setSubmittingReview(true);
+    const { error } = await supabase.from("reviews").insert({
+      reviewer_id: user.id,
+      reviewed_id: reviewOpen.influencer_id,
+      venue_id: booking.venue_id,
+      booking_id: booking.id,
+      rating: reviewRating,
+      review_text: reviewText.trim() || null,
+      review_type: "venue_to_influencer",
+      is_public: true,
+    });
+    setSubmittingReview(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Review submitted", description: "Thanks for your feedback." });
+    setReviewedBookings(prev => new Set(prev).add(booking.id));
+    setReviewOpen(null);
   };
 
   // Calendar
