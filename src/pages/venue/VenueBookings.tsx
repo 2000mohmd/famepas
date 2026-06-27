@@ -42,6 +42,12 @@ const VenueBookings = () => {
   const [redeemOpen, setRedeemOpen] = useState<Row | null>(null);
   const [otp, setOtp] = useState("");
   const [redeeming, setRedeeming] = useState(false);
+  const [bookingByRedemption, setBookingByRedemption] = useState<Record<string, { id: string; venue_id: string }>>({});
+  const [reviewedBookings, setReviewedBookings] = useState<Set<string>>(new Set());
+  const [reviewOpen, setReviewOpen] = useState<Row | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -60,6 +66,27 @@ const VenueBookings = () => {
     const pmap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
     const omap = new Map((offers ?? []).map((o: any) => [o.id, o]));
     setRows(list.map((r: any) => ({ ...r, profile: pmap.get(r.influencer_id), offer: omap.get(r.offer_id) })));
+
+    // Look up bookings + existing reviews so we can render "Leave review" / "Reviewed"
+    const redIds = list.map((r: any) => r.id);
+    if (redIds.length) {
+      const { data: bks } = await supabase.from("bookings").select("id, venue_id, redemption_id").in("redemption_id", redIds);
+      const bmap: Record<string, { id: string; venue_id: string }> = {};
+      (bks ?? []).forEach((b: any) => { if (b.redemption_id) bmap[b.redemption_id] = { id: b.id, venue_id: b.venue_id }; });
+      setBookingByRedemption(bmap);
+      const bookingIds = (bks ?? []).map((b: any) => b.id);
+      if (bookingIds.length) {
+        const { data: revs } = await supabase
+          .from("reviews")
+          .select("booking_id")
+          .in("booking_id", bookingIds)
+          .eq("reviewer_id", user.id)
+          .eq("review_type", "venue_to_influencer");
+        setReviewedBookings(new Set((revs ?? []).map((r: any) => r.booking_id)));
+      } else {
+        setReviewedBookings(new Set());
+      }
+    }
   };
 
   useEffect(() => { load(); }, [user]);
