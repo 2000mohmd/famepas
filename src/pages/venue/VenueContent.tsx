@@ -158,17 +158,30 @@ const VenueContent = () => {
                         <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{d.likes || 0}</span>
                         <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3"/>{d.comments || 0}</span>
                       </div>
-                      {(d.post_url || d.content_url) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => refreshMetrics(d.id, d.post_url || d.content_url)}
-                          disabled={refreshingId === d.id}
-                        >
-                          {refreshingId === d.id ? "Refreshing…" : "Refresh stats"}
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => refreshMetrics(d.id, d.post_url || d.content_url)}
+                        disabled={refreshingId === d.id || !(d.post_url || d.content_url)}
+                      >
+                        {refreshingId === d.id ? "Refreshing…" : "Refresh stats"}
+                      </Button>
+                    </div>
+                    <div className="mb-3">
+                      <label className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1">
+                        <Link2 className="w-3 h-3" /> Published post URL
+                      </label>
+                      <Input
+                        defaultValue={d.post_url || ""}
+                        placeholder="https://instagram.com/p/... or https://tiktok.com/..."
+                        onBlur={(e) => {
+                          if ((e.target.value || "").trim() !== (d.post_url || "")) {
+                            savePostUrl(d.id, e.target.value);
+                          }
+                        }}
+                        className="h-8 text-xs"
+                      />
                     </div>
                     <div className="mt-auto flex flex-wrap gap-2">
                       {d.content_url && (
