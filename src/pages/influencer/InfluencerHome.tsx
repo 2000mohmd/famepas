@@ -42,6 +42,7 @@ const InfluencerHome = () => {
         .select("*")
         .eq("is_active", true)
         .eq("approval_status", "approved")
+        .limit(30)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
@@ -54,6 +55,7 @@ const InfluencerHome = () => {
         .from("offers")
         .select("*, venues(name, city, category, logo_url)")
         .eq("is_active", true)
+        .limit(60)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
