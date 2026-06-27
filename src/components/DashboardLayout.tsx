@@ -168,6 +168,16 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
     })();
   }, [type, user, location.pathname]);
 
+  // Maintenance mode banner (all dashboards)
+  const [maintenance, setMaintenance] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("platform_settings").select("value").eq("key", "maintenance_mode").maybeSingle();
+      const v = data?.value as any;
+      setMaintenance(v === true || v === "true");
+    })();
+  }, [location.pathname]);
+
   const isInfluencer = type === "influencer";
 
   return (
