@@ -344,6 +344,23 @@ const VenueBookings = () => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!reviewOpen} onOpenChange={(o) => { if (!o) setReviewOpen(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Review {reviewOpen?.profile?.full_name ?? "Influencer"}</DialogTitle></DialogHeader>
+          <div className="flex justify-center gap-1 py-2">
+            {[1, 2, 3, 4, 5].map(n => (
+              <button key={n} type="button" onClick={() => setReviewRating(n)} className="p-1">
+                <Star className={`w-7 h-7 ${n <= reviewRating ? "fill-[#b8923a] text-[#b8923a]" : "text-slate-300"}`} />
+              </button>
+            ))}
+          </div>
+          <Textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Share how the collaboration went (optional)" rows={4} />
+          <Button onClick={submitReview} disabled={submittingReview} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">
+            {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit review"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
