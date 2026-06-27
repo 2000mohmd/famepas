@@ -51,6 +51,25 @@ const VenueCampaigns = () => {
     load();
   };
 
+  const duplicateCampaign = async (c: Campaign) => {
+    if (!venueId) return;
+    const { id: _omit, ...rest } = c as any;
+    const payload = {
+      ...rest,
+      venue_id: venueId,
+      title: `${c.title} (copy)`,
+      status: "draft",
+      start_date: null,
+      end_date: null,
+    };
+    delete payload.created_at;
+    delete payload.updated_at;
+    const { error } = await (supabase as any).from("campaigns").insert(payload);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Campaign duplicated", description: "A draft copy was created." });
+    load();
+  };
+
   const confirmDelete = async () => {
     if (!deleteCampaign) return;
     const { error } = await (supabase as any).from("campaigns").delete().eq("id", deleteCampaign.id);
