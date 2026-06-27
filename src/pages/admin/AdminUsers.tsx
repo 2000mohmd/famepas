@@ -141,13 +141,28 @@ const AdminUsers = () => {
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold">{a.full_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{a.full_name}</p>
+                        {a.is_suspended && (
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">Suspended</Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{a.permissions.length} permissions</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => remove.mutate(a.user_id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleSuspend.mutate({ user_id: a.user_id, suspend: !a.is_suspended })}
+                      className={a.is_suspended ? "border-green-300 text-green-700 hover:bg-green-50" : "border-yellow-300 text-yellow-700 hover:bg-yellow-50"}
+                    >
+                      {a.is_suspended ? "Unsuspend" : "Suspend"}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove.mutate(a.user_id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {ALL_PERMISSIONS.map((p) => {
