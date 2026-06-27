@@ -189,6 +189,11 @@ const InfluencerHome = () => {
               </Card>
             ))}
           </div>
+          <div className="flex justify-center mt-6">
+            <Button variant="outline" onClick={() => navigate("/influencer/explore")}>
+              View all venues & offers
+            </Button>
+          </div>
         </div>
       </div>
     </DashboardLayout>
