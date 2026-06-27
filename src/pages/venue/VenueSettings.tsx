@@ -292,7 +292,7 @@ const VenueSettings = () => {
     setPCats(prev => prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]);
   };
 
-  const SocialRow = ({ platform, label, color, logo, handle, setHandle }: any) => {
+  const SocialRow = ({ platform, label, color, logo, handle, setHandle, note }: any) => {
     const s = findSocial(platform);
     return (
       <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
@@ -303,6 +303,7 @@ const VenueSettings = () => {
           <div>
             <p className="font-medium text-foreground">{label}</p>
             <p className="text-xs text-muted-foreground">{s ? `@${s.handle}` : "Not connected"}</p>
+            {note && <p className="text-[11px] text-amber-700 mt-0.5">{note}</p>}
           </div>
         </div>
         {s?.status === "connected" ? (
@@ -315,7 +316,7 @@ const VenueSettings = () => {
         ) : (
           <div className="flex gap-2">
             <Input placeholder="@handle" className="w-40 h-9" value={handle} onChange={e => setHandle(e.target.value)} />
-            <Button size="sm" variant="outline" onClick={() => connectSocial(platform, handle)}>Connect</Button>
+            <Button size="sm" variant="outline" onClick={() => connectSocial(platform, handle)}>Save</Button>
           </div>
         )}
       </div>
