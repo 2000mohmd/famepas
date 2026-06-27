@@ -21,6 +21,7 @@ const VenueBriefs = () => {
   const [stage, setStage] = useState<Stage>("draft");
   const [briefs, setBriefs] = useState<any[]>([]);
   const [matchCounts, setMatchCounts] = useState<Record<string, number>>({});
+  const [invitedCounts, setInvitedCounts] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null);
   const [matchesFor, setMatchesFor] = useState<any | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
