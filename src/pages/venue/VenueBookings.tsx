@@ -5,12 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
