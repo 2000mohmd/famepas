@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2 } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
