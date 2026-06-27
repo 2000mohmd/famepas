@@ -347,14 +347,21 @@ const InfluencerSignup = () => {
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Country">
-                <TextInput value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. United States" />
-              </Field>
-              <Field label="City">
-                <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Los Angeles" />
-              </Field>
-            </div>
+            <Field label="Location" hint="Start typing your city — we'll auto-fill city and country.">
+              <LocationAutocomplete
+                defaultValue={city && country ? `${city}, ${country}` : ""}
+                placeholder="e.g. Dubai, United Arab Emirates"
+                onPick={(p) => {
+                  if (p.city) setCity(p.city);
+                  if (p.country) setCountry(p.country);
+                }}
+              />
+              {(city || country) && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Selected: {[city, country].filter(Boolean).join(", ")}
+                </p>
+              )}
+            </Field>
             <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
             </Field>
