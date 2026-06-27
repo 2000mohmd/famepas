@@ -47,13 +47,12 @@ const VenueBriefs = () => {
       venue_id: matchesFor.venue_id,
       influencer_id: m.influencer_id,
       brief_id: matchesFor.id,
-      status: "accepted",
+      status: "pending",
       message: `Approved for brief: ${matchesFor.title}`,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     await supabase.from("brief_matches").update({ invited: true }).eq("id", m.id);
-    await supabase.from("venue_briefs").update({ pipeline_stage: "in_progress" }).eq("id", matchesFor.id);
-    toast({ title: `Approved ${m.profile?.full_name ?? "influencer"}`, description: "Brief moved to In Progress." });
+    toast({ title: "Invitation sent", description: "Waiting for influencer to accept." });
     setMatchesFor(null);
     load();
   };
