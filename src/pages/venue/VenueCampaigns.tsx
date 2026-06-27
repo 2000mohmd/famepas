@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2 } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,7 @@ const VenueCampaigns = () => {
   const [activeOpen, setActiveOpen] = useState(true);
   const [scheduledOpen, setScheduledOpen] = useState(true);
   const [pausedOpen, setPausedOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 5, 1));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [deleteCampaign, setDeleteCampaign] = useState<Campaign | null>(null);
 
 
@@ -48,6 +48,25 @@ const VenueCampaigns = () => {
     const { error } = await (supabase as any).from("campaigns").update({ status: next }).eq("id", c.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: next === "paused" ? "Campaign paused" : "Campaign resumed" });
+    load();
+  };
+
+  const duplicateCampaign = async (c: Campaign) => {
+    if (!venueId) return;
+    const { id: _omit, ...rest } = c as any;
+    const payload = {
+      ...rest,
+      venue_id: venueId,
+      title: `${c.title} (copy)`,
+      status: "draft",
+      start_date: null,
+      end_date: null,
+    };
+    delete payload.created_at;
+    delete payload.updated_at;
+    const { error } = await (supabase as any).from("campaigns").insert(payload);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Campaign duplicated", description: "A draft copy was created." });
     load();
   };
 
@@ -125,6 +144,9 @@ const VenueCampaigns = () => {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleStatus(c)}>
                             {c.status === "paused" ? <><Play className="w-4 h-4 mr-2" /> Resume</> : <><Pause className="w-4 h-4 mr-2" /> Pause</>}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateCampaign(c)}>
+                            <Copy className="w-4 h-4 mr-2" /> Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteCampaign(c)}>

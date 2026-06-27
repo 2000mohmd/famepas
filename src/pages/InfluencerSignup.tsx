@@ -3,6 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
+import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
+
+const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
 
 /* ============================================================
    Joli-style light-mode creator (influencer) signup wizard
@@ -159,11 +162,15 @@ const InfluencerSignup = () => {
   const handleFinalize = async () => {
     setSubmitting(true);
     try {
+      const igHandle = instagram ? normalizeHandle(instagram) : null;
+      const ttHandle = tiktok ? normalizeHandle(tiktok) : null;
+      const ytHandle = youtube ? normalizeHandle(youtube) : null;
+
       const social_links: Record<string, string> = {};
-      if (instagram) social_links.instagram = instagram;
-      if (tiktok) social_links.tiktok = tiktok;
-      if (youtube) social_links.youtube = youtube;
-      if (username) social_links.username = username;
+      if (igHandle) social_links.instagram = igHandle;
+      if (ttHandle) social_links.tiktok = ttHandle;
+      if (ytHandle) social_links.youtube = ytHandle;
+      if (username) social_links.username = normalizeHandle(username);
 
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
@@ -171,8 +178,8 @@ const InfluencerSignup = () => {
           password,
           role: "influencer",
           full_name: fullName,
-          instagram_handle: instagram || null,
-          tiktok_handle: tiktok || null,
+          instagram_handle: igHandle,
+          tiktok_handle: ttHandle,
           tiktok_followers: 0,
           followers_count: Number(followers) || 0,
           bio: bio || null,
@@ -218,6 +225,21 @@ const InfluencerSignup = () => {
           }
         } catch (e) {
           console.warn("Avatar upload skipped:", e);
+        }
+      }
+
+      // Best-effort: verify handles & pull real follower counts via RapidAPI
+      if (igHandle || ttHandle) {
+        try {
+          await supabase.functions.invoke("fetch-profile-stats", {
+            body: {
+              instagram_handle: igHandle,
+              tiktok_handle: ttHandle,
+              self_reported_followers: Number(followers) || 0,
+            },
+          });
+        } catch (e) {
+          console.warn("Profile stats fetch skipped:", e);
         }
       }
 
@@ -325,14 +347,21 @@ const InfluencerSignup = () => {
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Country">
-                <TextInput value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. United States" />
-              </Field>
-              <Field label="City">
-                <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Los Angeles" />
-              </Field>
-            </div>
+            <Field label="Location" hint="Start typing your city — we'll auto-fill city and country.">
+              <LocationAutocomplete
+                defaultValue={city && country ? `${city}, ${country}` : ""}
+                placeholder="e.g. Dubai, United Arab Emirates"
+                onPick={(p) => {
+                  if (p.city) setCity(p.city);
+                  if (p.country) setCountry(p.country);
+                }}
+              />
+              {(city || country) && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Selected: {[city, country].filter(Boolean).join(", ")}
+                </p>
+              )}
+            </Field>
             <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
             </Field>

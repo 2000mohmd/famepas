@@ -21,6 +21,7 @@ const VenueBriefs = () => {
   const [stage, setStage] = useState<Stage>("draft");
   const [briefs, setBriefs] = useState<any[]>([]);
   const [matchCounts, setMatchCounts] = useState<Record<string, number>>({});
+  const [invitedCounts, setInvitedCounts] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null);
   const [matchesFor, setMatchesFor] = useState<any | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
@@ -65,10 +66,15 @@ const VenueBriefs = () => {
     const list = data ?? [];
     setBriefs(list);
     if (list.length) {
-      const { data: m } = await supabase.from("brief_matches").select("brief_id").in("brief_id", list.map(b => b.id));
+      const { data: m } = await supabase.from("brief_matches").select("brief_id,invited").in("brief_id", list.map(b => b.id));
       const counts: Record<string, number> = {};
-      (m ?? []).forEach((row: any) => { counts[row.brief_id] = (counts[row.brief_id] ?? 0) + 1; });
+      const invCounts: Record<string, number> = {};
+      (m ?? []).forEach((row: any) => {
+        counts[row.brief_id] = (counts[row.brief_id] ?? 0) + 1;
+        if (row.invited) invCounts[row.brief_id] = (invCounts[row.brief_id] ?? 0) + 1;
+      });
       setMatchCounts(counts);
+      setInvitedCounts(invCounts);
     }
   };
 
@@ -208,9 +214,14 @@ const VenueBriefs = () => {
                   <div className="flex-1 p-4 flex flex-col">
                     <div className="flex items-start justify-between gap-3 mb-1">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="font-semibold text-foreground truncate">{b.title}</h3>
                           {stageBadge(b.pipeline_stage ?? "draft")}
+                          {b.pipeline_stage === "matching" && (invitedCounts[b.id] ?? 0) > 0 && (
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e" }}>
+                              {invitedCounts[b.id]} pending acceptance
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-2">{b.description}</p>
                       </div>

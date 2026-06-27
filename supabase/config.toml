@@ -21,3 +21,7 @@ verify_jwt = false
 [functions.match-brief]
 verify_jwt = true
 
+
+[functions.fetch-profile-stats]
+verify_jwt = true
+
