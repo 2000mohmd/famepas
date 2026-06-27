@@ -93,6 +93,7 @@ const App = () => (
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><Navigate to="/venue/campaigns" replace /></ProtectedRoute>} />
+            <Route path="/venue/reports" element={<ProtectedRoute allowedRoles={["venue"]}><VenueReports /></ProtectedRoute>} />
             <Route path="/venue/content" element={<ProtectedRoute allowedRoles={["venue"]}><VenueContent /></ProtectedRoute>} />
             <Route path="/venue/campaigns" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaigns /></ProtectedRoute>} />
             <Route path="/venue/campaigns/new" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaignCreate /></ProtectedRoute>} />
