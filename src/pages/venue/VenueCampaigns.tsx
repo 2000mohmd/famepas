@@ -23,7 +23,7 @@ const VenueCampaigns = () => {
   const [activeOpen, setActiveOpen] = useState(true);
   const [scheduledOpen, setScheduledOpen] = useState(true);
   const [pausedOpen, setPausedOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 5, 1));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [deleteCampaign, setDeleteCampaign] = useState<Campaign | null>(null);
 
 
