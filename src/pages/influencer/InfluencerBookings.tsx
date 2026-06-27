@@ -42,7 +42,7 @@ const InfluencerBookings = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("bookings")
-        .select("*, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
+        .select("*, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
         .eq("influencer_id", user!.id)
         .order("scheduled_date", { ascending: false });
       return data ?? [];
