@@ -66,10 +66,15 @@ const VenueBriefs = () => {
     const list = data ?? [];
     setBriefs(list);
     if (list.length) {
-      const { data: m } = await supabase.from("brief_matches").select("brief_id").in("brief_id", list.map(b => b.id));
+      const { data: m } = await supabase.from("brief_matches").select("brief_id,invited").in("brief_id", list.map(b => b.id));
       const counts: Record<string, number> = {};
-      (m ?? []).forEach((row: any) => { counts[row.brief_id] = (counts[row.brief_id] ?? 0) + 1; });
+      const invCounts: Record<string, number> = {};
+      (m ?? []).forEach((row: any) => {
+        counts[row.brief_id] = (counts[row.brief_id] ?? 0) + 1;
+        if (row.invited) invCounts[row.brief_id] = (invCounts[row.brief_id] ?? 0) + 1;
+      });
       setMatchCounts(counts);
+      setInvitedCounts(invCounts);
     }
   };
 
