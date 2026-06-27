@@ -37,16 +37,33 @@ const AdminUsers = () => {
       const ids = (roles ?? []).map((r) => r.user_id);
       if (!ids.length) return [];
       const [{ data: profiles }, { data: perms }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids),
+        supabase.from("profiles").select("user_id, full_name, avatar_url, is_suspended").in("user_id", ids),
         supabase.from("admin_user_permissions").select("user_id, permission").in("user_id", ids),
       ]);
       return ids.map((id) => ({
         user_id: id,
         full_name: profiles?.find((p) => p.user_id === id)?.full_name || "Admin",
         avatar_url: profiles?.find((p) => p.user_id === id)?.avatar_url,
+        is_suspended: !!profiles?.find((p) => p.user_id === id)?.is_suspended,
         permissions: (perms ?? []).filter((p) => p.user_id === id).map((p) => p.permission),
       }));
     },
+  });
+
+  const toggleSuspend = useMutation({
+    mutationFn: async ({ user_id, suspend }: { user_id: string; suspend: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_suspended: suspend } as any)
+        .eq("user_id", user_id);
+      if (error) throw error;
+      return suspend;
+    },
+    onSuccess: (suspend) => {
+      toast({ title: suspend ? "User suspended" : "User unsuspended" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const create = useMutation({
