@@ -239,6 +239,30 @@ const InfluencerBookings = () => {
             )}
           </div>
         </div>
+        {hasDeliverable && deliverable.status !== "rejected" && (
+          <div className="mt-3 pt-3 border-t">
+            <Label className="text-xs text-muted-foreground">Published post URL</Label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                defaultValue={deliverable.post_url || ""}
+                placeholder="https://instagram.com/p/... or https://tiktok.com/..."
+                onBlur={async (e) => {
+                  const v = (e.target.value || "").trim();
+                  if (v === (deliverable.post_url || "")) return;
+                  const { error } = await supabase
+                    .from("deliverables")
+                    .update({ post_url: v || null })
+                    .eq("id", deliverable.id);
+                  if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+                  toast({ title: "Post URL saved" });
+                  queryClient.invalidateQueries({ queryKey: ["influencer-bookings"] });
+                }}
+                className="h-9 text-sm"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Paste your published post link so the venue can pull real engagement stats.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );};
