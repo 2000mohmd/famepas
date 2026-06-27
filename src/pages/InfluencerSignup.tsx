@@ -162,11 +162,15 @@ const InfluencerSignup = () => {
   const handleFinalize = async () => {
     setSubmitting(true);
     try {
+      const igHandle = instagram ? normalizeHandle(instagram) : null;
+      const ttHandle = tiktok ? normalizeHandle(tiktok) : null;
+      const ytHandle = youtube ? normalizeHandle(youtube) : null;
+
       const social_links: Record<string, string> = {};
-      if (instagram) social_links.instagram = instagram;
-      if (tiktok) social_links.tiktok = tiktok;
-      if (youtube) social_links.youtube = youtube;
-      if (username) social_links.username = username;
+      if (igHandle) social_links.instagram = igHandle;
+      if (ttHandle) social_links.tiktok = ttHandle;
+      if (ytHandle) social_links.youtube = ytHandle;
+      if (username) social_links.username = normalizeHandle(username);
 
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
@@ -174,8 +178,8 @@ const InfluencerSignup = () => {
           password,
           role: "influencer",
           full_name: fullName,
-          instagram_handle: instagram || null,
-          tiktok_handle: tiktok || null,
+          instagram_handle: igHandle,
+          tiktok_handle: ttHandle,
           tiktok_followers: 0,
           followers_count: Number(followers) || 0,
           bio: bio || null,
