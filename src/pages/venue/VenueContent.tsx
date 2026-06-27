@@ -43,6 +43,14 @@ const VenueContent = () => {
     }
   };
 
+  const savePostUrl = async (deliverableId: string, url: string) => {
+    const clean = url.trim();
+    const { error } = await supabase.from("deliverables").update({ post_url: clean || null }).eq("id", deliverableId);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Post URL saved" });
+    load();
+  };
+
   const load = async () => {
     if (!user) return;
     setLoading(true);
