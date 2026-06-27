@@ -145,6 +145,9 @@ const VenueCampaigns = () => {
                           <DropdownMenuItem onClick={() => toggleStatus(c)}>
                             {c.status === "paused" ? <><Play className="w-4 h-4 mr-2" /> Resume</> : <><Pause className="w-4 h-4 mr-2" /> Pause</>}
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateCampaign(c)}>
+                            <Copy className="w-4 h-4 mr-2" /> Duplicate
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteCampaign(c)}>
                             <Trash2 className="w-4 h-4 mr-2" /> Delete
