@@ -37,16 +37,33 @@ const AdminUsers = () => {
       const ids = (roles ?? []).map((r) => r.user_id);
       if (!ids.length) return [];
       const [{ data: profiles }, { data: perms }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids),
+        supabase.from("profiles").select("user_id, full_name, avatar_url, is_suspended").in("user_id", ids),
         supabase.from("admin_user_permissions").select("user_id, permission").in("user_id", ids),
       ]);
       return ids.map((id) => ({
         user_id: id,
         full_name: profiles?.find((p) => p.user_id === id)?.full_name || "Admin",
         avatar_url: profiles?.find((p) => p.user_id === id)?.avatar_url,
+        is_suspended: !!profiles?.find((p) => p.user_id === id)?.is_suspended,
         permissions: (perms ?? []).filter((p) => p.user_id === id).map((p) => p.permission),
       }));
     },
+  });
+
+  const toggleSuspend = useMutation({
+    mutationFn: async ({ user_id, suspend }: { user_id: string; suspend: boolean }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_suspended: suspend } as any)
+        .eq("user_id", user_id);
+      if (error) throw error;
+      return suspend;
+    },
+    onSuccess: (suspend) => {
+      toast({ title: suspend ? "User suspended" : "User unsuspended" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const create = useMutation({
@@ -124,13 +141,28 @@ const AdminUsers = () => {
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold">{a.full_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{a.full_name}</p>
+                        {a.is_suspended && (
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">Suspended</Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{a.permissions.length} permissions</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => remove.mutate(a.user_id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleSuspend.mutate({ user_id: a.user_id, suspend: !a.is_suspended })}
+                      className={a.is_suspended ? "border-green-300 text-green-700 hover:bg-green-50" : "border-yellow-300 text-yellow-700 hover:bg-yellow-50"}
+                    >
+                      {a.is_suspended ? "Unsuspend" : "Suspend"}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove.mutate(a.user_id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {ALL_PERMISSIONS.map((p) => {

@@ -60,41 +60,28 @@ const InfluencerExplore = () => {
     queryFn: async () => {
       let query = supabase
         .from("offers")
-        .select("*, venues(name, city, country, category, logo_url, description, latitude, longitude, address)")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+        .select("*, venues!inner(name, city, country, category, logo_url, description, latitude, longitude, address)")
+        .eq("is_active", true);
 
       if (typeFilter !== "all") query = query.eq("offer_type", typeFilter);
-
-      const { data } = await query;
-      let filtered = data ?? [];
-      if (countryFilter === "my" && myCountry) {
-        filtered = filtered.filter((o: any) => (o.venues?.country || "").toLowerCase() === myCountry.toLowerCase());
-      }
+      if (categoryFilter !== "all") query = query.eq("venues.category", categoryFilter);
+      if (countryFilter === "my" && myCountry) query = query.eq("venues.country", myCountry);
       if (search) {
-        const s = search.toLowerCase();
-        filtered = filtered.filter(
-          (o: any) =>
-            o.title.toLowerCase().includes(s) ||
-            o.venues?.name?.toLowerCase().includes(s) ||
-            o.venues?.city?.toLowerCase().includes(s) ||
-            o.venues?.address?.toLowerCase().includes(s)
-        );
+        const s = search.replace(/[%,()]/g, "");
+        query = query.or(`title.ilike.%${s}%,description.ilike.%${s}%`);
       }
-      if (categoryFilter !== "all") {
-        filtered = filtered.filter((o: any) => o.venues?.category === categoryFilter);
+
+      switch (sortBy) {
+        case "oldest": query = query.order("created_at", { ascending: true }); break;
+        case "title_asc": query = query.order("title", { ascending: true }); break;
+        case "title_desc": query = query.order("title", { ascending: false }); break;
+        case "followers_asc": query = query.order("min_followers", { ascending: true, nullsFirst: true }); break;
+        case "followers_desc": query = query.order("min_followers", { ascending: false, nullsFirst: false }); break;
+        default: query = query.order("created_at", { ascending: false });
       }
-      const sorters: Record<string, (a: any, b: any) => number> = {
-        newest: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        oldest: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-        title_asc: (a, b) => (a.title || "").localeCompare(b.title || ""),
-        title_desc: (a, b) => (b.title || "").localeCompare(a.title || ""),
-        slots_desc: (a, b) => ((b.max_redemptions ?? 0) - (b.current_redemptions ?? 0)) - ((a.max_redemptions ?? 0) - (a.current_redemptions ?? 0)),
-        followers_asc: (a, b) => (a.min_followers ?? 0) - (b.min_followers ?? 0),
-        followers_desc: (a, b) => (b.min_followers ?? 0) - (a.min_followers ?? 0),
-      };
-      filtered = [...filtered].sort(sorters[sortBy]);
-      return filtered;
+
+      const { data } = await query.limit(100);
+      return data ?? [];
     },
   });
 

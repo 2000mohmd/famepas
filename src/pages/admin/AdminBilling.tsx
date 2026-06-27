@@ -33,7 +33,7 @@ const AdminBilling = () => {
     const [tiersRes, earningsRes, withdrawalsRes, pendingRes] = await Promise.all([
       supabase.from("subscription_tiers").select("*").order("price"),
       supabase.from("earnings").select("net_amount, commission"),
-      supabase.from("withdrawal_requests").select("id, amount, status, created_at, payment_method").order("created_at", { ascending: false }).limit(20),
+      supabase.from("withdrawal_requests").select("id, influencer_id, amount, status, created_at, payment_method").order("created_at", { ascending: false }).limit(20),
       supabase.from("withdrawal_requests").select("amount", { count: "exact" }).eq("status", "pending"),
     ]);
     setTiers((tiersRes.data as any) ?? []);
@@ -64,7 +64,20 @@ const AdminBilling = () => {
   };
 
   const handleWithdrawalStatus = async (id: string, status: string) => {
+    const withdrawal = withdrawals.find((w) => w.id === id);
     await supabase.from("withdrawal_requests").update({ status, processed_at: new Date().toISOString() } as any).eq("id", id);
+
+    if (status === "completed" && withdrawal) {
+      await supabase.from("earnings").insert({
+        influencer_id: withdrawal.influencer_id,
+        amount: -Number(withdrawal.amount),
+        net_amount: -Number(withdrawal.amount),
+        commission: 0,
+        status: "paid",
+        description: "Withdrawal payout processed",
+      } as any);
+    }
+
     toast({ title: `Withdrawal ${status}` });
     fetchAll();
   };

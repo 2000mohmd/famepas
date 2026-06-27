@@ -153,7 +153,11 @@ const VenueBookings = () => {
   const today = new Date();
   const isToday = (d: number) => today.getFullYear() === month.getFullYear() && today.getMonth() === month.getMonth() && today.getDate() === d;
   const rowsByDate: Record<string, Row[]> = {};
-  upcoming.forEach(r => { const k = r.created_at.slice(0, 10); (rowsByDate[k] ??= []).push(r); });
+  upcoming.forEach(r => {
+    const visitDate = r.redeemed_at || r.created_at;
+    const k = visitDate.slice(0, 10);
+    (rowsByDate[k] ??= []).push(r);
+  });
 
   return (
     <DashboardLayout type="venue">

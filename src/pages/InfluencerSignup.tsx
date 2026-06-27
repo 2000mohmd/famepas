@@ -105,6 +105,19 @@ const InfluencerSignup = () => {
 
   const [step, setStep] = useState<Step>("account");
   const [submitting, setSubmitting] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "influencer_registration_open")
+        .maybeSingle();
+      const v = data?.value as any;
+      setRegistrationOpen(v === false || v === "false" ? false : true);
+    })();
+  }, []);
 
   // account
   const [email, setEmail] = useState("");
@@ -230,6 +243,22 @@ const InfluencerSignup = () => {
   };
 
   /* ============ steps ============ */
+
+  if (registrationOpen === false) {
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <Card>
+            <Heading
+              title="Registrations are closed"
+              sub="Influencer signups are temporarily disabled. Please check back soon."
+            />
+            <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
 
   if (step === "account") {
     return (

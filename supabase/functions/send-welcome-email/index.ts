@@ -61,6 +61,21 @@ serve(async (req) => {
       });
     }
 
+    // Respect influencer notification preferences (treat welcome as promotional)
+    if (role === "influencer") {
+      const callerId = (claimsData.claims as any).sub as string;
+      const { data: settings } = await supabaseAdmin
+        .from("influencer_settings")
+        .select("notification_promotions")
+        .eq("influencer_id", callerId)
+        .maybeSingle();
+      if (settings && settings.notification_promotions === false) {
+        return new Response(JSON.stringify({ ok: true, skipped: "preferences" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const greeting = name ? `Hi ${name},` : "Hi there,";
     const roleLabel = role === "venue" ? "Venue" : "Influencer";
 

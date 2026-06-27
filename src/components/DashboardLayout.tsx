@@ -168,6 +168,16 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
     })();
   }, [type, user, location.pathname]);
 
+  // Maintenance mode banner (all dashboards)
+  const [maintenance, setMaintenance] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("platform_settings").select("value").eq("key", "maintenance_mode").maybeSingle();
+      const v = data?.value as any;
+      setMaintenance(v === true || v === "true");
+    })();
+  }, [location.pathname]);
+
   const isInfluencer = type === "influencer";
 
   return (
@@ -290,6 +300,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
         style={{ background: "#f7f5f0" }}
       >
+        {maintenance && (
+          <div className="bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-sm px-4 py-2 text-center">
+            🛠 FamePass is currently undergoing maintenance. Some features may be temporarily unavailable.
+          </div>
+        )}
         <header className="sticky top-0 z-30 h-14 border-b border-[hsl(42_15%_90%)] bg-white/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
           {isInfluencer ? (
             <button
