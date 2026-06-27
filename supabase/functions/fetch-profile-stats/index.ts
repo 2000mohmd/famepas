@@ -115,7 +115,11 @@ serve(async (req) => {
       realTotal > 0 &&
       selfReported > 0 &&
       (selfReported > realTotal * 2 || selfReported * 2 < realTotal);
-    if (flagged) updates.followers_verification_flag = true;
+
+    if (Object.keys(updates).length) {
+      const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
+      if (updErr) console.warn("profile update failed:", updErr.message);
+    }
 
     if (Object.keys(updates).length) {
       await supabase.from("profiles").update(updates).eq("user_id", userId);
