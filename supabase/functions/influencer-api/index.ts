@@ -165,7 +165,7 @@ serve(async (req) => {
     // EXPLORE OPPORTUNITIES (Offers)
     // ==========================================
     if (path === "/offers" && method === "GET") {
-      let query = supabase.from("offers").select("*, venues(id, name, category, city, logo_url, cover_image_url, latitude, longitude, address)")
+      let query = supabase.from("offers").select("*, venues(id, name, city, address, latitude, longitude, logo_url, cover_image_url), categories!category_id(id, name, color)")
         .eq("is_active", true);
 
       const category = url.searchParams.get("category");
