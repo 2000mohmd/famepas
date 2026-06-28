@@ -90,6 +90,7 @@ export type Database = {
           invitation_id: string | null
           notes: string | null
           offer_id: string | null
+          preferred_date: string | null
           redemption_id: string | null
           scheduled_date: string
           status: string
@@ -106,6 +107,7 @@ export type Database = {
           invitation_id?: string | null
           notes?: string | null
           offer_id?: string | null
+          preferred_date?: string | null
           redemption_id?: string | null
           scheduled_date: string
           status?: string
@@ -122,6 +124,7 @@ export type Database = {
           invitation_id?: string | null
           notes?: string | null
           offer_id?: string | null
+          preferred_date?: string | null
           redemption_id?: string | null
           scheduled_date?: string
           status?: string
@@ -353,6 +356,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          color: string | null
           created_at: string
           icon: string | null
           id: string
@@ -361,6 +365,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -369,6 +374,7 @@ export type Database = {
           name: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -975,6 +981,7 @@ export type Database = {
           id: string
           influencer_id: string
           offer_id: string
+          preferred_date: string | null
           qr_code: string | null
           qr_expires_at: string | null
           qr_token: string | null
@@ -987,6 +994,7 @@ export type Database = {
           id?: string
           influencer_id: string
           offer_id: string
+          preferred_date?: string | null
           qr_code?: string | null
           qr_expires_at?: string | null
           qr_token?: string | null
@@ -999,6 +1007,7 @@ export type Database = {
           id?: string
           influencer_id?: string
           offer_id?: string
+          preferred_date?: string | null
           qr_code?: string | null
           qr_expires_at?: string | null
           qr_token?: string | null
@@ -1018,66 +1027,96 @@ export type Database = {
       }
       offers: {
         Row: {
+          available_days: string[] | null
           campaign_id: string | null
+          category: string | null
+          category_id: string | null
           cover_image_url: string | null
           created_at: string
           current_redemptions: number
           description: string | null
           discount_value: number | null
           ends_at: string | null
+          event_date: string | null
+          event_time: string | null
           gallery_urls: string[] | null
           id: string
           image_url: string | null
           is_active: boolean
           max_redemptions: number | null
+          media_type: string | null
+          media_url: string | null
+          min_engagement_rate: number | null
           min_followers: number | null
           offer_type: string
+          platforms: string[] | null
           requirements: string | null
           starts_at: string
           title: string
           updated_at: string
+          value_worth: string | null
           venue_id: string
         }
         Insert: {
+          available_days?: string[] | null
           campaign_id?: string | null
+          category?: string | null
+          category_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
           description?: string | null
           discount_value?: number | null
           ends_at?: string | null
+          event_date?: string | null
+          event_time?: string | null
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           max_redemptions?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          min_engagement_rate?: number | null
           min_followers?: number | null
           offer_type?: string
+          platforms?: string[] | null
           requirements?: string | null
           starts_at?: string
           title: string
           updated_at?: string
+          value_worth?: string | null
           venue_id: string
         }
         Update: {
+          available_days?: string[] | null
           campaign_id?: string | null
+          category?: string | null
+          category_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           current_redemptions?: number
           description?: string | null
           discount_value?: number | null
           ends_at?: string | null
+          event_date?: string | null
+          event_time?: string | null
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           max_redemptions?: number | null
+          media_type?: string | null
+          media_url?: string | null
+          min_engagement_rate?: number | null
           min_followers?: number | null
           offer_type?: string
+          platforms?: string[] | null
           requirements?: string | null
           starts_at?: string
           title?: string
           updated_at?: string
+          value_worth?: string | null
           venue_id?: string
         }
         Relationships: [
@@ -1086,6 +1125,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
           {
@@ -1327,6 +1373,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      saved_offers: {
+        Row: {
+          created_at: string
+          id: string
+          influencer_id: string
+          offer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          influencer_id: string
+          offer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          influencer_id?: string
+          offer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_offers_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_locations: {
         Row: {
