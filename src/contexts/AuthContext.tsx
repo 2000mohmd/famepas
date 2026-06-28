@@ -78,15 +78,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Defer to avoid deadlock; give the new-user trigger a moment for OAuth signups
           if (event === "SIGNED_IN") {
+            // Defer to avoid deadlock; give the new-user trigger a moment for OAuth signups
             setTimeout(async () => {
               await new Promise(r => setTimeout(r, 400));
               const ok = await enforceApproval(session);
-              if (ok) fetchRole(session.user.id);
+              if (ok) await fetchRole(session.user.id);
+              setLoading(false);
             }, 0);
+            return; // don't flip loading=false yet
           } else {
-            setTimeout(() => fetchRole(session.user.id), 0);
+            await fetchRole(session.user.id);
           }
         } else {
           setRole(null);
