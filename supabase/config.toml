@@ -23,5 +23,9 @@ verify_jwt = true
 
 
 [functions.fetch-profile-stats]
-verify_jwt = true
+verify_jwt = false
+
+[functions.influencer-api]
+verify_jwt = false
+
 
