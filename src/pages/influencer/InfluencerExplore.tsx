@@ -260,7 +260,7 @@ const InfluencerExplore = () => {
 
         {viewMode === "list" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {offers?.map((offer: any) => (
+            {displayedOffers?.map((offer: any) => (
               <OfferCard
                 key={offer.id}
                 offer={offer}
@@ -271,7 +271,7 @@ const InfluencerExplore = () => {
                 isPending={applyMutation.isPending}
               />
             ))}
-            {offers?.length === 0 && (
+            {displayedOffers?.length === 0 && (
               <div className="col-span-full text-center py-12 text-muted-foreground">
                 No offers found matching your criteria.
               </div>
