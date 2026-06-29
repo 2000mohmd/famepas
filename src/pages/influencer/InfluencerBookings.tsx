@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3, RefreshCw } from "lucide-react";
+import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { useState } from "react";
 
@@ -210,8 +211,22 @@ const InfluencerBookings = () => {
             {booking.deliverable_deadline && (
               <p className="text-xs text-muted-foreground">Deliverable deadline: {format(new Date(booking.deliverable_deadline), "PPP")}</p>
             )}
+            {booking.status === "upcoming" && booking.offer_redemptions?.qr_code && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-gold/30 bg-gold/5 px-2.5 py-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-gold" />
+                <span className="text-[11px] text-muted-foreground">Show this code at the venue:</span>
+                <span className="font-mono font-bold tracking-wider text-foreground text-xs">{booking.offer_redemptions.qr_code}</span>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-2 shrink-0">
+            {booking.offer_id && (
+              <Button asChild size="sm" variant="ghost">
+                <Link to={`/influencer/offer/${booking.offer_id}`}>
+                  <ExternalLink className="w-4 h-4 mr-1" /> View offer
+                </Link>
+              </Button>
+            )}
             {booking.status === "upcoming" && (
               <Button size="sm" onClick={() => { setCheckInFor(booking); setOtp(""); }}>
                 <KeyRound className="w-4 h-4 mr-1" /> Check In
@@ -329,9 +344,15 @@ const InfluencerBookings = () => {
           <DialogHeader>
             <DialogTitle>Check in to your visit</DialogTitle>
             <DialogDescription>
-              Ask the venue staff for the booking code (shown to them when they verify your visit). Enter it below to confirm you're at the venue.
+              Show the code below to the venue staff so they can verify your visit, then tap "Verify & Check In" to confirm.
             </DialogDescription>
           </DialogHeader>
+          {checkInFor?.offer_redemptions?.qr_code && (
+            <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-center">
+              <p className="text-[11px] text-muted-foreground mb-1">Your check-in code</p>
+              <p className="text-2xl font-mono tracking-widest font-bold text-foreground">{checkInFor.offer_redemptions.qr_code}</p>
+            </div>
+          )}
           <Input
             value={otp}
             onChange={e => setOtp(e.target.value.toUpperCase())}

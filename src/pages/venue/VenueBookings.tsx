@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star, Eye, Users, TrendingUp, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,6 +48,7 @@ const VenueBookings = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [applicantOpen, setApplicantOpen] = useState<Row | null>(null);
 
   const load = async () => {
     if (!user) return;
@@ -61,7 +62,7 @@ const VenueBookings = () => {
     const list = data ?? [];
     const infIds = [...new Set(list.map((r: any) => r.influencer_id))];
     const { data: profs } = infIds.length
-      ? await supabase.rpc("get_public_profiles_basic" as any, { _user_ids: infIds })
+      ? await supabase.rpc("get_public_profiles_detailed" as any, { _user_ids: infIds })
       : { data: [] as any };
     const pmap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
     const omap = new Map((offers ?? []).map((o: any) => [o.id, o]));
@@ -171,6 +172,7 @@ const VenueBookings = () => {
     switch (r.status) {
       case "pending":
         return <>
+          <Button size="sm" variant="outline" onClick={() => setApplicantOpen(r)}><Eye className="w-3 h-3 mr-1" />Review</Button>
           <Button size="sm" onClick={() => updateStatus(r, "approved")} style={{ background: PINK }} className="text-white hover:opacity-90"><CheckCircle2 className="w-3 h-3 mr-1" />Accept</Button>
           <Button size="sm" variant="ghost" onClick={() => updateStatus(r, "rejected")}><XCircle className="w-3 h-3 mr-1" />Decline</Button>
         </>;
@@ -359,6 +361,77 @@ const VenueBookings = () => {
           <Button onClick={submitReview} disabled={submittingReview} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">
             {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit review"}
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!applicantOpen} onOpenChange={(o) => { if (!o) setApplicantOpen(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Applicant profile</DialogTitle></DialogHeader>
+          {applicantOpen && (() => {
+            const p: any = applicantOpen.profile || {};
+            const followers = Math.max(p.followers_count || 0, p.tiktok_followers || 0);
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={p.avatar_url} />
+                    <AvatarFallback>{(p.full_name ?? "?").slice(0, 1)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">{p.full_name ?? "Influencer"}</p>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />{[p.city, p.country].filter(Boolean).join(", ") || "—"}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 text-[11px]">
+                      {p.instagram_handle && <span className="inline-flex items-center gap-0.5 text-muted-foreground"><Instagram className="w-3 h-3" />@{p.instagram_handle}</span>}
+                      {p.tiktok_handle && <span className="inline-flex items-center gap-0.5 text-muted-foreground"><Music2 className="w-3 h-3" />@{p.tiktok_handle}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <Users className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{followers.toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">Followers</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{p.engagement_rate ? `${Number(p.engagement_rate).toFixed(1)}%` : "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Engagement</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <Star className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{p.influencer_score ?? "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Score</p>
+                  </div>
+                </div>
+                {p.niche?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Niches</p>
+                    <div className="flex flex-wrap gap-1">
+                      {p.niche.map((n: string) => <Badge key={n} variant="secondary" className="text-[10px]">{n}</Badge>)}
+                    </div>
+                  </div>
+                )}
+                {p.bio && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Bio</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{p.bio}</p>
+                  </div>
+                )}
+                {applicantOpen.status === "pending" && (
+                  <div className="flex gap-2 pt-2">
+                    <Button className="flex-1" variant="ghost" onClick={() => { updateStatus(applicantOpen, "rejected"); setApplicantOpen(null); }}>
+                      <XCircle className="w-4 h-4 mr-1" />Decline
+                    </Button>
+                    <Button className="flex-1 text-white hover:opacity-90" style={{ background: PINK }} onClick={() => { updateStatus(applicantOpen, "approved"); setApplicantOpen(null); }}>
+                      <CheckCircle2 className="w-4 h-4 mr-1" />Approve
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </DashboardLayout>

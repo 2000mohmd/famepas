@@ -2006,6 +2006,27 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_profiles_detailed: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          badge: string
+          bio: string
+          city: string
+          country: string
+          cover_image_url: string
+          engagement_rate: number
+          followers_count: number
+          full_name: string
+          influencer_score: number
+          instagram_handle: string
+          is_verified: boolean
+          niche: string[]
+          tiktok_followers: number
+          tiktok_handle: string
+          user_id: string
+        }[]
+      }
       get_venue_contact: {
         Args: { _venue_id: string }
         Returns: {
