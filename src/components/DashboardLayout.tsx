@@ -78,7 +78,7 @@ const venueGroups: NavGroup[] = [
   {
     label: "Influencer Marketing",
     items: [
-      { to: "/venue", icon: BarChart3, label: "Reports" },
+      { to: "/venue/reports", icon: BarChart3, label: "Reports" },
       { to: "/venue/content", icon: Film, label: "Content" },
       { to: "/venue/campaigns", icon: Megaphone, label: "Campaigns" },
       { to: "/venue/bookings", icon: Clipboard, label: "Bookings" },
