@@ -46,7 +46,7 @@ const InfluencerOffer = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offer_redemptions")
-        .select("*")
+        .select("*, bookings!bookings_redemption_id_fkey(id, status, checked_in_at, completed_at, deliverables(id, status, post_url, views, likes, comments))")
         .eq("offer_id", id!)
         .eq("influencer_id", user!.id)
         .maybeSingle();
