@@ -479,17 +479,55 @@ const InfluencerSignup = () => {
           <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
             <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
-            <Field label="Instagram handle">
-              <TextInput value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@yourname" />
+            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG && !verifiedIG.ok ? "Not found" : "We'll verify and pull your real follower count."}>
+              <div className="relative">
+                <TextInput
+                  value={instagram}
+                  onChange={(e) => { setInstagram(e.target.value); setVerifiedIG(null); }}
+                  onBlur={(e) => verifyHandle("instagram", e.target.value)}
+                  placeholder="@yourname"
+                />
+                {verifyingHandle === "instagram" && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Verifying...</span>
+                )}
+                {verifiedIG?.ok && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
+                )}
+              </div>
             </Field>
-            <Field label="TikTok handle">
-              <TextInput value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="@yourname" />
+            <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT && !verifiedTT.ok ? "Not found" : undefined}>
+              <div className="relative">
+                <TextInput
+                  value={tiktok}
+                  onChange={(e) => { setTiktok(e.target.value); setVerifiedTT(null); }}
+                  onBlur={(e) => verifyHandle("tiktok", e.target.value)}
+                  placeholder="@yourname"
+                />
+                {verifyingHandle === "tiktok" && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Verifying...</span>
+                )}
+                {verifiedTT?.ok && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
+                )}
+              </div>
             </Field>
             <Field label="YouTube channel" hint="Username or full URL.">
               <TextInput value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@yourname or link" />
             </Field>
-            <Field label="Total followers (approx.)" hint="Across your main platform. You can update this later.">
-              <TextInput type="number" min={0} value={followers} onChange={(e) => setFollowers(e.target.value)} placeholder="e.g. 5000" />
+            <Field
+              label="Total followers"
+              hint={followersLocked ? "Auto-filled from verified accounts (read-only)." : "We'll auto-fill this once you verify a handle above."}
+            >
+              <TextInput
+                type="number"
+                min={0}
+                value={followers}
+                readOnly={followersLocked}
+                disabled={followersLocked}
+                onChange={(e) => setFollowers(e.target.value)}
+                placeholder="Verify a handle to auto-fill"
+                className={followersLocked ? "bg-slate-50 cursor-not-allowed" : ""}
+              />
             </Field>
             <PrimaryButton disabled={!socialsReady} onClick={() => setStep("niche")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
