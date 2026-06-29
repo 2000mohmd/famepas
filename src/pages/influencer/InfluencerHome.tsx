@@ -53,7 +53,7 @@ const InfluencerHome = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(name, city, category, logo_url, cover_image_url, image_url), categories(id, name)")
+        .select("*, venues(name, city, category, logo_url, cover_image_url), categories(id, name)")
         .eq("is_active", true)
         .limit(60)
         .order("created_at", { ascending: false });
