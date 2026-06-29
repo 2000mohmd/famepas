@@ -118,7 +118,7 @@ const InfluencerOffer = () => {
 
   const v: any = offer.venues;
   const cat: any = (offer as any).categories;
-  const cover = (offer as any).image_url || v?.cover_image_url || v?.image_url || cat?.image_url;
+  const cover = (offer as any).image_url || (offer as any).cover_image_url || v?.cover_image_url || cat?.image_url;
   const slotsLeft =
     offer.max_redemptions != null ? offer.max_redemptions - (offer.current_redemptions || 0) : null;
 
