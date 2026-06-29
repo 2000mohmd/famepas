@@ -260,27 +260,40 @@ const VenueCard = ({ venue, offerCount, onClick }: { venue: any; offerCount: num
   </div>
 );
 
-const OfferCard = ({ offer, onClick }: { offer: any; onClick: () => void }) => (
-  <div
-    onClick={onClick}
-    className="flex-shrink-0 w-[240px] rounded-xl bg-card border border-border hover:border-gold/30 transition-all cursor-pointer overflow-hidden"
-  >
-    {offer.image_url ? (
-      <img src={offer.image_url} alt={offer.title} className="w-full h-24 object-cover" />
-    ) : (
-      <div className="w-full h-24 bg-secondary flex items-center justify-center">
-        <Tag className="w-6 h-6 text-muted-foreground" />
-      </div>
-    )}
-    <div className="p-3 space-y-1">
-      <h4 className="font-medium text-foreground text-sm truncate">{offer.title}</h4>
-      <p className="text-xs text-muted-foreground truncate">{offer.venues?.name}</p>
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs capitalize">{offer.offer_type}</Badge>
-        {offer.discount_value && <span className="text-xs text-gold font-medium">${offer.discount_value}</span>}
+const OfferCard = ({ offer, onClick }: { offer: any; onClick: () => void }) => {
+  const cover =
+    offer.image_url || offer.cover_image_url || offer.venues?.cover_image_url || offer.venues?.image_url;
+  return (
+    <div
+      onClick={onClick}
+      className="flex-shrink-0 w-[240px] rounded-xl bg-card border border-border hover:border-gold/30 transition-all cursor-pointer overflow-hidden"
+    >
+      {cover ? (
+        <img src={cover} alt={offer.title} className="w-full h-24 object-cover" />
+      ) : (
+        <div className="w-full h-24 bg-secondary flex items-center justify-center">
+          <Tag className="w-6 h-6 text-muted-foreground" />
+        </div>
+      )}
+      <div className="p-3 space-y-1">
+        <h4 className="font-medium text-foreground text-sm truncate">{offer.title}</h4>
+        <div className="flex items-center gap-2">
+          {offer.venues?.logo_url ? (
+            <img src={offer.venues.logo_url} alt="" className="w-5 h-5 rounded-full object-cover border border-border" />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+              <Building2 className="w-3 h-3 text-gold" />
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground truncate">{offer.venues?.name}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs capitalize">{offer.offer_type}</Badge>
+          {offer.discount_value && <span className="text-xs text-gold font-medium">${offer.discount_value}</span>}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default InfluencerHome;
