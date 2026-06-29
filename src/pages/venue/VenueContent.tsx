@@ -30,11 +30,23 @@ const VenueContent = () => {
     }
     setRefreshingId(deliverableId);
     try {
-      const { error } = await supabase.functions.invoke("fetch-post-metrics", {
+      const { data, error } = await supabase.functions.invoke("fetch-post-metrics", {
         body: { deliverable_id: deliverableId, post_url: url },
       });
       if (error) throw error;
-      toast({ title: "Stats updated successfully" });
+      if (data && data.success === false) {
+        toast({
+          title: "Metrics unavailable",
+          description: data.code === "MISSING_API_KEY"
+            ? "The metrics provider isn't configured yet."
+            : data.code === "PROVIDER_RATE_LIMITED"
+            ? "Provider rate limit reached. Try again in a minute."
+            : data.error || "Couldn't fetch stats right now.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Stats updated successfully" });
+      }
       load();
     } catch (err: any) {
       toast({ title: "Failed to fetch stats", description: err.message, variant: "destructive" });
