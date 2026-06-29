@@ -31,6 +31,20 @@ const InfluencerExplore = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyOnly, setNearbyOnly] = useState(false);
+
+  // Auto-detect user location on mount
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => { /* silently ignore - user denied or unavailable */ },
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  }, []);
 
   const { data: myProfile } = useQuery({
     queryKey: ["my-profile-country", user?.id],
