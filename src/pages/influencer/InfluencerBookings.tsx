@@ -218,9 +218,16 @@ const InfluencerBookings = () => {
               </Button>
             )}
             {booking.status === "checked_in" && (
-              <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
-                <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
-              </Button>
+              <>
+                <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
+                </Button>
+                {!hasDeliverable && (
+                  <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
+                    <Upload className="w-4 h-4 mr-1" /> Share Post Link
+                  </Button>
+                )}
+              </>
             )}
             {booking.status === "completed" && !hasDeliverable && (
               <Button size="sm" onClick={() => setUploadFor(booking)}>
