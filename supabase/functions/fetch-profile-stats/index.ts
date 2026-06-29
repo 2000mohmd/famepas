@@ -64,13 +64,12 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData } = await supabase.auth.getUser(token);
-    const userId = userData?.user?.id;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Auth is OPTIONAL: when present, persist updates on the profile.
+    // When absent (e.g. live verification during signup), just return the data.
+    let userId: string | null = null;
+    if (token) {
+      const { data: userData } = await supabase.auth.getUser(token);
+      userId = userData?.user?.id ?? null;
     }
 
     const body = await req.json().catch(() => ({}));
@@ -100,7 +99,6 @@ serve(async (req) => {
       }
     }
 
-    // Update profile with verified follower counts (use the larger of the two when only one platform)
     const updates: Record<string, any> = {};
     if (result.instagram?.followers) {
       updates.followers_count = result.instagram.followers;
@@ -110,20 +108,24 @@ serve(async (req) => {
     }
     if (result.tiktok?.followers) updates.tiktok_followers = result.tiktok.followers;
 
-    // Flag if self-reported diverges from real by > 2x
     const flagged =
       realTotal > 0 &&
       selfReported > 0 &&
       (selfReported > realTotal * 2 || selfReported * 2 < realTotal);
 
-    if (Object.keys(updates).length) {
+    if (userId && Object.keys(updates).length) {
       const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
       if (updErr) console.warn("profile update failed:", updErr.message);
     }
 
-
     return new Response(
-      JSON.stringify({ ok: true, verified: result, flagged, applied: updates }),
+      JSON.stringify({
+        ok: true,
+        verified: result,
+        followers_total: realTotal,
+        flagged,
+        applied: userId ? updates : null,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {

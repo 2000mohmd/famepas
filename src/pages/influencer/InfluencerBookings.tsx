@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3 } from "lucide-react";
+import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -218,9 +218,16 @@ const InfluencerBookings = () => {
               </Button>
             )}
             {booking.status === "checked_in" && (
-              <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
-                <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
-              </Button>
+              <>
+                <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
+                </Button>
+                {!hasDeliverable && (
+                  <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
+                    <Upload className="w-4 h-4 mr-1" /> Share Post Link
+                  </Button>
+                )}
+              </>
             )}
             {booking.status === "completed" && !hasDeliverable && (
               <Button size="sm" onClick={() => setUploadFor(booking)}>
@@ -255,12 +262,32 @@ const InfluencerBookings = () => {
                     .eq("id", deliverable.id);
                   if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
                   toast({ title: "Post URL saved" });
-                  queryClient.invalidateQueries({ queryKey: ["influencer-bookings"] });
+                  queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
                 }}
                 className="h-9 text-sm"
               />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!deliverable.post_url}
+                onClick={async () => {
+                  const url = (deliverable.post_url || "").trim();
+                  if (!url) { toast({ title: "Add a post URL first", variant: "destructive" }); return; }
+                  toast({ title: "Fetching views..." });
+                  const { error } = await supabase.functions.invoke("fetch-post-metrics", {
+                    body: { deliverable_id: deliverable.id, post_url: url },
+                  });
+                  if (error) { toast({ title: "Refresh failed", description: error.message, variant: "destructive" }); return; }
+                  toast({ title: "Views refreshed" });
+                  queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-1" /> Refresh views
+              </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">Paste your published post link so the venue can pull real engagement stats.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Views: <span className="font-medium text-foreground">{deliverable.views ?? 0}</span> • Likes: {deliverable.likes ?? 0} • Comments: {deliverable.comments ?? 0}
+            </p>
           </div>
         )}
       </CardContent>
