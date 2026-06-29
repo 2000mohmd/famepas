@@ -280,10 +280,25 @@ serve(async (req) => {
     if (path.match(/^\/offers\/[^/]+$/) && method === "GET") {
       const offerId = path.split("/")[2];
       const { data, error } = await supabase.from("offers")
-        .select("*, venues(*)").eq("id", offerId).single();
+        .select("*, venues(*), categories!category_id(id, name, icon, color)")
+        .eq("id", offerId).single();
       if (error) return errorResponse(error.message);
-      return jsonResponse({ offer: data });
+      const [redemption, saved, reviews] = await Promise.all([
+        supabase.from("offer_redemptions").select("id, status, qr_code, qr_expires_at, redeemed_at")
+          .eq("offer_id", offerId).eq("influencer_id", userId).maybeSingle(),
+        supabase.from("saved_offers").select("id").eq("offer_id", offerId).eq("influencer_id", userId).maybeSingle(),
+        supabase.from("reviews").select("rating, comment, created_at")
+          .eq("venue_id", (data as any)?.venue_id).eq("review_type", "influencer_to_venue").eq("is_public", true)
+          .limit(10).order("created_at", { ascending: false }),
+      ]);
+      return jsonResponse({
+        offer: data,
+        my_redemption: redemption.data,
+        is_saved: !!saved.data,
+        venue_reviews: reviews.data || [],
+      });
     }
+
 
     // Accept an offer directly (generates QR code)
     if (path.match(/^\/offers\/[^/]+\/accept$/) && method === "POST") {
