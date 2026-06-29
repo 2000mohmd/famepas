@@ -187,15 +187,15 @@ const InfluencerOffer = () => {
             label="Slots"
             value={slotsLeft != null ? `${slotsLeft} left` : "Unlimited"}
           />
-          {offer.expires_at && (
+          {(offer as any).expires_at && (
             <FactCard
               icon={<Calendar className="w-4 h-4" />}
               label="Expires"
-              value={new Date(offer.expires_at).toLocaleDateString()}
+              value={new Date((offer as any).expires_at).toLocaleDateString()}
             />
           )}
-          {offer.deliverable_type && (
-            <FactCard icon={<Clock className="w-4 h-4" />} label="Deliverable" value={String(offer.deliverable_type)} />
+          {(offer as any).deliverable_type && (
+            <FactCard icon={<Clock className="w-4 h-4" />} label="Deliverable" value={String((offer as any).deliverable_type)} />
           )}
         </div>
 
