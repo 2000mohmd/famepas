@@ -283,7 +283,7 @@ const InfluencerExplore = () => {
   );
 };
 
-const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus }: any) => {
+const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus, userLocation }: any) => {
   const { isLoaded } = useGoogleMaps();
 
   if (!isLoaded) {
@@ -294,7 +294,9 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
     );
   }
 
-  const center = venues.length > 0
+  const center = userLocation
+    ? userLocation
+    : venues.length > 0
     ? { lat: venues[0].latitude, lng: venues[0].longitude }
     : defaultCenter;
 
