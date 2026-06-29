@@ -213,6 +213,13 @@ const InfluencerBookings = () => {
             )}
           </div>
           <div className="flex flex-col gap-2 shrink-0">
+            {booking.offer_id && (
+              <Button asChild size="sm" variant="ghost">
+                <Link to={`/influencer/offer/${booking.offer_id}`}>
+                  <ExternalLink className="w-4 h-4 mr-1" /> View offer
+                </Link>
+              </Button>
+            )}
             {booking.status === "upcoming" && (
               <Button size="sm" onClick={() => { setCheckInFor(booking); setOtp(""); }}>
                 <KeyRound className="w-4 h-4 mr-1" /> Check In
