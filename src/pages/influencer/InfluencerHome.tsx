@@ -104,23 +104,34 @@ const InfluencerHome = () => {
             <h2 className="text-xl font-display font-semibold text-foreground">Browse by Category</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {categories?.map((cat) => (
+            {categories?.map((cat: any) => (
               <button
                 key={cat.id}
                 onClick={() => navigate(`/influencer/explore?category=${cat.name}`)}
-                className="flex-shrink-0 flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-card border border-border hover:border-gold/40 transition-all min-w-[100px]"
+                className="flex-shrink-0 w-[160px] rounded-xl bg-card border border-border hover:border-gold/40 transition-all overflow-hidden text-left"
               >
-                <span className="text-2xl">{cat.icon || "🏢"}</span>
-                <span className="text-sm font-medium text-foreground">{cat.name}</span>
+                {cat.image_url ? (
+                  <img src={cat.image_url} alt={cat.name} className="w-full h-24 object-cover" />
+                ) : (
+                  <div
+                    className="w-full h-24 flex items-center justify-center text-3xl"
+                    style={{ background: cat.color ? `${cat.color}22` : undefined }}
+                  >
+                    {cat.icon || "🏢"}
+                  </div>
+                )}
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-foreground truncate">{cat.name}</p>
+                </div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Per-category carousels */}
-        {categories?.map((cat) => {
+        {categories?.map((cat: any) => {
           const catVenues = venuesByCategory(cat.name);
-          const catOffers = offersByCategory(cat.name);
+          const catOffers = offersByCategory(cat);
           if (catVenues.length === 0 && catOffers.length === 0) return null;
 
           return (
@@ -157,7 +168,7 @@ const InfluencerHome = () => {
               {catOffers.length > 0 && (
                 <ScrollCarousel>
                   {catOffers.map((offer: any) => (
-                    <OfferCard key={offer.id} offer={offer} onClick={() => navigate("/influencer/explore")} />
+                    <OfferCard key={offer.id} offer={offer} onClick={() => navigate(`/influencer/offers/${offer.id}`)} />
                   ))}
                 </ScrollCarousel>
               )}
