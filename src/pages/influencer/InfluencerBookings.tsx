@@ -329,9 +329,15 @@ const InfluencerBookings = () => {
           <DialogHeader>
             <DialogTitle>Check in to your visit</DialogTitle>
             <DialogDescription>
-              Ask the venue staff for the booking code (shown to them when they verify your visit). Enter it below to confirm you're at the venue.
+              Show the code below to the venue staff so they can verify your visit, then tap "Verify & Check In" to confirm.
             </DialogDescription>
           </DialogHeader>
+          {checkInFor?.offer_redemptions?.qr_code && (
+            <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-center">
+              <p className="text-[11px] text-muted-foreground mb-1">Your check-in code</p>
+              <p className="text-2xl font-mono tracking-widest font-bold text-foreground">{checkInFor.offer_redemptions.qr_code}</p>
+            </div>
+          )}
           <Input
             value={otp}
             onChange={e => setOtp(e.target.value.toUpperCase())}
