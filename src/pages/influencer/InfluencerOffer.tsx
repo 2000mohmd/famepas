@@ -439,11 +439,24 @@ const PostUrlBlock = ({
   const refresh = async () => {
     if (!deliverable?.id || !deliverable?.post_url) return;
     setRefreshing(true);
-    const { error } = await supabase.functions.invoke("fetch-post-metrics", {
+    const { data, error } = await supabase.functions.invoke("fetch-post-metrics", {
       body: { deliverable_id: deliverable.id, post_url: deliverable.post_url },
     });
     setRefreshing(false);
     if (error) { toast({ title: "Refresh failed", description: error.message, variant: "destructive" }); return; }
+    if (data && data.success === false) {
+      toast({
+        title: "Metrics unavailable",
+        description: data.code === "MISSING_API_KEY"
+          ? "The metrics provider isn't configured yet. The venue will see your link."
+          : data.code === "PROVIDER_RATE_LIMITED"
+          ? "The metrics provider is rate-limited. Try again in a minute."
+          : data.error || "We couldn't fetch metrics right now. Your post URL is saved.",
+        variant: "destructive",
+      });
+      onSaved();
+      return;
+    }
     toast({ title: "Metrics refreshed" });
     onSaved();
   };
