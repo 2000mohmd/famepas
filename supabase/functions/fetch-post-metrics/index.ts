@@ -32,8 +32,8 @@ async function safeJson(res: Response) {
 }
 
 async function fetchInstagramMetrics(postUrl: string) {
-  const shortcode = postUrl.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/)?.[2];
-  if (!shortcode) throw new Error("Invalid Instagram URL — expected /p/, /reel/ or /tv/ link");
+  const shortcode = postUrl.match(/\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/)?.[2];
+  if (!shortcode) throw new Error("Invalid Instagram URL — expected /p/, /reel/, /reels/ or /tv/ link");
 
   const res = await fetch(
     `https://instagram-scraper-api2.p.rapidapi.com/v1/post_info?code_or_id_or_url=${encodeURIComponent(shortcode)}`,
