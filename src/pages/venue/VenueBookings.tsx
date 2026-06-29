@@ -172,6 +172,7 @@ const VenueBookings = () => {
     switch (r.status) {
       case "pending":
         return <>
+          <Button size="sm" variant="outline" onClick={() => setApplicantOpen(r)}><Eye className="w-3 h-3 mr-1" />Review</Button>
           <Button size="sm" onClick={() => updateStatus(r, "approved")} style={{ background: PINK }} className="text-white hover:opacity-90"><CheckCircle2 className="w-3 h-3 mr-1" />Accept</Button>
           <Button size="sm" variant="ghost" onClick={() => updateStatus(r, "rejected")}><XCircle className="w-3 h-3 mr-1" />Decline</Button>
         </>;
