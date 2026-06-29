@@ -138,8 +138,46 @@ serve(async (req) => {
     }
 
     // ==========================================
-    // HOME / DASHBOARD
+    // HOME / DASHBOARD (mobile home screen)
     // ==========================================
+    if (path === "/home" && method === "GET") {
+      const [categoriesRes, offersRes, venuesRes, profileRes, points] = await Promise.all([
+        supabase.from("categories").select("*").eq("is_active", true).order("name"),
+        supabase.from("offers")
+          .select("*, venues(id, name, city, logo_url, cover_image_url, latitude, longitude), categories!category_id(id, name, icon, color)")
+          .eq("is_active", true)
+          .limit(60)
+          .order("created_at", { ascending: false }),
+        supabase.from("venues")
+          .select("id, name, city, logo_url, cover_image_url, category, latitude, longitude")
+          .eq("is_active", true)
+          .eq("approval_status", "approved")
+          .limit(30),
+        supabase.from("profiles").select("full_name, avatar_url, badge, influencer_score").eq("user_id", userId).single(),
+        supabase.from("reward_points").select("points, tier").eq("user_id", userId).maybeSingle(),
+      ]);
+      const categories = categoriesRes.data || [];
+      const allOffers = offersRes.data || [];
+      const offersByCategory: Record<string, any[]> = {};
+      for (const cat of categories) {
+        offersByCategory[cat.id] = allOffers.filter((o: any) => o.category_id === cat.id).slice(0, 12);
+      }
+      return jsonResponse({
+        profile: profileRes.data,
+        rewards: { points: points.data?.points ?? 0, tier: points.data?.tier ?? "bronze" },
+        categories,
+        featured_offers: allOffers.slice(0, 10),
+        venues: venuesRes.data || [],
+        offers_by_category: offersByCategory,
+      });
+    }
+
+    if (path === "/categories" && method === "GET") {
+      const { data, error } = await supabase.from("categories").select("*").eq("is_active", true).order("name");
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ categories: data });
+    }
+
     if (path === "/dashboard" && method === "GET") {
       const [invitations, bookings, completedBookings, earnings, rewardPoints] = await Promise.all([
         supabase.from("invitations").select("id", { count: "exact", head: true }).eq("influencer_id", userId).eq("status", "pending"),
@@ -160,6 +198,35 @@ serve(async (req) => {
         reward_tier: rewardPoints.data?.tier || "bronze",
       });
     }
+
+    // ==========================================
+    // SAVED OFFERS (mobile favourites)
+    // ==========================================
+    if (path === "/saved-offers" && method === "GET") {
+      const { data, error } = await supabase.from("saved_offers")
+        .select("*, offers(*, venues(id, name, city, logo_url, cover_image_url))")
+        .eq("influencer_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ saved: data });
+    }
+
+    if (path.match(/^\/saved-offers\/[^/]+$/) && method === "POST") {
+      const offerId = path.split("/")[2];
+      const { error } = await supabase.from("saved_offers")
+        .insert({ influencer_id: userId, offer_id: offerId });
+      if (error && !error.message.includes("duplicate")) return errorResponse(error.message);
+      return jsonResponse({ ok: true });
+    }
+
+    if (path.match(/^\/saved-offers\/[^/]+$/) && method === "DELETE") {
+      const offerId = path.split("/")[2];
+      const { error } = await supabase.from("saved_offers")
+        .delete().eq("influencer_id", userId).eq("offer_id", offerId);
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ ok: true });
+    }
+
 
     // ==========================================
     // EXPLORE OPPORTUNITIES (Offers)
