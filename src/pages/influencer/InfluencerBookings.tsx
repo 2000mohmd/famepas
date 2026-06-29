@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3 } from "lucide-react";
+import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useState } from "react";
