@@ -9,8 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List } from "lucide-react";
-import { useState } from "react";
+import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List, Navigation } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
@@ -31,6 +31,20 @@ const InfluencerExplore = () => {
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyOnly, setNearbyOnly] = useState(false);
+
+  // Auto-detect user location on mount
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => { /* silently ignore - user denied or unavailable */ },
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  }, []);
 
   const { data: myProfile } = useQuery({
     queryKey: ["my-profile-country", user?.id],
@@ -130,8 +144,31 @@ const InfluencerExplore = () => {
 
   const getApplicationStatus = (offerId: string) => myApplications?.find((a) => a.offer_id === offerId);
 
+  // Haversine distance (km)
+  const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+    const toRad = (n: number) => (n * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  };
+
+  let displayedOffers: any[] = offers ?? [];
+  if (userLocation && nearbyOnly) {
+    displayedOffers = displayedOffers
+      .map((o: any) => {
+        const lat = o.venues?.latitude;
+        const lng = o.venues?.longitude;
+        const d = lat && lng ? distanceKm(userLocation, { lat, lng }) : Infinity;
+        return { ...o, _distance: d };
+      })
+      .filter((o: any) => o._distance < 100)
+      .sort((a: any, b: any) => a._distance - b._distance);
+  }
+
   const mapVenues = venues?.filter((v) => v.latitude && v.longitude) ?? [];
-  const offersForVenue = (venueId: string) => offers?.filter((o: any) => o.venue_id === venueId) ?? [];
+  const offersForVenue = (venueId: string) => displayedOffers?.filter((o: any) => o.venue_id === venueId) ?? [];
 
   return (
     <DashboardLayout type="influencer">
@@ -192,9 +229,20 @@ const InfluencerExplore = () => {
             </SelectContent>
           </Select>
         </div>
-        {!myCountry && countryFilter === "my" && (
+        {userLocation && (
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Navigation className="w-4 h-4 text-gold" />
+              <span>Showing offers near your current location</span>
+            </div>
+            <Button size="sm" variant={nearbyOnly ? "default" : "outline"} onClick={() => setNearbyOnly(v => !v)}>
+              {nearbyOnly ? "Near me: ON" : "Near me: OFF"}
+            </Button>
+          </div>
+        )}
+        {!myCountry && countryFilter === "my" && !userLocation && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
-            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> to see offers near you.
+            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> or allow location access to see offers near you.
           </div>
         )}
 
@@ -206,12 +254,13 @@ const InfluencerExplore = () => {
             offersForVenue={offersForVenue}
             onApply={(offerId: string) => applyMutation.mutate(offerId)}
             getApplicationStatus={getApplicationStatus}
+            userLocation={userLocation}
           />
         )}
 
         {viewMode === "list" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {offers?.map((offer: any) => (
+            {displayedOffers?.map((offer: any) => (
               <OfferCard
                 key={offer.id}
                 offer={offer}
@@ -222,7 +271,7 @@ const InfluencerExplore = () => {
                 isPending={applyMutation.isPending}
               />
             ))}
-            {offers?.length === 0 && (
+            {displayedOffers?.length === 0 && (
               <div className="col-span-full text-center py-12 text-muted-foreground">
                 No offers found matching your criteria.
               </div>
@@ -234,7 +283,7 @@ const InfluencerExplore = () => {
   );
 };
 
-const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus }: any) => {
+const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus, userLocation }: any) => {
   const { isLoaded } = useGoogleMaps();
 
   if (!isLoaded) {
@@ -245,13 +294,34 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
     );
   }
 
-  const center = venues.length > 0
+  const center = userLocation
+    ? userLocation
+    : venues.length > 0
     ? { lat: venues[0].latitude, lng: venues[0].longitude }
     : defaultCenter;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-border">
+    <div className="rounded-xl overflow-hidden border border-border relative">
+      {venues.length === 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-card border border-border rounded-lg px-4 py-2 shadow-md text-sm text-muted-foreground">
+          No venues with location data found in this area yet.
+        </div>
+      )}
       <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={12}>
+        {userLocation && (
+          <MarkerF
+            position={userLocation}
+            title="You are here"
+            icon={{
+              path: (window as any).google?.maps?.SymbolPath?.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "#fff",
+              strokeWeight: 2,
+            }}
+          />
+        )}
         {venues.map((venue: any) => (
           <MarkerF key={venue.id} position={{ lat: venue.latitude, lng: venue.longitude }} onClick={() => onSelectVenue(venue)} title={venue.name} />
         ))}

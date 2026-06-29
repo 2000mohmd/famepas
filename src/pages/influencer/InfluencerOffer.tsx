@@ -31,7 +31,7 @@ const InfluencerOffer = () => {
       const { data, error } = await supabase
         .from("offers")
         .select(
-          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, image_url, description, latitude, longitude), categories(name, icon, image_url, color)"
+          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, description, latitude, longitude), categories(name, icon, image_url, color)"
         )
         .eq("id", id!)
         .maybeSingle();
@@ -118,7 +118,7 @@ const InfluencerOffer = () => {
 
   const v: any = offer.venues;
   const cat: any = (offer as any).categories;
-  const cover = (offer as any).image_url || v?.cover_image_url || v?.image_url || cat?.image_url;
+  const cover = (offer as any).image_url || (offer as any).cover_image_url || v?.cover_image_url || cat?.image_url;
   const slotsLeft =
     offer.max_redemptions != null ? offer.max_redemptions - (offer.current_redemptions || 0) : null;
 
