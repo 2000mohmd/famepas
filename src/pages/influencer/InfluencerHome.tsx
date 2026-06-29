@@ -262,7 +262,7 @@ const VenueCard = ({ venue, offerCount, onClick }: { venue: any; offerCount: num
 
 const OfferCard = ({ offer, onClick }: { offer: any; onClick: () => void }) => {
   const cover =
-    offer.image_url || offer.cover_image_url || offer.venues?.cover_image_url || offer.venues?.image_url;
+    offer.image_url || offer.cover_image_url || offer.venues?.cover_image_url;
   return (
     <div
       onClick={onClick}
