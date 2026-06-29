@@ -143,6 +143,55 @@ const InfluencerSignup = () => {
   const [tiktok, setTiktok] = useState("");
   const [youtube, setYoutube] = useState("");
   const [followers, setFollowers] = useState("");
+  const [verifyingHandle, setVerifyingHandle] = useState<null | "instagram" | "tiktok">(null);
+  const [verifiedIG, setVerifiedIG] = useState<{ ok: boolean; followers: number } | null>(null);
+  const [verifiedTT, setVerifiedTT] = useState<{ ok: boolean; followers: number } | null>(null);
+  const followersLocked = !!(verifiedIG?.ok || verifiedTT?.ok);
+
+  const verifyHandle = async (platform: "instagram" | "tiktok", raw: string) => {
+    const h = normalizeHandle(raw);
+    if (!h) return;
+    setVerifyingHandle(platform);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-profile-stats", {
+        body: platform === "instagram"
+          ? { instagram_handle: h }
+          : { tiktok_handle: h },
+      });
+      if (error) throw error;
+      const v: any = (data as any)?.verified ?? {};
+      const igFollowers = Number(v.instagram?.followers || 0);
+      const ttFollowers = Number(v.tiktok?.followers || 0);
+      if (platform === "instagram") {
+        if (v.instagram?.exists !== false && igFollowers > 0) {
+          setVerifiedIG({ ok: true, followers: igFollowers });
+        } else {
+          setVerifiedIG({ ok: false, followers: 0 });
+          toast({ title: "Instagram handle not found", description: "Double-check the @username.", variant: "destructive" });
+        }
+      } else {
+        if (v.tiktok?.exists !== false && ttFollowers > 0) {
+          setVerifiedTT({ ok: true, followers: ttFollowers });
+        } else {
+          setVerifiedTT({ ok: false, followers: 0 });
+          toast({ title: "TikTok handle not found", description: "Double-check the @username.", variant: "destructive" });
+        }
+      }
+      const total = Number((data as any)?.followers_total || 0) ||
+        Math.max(igFollowers, ttFollowers) +
+        (igFollowers && ttFollowers ? 0 : 0);
+      // Sum both verified counts so far
+      const sum = (platform === "instagram" ? igFollowers : (verifiedIG?.followers || 0)) +
+                  (platform === "tiktok" ? ttFollowers : (verifiedTT?.followers || 0));
+      if (sum > 0) setFollowers(String(sum));
+      else if (total > 0) setFollowers(String(total));
+    } catch (e) {
+      console.warn("verify failed", e);
+      toast({ title: "Could not verify handle", description: "We'll re-check after signup.", variant: "destructive" });
+    } finally {
+      setVerifyingHandle(null);
+    }
+  };
 
   // niches
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
