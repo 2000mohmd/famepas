@@ -206,9 +206,20 @@ const InfluencerExplore = () => {
             </SelectContent>
           </Select>
         </div>
-        {!myCountry && countryFilter === "my" && (
+        {userLocation && (
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Navigation className="w-4 h-4 text-gold" />
+              <span>Showing offers near your current location</span>
+            </div>
+            <Button size="sm" variant={nearbyOnly ? "default" : "outline"} onClick={() => setNearbyOnly(v => !v)}>
+              {nearbyOnly ? "Near me: ON" : "Near me: OFF"}
+            </Button>
+          </div>
+        )}
+        {!myCountry && countryFilter === "my" && !userLocation && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
-            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> to see offers near you.
+            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> or allow location access to see offers near you.
           </div>
         )}
 
@@ -220,6 +231,7 @@ const InfluencerExplore = () => {
             offersForVenue={offersForVenue}
             onApply={(offerId: string) => applyMutation.mutate(offerId)}
             getApplicationStatus={getApplicationStatus}
+            userLocation={userLocation}
           />
         )}
 
