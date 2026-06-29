@@ -31,7 +31,7 @@ const InfluencerOffer = () => {
       const { data, error } = await supabase
         .from("offers")
         .select(
-          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, image_url, description, latitude, longitude), categories(name, icon, image_url, color)"
+          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, description, latitude, longitude), categories(name, icon, image_url, color)"
         )
         .eq("id", id!)
         .maybeSingle();
