@@ -363,6 +363,77 @@ const VenueBookings = () => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!applicantOpen} onOpenChange={(o) => { if (!o) setApplicantOpen(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Applicant profile</DialogTitle></DialogHeader>
+          {applicantOpen && (() => {
+            const p: any = applicantOpen.profile || {};
+            const followers = Math.max(p.followers_count || 0, p.tiktok_followers || 0);
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={p.avatar_url} />
+                    <AvatarFallback>{(p.full_name ?? "?").slice(0, 1)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">{p.full_name ?? "Influencer"}</p>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />{[p.city, p.country].filter(Boolean).join(", ") || "—"}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 text-[11px]">
+                      {p.instagram_handle && <span className="inline-flex items-center gap-0.5 text-muted-foreground"><Instagram className="w-3 h-3" />@{p.instagram_handle}</span>}
+                      {p.tiktok_handle && <span className="inline-flex items-center gap-0.5 text-muted-foreground"><Music2 className="w-3 h-3" />@{p.tiktok_handle}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <Users className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{followers.toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">Followers</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{p.engagement_rate ? `${Number(p.engagement_rate).toFixed(1)}%` : "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Engagement</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <Star className="w-4 h-4 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-semibold mt-1">{p.influencer_score ?? "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Score</p>
+                  </div>
+                </div>
+                {p.niche?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Niches</p>
+                    <div className="flex flex-wrap gap-1">
+                      {p.niche.map((n: string) => <Badge key={n} variant="secondary" className="text-[10px]">{n}</Badge>)}
+                    </div>
+                  </div>
+                )}
+                {p.bio && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Bio</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{p.bio}</p>
+                  </div>
+                )}
+                {applicantOpen.status === "pending" && (
+                  <div className="flex gap-2 pt-2">
+                    <Button className="flex-1" variant="ghost" onClick={() => { updateStatus(applicantOpen, "rejected"); setApplicantOpen(null); }}>
+                      <XCircle className="w-4 h-4 mr-1" />Decline
+                    </Button>
+                    <Button className="flex-1 text-white hover:opacity-90" style={{ background: PINK }} onClick={() => { updateStatus(applicantOpen, "approved"); setApplicantOpen(null); }}>
+                      <CheckCircle2 className="w-4 h-4 mr-1" />Approve
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
