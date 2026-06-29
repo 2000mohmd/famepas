@@ -53,7 +53,7 @@ const InfluencerHome = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("offers")
-        .select("*, venues(name, city, category, logo_url)")
+        .select("*, venues(name, city, category, logo_url, cover_image_url, image_url), categories(id, name)")
         .eq("is_active", true)
         .limit(60)
         .order("created_at", { ascending: false });
@@ -61,11 +61,21 @@ const InfluencerHome = () => {
     },
   });
 
-  const venuesByCategory = (category: string) =>
-    venues?.filter((v) => v.category === category) ?? [];
+  const venuesByCategory = (catName: string) => {
+    const norm = catName.trim().toLowerCase();
+    return venues?.filter((v) => (v.category || "").trim().toLowerCase() === norm) ?? [];
+  };
 
-  const offersByCategory = (category: string) =>
-    offers?.filter((o: any) => o.venues?.category === category) ?? [];
+  const offersByCategory = (cat: any) => {
+    const norm = (cat.name || "").trim().toLowerCase();
+    return (
+      offers?.filter((o: any) => {
+        if (o.category_id && o.category_id === cat.id) return true;
+        const c = (o.categories?.name || o.venues?.category || "").trim().toLowerCase();
+        return c === norm;
+      }) ?? []
+    );
+  };
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
