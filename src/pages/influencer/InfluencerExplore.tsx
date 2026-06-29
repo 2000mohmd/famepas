@@ -301,8 +301,27 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
     : defaultCenter;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-border">
+    <div className="rounded-xl overflow-hidden border border-border relative">
+      {venues.length === 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-card border border-border rounded-lg px-4 py-2 shadow-md text-sm text-muted-foreground">
+          No venues with location data found in this area yet.
+        </div>
+      )}
       <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={12}>
+        {userLocation && (
+          <MarkerF
+            position={userLocation}
+            title="You are here"
+            icon={{
+              path: (window as any).google?.maps?.SymbolPath?.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "#fff",
+              strokeWeight: 2,
+            }}
+          />
+        )}
         {venues.map((venue: any) => (
           <MarkerF key={venue.id} position={{ lat: venue.latitude, lng: venue.longitude }} onClick={() => onSelectVenue(venue)} title={venue.name} />
         ))}
