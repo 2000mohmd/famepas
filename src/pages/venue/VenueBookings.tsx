@@ -62,7 +62,7 @@ const VenueBookings = () => {
     const list = data ?? [];
     const infIds = [...new Set(list.map((r: any) => r.influencer_id))];
     const { data: profs } = infIds.length
-      ? await supabase.rpc("get_public_profiles_basic" as any, { _user_ids: infIds })
+      ? await supabase.rpc("get_public_profiles_detailed" as any, { _user_ids: infIds })
       : { data: [] as any };
     const pmap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
     const omap = new Map((offers ?? []).map((o: any) => [o.id, o]));
