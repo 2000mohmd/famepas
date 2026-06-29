@@ -48,6 +48,7 @@ const VenueBookings = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [applicantOpen, setApplicantOpen] = useState<Row | null>(null);
 
   const load = async () => {
     if (!user) return;
