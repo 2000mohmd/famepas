@@ -130,9 +130,8 @@ const InfluencerHome = () => {
 
         {/* Per-category carousels */}
         {categories?.map((cat: any) => {
-          const catVenues = venuesByCategory(cat.name);
           const catOffers = offersByCategory(cat);
-          if (catVenues.length === 0 && catOffers.length === 0) return null;
+          if (catOffers.length === 0) return null;
 
           return (
             <div key={cat.id} className="space-y-4">
@@ -150,28 +149,11 @@ const InfluencerHome = () => {
                 </Button>
               </div>
 
-              {/* Venues carousel */}
-              {catVenues.length > 0 && (
-                <ScrollCarousel>
-                  {catVenues.map((venue) => (
-                    <VenueCard
-                      key={venue.id}
-                      venue={venue}
-                      offerCount={offers?.filter((o: any) => o.venue_id === venue.id).length ?? 0}
-                      onClick={() => navigate(`/influencer/explore?venue=${venue.name}`)}
-                    />
-                  ))}
-                </ScrollCarousel>
-              )}
-
-              {/* Offers carousel */}
-              {catOffers.length > 0 && (
-                <ScrollCarousel>
-                  {catOffers.map((offer: any) => (
-                    <OfferCard key={offer.id} offer={offer} onClick={() => navigate(`/influencer/offers/${offer.id}`)} />
-                  ))}
-                </ScrollCarousel>
-              )}
+              <ScrollCarousel>
+                {catOffers.map((offer: any) => (
+                  <OfferCard key={offer.id} offer={offer} onClick={() => navigate(`/influencer/offers/${offer.id}`)} />
+                ))}
+              </ScrollCarousel>
             </div>
           );
         })}

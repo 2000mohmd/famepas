@@ -33,7 +33,7 @@ const InfluencerInvitations = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("invitations")
-        .select("*, venues(name, city, logo_url, address, image_url), offers(title, offer_type, description)")
+        .select("*, venues(name, city, logo_url, address, cover_image_url), offers(title, offer_type, description)")
         .eq("influencer_id", user!.id)
         .order("created_at", { ascending: false });
       return data ?? [];

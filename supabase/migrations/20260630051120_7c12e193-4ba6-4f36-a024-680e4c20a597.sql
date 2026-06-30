@@ -1,0 +1,1 @@
+UPDATE public.venues SET category='Restaurants' WHERE category='Resturants';

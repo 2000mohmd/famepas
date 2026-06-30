@@ -222,7 +222,7 @@ const InfluencerBookings = () => {
           <div className="flex flex-col gap-2 shrink-0">
             {booking.offer_id && (
               <Button asChild size="sm" variant="ghost">
-                <Link to={`/influencer/offer/${booking.offer_id}`}>
+                <Link to={`/influencer/offers/${booking.offer_id}`}>
                   <ExternalLink className="w-4 h-4 mr-1" /> View offer
                 </Link>
               </Button>
