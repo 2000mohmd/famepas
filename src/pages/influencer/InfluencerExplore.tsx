@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -364,13 +365,15 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
 
   return (
     <Card className="hover:border-gold/30 transition-colors overflow-hidden">
-      {(offer.cover_image_url || offer.image_url) && <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base">{offer.title}</CardTitle>
-          <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
-        </div>
-      </CardHeader>
+      <Link to={`/influencer/offers/${offer.id}`} className="block">
+        {(offer.cover_image_url || offer.image_url) && <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base hover:text-gold transition-colors">{offer.title}</CardTitle>
+            <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
+          </div>
+        </CardHeader>
+      </Link>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="w-4 h-4" />
@@ -416,6 +419,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Apply to: {offer.title}</DialogTitle>
+                  <DialogDescription>Review the offer details and confirm your application.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">{offer.description}</p>
