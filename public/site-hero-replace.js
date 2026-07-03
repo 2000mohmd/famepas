@@ -66,3 +66,29 @@
     start();
   }
 })();
+
+// Joli-style card polish: rounded corners, drop shadow, alternating gentle tilt,
+// and counter-skew so each card reads upright while the marquee still drifts.
+(function injectJoliStyles(){
+  if (document.getElementById('joli-hero-style')) return;
+  var css = `
+    .framer-8izlk2 {
+      border-radius: 22px !important;
+      overflow: hidden;
+      box-shadow: 0 24px 40px -12px rgba(0,0,0,0.35), 0 8px 16px -8px rgba(0,0,0,0.25);
+    }
+    .framer-8izlk2 img { border-radius: 22px !important; }
+    /* Neutralize the diagonal skew from the marquee wrapper on each card,
+       then add a subtle alternating tilt for the Joli feel. */
+    [class*="framer-"][class$="-container"] > .framer-ARkFZ {
+      transform: skewX(-17deg) rotate(-17deg);
+      transform-origin: center center;
+    }
+    .framer-8cnfuk [class*="-container"]:nth-child(odd)  > .framer-ARkFZ { transform: skewX(-17deg) rotate(-14deg); }
+    .framer-8cnfuk [class*="-container"]:nth-child(even) > .framer-ARkFZ { transform: skewX(-17deg) rotate(-20deg); }
+  `;
+  var s = document.createElement('style');
+  s.id = 'joli-hero-style';
+  s.textContent = css;
+  (document.head || document.documentElement).appendChild(s);
+})();
