@@ -5,7 +5,7 @@
   var nativeFetch = window.fetch.bind(window);
 
   window.fetch = function (input, init) {
-    var requestUrl = typeof input === "string" ? input : input && input.url;
+    var requestUrl = typeof input === "string" ? input : input && (input.href || input.url);
 
     try {
       var url = new URL(requestUrl, document.baseURI || window.location.href);
