@@ -50,6 +50,7 @@ import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
 import InfluencerOffer from "./pages/influencer/InfluencerOffer";
+import MarketingPage from "./pages/MarketingPage";
 
 const queryClient = new QueryClient();
 
@@ -62,8 +63,15 @@ const App = () => (
         <AuthProvider>
           <GoogleMapsProvider>
           <Routes>
-            {/* Public marketing site is built externally (Framer). App handles auth + dashboards only. */}
-            <Route path="/" element={<Navigate to="/welcome" replace />} />
+            {/* Public marketing site (Framer static, served from /public/site). */}
+            <Route path="/" element={<MarketingPage path="" />} />
+            <Route path="/about" element={<MarketingPage path="about" />} />
+            <Route path="/pricing" element={<MarketingPage path="pricing" />} />
+            <Route path="/contact" element={<MarketingPage path="contact" />} />
+            <Route path="/legal/privacy-policy" element={<MarketingPage path="legal/privacy-policy" />} />
+            <Route path="/legal/terms-condition" element={<MarketingPage path="legal/terms-condition" />} />
+            <Route path="/casestudy" element={<MarketingPage path="casestudy" />} />
+            <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
