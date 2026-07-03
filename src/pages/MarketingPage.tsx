@@ -11,7 +11,7 @@ const MarketingPage = ({ path, dynamicSegment }: MarketingPageProps) => {
   if (dynamicSegment === "casestudy" && params.slug) {
     resolved = `casestudy/${params.slug}`;
   }
-  const src = `/site/${resolved ? resolved + "/" : ""}`;
+  const src = `/site/${resolved ? resolved + "/" : ""}index.html`;
 
   return (
     <iframe
