@@ -74,18 +74,20 @@
   var css = `
     .framer-8izlk2 {
       border-radius: 22px !important;
-      overflow: hidden;
-      box-shadow: 0 24px 40px -12px rgba(0,0,0,0.35), 0 8px 16px -8px rgba(0,0,0,0.25);
+      overflow: hidden !important;
+      box-shadow: 0 30px 50px -18px rgba(0,0,0,0.45), 0 10px 20px -10px rgba(0,0,0,0.28) !important;
     }
     .framer-8izlk2 img { border-radius: 22px !important; }
-    /* Neutralize the diagonal skew from the marquee wrapper on each card,
-       then add a subtle alternating tilt for the Joli feel. */
+    /* Make each card upright (cancel the marquee wrapper's rotate+skew),
+       with a gentle alternating tilt and breathing space between cards. */
     [class*="framer-"][class$="-container"] > .framer-ARkFZ {
-      transform: skewX(-17deg) rotate(-17deg);
-      transform-origin: center center;
+      transform: skewX(-17deg) rotate(-17deg) !important;
+      transform-origin: center center !important;
+      padding: 0 12px !important;
+      box-sizing: border-box !important;
     }
-    .framer-8cnfuk [class*="-container"]:nth-child(odd)  > .framer-ARkFZ { transform: skewX(-17deg) rotate(-14deg); }
-    .framer-8cnfuk [class*="-container"]:nth-child(even) > .framer-ARkFZ { transform: skewX(-17deg) rotate(-20deg); }
+    .framer-8cnfuk [class*="-container"]:nth-child(odd)  > .framer-ARkFZ { transform: rotate(-3deg) skewX(-17deg) rotate(-17deg) !important; }
+    .framer-8cnfuk [class*="-container"]:nth-child(even) > .framer-ARkFZ { transform: rotate(3deg)  skewX(-17deg) rotate(-17deg) !important; }
   `;
   var s = document.createElement('style');
   s.id = 'joli-hero-style';
