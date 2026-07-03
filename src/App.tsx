@@ -50,6 +50,7 @@ import InfluencerRewards from "./pages/influencer/InfluencerRewards";
 import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
 import InfluencerOffer from "./pages/influencer/InfluencerOffer";
+import MarketingPage from "./pages/MarketingPage";
 
 const queryClient = new QueryClient();
 
