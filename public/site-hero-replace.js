@@ -11,20 +11,28 @@
 
   var STYLE_ID = "famepass-hero-marquee-style";
   var MARQUEE_ID = "famepass-hero-marquee";
+  // Framer host candidates (class may change across publishes)
+  var HOST_SELECTORS = [
+    ".framer-d0aqv4",
+    "[data-framer-name='Hero Marquee']",
+    "[data-framer-name='Marquee']",
+  ];
 
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
     var css = [
+      // Hide original framer marquee tracks immediately to avoid flash
+      HOST_SELECTORS.join(",") + "{visibility:hidden !important;}",
       "#" + MARQUEE_ID + "{",
       "  position:relative;width:100%;overflow:hidden;",
-      "  padding:24px 0;",
+      "  padding:24px 0;visibility:visible !important;",
       "  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);",
       "          mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);",
       "}",
       "#" + MARQUEE_ID + " .fp-track{",
       "  display:flex;gap:16px;width:max-content;",
       "  animation:fp-marquee 35s linear infinite;",
-      "  will-change:transform;",
+      "  will-change:transform;transform:translate3d(0,0,0);",
       "}",
       "#" + MARQUEE_ID + ":hover .fp-track{animation-play-state:paused;}",
       "#" + MARQUEE_ID + " .fp-card{",
@@ -44,7 +52,6 @@
       "@media (max-width:640px){",
       "  #" + MARQUEE_ID + " .fp-card{width:160px;height:284px;}",
       "}",
-      // hide the original framer marquee track once ours is mounted
       ".famepass-hidden{display:none !important;}",
     ].join("\n");
     var s = document.createElement("style");
@@ -53,12 +60,22 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
+  function preloadImages() {
+    // Warm the cache as early as possible
+    IMAGES.forEach(function (src) {
+      var l = document.createElement("link");
+      l.rel = "preload";
+      l.as = "image";
+      l.href = src;
+      (document.head || document.documentElement).appendChild(l);
+    });
+  }
+
   function buildMarquee() {
     var wrap = document.createElement("div");
     wrap.id = MARQUEE_ID;
     var track = document.createElement("div");
     track.className = "fp-track";
-    // Duplicate list so translateX(-50%) loops seamlessly
     var seq = IMAGES.concat(IMAGES);
     seq.forEach(function (src, i) {
       var card = document.createElement("div");
@@ -66,6 +83,7 @@
       var img = document.createElement("img");
       img.src = src;
       img.loading = i < IMAGES.length ? "eager" : "lazy";
+      img.decoding = "async";
       img.alt = "";
       card.appendChild(img);
       track.appendChild(card);
@@ -74,14 +92,19 @@
     return wrap;
   }
 
+  function findHost() {
+    for (var i = 0; i < HOST_SELECTORS.length; i++) {
+      var el = document.querySelector(HOST_SELECTORS[i]);
+      if (el) return el;
+    }
+    return null;
+  }
+
   function mount() {
-    injectStyles();
-    // The hero row viewport in the Framer output.
-    var host = document.querySelector(".framer-d0aqv4");
+    var host = findHost();
     if (!host) return false;
     if (host.dataset.famepassMounted === "1") return true;
     host.dataset.famepassMounted = "1";
-    // Hide original marquee children and reset the host to a plain block.
     Array.prototype.forEach.call(host.children, function (c) {
       c.classList.add("famepass-hidden");
     });
@@ -91,17 +114,27 @@
     host.style.width = "100%";
     host.style.height = "auto";
     host.style.display = "block";
+    host.style.visibility = "visible";
     host.appendChild(buildMarquee());
     return true;
   }
 
   function start() {
+    injectStyles();
+    preloadImages();
     if (mount()) return;
-    var tries = 0;
-    var iv = setInterval(function () {
-      tries++;
-      if (mount() || tries > 40) clearInterval(iv);
-    }, 150);
+    // Observe DOM for the host (Framer hydrates async)
+    var observer = new MutationObserver(function () {
+      if (mount()) observer.disconnect();
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+    // Safety timeout
+    setTimeout(function () {
+      observer.disconnect();
+    }, 15000);
   }
 
   if (document.readyState === "loading") {
