@@ -10,7 +10,18 @@
 	<!-- Start of headStart -->
     
     <!-- End of headStart -->
-	<meta name="viewport" content="width=device-width">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<style id="famepass-mobile-fix">
+	@media (max-width: 767.98px) {
+		/* Hide the "Home" link that overlaps the hamburger toggle on mobile */
+		nav a[data-framer-name="Desktop 01"] { display: none !important; pointer-events: none !important; }
+		/* Constrain hero headline wrapper to viewport so text is not cut off */
+		.framer-kawptm { width: auto !important; max-width: calc(100vw - 32px) !important; margin-left: auto !important; margin-right: auto !important; left: auto !important; right: auto !important; transform: none !important; }
+		.framer-kawptm h1, .framer-kawptm .framer-text { font-size: clamp(26px, 8.5vw, 34px) !important; line-height: 1.1 !important; word-break: break-word; }
+		/* Safety: prevent horizontal overflow of the whole page */
+		html, body { overflow-x: hidden !important; }
+	}
+	</style>
 	<meta name="generator" content="Framer 1a93ff7">
 	<title>FamePass</title>
     <meta name="description" content="Grow Even Faster Where Attention Lives">
