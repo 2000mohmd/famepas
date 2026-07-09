@@ -303,7 +303,19 @@ serve(async (req) => {
     // Accept an offer directly (generates QR code)
     if (path.match(/^\/offers\/[^/]+\/accept$/) && method === "POST") {
       const offerId = path.split("/")[2];
-      
+
+      // Optional visit date/time chosen by the creator on the offer page.
+      let scheduledDate = new Date().toISOString();
+      try {
+        const body = await req.json();
+        if (body?.scheduled_date) {
+          const parsed = new Date(body.scheduled_date);
+          if (!isNaN(parsed.getTime())) scheduledDate = parsed.toISOString();
+        }
+      } catch {
+        // No body / invalid JSON — fall back to "now"
+      }
+
       // Get the offer details
       const { data: offer, error: offerErr } = await supabase.from("offers")
         .select("*, venues(id, name)").eq("id", offerId).eq("is_active", true).single();
@@ -323,12 +335,12 @@ serve(async (req) => {
       }).select().single();
       if (redErr) return errorResponse(redErr.message);
 
-      // Also create a booking for this
+      // Also create a booking for the creator's chosen visit time.
       const { data: booking } = await supabase.from("bookings").insert({
         influencer_id: userId,
         venue_id: offer.venue_id,
         offer_id: offerId,
-        scheduled_date: new Date().toISOString(),
+        scheduled_date: scheduledDate,
         status: "upcoming",
       }).select().single();
 
