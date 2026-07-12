@@ -245,23 +245,34 @@ serve(async (req) => {
       if (city) query = query.ilike("venues.city", `%${city}%`);
       if (offer_type) query = query.eq("offer_type", offer_type);
       if (min_followers) query = query.lte("min_followers", parseInt(min_followers));
-      if (search) {
-        // Sanitize: strip PostgREST operator characters to prevent filter injection
-        const safe = search.replace(/[,()%*]/g, "").slice(0, 80);
-        if (safe) {
-          query = query.ilike("title", `%${safe}%`);
-        }
-      }
+
+      // Sanitize the free-text search once; strip PostgREST operator characters.
+      const safeSearch = search ? search.replace(/[,()%*]/g, "").slice(0, 80).trim() : "";
 
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) return errorResponse(error.message);
+
+      // Search matches the offer title OR the venue name OR the venue city, so
+      // creators can search "by location or venue name" (not just offer title).
+      // Done in JS because the match spans the joined `venues` table.
+      let searched = data || [];
+      if (safeSearch) {
+        const q = safeSearch.toLowerCase();
+        searched = searched.filter((o: any) => {
+          const title = (o.title || "").toLowerCase();
+          const venueName = (o.venues?.name || "").toLowerCase();
+          const venueCity = (o.venues?.city || "").toLowerCase();
+          const venueAddr = (o.venues?.address || "").toLowerCase();
+          return title.includes(q) || venueName.includes(q) || venueCity.includes(q) || venueAddr.includes(q);
+        });
+      }
 
       // Location-based filtering (lat, lng, radius_km)
       const lat = url.searchParams.get("lat");
       const lng = url.searchParams.get("lng");
       const radiusKm = parseFloat(url.searchParams.get("radius_km") || "50");
 
-      let offers = data || [];
+      let offers = searched;
       if (lat && lng) {
         const userLat = parseFloat(lat);
         const userLng = parseFloat(lng);
