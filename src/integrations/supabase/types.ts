@@ -264,6 +264,8 @@ export type Database = {
           invite_only: boolean | null
           is_draft: boolean | null
           location_id: string | null
+          post_min_photo_count: number | null
+          reel_min_duration_seconds: number | null
           require_phone: boolean | null
           required_days_notice: number | null
           start_date: string | null
@@ -299,6 +301,8 @@ export type Database = {
           invite_only?: boolean | null
           is_draft?: boolean | null
           location_id?: string | null
+          post_min_photo_count?: number | null
+          reel_min_duration_seconds?: number | null
           require_phone?: boolean | null
           required_days_notice?: number | null
           start_date?: string | null
@@ -334,6 +338,8 @@ export type Database = {
           invite_only?: boolean | null
           is_draft?: boolean | null
           location_id?: string | null
+          post_min_photo_count?: number | null
+          reel_min_duration_seconds?: number | null
           require_phone?: boolean | null
           required_days_notice?: number | null
           start_date?: string | null
@@ -470,6 +476,9 @@ export type Database = {
           booking_id: string
           caption: string | null
           comments: number
+          content_quality_rating: number | null
+          content_rated_at: string | null
+          content_rated_by: string | null
           content_type: string
           content_url: string | null
           created_at: string
@@ -497,6 +506,9 @@ export type Database = {
           booking_id: string
           caption?: string | null
           comments?: number
+          content_quality_rating?: number | null
+          content_rated_at?: string | null
+          content_rated_by?: string | null
           content_type?: string
           content_url?: string | null
           created_at?: string
@@ -524,6 +536,9 @@ export type Database = {
           booking_id?: string
           caption?: string | null
           comments?: number
+          content_quality_rating?: number | null
+          content_rated_at?: string | null
+          content_rated_by?: string | null
           content_type?: string
           content_url?: string | null
           created_at?: string
@@ -1050,6 +1065,8 @@ export type Database = {
           min_followers: number | null
           offer_type: string
           platforms: string[] | null
+          post_min_photo_count: number | null
+          reel_min_duration_seconds: number | null
           requirements: string | null
           starts_at: string
           title: string
@@ -1081,6 +1098,8 @@ export type Database = {
           min_followers?: number | null
           offer_type?: string
           platforms?: string[] | null
+          post_min_photo_count?: number | null
+          reel_min_duration_seconds?: number | null
           requirements?: string | null
           starts_at?: string
           title: string
@@ -1112,6 +1131,8 @@ export type Database = {
           min_followers?: number | null
           offer_type?: string
           platforms?: string[] | null
+          post_min_photo_count?: number | null
+          reel_min_duration_seconds?: number | null
           requirements?: string | null
           starts_at?: string
           title?: string

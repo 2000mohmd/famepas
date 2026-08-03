@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2 } from "lucide-react";
+import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,23 @@ const VenueContent = () => {
   const [rejectFor, setRejectFor] = useState<any | null>(null);
   const [feedback, setFeedback] = useState("");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+
+  const rateQuality = async (d: any, rating: number) => {
+    const { error } = await supabase
+      .from("deliverables")
+      .update({
+        content_quality_rating: rating,
+        content_rated_at: new Date().toISOString(),
+        content_rated_by: user?.id ?? null,
+      } as any)
+      .eq("id", d.id);
+    if (error) {
+      toast({ title: "Could not save rating", description: error.message, variant: "destructive" });
+      return;
+    }
+    setItems(prev => prev.map(x => (x.id === d.id ? { ...x, content_quality_rating: rating } : x)));
+    toast({ title: `Rated ${rating}/5` });
+  };
 
   const refreshMetrics = async (deliverableId: string, url?: string | null) => {
     if (!url || (!url.includes("instagram.com") && !url.includes("tiktok.com"))) {
@@ -213,6 +230,29 @@ const VenueContent = () => {
                         </>
                       )}
                     </div>
+                    {d.status === "approved" && (
+                      <div className="mt-3 border-t border-border pt-2">
+                        <p className="text-[11px] text-muted-foreground mb-1">Content quality</p>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => rateQuality(d, n)}
+                              className="p-0.5"
+                              aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                            >
+                              <Star className={`w-4 h-4 ${n <= (d.content_quality_rating ?? 0) ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+                            </button>
+                          ))}
+                          {d.content_quality_rating ? (
+                            <span className="ml-2 text-[11px] text-muted-foreground">{d.content_quality_rating}/5</span>
+                          ) : (
+                            <span className="ml-2 text-[11px] text-muted-foreground">Not rated</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     {d.feedback && d.status === "rejected" && (
                       <p className="mt-3 text-xs text-red-600 border-t border-border pt-2">Feedback: {d.feedback}</p>
                     )}

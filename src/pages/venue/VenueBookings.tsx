@@ -49,6 +49,20 @@ const VenueBookings = () => {
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [applicantOpen, setApplicantOpen] = useState<Row | null>(null);
+  const [contentQuality, setContentQuality] = useState<{ avg: number; count: number } | null>(null);
+
+  useEffect(() => {
+    if (!applicantOpen) { setContentQuality(null); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("deliverables")
+        .select("content_quality_rating")
+        .eq("influencer_id", applicantOpen.influencer_id)
+        .not("content_quality_rating", "is", null);
+      const vals = (data ?? []).map((d: any) => d.content_quality_rating).filter((v: any) => typeof v === "number");
+      setContentQuality(vals.length ? { avg: vals.reduce((a: number, b: number) => a + b, 0) / vals.length, count: vals.length } : null);
+    })();
+  }, [applicantOpen]);
 
   const load = async () => {
     if (!user) return;
@@ -388,7 +402,7 @@ const VenueBookings = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="bg-muted/40 rounded-lg p-2">
                     <Users className="w-4 h-4 mx-auto text-muted-foreground" />
                     <p className="text-sm font-semibold mt-1">{followers.toLocaleString()}</p>
@@ -403,6 +417,11 @@ const VenueBookings = () => {
                     <Star className="w-4 h-4 mx-auto text-muted-foreground" />
                     <p className="text-sm font-semibold mt-1">{p.influencer_score ?? "—"}</p>
                     <p className="text-[10px] text-muted-foreground">Score</p>
+                  </div>
+                  <div className="bg-muted/40 rounded-lg p-2">
+                    <Star className="w-4 h-4 mx-auto text-gold fill-gold" />
+                    <p className="text-sm font-semibold mt-1">{contentQuality ? `${contentQuality.avg.toFixed(1)}/5` : "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Content quality</p>
                   </div>
                 </div>
                 {p.niche?.length > 0 && (

@@ -7,6 +7,8 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,13 +53,25 @@ const ResetPassword = () => {
               <form onSubmit={submit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold mb-2">New password</label>
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                  <div className="relative">
+                    <input type={showPwd ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
+                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                    <button type="button" onClick={() => setShowPwd((s) => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                      {showPwd ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">Confirm new password</label>
-                  <input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                  <div className="relative">
+                    <input type={showConfirm ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                    <button type="button" onClick={() => setShowConfirm((s) => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                      {showConfirm ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
                 <button disabled={loading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
                   {loading ? "Updating..." : "Update password"}

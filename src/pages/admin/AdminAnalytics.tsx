@@ -1,20 +1,44 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { TrendingUp, Users, Tag, Eye, Filter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { TrendingUp, Users, Tag, Eye, Filter, CalendarIcon, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface CategoryStat { name: string; count: number; }
 
+type RangeKey = "7" | "30" | "90" | "custom";
+
 const AdminAnalytics = () => {
-  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0 });
+  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0, liveOffers: 0 });
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [topVenues, setTopVenues] = useState<{ name: string; redemptions: number }[]>([]);
   const [cityFilter, setCityFilter] = useState("all");
   const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rangeKey, setRangeKey] = useState<RangeKey>("30");
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
+
+  const { fromISO, toISO, rangeLabel } = useMemo(() => {
+    if (rangeKey === "custom" && customRange?.from) {
+      const to = customRange.to ?? customRange.from;
+      const end = new Date(to); end.setHours(23, 59, 59, 999);
+      return {
+        fromISO: new Date(customRange.from).toISOString(),
+        toISO: end.toISOString(),
+        rangeLabel: `${format(customRange.from, "MMM d")} – ${format(to, "MMM d, yyyy")}`,
+      };
+    }
+    const days = parseInt(rangeKey === "custom" ? "30" : rangeKey, 10);
+    const from = new Date(); from.setDate(from.getDate() - days);
+    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: `Last ${days} days` };
+  }, [rangeKey, customRange]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -28,10 +52,10 @@ const AdminAnalytics = () => {
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
-      // Base venue query
-      let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
-      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
+      const inRange = (q: any) => q.gte("created_at", fromISO).lte("created_at", toISO);
 
+      let venueQuery = inRange(supabase.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true));
+      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
       let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
       if (cityFilter !== "all") venueListQuery = venueListQuery.eq("city", cityFilter);
@@ -39,11 +63,12 @@ const AdminAnalytics = () => {
       let categoriesQuery = supabase.from("venues").select("category");
       if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
 
-      const [venues, influencers, redemptions, offers, venueList, categoriesRaw] = await Promise.all([
+      const [venues, influencers, redemptions, offers, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
-        supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
-        supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
-        supabase.from("offers").select("id", { count: "exact", head: true }),
+        inRange(supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer")),
+        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
+        inRange(supabase.from("offers").select("id", { count: "exact", head: true })),
+        inRange(supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true)),
         venueListQuery,
         categoriesQuery,
       ]);
@@ -53,6 +78,7 @@ const AdminAnalytics = () => {
         influencers: influencers.count ?? 0,
         redemptions: redemptions.count ?? 0,
         offers: offers.count ?? 0,
+        liveOffers: liveOffers.count ?? 0,
       });
 
       // Build category distribution from venues
@@ -82,7 +108,7 @@ const AdminAnalytics = () => {
       setLoading(false);
     };
     fetchStats();
-  }, [cityFilter]);
+  }, [cityFilter, fromISO, toISO]);
 
   const redemptionRate = stats.offers > 0 ? Math.round((stats.redemptions / stats.offers) * 100) : 0;
   const maxCat = Math.max(...categoryStats.map(c => c.count), 1);
@@ -95,7 +121,7 @@ const AdminAnalytics = () => {
             <h1 className="text-3xl font-display font-bold text-foreground mb-2">Platform <span className="text-gold">Analytics</span></h1>
             <p className="text-muted-foreground">Track platform performance and generate insights</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
             <Select value={cityFilter} onValueChange={setCityFilter}>
               <SelectTrigger className="w-44 bg-secondary border-border">
@@ -106,14 +132,48 @@ const AdminAnalytics = () => {
                 {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
+              <SelectTrigger className="w-44 bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+                <SelectItem value="custom">Custom range</SelectItem>
+              </SelectContent>
+            </Select>
+            {rangeKey === "custom" && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("justify-start text-left font-normal", !customRange?.from && "text-muted-foreground")}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {customRange?.from ? rangeLabel : "Pick dates"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={customRange}
+                    onSelect={setCustomRange}
+                    numberOfMonths={2}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <p className="text-xs text-muted-foreground mb-4">Showing data for {rangeLabel.toLowerCase()}</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <StatCard title="Active Venues" value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? `In ${cityFilter}` : "Platform-wide"} trendUp />
-          <StatCard title="Total Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="Registered users" trendUp />
-          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} total redemptions`} trendUp={redemptionRate > 50} />
+          <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="New in range" trendUp />
+          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} redemptions`} trendUp={redemptionRate > 50} />
           <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active" trendUp />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
