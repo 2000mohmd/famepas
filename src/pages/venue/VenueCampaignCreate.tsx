@@ -63,6 +63,8 @@ const VenueCampaignCreate = () => {
   const [stories, setStories] = useState(2);
   const [reels, setReels] = useState(1);
   const [posts, setPosts] = useState(0);
+  const [reelMinDuration, setReelMinDuration] = useState<string>("15");
+  const [postMinPhotos, setPostMinPhotos] = useState<string>("1");
   const [allowPostOrReel, setAllowPostOrReel] = useState(false);
 
   const [availabilityType, setAvailabilityType] = useState("ongoing");
