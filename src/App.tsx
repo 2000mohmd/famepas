@@ -74,6 +74,7 @@ const App = () => (
             <Route path="/casestudy" element={<MarketingPage path="casestudy" />} />
             <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

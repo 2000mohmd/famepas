@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserCheck } from "lucide-react";
+
+const safeNext = (value: string | null) =>
+  value && value.startsWith("/") && !value.startsWith("//") ? value : null;
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,14 +15,17 @@ const Login = () => {
   const { signIn, role, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   useEffect(() => {
     if (user && role) {
-      if (role === "admin") navigate("/admin", { replace: true });
+      if (next) navigate(next, { replace: true });
+      else if (role === "admin") navigate("/admin", { replace: true });
       else if (role === "venue") navigate("/venue", { replace: true });
       else navigate("/influencer/home", { replace: true });
     }
-  }, [user, role, navigate]);
+  }, [user, role, navigate, next]);
 
   const [otpRequired, setOtpRequired] = useState(false);
   const [otpCode, setOtpCode] = useState("");
