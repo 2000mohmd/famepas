@@ -23,6 +23,23 @@ const VenueContent = () => {
   const [feedback, setFeedback] = useState("");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
+  const rateQuality = async (d: any, rating: number) => {
+    const { error } = await supabase
+      .from("deliverables")
+      .update({
+        content_quality_rating: rating,
+        content_rated_at: new Date().toISOString(),
+        content_rated_by: user?.id ?? null,
+      } as any)
+      .eq("id", d.id);
+    if (error) {
+      toast({ title: "Could not save rating", description: error.message, variant: "destructive" });
+      return;
+    }
+    setItems(prev => prev.map(x => (x.id === d.id ? { ...x, content_quality_rating: rating } : x)));
+    toast({ title: `Rated ${rating}/5` });
+  };
+
   const refreshMetrics = async (deliverableId: string, url?: string | null) => {
     if (!url || (!url.includes("instagram.com") && !url.includes("tiktok.com"))) {
       toast({ title: "No Instagram/TikTok post URL on this deliverable", variant: "destructive" });
