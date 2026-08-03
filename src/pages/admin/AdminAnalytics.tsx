@@ -1,20 +1,44 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
-import { TrendingUp, Users, Tag, Eye, Filter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { TrendingUp, Users, Tag, Eye, Filter, CalendarIcon, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 interface CategoryStat { name: string; count: number; }
 
+type RangeKey = "7" | "30" | "90" | "custom";
+
 const AdminAnalytics = () => {
-  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0 });
+  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0, liveOffers: 0 });
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [topVenues, setTopVenues] = useState<{ name: string; redemptions: number }[]>([]);
   const [cityFilter, setCityFilter] = useState("all");
   const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rangeKey, setRangeKey] = useState<RangeKey>("30");
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
+
+  const { fromISO, toISO, rangeLabel } = useMemo(() => {
+    if (rangeKey === "custom" && customRange?.from) {
+      const to = customRange.to ?? customRange.from;
+      const end = new Date(to); end.setHours(23, 59, 59, 999);
+      return {
+        fromISO: new Date(customRange.from).toISOString(),
+        toISO: end.toISOString(),
+        rangeLabel: `${format(customRange.from, "MMM d")} – ${format(to, "MMM d, yyyy")}`,
+      };
+    }
+    const days = parseInt(rangeKey === "custom" ? "30" : rangeKey, 10);
+    const from = new Date(); from.setDate(from.getDate() - days);
+    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: `Last ${days} days` };
+  }, [rangeKey, customRange]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -28,10 +52,10 @@ const AdminAnalytics = () => {
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
-      // Base venue query
-      let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true });
-      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
+      const inRange = (q: any) => q.gte("created_at", fromISO).lte("created_at", toISO);
 
+      let venueQuery = inRange(supabase.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true));
+      if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
       let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
       if (cityFilter !== "all") venueListQuery = venueListQuery.eq("city", cityFilter);
@@ -39,11 +63,12 @@ const AdminAnalytics = () => {
       let categoriesQuery = supabase.from("venues").select("category");
       if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
 
-      const [venues, influencers, redemptions, offers, venueList, categoriesRaw] = await Promise.all([
+      const [venues, influencers, redemptions, offers, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
-        supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
-        supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
-        supabase.from("offers").select("id", { count: "exact", head: true }),
+        inRange(supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer")),
+        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
+        inRange(supabase.from("offers").select("id", { count: "exact", head: true })),
+        inRange(supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true)),
         venueListQuery,
         categoriesQuery,
       ]);
@@ -53,6 +78,7 @@ const AdminAnalytics = () => {
         influencers: influencers.count ?? 0,
         redemptions: redemptions.count ?? 0,
         offers: offers.count ?? 0,
+        liveOffers: liveOffers.count ?? 0,
       });
 
       // Build category distribution from venues
@@ -82,7 +108,7 @@ const AdminAnalytics = () => {
       setLoading(false);
     };
     fetchStats();
-  }, [cityFilter]);
+  }, [cityFilter, fromISO, toISO]);
 
   const redemptionRate = stats.offers > 0 ? Math.round((stats.redemptions / stats.offers) * 100) : 0;
   const maxCat = Math.max(...categoryStats.map(c => c.count), 1);
