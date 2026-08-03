@@ -375,7 +375,12 @@ const VenueSignup = () => {
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
             <Field label="Password">
-              <TextInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" />
+              <div className="relative">
+                <TextInput type={showPwd ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" className="pr-16" />
+                <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                  {showPwd ? "Hide" : "Show"}
+                </button>
+              </div>
             </Field>
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-slate-600">
               {[
@@ -393,7 +398,12 @@ const VenueSignup = () => {
               ))}
             </div>
             <Field label="Confirm password">
-              <TextInput type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
+              <div className="relative">
+                <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pr-16" />
+                <button type="button" onClick={() => setShowConfirmPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                  {showConfirmPwd ? "Hide" : "Show"}
+                </button>
+              </div>
               {confirmPassword.length > 0 && !passwordsMatch && (
                 <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
               )}
