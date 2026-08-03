@@ -51,6 +51,19 @@ const VenueBookings = () => {
   const [applicantOpen, setApplicantOpen] = useState<Row | null>(null);
   const [contentQuality, setContentQuality] = useState<{ avg: number; count: number } | null>(null);
 
+  useEffect(() => {
+    if (!applicantOpen) { setContentQuality(null); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("deliverables")
+        .select("content_quality_rating")
+        .eq("influencer_id", applicantOpen.influencer_id)
+        .not("content_quality_rating", "is", null);
+      const vals = (data ?? []).map((d: any) => d.content_quality_rating).filter((v: any) => typeof v === "number");
+      setContentQuality(vals.length ? { avg: vals.reduce((a: number, b: number) => a + b, 0) / vals.length, count: vals.length } : null);
+    })();
+  }, [applicantOpen]);
+
   const load = async () => {
     if (!user) return;
     const { data: ownerVenues } = await supabase.from("venues").select("id").eq("owner_id", user.id);
