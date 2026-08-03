@@ -552,19 +552,19 @@ const VenueSettings = () => {
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-4">
             <h2 className="font-semibold text-foreground">Compliance</h2>
             <p className="text-sm text-muted-foreground">
-              Make sure influencer content meets advertising disclosure requirements.
+              Ensure influencer content meets your advertising disclosure requirements.
             </p>
             <div className="flex items-center justify-between border border-border rounded-xl p-4">
               <div>
                 <p className="font-medium">Require #ad disclosure</p>
-                <p className="text-xs text-muted-foreground">Influencers must include #ad in sponsored posts</p>
+                <p className="text-xs text-muted-foreground">Influencers must include #ad in every sponsored post.</p>
               </div>
               <Switch checked={requireAdDisclosure} onCheckedChange={(v) => updateCompliance("require_ad_disclosure", v)} />
             </div>
             <div className="flex items-center justify-between border border-border rounded-xl p-4">
               <div>
                 <p className="font-medium">Require venue tag</p>
-                <p className="text-xs text-muted-foreground">Posts must tag your venue's social handle</p>
+                <p className="text-xs text-muted-foreground">Influencers must tag your venue's social handle in every post.</p>
               </div>
               <Switch checked={requireVenueTag} onCheckedChange={(v) => updateCompliance("require_venue_tag", v)} />
             </div>
