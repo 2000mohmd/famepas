@@ -216,6 +216,19 @@ const InfluencerOffer = () => {
                 </p>
               </>
             )}
+            {((offer as any).reel_min_duration_seconds || (offer as any).post_min_photo_count) && (
+              <>
+                <h3 className="text-sm font-semibold mt-4">Content spec</h3>
+                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                  {(offer as any).reel_min_duration_seconds && (
+                    <li>Reels must be at least {(offer as any).reel_min_duration_seconds} seconds long</li>
+                  )}
+                  {(offer as any).post_min_photo_count && (
+                    <li>Posts must include at least {(offer as any).post_min_photo_count} photo{(offer as any).post_min_photo_count > 1 ? "s" : ""}</li>
+                  )}
+                </ul>
+              </>
+            )}
           </CardContent>
         </Card>
 
