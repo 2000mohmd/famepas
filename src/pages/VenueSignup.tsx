@@ -150,6 +150,8 @@ const VenueSignup = () => {
 
   const [step, setStep] = useState<Step>("account");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [sendingResend, setSendingResend] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
 
