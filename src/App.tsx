@@ -51,6 +51,7 @@ import InfluencerSettings from "./pages/influencer/InfluencerSettings";
 import InfluencerHome from "./pages/influencer/InfluencerHome";
 import InfluencerOffer from "./pages/influencer/InfluencerOffer";
 import MarketingPage from "./pages/MarketingPage";
+import OAuthConsent from "./pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
