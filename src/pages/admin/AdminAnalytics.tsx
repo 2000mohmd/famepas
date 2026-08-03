@@ -121,7 +121,7 @@ const AdminAnalytics = () => {
             <h1 className="text-3xl font-display font-bold text-foreground mb-2">Platform <span className="text-gold">Analytics</span></h1>
             <p className="text-muted-foreground">Track platform performance and generate insights</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
             <Select value={cityFilter} onValueChange={setCityFilter}>
               <SelectTrigger className="w-44 bg-secondary border-border">
@@ -132,14 +132,48 @@ const AdminAnalytics = () => {
                 {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
+              <SelectTrigger className="w-44 bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+                <SelectItem value="custom">Custom range</SelectItem>
+              </SelectContent>
+            </Select>
+            {rangeKey === "custom" && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("justify-start text-left font-normal", !customRange?.from && "text-muted-foreground")}>
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {customRange?.from ? rangeLabel : "Pick dates"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={customRange}
+                    onSelect={setCustomRange}
+                    numberOfMonths={2}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <p className="text-xs text-muted-foreground mb-4">Showing data for {rangeLabel.toLowerCase()}</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <StatCard title="Active Venues" value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? `In ${cityFilter}` : "Platform-wide"} trendUp />
-          <StatCard title="Total Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="Registered users" trendUp />
-          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} total redemptions`} trendUp={redemptionRate > 50} />
+          <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="New in range" trendUp />
+          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} redemptions`} trendUp={redemptionRate > 50} />
           <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active" trendUp />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
