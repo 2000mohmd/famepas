@@ -12,6 +12,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
   const { signIn, role, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -151,14 +152,23 @@ const Login = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-800 mb-2">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 transition"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPwd ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((s) => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]"
+                      >
+                        {showPwd ? "Hide" : "Show"}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex justify-end -mt-2">
                     <Link to="/forgot-password" className="text-sm font-semibold text-[#b8923a] hover:underline">
