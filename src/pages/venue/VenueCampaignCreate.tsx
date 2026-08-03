@@ -449,17 +449,43 @@ const VenueCampaignCreate = () => {
             <Label className="text-sm font-semibold">Deliverables</Label>
             <p className="text-xs text-muted-foreground mb-3">What content would you like in return</p>
             {[
-              { label: "Instagram Story", val: stories, set: setStories },
-              { label: "Instagram Reel", val: reels, set: setReels },
-              { label: "Instagram Post", val: posts, set: setPosts },
-            ].map(({ label, val, set }) => (
-              <div key={label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <span className="text-sm">{label}</span>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => set(Math.max(0, val - 1))}><Minus className="w-3 h-3" /></Button>
-                  <span className="w-8 text-center text-sm">{val}</span>
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => set(val + 1)}><Plus className="w-3 h-3" /></Button>
+              { key: "story", label: "Instagram Story", val: stories, set: setStories },
+              { key: "reel", label: "Instagram Reel", val: reels, set: setReels },
+              { key: "post", label: "Instagram Post", val: posts, set: setPosts },
+            ].map(({ key, label, val, set }) => (
+              <div key={label} className="py-2 border-b border-border last:border-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">{label}</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => set(Math.max(0, val - 1))}><Minus className="w-3 h-3" /></Button>
+                    <span className="w-8 text-center text-sm">{val}</span>
+                    <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => set(val + 1)}><Plus className="w-3 h-3" /></Button>
+                  </div>
                 </div>
+                {key === "reel" && val > 0 && (
+                  <div className="mt-2 flex items-center justify-between gap-3 pl-1">
+                    <span className="text-xs text-muted-foreground">Minimum duration (seconds)</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={reelMinDuration}
+                      onChange={(e) => setReelMinDuration(e.target.value)}
+                      className="h-8 w-24"
+                    />
+                  </div>
+                )}
+                {key === "post" && val > 0 && (
+                  <div className="mt-2 flex items-center justify-between gap-3 pl-1">
+                    <span className="text-xs text-muted-foreground">Minimum number of photos</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={postMinPhotos}
+                      onChange={(e) => setPostMinPhotos(e.target.value)}
+                      className="h-8 w-24"
+                    />
+                  </div>
+                )}
               </div>
             ))}
             <label className="flex items-center gap-2 text-sm mt-3">
