@@ -709,6 +709,30 @@ const VenueCampaignCreate = () => {
                   )) : <span className="text-xs text-muted-foreground">None selected</span>}
                 </div>
               </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1.5">Deliverables</p>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>{stories} story{stories !== 1 ? "ies" : "y"}</span>
+                  </div>
+                  {reels > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Video className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>{reels} reel{reels !== 1 ? "s" : ""}{reelMinDuration ? ` · min ${reelMinDuration}s each` : ""}</span>
+                    </div>
+                  )}
+                  {posts > 0 && (
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>{posts} post{posts !== 1 ? "s" : ""}{postMinPhotos ? ` · min ${postMinPhotos} photos each` : ""}</span>
+                    </div>
+                  )}
+                  {allowPostOrReel && (
+                    <p className="text-xs text-[#b8923a]">Influencers may choose between a post or a reel.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </DialogContent>
