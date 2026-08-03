@@ -113,6 +113,8 @@ const VenueCampaignCreate = () => {
           setHandles((c as any).handles ?? []);
           const d = (c as any).deliverables ?? {};
           setStories(d.stories ?? 2); setReels(d.reels ?? 1); setPosts(d.posts ?? 0);
+          setReelMinDuration(((c as any).reel_min_duration_seconds ?? d.reel_min_duration_seconds ?? 15).toString());
+          setPostMinPhotos(((c as any).post_min_photo_count ?? d.post_min_photo_count ?? 1).toString());
           setAllowPostOrReel((c as any).allow_post_or_reel ?? false);
           setAvailabilityType((c as any).availability_type ?? "ongoing");
           setStartDate(c.start_date ?? "");
@@ -171,7 +173,15 @@ const VenueCampaignCreate = () => {
       instagram_offers: igOffers,
       tiktok_offers: tkEnabled ? tkOffers : [],
       handles,
-      deliverables: { stories, reels, posts },
+      deliverables: {
+        stories,
+        reels,
+        posts,
+        reel_min_duration_seconds: reels > 0 && reelMinDuration ? parseInt(reelMinDuration) : null,
+        post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
+      },
+      reel_min_duration_seconds: reels > 0 && reelMinDuration ? parseInt(reelMinDuration) : null,
+      post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
       allow_post_or_reel: allowPostOrReel,
       availability_type: availabilityType,
       start_date: startDate || null,
