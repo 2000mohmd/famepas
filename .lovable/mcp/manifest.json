@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://dvauueqtqrveqcckfrjx.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "remix-of-connect-create-platform",
+      "version": "0.1.0",
+      "title": "Remix of Connect & Create Platform"
+    },
+    "tools": [
+      {
+        "name": "list_offers",
+        "title": "List offers",
+        "description": "List active FamePass venue offers/campaigns, optionally filtered by city, offer type, or a text search on the title.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Text to match in the offer title."
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Filter by venue city."
+            },
+            "offer_type": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Filter by offer type."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "description": "Max offers to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_offer",
+        "title": "Get offer",
+        "description": "Get the full details of a single FamePass offer, including the venue that published it.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "offer_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The offer id."
+            }
+          },
+          "required": [
+            "offer_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "apply_to_offer",
+        "title": "Apply to an offer",
+        "description": "Apply the signed-in influencer to a FamePass offer. Creates a pending redemption the venue can approve.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "offer_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The offer to apply to."
+            },
+            "preferred_date": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Preferred visit date, ISO format (YYYY-MM-DD)."
+            }
+          },
+          "required": [
+            "offer_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_bookings",
+        "title": "List my bookings",
+        "description": "List the signed-in user's FamePass bookings (as influencer, or as venue owner for their venues), newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Filter by booking status, e.g. upcoming, checked_in, completed."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Get the signed-in user's FamePass profile (name, handles, followers, score) and the venues they own, if any.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
