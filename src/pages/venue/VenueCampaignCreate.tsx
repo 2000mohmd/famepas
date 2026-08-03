@@ -237,6 +237,8 @@ const VenueCampaignCreate = () => {
         ends_at: endDate || null,
         is_active: mode === "live" && !inviteOnly,
         requirements: firstIg?.offer || null,
+        reel_min_duration_seconds: reels > 0 && reelMinDuration ? parseInt(reelMinDuration) : null,
+        post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
       };
       const { data: existingOffer } = await sb.from("offers").select("id").eq("campaign_id", campaignId).maybeSingle();
       if (existingOffer?.id) {
