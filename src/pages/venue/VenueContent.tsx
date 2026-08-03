@@ -213,6 +213,29 @@ const VenueContent = () => {
                         </>
                       )}
                     </div>
+                    {d.status === "approved" && (
+                      <div className="mt-3 border-t border-border pt-2">
+                        <p className="text-[11px] text-muted-foreground mb-1">Content quality</p>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => rateQuality(d, n)}
+                              className="p-0.5"
+                              aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                            >
+                              <Star className={`w-4 h-4 ${n <= (d.content_quality_rating ?? 0) ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+                            </button>
+                          ))}
+                          {d.content_quality_rating ? (
+                            <span className="ml-2 text-[11px] text-muted-foreground">{d.content_quality_rating}/5</span>
+                          ) : (
+                            <span className="ml-2 text-[11px] text-muted-foreground">Not rated</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     {d.feedback && d.status === "rejected" && (
                       <p className="mt-3 text-xs text-red-600 border-t border-border pt-2">Feedback: {d.feedback}</p>
                     )}
