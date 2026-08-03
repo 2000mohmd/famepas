@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2 } from "lucide-react";
+import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
