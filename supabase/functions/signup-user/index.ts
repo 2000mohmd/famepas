@@ -75,8 +75,9 @@ serve(async (req) => {
         country: country || null,
         niche: Array.isArray(niche) ? niche : (niche ? [niche] : null),
         followers_count: followers_count || 0,
-        // Auto-approve influencers during development so they can immediately access the app
-        approval_status: "approved",
+        // Influencers go through the same admin approval gate as venues
+        approval_status: "pending",
+
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
