@@ -292,9 +292,13 @@ const InfluencerSignup = () => {
         }
       }
 
+      // New influencers start as "pending" — sign the temporary session out and
+      // show a review confirmation instead of routing into the dashboard.
+      await supabase.auth.signOut();
+
       setStep("done");
-      toast({ title: "Welcome to FamePass!", description: "Your creator account is ready." });
-      setTimeout(() => navigate("/influencer/explore", { replace: true }), 600);
+      toast({ title: "Application submitted", description: "Your creator account is under review." });
+
     } catch (e) {
       const message = e instanceof Error ? e.message : "Please try again.";
       const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
