@@ -153,7 +153,7 @@ serve(async (req) => {
               <p><strong>Category:</strong> ${venue_category || "dining"}</p>
               <p><strong>Owner email:</strong> ${email}</p>
               <p style="margin-top:24px;">
-                <a href="https://famepas.lovable.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
+                <a href="https://famepass.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
               </p>
             </div>`;
           await fetch("https://connector-gateway.lovable.dev/resend/emails", {
