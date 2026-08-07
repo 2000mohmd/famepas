@@ -92,9 +92,22 @@ const AdminInfluencers = () => {
 
   const setApprovalStatus = async (userId: string, status: "approved" | "rejected") => {
     const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: status === "approved" ? "Influencer approved" : "Influencer rejected" }); fetchInfluencers(); }
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    if (status === "approved") {
+      const { data, error: mailErr } = await supabase.functions.invoke("send-approval-email", {
+        body: { kind: "influencer", user_id: userId },
+      });
+      if (mailErr || (data as any)?.success === false) {
+        toast({ title: "Influencer approved", description: "Approval email could not be sent.", variant: "destructive" });
+      } else {
+        toast({ title: "Influencer approved", description: "Approval email sent." });
+      }
+    } else {
+      toast({ title: "Influencer rejected" });
+    }
+    fetchInfluencers();
   };
+
 
   const sendWarning = async () => {
     if (!warningTarget || !warningMessage.trim() || !user) return;

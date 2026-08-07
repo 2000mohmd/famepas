@@ -75,8 +75,9 @@ serve(async (req) => {
         country: country || null,
         niche: Array.isArray(niche) ? niche : (niche ? [niche] : null),
         followers_count: followers_count || 0,
-        // Auto-approve influencers during development so they can immediately access the app
-        approval_status: "approved",
+        // Influencers go through the same admin approval gate as venues
+        approval_status: "pending",
+
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
@@ -152,7 +153,7 @@ serve(async (req) => {
               <p><strong>Category:</strong> ${venue_category || "dining"}</p>
               <p><strong>Owner email:</strong> ${email}</p>
               <p style="margin-top:24px;">
-                <a href="https://famepas.lovable.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
+                <a href="https://famepass.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
               </p>
             </div>`;
           await fetch("https://connector-gateway.lovable.dev/resend/emails", {

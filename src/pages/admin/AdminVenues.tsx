@@ -81,8 +81,19 @@ const AdminVenues = () => {
 
   const setApprovalStatus = async (id: string, status: string) => {
     await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
+    if (status === "approved") {
+      const { data, error } = await supabase.functions.invoke("send-approval-email", {
+        body: { kind: "venue", venue_id: id },
+      });
+      if (error || (data as any)?.success === false) {
+        toast({ title: "Venue approved", description: "Approval email could not be sent.", variant: "destructive" });
+      } else {
+        toast({ title: "Venue approved", description: "Approval email sent." });
+      }
+    }
     fetchVenues();
   };
+
 
   const deleteVenue = async (id: string, name: string) => {
     const { error } = await supabase.functions.invoke("delete-user", { body: { venue_id: id } });
