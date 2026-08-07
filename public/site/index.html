@@ -84,9 +84,34 @@
 			width: 100% !important;
 			max-width: 100vw !important;
 		}
+		/* Buttons / links must never be squeezed into a narrow column */
+		#main a[data-framer-name*="Button"],
+		#main a[data-framer-component-type="Link"],
+		#main [data-framer-name="Button"],
+		#main [data-framer-name*="CTA"] {
+			width: auto !important;
+			max-width: 100% !important;
+			flex: 0 0 auto !important;
+			white-space: nowrap !important;
+		}
+		#main a p,
+		#main button p,
+		#main a [data-framer-component-type="RichTextContainer"],
+		#main button [data-framer-component-type="RichTextContainer"] {
+			width: auto !important;
+			max-width: none !important;
+			white-space: nowrap !important;
+			word-break: normal !important;
+			text-align: center !important;
+		}
+		/* Keep spacing around the cursive headline fragment */
+		#main h1 em, #main h2 em,
+		#main h1 i, #main h2 i { padding: 0 0.12em; word-spacing: 0.18em; }
+
 		/* Safety: prevent horizontal overflow of the whole page */
 		html, body { overflow-x: hidden !important; }
 	}
+
 	</style>
 	<meta name="generator" content="Framer 1a93ff7">
 	<title>FamePass</title>
