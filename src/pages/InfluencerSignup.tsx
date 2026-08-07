@@ -585,7 +585,11 @@ const InfluencerSignup = () => {
           <div className="w-16 h-16 mx-auto rounded-full bg-[#fbf6e8] flex items-center justify-center mb-4">
             <Sparkles className="w-8 h-8 text-[#b8923a]" />
           </div>
-          <Heading title="You're in! 🎉" sub="Taking you to your creator dashboard..." />
+          <Heading
+            title="Your application is under review"
+            sub="Thanks for signing up! Our team reviews every creator profile before granting access. You'll get an email at the address you provided as soon as your account is approved — then you can sign in and start applying to offers."
+          />
+          <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
         </Card>
       </div>
     </Page>
@@ -593,3 +597,4 @@ const InfluencerSignup = () => {
 };
 
 export default InfluencerSignup;
+
