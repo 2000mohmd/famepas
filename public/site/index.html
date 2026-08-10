@@ -65,25 +65,42 @@
 			filter: none !important;
 			opacity: 1 !important;
 		}
-		/* Trusted-by paragraph and other body copy: wrap and scale on mobile */
+		/* Body copy: wrap and scale on mobile (never force a narrow column) */
 		#main p,
 		#main [data-framer-component-type="RichTextContainer"] p,
 		#main .framer-styles-preset-1ein9ie,
-		#main [data-framer-name="Trusted by 1,000+ brands"],
+		#main [data-framer-name="Trusted by 1,000+ brands"] p,
 		#main [data-framer-name="Stars Ratings"] p {
+			width: auto !important;
 			max-width: 100% !important;
 			white-space: normal !important;
-			word-break: break-word;
+			word-break: normal !important;
+			overflow-wrap: break-word !important;
 			text-align: center !important;
 			font-size: clamp(13px, 3.6vw, 16px) !important;
 			line-height: 1.4 !important;
 		}
+		/* Tagline pills / badges: size to their content, stay on one row */
 		#main [data-framer-name="Stars Ratings"],
 		#main [data-framer-name="Trusted by 1,000+ brands"] {
+			flex-direction: row !important;
 			flex-wrap: wrap !important;
-			width: 100% !important;
-			max-width: 100vw !important;
+			width: auto !important;
+			min-width: 0 !important;
+			max-width: 100% !important;
 		}
+		#main .framer-1at3z78,
+		#main [data-framer-name="Trusted by 1,000+ brands"] {
+			white-space: nowrap !important;
+		}
+		#main .framer-1at3z78 p,
+		#main [data-framer-name="Trusted by 1,000+ brands"] p {
+			white-space: nowrap !important;
+			overflow-wrap: normal !important;
+			font-size: clamp(11px, 3.2vw, 14px) !important;
+		}
+
+
 		/* Buttons / links must never be squeezed into a narrow column */
 		#main a[data-framer-name*="Button"],
 		#main a[data-framer-component-type="Link"],
