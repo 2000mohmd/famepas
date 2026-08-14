@@ -300,6 +300,21 @@ const VenueContent = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={!!disputeFor} onOpenChange={(o) => !o && setDisputeFor(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Flag this delivery</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Tell us what wasn't delivered as promised. Our team reviews flagged deliveries.
+            </p>
+            <Textarea placeholder="Describe the issue…" value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)} rows={5} />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDisputeFor(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={submitDispute} disabled={!disputeReason.trim()}>Flag for review</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </DashboardLayout>
   );
