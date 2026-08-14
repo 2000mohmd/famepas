@@ -16,6 +16,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { useState } from "react";
+import { notifyEmail } from "@/lib/notify";
 
 const InfluencerBookings = () => {
   const { user } = useAuth();
@@ -124,6 +125,7 @@ const InfluencerBookings = () => {
         submitted_at: new Date().toISOString(),
       }).select("id").single();
       if (error) throw error;
+      if (inserted?.id) notifyEmail({ event: "content_submitted", deliverable_id: inserted.id });
 
       // Auto-fetch real metrics from Instagram/TikTok via RapidAPI
       if (inserted?.id && url && (url.includes("instagram.com") || url.includes("tiktok.com"))) {

@@ -16,6 +16,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
+import { notifyEmail } from "@/lib/notify";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
 const defaultCenter = { lat: 25.2048, lng: 55.2708 };
@@ -127,12 +128,13 @@ const InfluencerExplore = () => {
 
   const applyMutation = useMutation({
     mutationFn: async (offerId: string) => {
-      const { error } = await supabase.from("offer_redemptions").insert({
+      const { data: inserted, error } = await supabase.from("offer_redemptions").insert({
         offer_id: offerId,
         influencer_id: user!.id,
         status: "pending",
-      });
+      }).select("id").single();
       if (error) throw error;
+      if (inserted?.id) notifyEmail({ event: "application_submitted", redemption_id: inserted.id });
     },
     onSuccess: () => {
       toast({ title: "Application submitted!", description: "The venue will review your application." });
