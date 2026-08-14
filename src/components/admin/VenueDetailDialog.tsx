@@ -22,7 +22,8 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
     if (!venueId || !open) return;
     setLoading(true);
     (async () => {
-      const { data: v } = await supabase.from("venues").select("*").eq("id", venueId).maybeSingle();
+      const { data: vRows } = await supabase.rpc("get_venue_full" as any, { _venue_id: venueId });
+      const v: any = (vRows as any[])?.[0] ?? null;
       setVenue(v);
       if (v?.owner_id) {
         const { data: p } = await supabase.from("profiles").select("full_name, avatar_url, phone").eq("user_id", v.owner_id).maybeSingle();

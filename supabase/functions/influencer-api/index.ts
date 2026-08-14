@@ -291,7 +291,7 @@ serve(async (req) => {
     if (path.match(/^\/offers\/[^/]+$/) && method === "GET") {
       const offerId = path.split("/")[2];
       const { data, error } = await supabase.from("offers")
-        .select("*, venues(*), categories!category_id(id, name, icon, color)")
+        .select("*, venues(id, name, description, category, city, country, address, latitude, longitude, logo_url, cover_image_url, website), categories!category_id(id, name, icon, color)")
         .eq("id", offerId).single();
       if (error) return errorResponse(error.message);
       const [redemption, saved, reviews] = await Promise.all([

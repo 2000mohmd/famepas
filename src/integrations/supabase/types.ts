@@ -2098,6 +2098,51 @@ export type Database = {
           whatsapp_phone: string
         }[]
       }
+      get_venue_full: {
+        Args: { _venue_id?: string }
+        Returns: {
+          address: string | null
+          address_line1: string | null
+          address_line2: string | null
+          approval_status: string
+          brand_id: string | null
+          cancellation_policy: boolean
+          categories: string[]
+          category: string
+          city: string | null
+          contact_person_name: string | null
+          contact_phone: string | null
+          country: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          logo_url: string | null
+          longitude: number | null
+          name: string
+          owner_id: string
+          phone: string | null
+          require_ad_disclosure: boolean
+          require_venue_tag: boolean
+          signup_completed: boolean
+          subscription_tier_id: string | null
+          timezone: string | null
+          updated_at: string
+          venue_type: string
+          website: string | null
+          whatsapp_phone: string | null
+          zip_code: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "venues"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_admin_permission: {
         Args: { _permission: string; _user_id: string }

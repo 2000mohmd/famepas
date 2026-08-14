@@ -143,9 +143,8 @@ const VenueSettings = () => {
 
   const load = async () => {
     if (!user) return;
-    const { data: v } = await supabase
-      .from("venues").select("*").eq("owner_id", user.id)
-      .order("created_at", { ascending: true }).limit(1).maybeSingle();
+    const { data: vList } = await supabase.rpc("get_venue_full" as any);
+    const v: any = (vList as any[])?.[0] ?? null;
     if (!v) return;
     setVenue(v);
     setPName(v.name || "");

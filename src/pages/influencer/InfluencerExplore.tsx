@@ -106,7 +106,7 @@ const InfluencerExplore = () => {
     queryFn: async () => {
       let query = supabase
         .from("venues")
-        .select("*")
+        .select("id, name, description, category, categories, city, country, address, latitude, longitude, logo_url, cover_image_url, website, is_active, approval_status")
         .eq("is_active", true)
         .eq("approval_status", "approved");
       const { data } = await query;

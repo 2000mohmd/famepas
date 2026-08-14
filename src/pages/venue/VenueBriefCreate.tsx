@@ -65,9 +65,7 @@ const VenueBriefCreate = () => {
   useEffect(() => {
     (async () => {
       if (!user) return;
-      const { data: vs } = await supabase
-        .from("venues").select("*").eq("owner_id", user.id)
-        .order("created_at", { ascending: true });
+      const { data: vs } = await supabase.rpc("get_venue_full" as any);
       const list = vs ?? [];
       if (!list.length) return;
       setVenue(list[0]);

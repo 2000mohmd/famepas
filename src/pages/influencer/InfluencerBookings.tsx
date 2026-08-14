@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, KeyRound, Upload, Loader2, CheckCircle2, BarChart3, RefreshCw, ExternalLink } from "lucide-react";
+import { CalendarDays, KeyRound, Upload, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -29,15 +29,6 @@ const InfluencerBookings = () => {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Check-in OTP dialog
-  const [checkInFor, setCheckInFor] = useState<any | null>(null);
-  const [otp, setOtp] = useState("");
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-
-  // Stats editor
-  const [statsFor, setStatsFor] = useState<any | null>(null);
-  const [stats, setStats] = useState({ views: 0, likes: 0, comments: 0, shares: 0 });
-  const [savingStats, setSavingStats] = useState(false);
 
   const { data: bookings } = useQuery({
     queryKey: ["my-bookings", user?.id],
@@ -51,45 +42,6 @@ const InfluencerBookings = () => {
     },
     enabled: !!user,
   });
-
-  const completeBooking = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("bookings").update({ completed_at: new Date().toISOString(), status: "completed" }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Visit marked as completed" });
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    },
-  });
-
-  const verifyAndCheckIn = async () => {
-    if (!checkInFor) return;
-    const code = otp.trim().toUpperCase();
-    if (!code) return;
-    setVerifyingOtp(true);
-    try {
-      const expected = (checkInFor.offer_redemptions?.qr_code ?? "").toUpperCase();
-      if (!expected) {
-        toast({ title: "No code on file", description: "Ask the venue to provide a check-in code.", variant: "destructive" });
-        return;
-      }
-      if (expected !== code) {
-        toast({ title: "Invalid code", description: "That code doesn't match this booking.", variant: "destructive" });
-        return;
-      }
-      const now = new Date().toISOString();
-      const { error } = await supabase.from("bookings").update({ checked_in_at: now, status: "checked_in" }).eq("id", checkInFor.id);
-      if (error) throw error;
-      toast({ title: "Checked in successfully!" });
-      setCheckInFor(null); setOtp("");
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setVerifyingOtp(false);
-    }
-  };
 
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
@@ -141,37 +93,6 @@ const InfluencerBookings = () => {
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const openStats = (deliverable: any) => {
-    setStatsFor(deliverable);
-    setStats({
-      views: deliverable.views ?? 0,
-      likes: deliverable.likes ?? 0,
-      comments: deliverable.comments ?? 0,
-      shares: deliverable.shares ?? 0,
-    });
-  };
-
-  const saveStats = async () => {
-    if (!statsFor) return;
-    setSavingStats(true);
-    try {
-      const { error } = await supabase.from("deliverables").update({
-        views: Number(stats.views) || 0,
-        likes: Number(stats.likes) || 0,
-        comments: Number(stats.comments) || 0,
-        shares: Number(stats.shares) || 0,
-      }).eq("id", statsFor.id);
-      if (error) throw error;
-      toast({ title: "Stats updated" });
-      setStatsFor(null);
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setSavingStats(false);
     }
   };
 
@@ -230,21 +151,14 @@ const InfluencerBookings = () => {
               </Button>
             )}
             {booking.status === "upcoming" && (
-              <Button size="sm" onClick={() => { setCheckInFor(booking); setOtp(""); }}>
-                <KeyRound className="w-4 h-4 mr-1" /> Check In
-              </Button>
+              <p className="text-[11px] text-muted-foreground max-w-[180px] text-right">
+                The venue confirms your check-in with the code above.
+              </p>
             )}
-            {booking.status === "checked_in" && (
-              <>
-                <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
-                  <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
-                </Button>
-                {!hasDeliverable && (
-                  <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
-                    <Upload className="w-4 h-4 mr-1" /> Share Post Link
-                  </Button>
-                )}
-              </>
+            {booking.status === "checked_in" && !hasDeliverable && (
+              <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
+                <Upload className="w-4 h-4 mr-1" /> Share Post Link
+              </Button>
             )}
             {booking.status === "completed" && !hasDeliverable && (
               <Button size="sm" onClick={() => setUploadFor(booking)}>
@@ -254,11 +168,6 @@ const InfluencerBookings = () => {
             {booking.status === "completed" && deliverable?.status === "rejected" && (
               <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
                 <Upload className="w-4 h-4 mr-1" /> Resubmit
-              </Button>
-            )}
-            {hasDeliverable && deliverable.status !== "rejected" && (
-              <Button size="sm" variant="outline" onClick={() => openStats(deliverable)}>
-                <BarChart3 className="w-4 h-4 mr-1" /> Update stats
               </Button>
             )}
           </div>
@@ -340,33 +249,6 @@ const InfluencerBookings = () => {
         </Tabs>
       </div>
 
-      {/* Check-in OTP dialog */}
-      <Dialog open={!!checkInFor} onOpenChange={(o) => { if (!o) { setCheckInFor(null); setOtp(""); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Check in to your visit</DialogTitle>
-            <DialogDescription>
-              Show the code below to the venue staff so they can verify your visit, then tap "Verify & Check In" to confirm.
-            </DialogDescription>
-          </DialogHeader>
-          {checkInFor?.offer_redemptions?.qr_code && (
-            <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-center">
-              <p className="text-[11px] text-muted-foreground mb-1">Your check-in code</p>
-              <p className="text-2xl font-mono tracking-widest font-bold text-foreground">{checkInFor.offer_redemptions.qr_code}</p>
-            </div>
-          )}
-          <Input
-            value={otp}
-            onChange={e => setOtp(e.target.value.toUpperCase())}
-            placeholder="e.g. AB12CD34EF56"
-            className="font-mono tracking-wider text-center"
-            maxLength={20}
-          />
-          <Button onClick={verifyAndCheckIn} disabled={verifyingOtp || !otp.trim()} className="w-full">
-            {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Verify & Check In</>}
-          </Button>
-        </DialogContent>
-      </Dialog>
 
       {/* Content upload dialog */}
       <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) resetUpload(); }}>
@@ -422,33 +304,6 @@ const InfluencerBookings = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Update stats dialog */}
-      <Dialog open={!!statsFor} onOpenChange={(o) => !o && setStatsFor(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Update post stats</DialogTitle>
-            <DialogDescription>
-              Paste the latest metrics from your post so the venue sees real engagement.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            {(["views", "likes", "comments", "shares"] as const).map(k => (
-              <div key={k}>
-                <Label className="text-xs capitalize">{k}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={stats[k]}
-                  onChange={e => setStats(s => ({ ...s, [k]: Number(e.target.value) }))}
-                />
-              </div>
-            ))}
-          </div>
-          <Button onClick={saveStats} disabled={savingStats} className="w-full">
-            {savingStats ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save stats"}
-          </Button>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
