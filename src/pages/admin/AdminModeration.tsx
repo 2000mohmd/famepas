@@ -41,6 +41,30 @@ interface Deliverable {
 const AdminModeration = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+  const [disputes, setDisputes] = useState<any[]>([]);
+
+  const fetchDisputes = async () => {
+    const { data } = await supabase
+      .from("deliverables")
+      .select("id, content_type, post_url, content_url, status, dispute_reason, disputed_at, influencer_id")
+      .eq("disputed", true)
+      .order("disputed_at", { ascending: false });
+    const rows = (data as any[]) ?? [];
+    const ids = Array.from(new Set(rows.map((r) => r.influencer_id).filter(Boolean)));
+    let map = new Map<string, string>();
+    if (ids.length) {
+      const { data: profs } = await supabase.rpc("get_public_profiles_basic", { _user_ids: ids });
+      map = new Map(((profs as any[]) ?? []).map((p) => [p.user_id, p.full_name]));
+    }
+    setDisputes(rows.map((r) => ({ ...r, influencer_name: map.get(r.influencer_id) ?? "Influencer" })));
+  };
+
+  const resolveDispute = async (id: string) => {
+    const { error } = await supabase.from("deliverables").update({ disputed: false } as any).eq("id", id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Dispute resolved" });
+    fetchDisputes();
+  };
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "hidden" | "public">("all");
   const [rejectTarget, setRejectTarget] = useState<Deliverable | null>(null);
@@ -102,7 +126,7 @@ const AdminModeration = () => {
     })));
   };
 
-  useEffect(() => { fetchReviews(); fetchDeliverables(); }, []);
+  useEffect(() => { fetchReviews(); fetchDeliverables(); fetchDisputes(); }, []);
 
   const toggleHidden = async (id: string, hidden: boolean) => {
     const { error } = await supabase.from("reviews").update({ is_hidden: !hidden } as any).eq("id", id);
@@ -179,7 +203,36 @@ const AdminModeration = () => {
                 <Badge className="bg-gold text-background ml-1">{deliverables.length}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="disputes" className="gap-2">
+              Disputes
+              {disputes.length > 0 && <Badge variant="destructive" className="text-xs">{disputes.length}</Badge>}
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="disputes" className="mt-6">
+            {disputes.length === 0 ? (
+              <div className="bg-white border border-border rounded-2xl py-16 text-center text-muted-foreground">
+                No flagged deliveries.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {disputes.map((d) => (
+                  <div key={d.id} className="bg-white border border-border rounded-xl p-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{d.influencer_name} · <span className="capitalize">{d.content_type || "content"}</span></p>
+                      <p className="text-sm text-muted-foreground mt-1">{d.dispute_reason || "No reason provided."}</p>
+                      {(d.post_url || d.content_url) && (
+                        <a href={d.post_url || d.content_url} target="_blank" rel="noreferrer" className="text-xs text-gold inline-flex items-center gap-1 mt-2">
+                          Open content <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => resolveDispute(d.id)}>Mark resolved</Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="reviews" className="mt-6">
             <div className="flex flex-wrap gap-4 mb-6">
