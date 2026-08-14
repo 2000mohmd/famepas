@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { notifyEmail } from "@/lib/notify";
 
 interface Category { id: string; name: string; }
 interface Location { id: string; city: string; }
@@ -82,14 +83,19 @@ const AdminVenues = () => {
   const setApprovalStatus = async (id: string, status: string) => {
     await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
     if (status === "approved") {
-      const { data, error } = await supabase.functions.invoke("send-approval-email", {
-        body: { kind: "venue", venue_id: id },
+      const sent = await notifyEmail({ event: "venue_approved", venue_id: id });
+      toast({
+        title: "Venue approved",
+        description: sent ? "Approval email sent." : "Approval email could not be sent.",
+        variant: sent ? undefined : "destructive",
       });
-      if (error || (data as any)?.success === false) {
-        toast({ title: "Venue approved", description: "Approval email could not be sent.", variant: "destructive" });
-      } else {
-        toast({ title: "Venue approved", description: "Approval email sent." });
-      }
+    } else if (status === "rejected") {
+      const sent = await notifyEmail({ event: "venue_rejected", venue_id: id });
+      toast({
+        title: "Venue rejected",
+        description: sent ? "Notification email sent." : "Notification email could not be sent.",
+        variant: sent ? undefined : "destructive",
+      });
     }
     fetchVenues();
   };

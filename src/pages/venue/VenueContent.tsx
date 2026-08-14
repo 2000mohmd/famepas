@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { notifyEmail } from "@/lib/notify";
 
 type Tab = "all" | "submitted" | "approved" | "rejected";
 
@@ -114,6 +115,7 @@ const VenueContent = () => {
     }).eq("id", d.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Approved", description: "Content marked as approved." });
+    notifyEmail({ event: "content_approved", deliverable_id: d.id });
     load();
   };
 
@@ -124,6 +126,7 @@ const VenueContent = () => {
     }).eq("id", rejectFor.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Changes requested", description: "Influencer has been notified." });
+    notifyEmail({ event: "content_rejected", deliverable_id: rejectFor.id, feedback });
     setRejectFor(null); setFeedback(""); load();
   };
 

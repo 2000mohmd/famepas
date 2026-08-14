@@ -20,6 +20,7 @@ import {
   Heart,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { notifyEmail } from "@/lib/notify";
 
 const InfluencerOffer = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,12 +74,13 @@ const InfluencerOffer = () => {
 
   const apply = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("offer_redemptions").insert({
+      const { data: inserted, error } = await supabase.from("offer_redemptions").insert({
         offer_id: id!,
         influencer_id: user!.id,
         status: "pending",
-      });
+      }).select("id").single();
       if (error) throw error;
+      if (inserted?.id) notifyEmail({ event: "application_submitted", redemption_id: inserted.id });
     },
     onSuccess: () => {
       toast({ title: "Application submitted!", description: "The venue will review your application." });
@@ -435,6 +437,7 @@ const PostUrlBlock = ({
         }).select("id").single();
         if (error) throw error;
         id = data.id;
+        notifyEmail({ event: "content_submitted", deliverable_id: id });
       }
       // best-effort metrics scrape
       if (id && (clean.includes("instagram.com") || clean.includes("tiktok.com"))) {
