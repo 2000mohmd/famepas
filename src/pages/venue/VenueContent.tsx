@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star } from "lucide-react";
+import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,21 @@ const VenueContent = () => {
   const [rejectFor, setRejectFor] = useState<any | null>(null);
   const [feedback, setFeedback] = useState("");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [disputeFor, setDisputeFor] = useState<any | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
+
+  const submitDispute = async () => {
+    if (!disputeFor) return;
+    const { error } = await supabase.from("deliverables").update({
+      disputed: true,
+      dispute_reason: disputeReason || null,
+      disputed_at: new Date().toISOString(),
+      disputed_by: user?.id ?? null,
+    } as any).eq("id", disputeFor.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Flagged for review", description: "Our team will look into this delivery." });
+    setDisputeFor(null); setDisputeReason(""); load();
+  };
 
   const rateQuality = async (d: any, rating: number) => {
     const { error } = await supabase
@@ -231,6 +246,15 @@ const VenueContent = () => {
                           <Button size="sm" onClick={() => approve(d)}><Check className="w-3 h-3 mr-1"/>Approve</Button>
                           <Button size="sm" variant="outline" onClick={() => { setRejectFor(d); setFeedback(""); }}><X className="w-3 h-3 mr-1"/>Request changes</Button>
                         </>
+                      )}
+                      {d.disputed ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 inline-flex items-center gap-1">
+                          <Flag className="w-3 h-3" /> Flagged for review
+                        </span>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { setDisputeFor(d); setDisputeReason(""); }}>
+                          <Flag className="w-3 h-3 mr-1" />Flag issue
+                        </Button>
                       )}
                     </div>
                     {d.status === "approved" && (
