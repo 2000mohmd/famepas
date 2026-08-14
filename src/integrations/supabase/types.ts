@@ -482,6 +482,10 @@ export type Database = {
           content_type: string
           content_url: string | null
           created_at: string
+          dispute_reason: string | null
+          disputed: boolean
+          disputed_at: string | null
+          disputed_by: string | null
           external_post_id: string | null
           feedback: string | null
           id: string
@@ -512,6 +516,10 @@ export type Database = {
           content_type?: string
           content_url?: string | null
           created_at?: string
+          dispute_reason?: string | null
+          disputed?: boolean
+          disputed_at?: string | null
+          disputed_by?: string | null
           external_post_id?: string | null
           feedback?: string | null
           id?: string
@@ -542,6 +550,10 @@ export type Database = {
           content_type?: string
           content_url?: string | null
           created_at?: string
+          dispute_reason?: string | null
+          disputed?: boolean
+          disputed_at?: string | null
+          disputed_by?: string | null
           external_post_id?: string | null
           feedback?: string | null
           id?: string
@@ -1033,6 +1045,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "offer_redemptions_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_views: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_views_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "offers"

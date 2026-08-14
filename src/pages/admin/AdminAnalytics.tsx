@@ -17,6 +17,11 @@ type RangeKey = "7" | "30" | "90" | "custom";
 
 const AdminAnalytics = () => {
   const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0, liveOffers: 0 });
+  const [sub, setSub] = useState({
+    venuesSignedUp: 0, venuesPosted: 0,
+    influencersActive: 0, influencersRegistered: 0,
+    offersLive: 0, offersDone: 0,
+  });
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [topVenues, setTopVenues] = useState<{ name: string; redemptions: number }[]>([]);
   const [cityFilter, setCityFilter] = useState("all");
@@ -24,6 +29,7 @@ const AdminAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [rangeKey, setRangeKey] = useState<RangeKey>("30");
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
+
 
   const { fromISO, toISO, rangeLabel } = useMemo(() => {
     if (rangeKey === "custom" && customRange?.from) {
@@ -80,6 +86,52 @@ const AdminAnalytics = () => {
         offers: offers.count ?? 0,
         liveOffers: liveOffers.count ?? 0,
       });
+
+      // ---- Sub-metric breakdowns for the same range ----
+      const [signups, postedRows, redRows, delRows, infProfiles, liveNow] = await Promise.all([
+        (() => {
+          let q = supabase.from("venues").select("id", { count: "exact", head: true })
+            .gte("created_at", fromISO).lte("created_at", toISO);
+          if (cityFilter !== "all") q = q.eq("city", cityFilter);
+          return q;
+        })(),
+        supabase.from("offers").select("venue_id").gte("created_at", fromISO).lte("created_at", toISO),
+        supabase.from("offer_redemptions").select("influencer_id, status, redeemed_at, offer_id")
+          .gte("created_at", fromISO).lte("created_at", toISO),
+        supabase.from("deliverables").select("influencer_id").gte("created_at", fromISO).lte("created_at", toISO),
+        supabase.from("user_roles").select("user_id").eq("role", "influencer"),
+        supabase.from("offers").select("id, is_active, ends_at").eq("is_active", true),
+      ]);
+
+      const postedVenueIds = new Set((postedRows.data ?? []).map((o: any) => o.venue_id));
+      const activeInfluencerIds = new Set([
+        ...(redRows.data ?? []).map((r: any) => r.influencer_id),
+        ...(delRows.data ?? []).map((d: any) => d.influencer_id),
+      ]);
+      const infIds = (infProfiles.data ?? []).map((r: any) => r.user_id);
+      let registered = 0;
+      if (infIds.length) {
+        const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true })
+          .in("user_id", infIds).gte("created_at", fromISO).lte("created_at", toISO);
+        registered = count ?? 0;
+      }
+      const nowMs = Date.now();
+      const liveRightNow = (liveNow.data ?? []).filter((o: any) => !o.ends_at || new Date(o.ends_at).getTime() > nowMs).length;
+      const doneOfferIds = new Set(
+        (redRows.data ?? [])
+          .filter((r: any) => ["redeemed", "completed"].includes(r.status))
+          .map((r: any) => r.offer_id)
+      );
+
+      setSub({
+        venuesSignedUp: signups.count ?? 0,
+        venuesPosted: postedVenueIds.size,
+        influencersActive: activeInfluencerIds.size,
+        influencersRegistered: registered,
+        offersLive: liveRightNow,
+        offersDone: doneOfferIds.size,
+      });
+
 
       // Build category distribution from venues
       const catMap: Record<string, number> = {};
@@ -166,15 +218,39 @@ const AdminAnalytics = () => {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground mb-4">Showing data for {rangeLabel.toLowerCase()}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <p className="text-xs text-muted-foreground">Showing data for {rangeLabel.toLowerCase()}</p>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/admin/analytics/deep">Open deep analytics</Link>
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <StatCard title="Active Venues" value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? `In ${cityFilter}` : "Platform-wide"} trendUp />
-          <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="New in range" trendUp />
+          <div className="space-y-2">
+            <StatCard title="Active Venues" value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? `In ${cityFilter}` : "Platform-wide"} trendUp />
+            <div className="px-1 text-xs text-muted-foreground space-y-0.5">
+              <p><span className="text-foreground font-medium">{sub.venuesSignedUp}</span> signed up</p>
+              <p><span className="text-foreground font-medium">{sub.venuesPosted}</span> posted an offer</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="New in range" trendUp />
+            <div className="px-1 text-xs text-muted-foreground space-y-0.5">
+              <p><span className="text-foreground font-medium">{sub.influencersActive}</span> claimed or delivered something</p>
+              <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered</p>
+            </div>
+          </div>
           <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} redemptions`} trendUp={redemptionRate > 50} />
-          <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+          <div className="space-y-2">
+            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+            <div className="px-1 text-xs text-muted-foreground space-y-0.5">
+              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
+              <p><span className="text-foreground font-medium">{sub.offersDone}</span> done in the {rangeLabel.toLowerCase()}</p>
+            </div>
+          </div>
           <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active" trendUp />
         </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Venues */}
