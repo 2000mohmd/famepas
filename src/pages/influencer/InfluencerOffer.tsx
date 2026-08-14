@@ -58,6 +58,16 @@ const InfluencerOffer = () => {
     enabled: !!id && !!user,
   });
 
+  // Record a listing view (analytics). Fire-and-forget, never blocks the page.
+  React.useEffect(() => {
+    if (!id || !user?.id) return;
+    supabase.from("offer_views").insert({ offer_id: id, viewer_id: user.id }).then(({ error }) => {
+      if (error) console.error("offer view not recorded", error.message);
+    });
+  }, [id, user?.id]);
+
+
+
   const { data: isSaved } = useQuery({
     queryKey: ["saved-offer", id, user?.id],
     queryFn: async () => {
