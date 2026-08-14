@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Eye, EyeOff, Trash2, Star, Search, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { notifyEmail } from "@/lib/notify";
 
 interface Review {
   id: string;
@@ -122,7 +123,7 @@ const AdminModeration = () => {
       .update({ status: "approved", reviewed_at: new Date().toISOString() } as any)
       .eq("id", id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Content approved" }); fetchDeliverables(); }
+    else { toast({ title: "Content approved" }); notifyEmail({ event: "content_approved", deliverable_id: id }); fetchDeliverables(); }
   };
 
   const submitReject = async () => {
@@ -138,6 +139,7 @@ const AdminModeration = () => {
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else {
       toast({ title: "Content rejected" });
+      notifyEmail({ event: "content_rejected", deliverable_id: rejectTarget.id, feedback: rejectReason || undefined });
       setRejectTarget(null);
       setRejectReason("");
       fetchDeliverables();

@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import InfluencerDetailDialog from "@/components/admin/InfluencerDetailDialog";
+import { notifyEmail } from "@/lib/notify";
 
 interface Influencer {
   user_id: string;
@@ -94,16 +95,19 @@ const AdminInfluencers = () => {
     const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     if (status === "approved") {
-      const { data, error: mailErr } = await supabase.functions.invoke("send-approval-email", {
-        body: { kind: "influencer", user_id: userId },
+      const sent = await notifyEmail({ event: "influencer_approved", user_id: userId });
+      toast({
+        title: "Influencer approved",
+        description: sent ? "Approval email sent." : "Approval email could not be sent.",
+        variant: sent ? undefined : "destructive",
       });
-      if (mailErr || (data as any)?.success === false) {
-        toast({ title: "Influencer approved", description: "Approval email could not be sent.", variant: "destructive" });
-      } else {
-        toast({ title: "Influencer approved", description: "Approval email sent." });
-      }
     } else {
-      toast({ title: "Influencer rejected" });
+      const sent = await notifyEmail({ event: "influencer_rejected", user_id: userId });
+      toast({
+        title: "Influencer rejected",
+        description: sent ? "Notification email sent." : "Notification email could not be sent.",
+        variant: sent ? undefined : "destructive",
+      });
     }
     fetchInfluencers();
   };

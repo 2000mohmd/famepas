@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { notifyEmail } from "@/lib/notify";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
@@ -110,6 +111,12 @@ const VenueBookings = () => {
     const { error } = await supabase.from("offer_redemptions").update({ status, ...extra }).eq("id", r.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: `Marked ${status.replace("_", " ")}` });
+    if (status === "approved" || status === "rejected") {
+      notifyEmail({
+        event: status === "approved" ? "application_approved" : "application_rejected",
+        redemption_id: r.id,
+      });
+    }
     load();
   };
 
