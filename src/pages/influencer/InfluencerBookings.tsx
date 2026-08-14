@@ -29,11 +29,6 @@ const InfluencerBookings = () => {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Check-in OTP dialog
-  const [checkInFor, setCheckInFor] = useState<any | null>(null);
-  const [otp, setOtp] = useState("");
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-
   // Stats editor
   const [statsFor, setStatsFor] = useState<any | null>(null);
   const [stats, setStats] = useState({ views: 0, likes: 0, comments: 0, shares: 0 });
@@ -51,45 +46,6 @@ const InfluencerBookings = () => {
     },
     enabled: !!user,
   });
-
-  const completeBooking = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("bookings").update({ completed_at: new Date().toISOString(), status: "completed" }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Visit marked as completed" });
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    },
-  });
-
-  const verifyAndCheckIn = async () => {
-    if (!checkInFor) return;
-    const code = otp.trim().toUpperCase();
-    if (!code) return;
-    setVerifyingOtp(true);
-    try {
-      const expected = (checkInFor.offer_redemptions?.qr_code ?? "").toUpperCase();
-      if (!expected) {
-        toast({ title: "No code on file", description: "Ask the venue to provide a check-in code.", variant: "destructive" });
-        return;
-      }
-      if (expected !== code) {
-        toast({ title: "Invalid code", description: "That code doesn't match this booking.", variant: "destructive" });
-        return;
-      }
-      const now = new Date().toISOString();
-      const { error } = await supabase.from("bookings").update({ checked_in_at: now, status: "checked_in" }).eq("id", checkInFor.id);
-      if (error) throw error;
-      toast({ title: "Checked in successfully!" });
-      setCheckInFor(null); setOtp("");
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setVerifyingOtp(false);
-    }
-  };
 
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
@@ -230,21 +186,14 @@ const InfluencerBookings = () => {
               </Button>
             )}
             {booking.status === "upcoming" && (
-              <Button size="sm" onClick={() => { setCheckInFor(booking); setOtp(""); }}>
-                <KeyRound className="w-4 h-4 mr-1" /> Check In
-              </Button>
+              <p className="text-[11px] text-muted-foreground max-w-[180px] text-right">
+                The venue confirms your check-in with the code above.
+              </p>
             )}
-            {booking.status === "checked_in" && (
-              <>
-                <Button size="sm" onClick={() => completeBooking.mutate(booking.id)}>
-                  <CheckCircle2 className="w-4 h-4 mr-1" /> Complete
-                </Button>
-                {!hasDeliverable && (
-                  <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
-                    <Upload className="w-4 h-4 mr-1" /> Share Post Link
-                  </Button>
-                )}
-              </>
+            {booking.status === "checked_in" && !hasDeliverable && (
+              <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
+                <Upload className="w-4 h-4 mr-1" /> Share Post Link
+              </Button>
             )}
             {booking.status === "completed" && !hasDeliverable && (
               <Button size="sm" onClick={() => setUploadFor(booking)}>
@@ -340,33 +289,6 @@ const InfluencerBookings = () => {
         </Tabs>
       </div>
 
-      {/* Check-in OTP dialog */}
-      <Dialog open={!!checkInFor} onOpenChange={(o) => { if (!o) { setCheckInFor(null); setOtp(""); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Check in to your visit</DialogTitle>
-            <DialogDescription>
-              Show the code below to the venue staff so they can verify your visit, then tap "Verify & Check In" to confirm.
-            </DialogDescription>
-          </DialogHeader>
-          {checkInFor?.offer_redemptions?.qr_code && (
-            <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 text-center">
-              <p className="text-[11px] text-muted-foreground mb-1">Your check-in code</p>
-              <p className="text-2xl font-mono tracking-widest font-bold text-foreground">{checkInFor.offer_redemptions.qr_code}</p>
-            </div>
-          )}
-          <Input
-            value={otp}
-            onChange={e => setOtp(e.target.value.toUpperCase())}
-            placeholder="e.g. AB12CD34EF56"
-            className="font-mono tracking-wider text-center"
-            maxLength={20}
-          />
-          <Button onClick={verifyAndCheckIn} disabled={verifyingOtp || !otp.trim()} className="w-full">
-            {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Verify & Check In</>}
-          </Button>
-        </DialogContent>
-      </Dialog>
 
       {/* Content upload dialog */}
       <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) resetUpload(); }}>
