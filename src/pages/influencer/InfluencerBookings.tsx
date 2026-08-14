@@ -29,10 +29,6 @@ const InfluencerBookings = () => {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Stats editor
-  const [statsFor, setStatsFor] = useState<any | null>(null);
-  const [stats, setStats] = useState({ views: 0, likes: 0, comments: 0, shares: 0 });
-  const [savingStats, setSavingStats] = useState(false);
 
   const { data: bookings } = useQuery({
     queryKey: ["my-bookings", user?.id],
@@ -97,37 +93,6 @@ const InfluencerBookings = () => {
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const openStats = (deliverable: any) => {
-    setStatsFor(deliverable);
-    setStats({
-      views: deliverable.views ?? 0,
-      likes: deliverable.likes ?? 0,
-      comments: deliverable.comments ?? 0,
-      shares: deliverable.shares ?? 0,
-    });
-  };
-
-  const saveStats = async () => {
-    if (!statsFor) return;
-    setSavingStats(true);
-    try {
-      const { error } = await supabase.from("deliverables").update({
-        views: Number(stats.views) || 0,
-        likes: Number(stats.likes) || 0,
-        comments: Number(stats.comments) || 0,
-        shares: Number(stats.shares) || 0,
-      }).eq("id", statsFor.id);
-      if (error) throw error;
-      toast({ title: "Stats updated" });
-      setStatsFor(null);
-      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setSavingStats(false);
     }
   };
 
@@ -203,11 +168,6 @@ const InfluencerBookings = () => {
             {booking.status === "completed" && deliverable?.status === "rejected" && (
               <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
                 <Upload className="w-4 h-4 mr-1" /> Resubmit
-              </Button>
-            )}
-            {hasDeliverable && deliverable.status !== "rejected" && (
-              <Button size="sm" variant="outline" onClick={() => openStats(deliverable)}>
-                <BarChart3 className="w-4 h-4 mr-1" /> Update stats
               </Button>
             )}
           </div>
@@ -344,33 +304,6 @@ const InfluencerBookings = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Update stats dialog */}
-      <Dialog open={!!statsFor} onOpenChange={(o) => !o && setStatsFor(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Update post stats</DialogTitle>
-            <DialogDescription>
-              Paste the latest metrics from your post so the venue sees real engagement.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            {(["views", "likes", "comments", "shares"] as const).map(k => (
-              <div key={k}>
-                <Label className="text-xs capitalize">{k}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={stats[k]}
-                  onChange={e => setStats(s => ({ ...s, [k]: Number(e.target.value) }))}
-                />
-              </div>
-            ))}
-          </div>
-          <Button onClick={saveStats} disabled={savingStats} className="w-full">
-            {savingStats ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save stats"}
-          </Button>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
