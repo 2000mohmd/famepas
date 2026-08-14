@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { emailLayout, firstName, paragraph, sendEmail } from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,6 +82,48 @@ serve(async (req) => {
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
+
+      // Welcome / waiting-list email to the influencer (best-effort)
+      try {
+        await sendEmail({
+          to: email,
+          subject: "You're on the FamePass waiting list!",
+          html: emailLayout({
+            heading: "You're on the waiting list 🎉",
+            bodyHtml:
+              paragraph(`Hi ${firstName(full_name)},`) +
+              paragraph("Thank you for applying to join FamePass!") +
+              paragraph("Your application has been received, and you are now officially on our waiting list. We'll contact you as soon as your account is ready to be activated."),
+          }),
+        });
+      } catch (mailErr) {
+        console.error("Influencer welcome email failed", mailErr);
+      }
+
+      // Notify admin about the new influencer awaiting approval (best-effort)
+      try {
+        const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
+        if (ADMIN_EMAIL) {
+          await sendEmail({
+            to: ADMIN_EMAIL,
+            subject: `New influencer awaiting approval: ${full_name || email}`,
+            html: emailLayout({
+              heading: "New influencer awaiting approval",
+              bodyHtml:
+                paragraph(`Name: ${full_name || "—"}`) +
+                paragraph(`Email: ${email}`) +
+                paragraph(`Instagram: ${instagram_handle || "—"}`) +
+                paragraph(`TikTok: ${tiktok_handle || "—"}`) +
+                paragraph(`City: ${city || "—"}`),
+              button: { label: "Review in Admin", url: "https://famepass.app/admin/influencers" },
+            }),
+          });
+        } else {
+          console.error("Admin influencer notification skipped — missing ADMIN_EMAIL");
+        }
+      } catch (notifyErr) {
+        console.error("Admin influencer notification failed", notifyErr);
+      }
     } else {
       await new Promise(r => setTimeout(r, 300));
       const { data: existing } = await supabaseAdmin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
@@ -137,6 +180,23 @@ serve(async (req) => {
         is_active: false,
       }).select().single();
       venue = venueData;
+
+      // Application-received email to the venue (best-effort)
+      try {
+        await sendEmail({
+          to: email,
+          subject: "Your FamePass application has been received",
+          html: emailLayout({
+            heading: "Application received",
+            bodyHtml:
+              paragraph(`Hi ${firstName(contact_person_name || full_name || venue_name)},`) +
+              paragraph("Thank you for applying to join FamePass!") +
+              paragraph("Your venue application has been received and is now pending review. We'll email you as soon as it's approved."),
+          }),
+        });
+      } catch (mailErr) {
+        console.error("Venue welcome email failed", mailErr);
+      }
 
       // Notify admin that a new venue is awaiting approval.
       // Required secrets in edge function settings: ADMIN_EMAIL, LOVABLE_API_KEY, RESEND_API_KEY
