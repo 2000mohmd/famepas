@@ -13,7 +13,7 @@ const corsHeaders = {
 
 const RESEND_URL = "https://api.resend.com";
 
-const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? "FamePass <notify@famepass.app>";
+const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? "FamePass <notify@notify.famepass.app>";
 const APP_NAME = "FamePass";
 
 function buildEmail(actionType: string, confirmationUrl: string, token: string): { subject: string; html: string } {

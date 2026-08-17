@@ -28,4 +28,3 @@ verify_jwt = false
 [functions.influencer-api]
 verify_jwt = false
 
-
