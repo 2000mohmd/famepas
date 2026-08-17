@@ -76,10 +76,9 @@ serve(async (req) => {
 
     if (!email) return json({ error: "No email address on record" }, 400);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      console.error("Missing LOVABLE_API_KEY / RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      console.error("Missing RESEND_API_KEY");
       return json({ success: false, error: "Email service is not configured" }, 200);
     }
 
@@ -99,15 +98,14 @@ serve(async (req) => {
         <p style="font-size:13px;color:#666;margin-top:24px;">If the button doesn't work, open https://famepass.app/login</p>
       </div>`;
 
-    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "FamePass <onboarding@resend.dev>",
+        from: "FamePass <notify@famepass.app>",
         to: [email],
         subject: "Your FamePass account is approved",
         html,

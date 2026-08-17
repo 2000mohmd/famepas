@@ -1,6 +1,6 @@
 // Shared FamePass email helpers (Resend via Lovable connector gateway).
 
-export const FAMEPASS_FROM = "FamePass <onboarding@resend.dev>";
+export const FAMEPASS_FROM = "FamePass <notify@famepass.app>";
 
 export function firstName(fullName?: string | null): string {
   const n = (fullName ?? "").trim();
@@ -50,22 +50,20 @@ export function quote(text: string): string {
  */
 export async function sendEmail(args: { to: string; subject: string; html: string }): Promise<{ ok: boolean; error?: string }> {
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      console.error("Email skipped — missing LOVABLE_API_KEY / RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      console.error("Email skipped — missing RESEND_API_KEY");
       return { ok: false, error: "Email service is not configured" };
     }
     if (!args.to) {
       console.error("Email skipped — no recipient address");
       return { ok: false, error: "No recipient" };
     }
-    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({ from: FAMEPASS_FROM, to: [args.to], subject: args.subject, html: args.html }),
     });

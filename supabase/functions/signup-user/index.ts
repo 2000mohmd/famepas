@@ -199,12 +199,11 @@ serve(async (req) => {
       }
 
       // Notify admin that a new venue is awaiting approval.
-      // Required secrets in edge function settings: ADMIN_EMAIL, LOVABLE_API_KEY, RESEND_API_KEY
+      // Required secrets in edge function settings: ADMIN_EMAIL, RESEND_API_KEY
       try {
         const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-        if (ADMIN_EMAIL && LOVABLE_API_KEY && RESEND_API_KEY) {
+        if (ADMIN_EMAIL && RESEND_API_KEY) {
           const html = `
             <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#111;">
               <h1 style="color:#b8860b;margin:0 0 12px;">New venue awaiting approval</h1>
@@ -216,22 +215,21 @@ serve(async (req) => {
                 <a href="https://famepass.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
               </p>
             </div>`;
-          await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+          await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "X-Connection-Api-Key": RESEND_API_KEY,
+              Authorization: `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: "FamePass <onboarding@resend.dev>",
+              from: "FamePass <notify@famepass.app>",
               to: [ADMIN_EMAIL],
               subject: `New venue awaiting approval: ${venue_name}`,
               html,
             }),
           });
         } else {
-          console.log("Admin venue notification skipped — missing ADMIN_EMAIL / LOVABLE_API_KEY / RESEND_API_KEY");
+          console.log("Admin venue notification skipped — missing ADMIN_EMAIL / RESEND_API_KEY");
         }
       } catch (notifyErr) {
         console.error("Admin venue notification failed", notifyErr);

@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+const RESEND_URL = "https://api.resend.com";
 
 async function sha256(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -18,7 +18,6 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
     const { action, email, code } = await req.json();
@@ -54,7 +53,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (!LOVABLE_API_KEY || !RESEND_API_KEY) throw new Error("Email service not configured");
+      if (!RESEND_API_KEY) throw new Error("Email service not configured");
 
       const newCode = String(Math.floor(100000 + Math.random() * 900000));
       const codeHash = await sha256(newCode);
@@ -73,15 +72,14 @@ serve(async (req) => {
           <p style="color:#666;font-size:12px;">If you didn't request this, you can safely ignore the email.</p>
         </div>`;
 
-      const res = await fetch(`${GATEWAY_URL}/emails`, {
+      const res = await fetch(`${RESEND_URL}/emails`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": RESEND_API_KEY,
+          Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "FamePass <onboarding@resend.dev>",
+          from: "FamePass <notify@famepass.app>",
           to: [email],
           subject: "Your FamePass login verification code",
           html,

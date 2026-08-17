@@ -11,9 +11,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, webhook-id, webhook-timestamp, webhook-signature",
 };
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+const RESEND_URL = "https://api.resend.com";
 
-const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? "FamePass <onboarding@resend.dev>";
+const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? "FamePass <notify@famepass.app>";
 const APP_NAME = "FamePass";
 
 function buildEmail(actionType: string, confirmationUrl: string, token: string): { subject: string; html: string } {
@@ -65,10 +65,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const HOOK_SECRET = Deno.env.get("SEND_EMAIL_HOOK_SECRET");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured (link the Resend connector)");
     if (!HOOK_SECRET) throw new Error("SEND_EMAIL_HOOK_SECRET not configured");
 
@@ -86,12 +84,11 @@ serve(async (req) => {
     const confirmationUrl = `${site_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
     const { subject, html } = buildEmail(email_action_type, confirmationUrl, token);
 
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
+    const res = await fetch(`${RESEND_URL}/emails`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({ from: FROM_EMAIL, to: [event.user.email], subject, html }),
     });
