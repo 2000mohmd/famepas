@@ -1,5 +1,7 @@
-// Verify influencer handles and pull real follower counts via RapidAPI.
-// Required secret: RAPIDAPI_KEY
+// Verify influencer handles and pull real follower counts.
+// Instagram: RapidAPI providers with a public web-profile fallback.
+// TikTok: RapidAPI with a public web fallback.
+// Optional secret: RAPIDAPI_KEY
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -14,130 +16,174 @@ const corsHeaders = {
 
 const clean = (h: string) => (h || "").trim().replace(/^@+/, "");
 
-const diag: string[] = [];
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-async function fetchInstagramProfile(handle: string) {
-  const hosts = [
-    {
-      host: "instagram-scraper-api2.p.rapidapi.com",
-      url: (h: string) => `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
-      parse: (json: any) => {
-        const d = json?.data;
-        if (!d) return null;
-        return {
-          exists: true,
-          followers: d.follower_count ?? d.followers ?? 0,
-          full_name: d.full_name ?? null,
-          is_verified: !!d.is_verified,
-        };
-      },
-    },
-    {
-      host: "social-api4.p.rapidapi.com",
-      url: (h: string) => `https://social-api4.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
-      parse: (json: any) => {
-        const d = json?.data;
-        if (!d) return null;
-        return {
-          exists: true,
-          followers: d.follower_count ?? d.followers ?? 0,
-          full_name: d.full_name ?? null,
-          is_verified: !!d.is_verified,
-        };
-      },
-    },
-    {
-      host: "instagram-social-api.p.rapidapi.com",
-      url: (h: string) => `https://instagram-social-api.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
-      parse: (json: any) => {
-        const d = json?.data;
-        if (!d) return null;
-        return {
-          exists: true,
-          followers: d.follower_count ?? d.followers ?? 0,
-          full_name: d.full_name ?? null,
-          is_verified: !!d.is_verified,
-        };
-      },
-    },
+type Profile = {
+  exists: true;
+  followers: number;
+  full_name: string | null;
+  is_verified: boolean;
+};
+
+type Lookup =
+  | { status: "found"; profile: Profile }
+  | { status: "not_found" }
+  | { status: "unavailable"; reason: string };
+
+async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
+  const rapidHosts = [
+    "instagram-scraper-api2.p.rapidapi.com",
+    "social-api4.p.rapidapi.com",
+    "instagram-social-api.p.rapidapi.com",
   ];
 
-  for (const p of hosts) {
-    try {
-      const res = await fetch(p.url(handle), {
-        headers: { "x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": p.host },
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        diag.push(`ig:${p.host} ${res.status} ${text.slice(0, 160)}`);
-        continue;
+  if (RAPIDAPI_KEY) {
+    for (const host of rapidHosts) {
+      try {
+        const res = await fetch(
+          `https://${host}/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`,
+          { headers: { "x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": host } },
+        );
+        const text = await res.text();
+        if (!res.ok) {
+          diag.push(`ig:${host} ${res.status} ${text.slice(0, 120)}`);
+          continue;
+        }
+        let json: any = null;
+        try { json = JSON.parse(text); } catch { /* ignore */ }
+        const d = json?.data;
+        if (d && (d.follower_count != null || d.followers != null || d.username)) {
+          return {
+            status: "found",
+            profile: {
+              exists: true,
+              followers: Number(d.follower_count ?? d.followers ?? 0),
+              full_name: d.full_name ?? null,
+              is_verified: !!d.is_verified,
+            },
+          };
+        }
+        diag.push(`ig:${host} 200 no-data ${text.slice(0, 120)}`);
+      } catch (e) {
+        diag.push(`ig:${host} threw ${String(e).slice(0, 100)}`);
       }
-      let json: any = null;
-      try { json = JSON.parse(text); } catch { /* ignore */ }
-      const parsed = p.parse(json);
-      if (parsed) return parsed;
-      diag.push(`ig:${p.host} 200 no-data ${text.slice(0, 160)}`);
-    } catch (e) {
-      diag.push(`ig:${p.host} threw ${String(e).slice(0, 120)}`);
     }
+  } else {
+    diag.push("ig: no RAPIDAPI_KEY");
   }
 
-  // Public fallback: Instagram's own web profile endpoint (no key required).
+  // Public fallback — Instagram's own web profile endpoint (no key needed).
   try {
     const res = await fetch(
       `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`,
       {
         headers: {
           "x-ig-app-id": "936619743392459",
-          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-          "accept": "*/*",
+          "user-agent": UA,
+          accept: "*/*",
         },
       },
     );
     const text = await res.text();
     if (res.ok) {
-      const json = JSON.parse(text);
-      const u = json?.data?.user;
+      const u = JSON.parse(text)?.data?.user;
       if (u) {
         return {
-          exists: true,
-          followers: u.edge_followed_by?.count ?? 0,
-          full_name: u.full_name ?? null,
-          is_verified: !!u.is_verified,
+          status: "found",
+          profile: {
+            exists: true,
+            followers: Number(u.edge_followed_by?.count ?? 0),
+            full_name: u.full_name ?? null,
+            is_verified: !!u.is_verified,
+          },
         };
       }
-      diag.push(`ig:web 200 no-user`);
-    } else {
-      diag.push(`ig:web ${res.status} ${text.slice(0, 120)}`);
+      diag.push("ig:web 200 no-user");
+      return { status: "not_found" };
     }
+    if (res.status === 404) {
+      diag.push("ig:web 404");
+      return { status: "not_found" };
+    }
+    diag.push(`ig:web ${res.status} ${text.slice(0, 120)}`);
   } catch (e) {
-    diag.push(`ig:web threw ${String(e).slice(0, 120)}`);
+    diag.push(`ig:web threw ${String(e).slice(0, 100)}`);
   }
 
-  return null;
+  return { status: "unavailable", reason: diag.join(" | ") };
 }
 
+async function fetchTikTok(handle: string, diag: string[]): Promise<Lookup> {
+  if (RAPIDAPI_KEY) {
+    try {
+      const res = await fetch(
+        `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(handle)}`,
+        {
+          headers: {
+            "x-rapidapi-key": RAPIDAPI_KEY,
+            "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
+          },
+        },
+      );
+      const text = await res.text();
+      if (res.ok) {
+        let json: any = null;
+        try { json = JSON.parse(text); } catch { /* ignore */ }
+        const s = json?.data?.stats;
+        if (s) {
+          return {
+            status: "found",
+            profile: {
+              exists: true,
+              followers: Number(s.followerCount ?? 0),
+              full_name: json?.data?.user?.nickname ?? null,
+              is_verified: !!json?.data?.user?.verified,
+            },
+          };
+        }
+        diag.push(`tt:rapid 200 no-data ${text.slice(0, 120)}`);
+      } else {
+        diag.push(`tt:rapid ${res.status} ${text.slice(0, 120)}`);
+      }
+    } catch (e) {
+      diag.push(`tt:rapid threw ${String(e).slice(0, 100)}`);
+    }
+  } else {
+    diag.push("tt: no RAPIDAPI_KEY");
+  }
 
-async function fetchTikTokProfile(handle: string) {
-  const res = await fetch(
-    `https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(handle)}`,
-    {
-      headers: {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
-      },
-    },
-  );
-  if (!res.ok) return null;
-  const json = await res.json().catch(() => null);
-  const s = json?.data?.stats;
-  if (!s) return null;
-  return {
-    exists: true,
-    followers: s.followerCount ?? 0,
-    full_name: json?.data?.user?.nickname ?? null,
-    is_verified: !!json?.data?.user?.verified,
-  };
+  // Public fallback — parse the profile page for follower count.
+  try {
+    const res = await fetch(`https://www.tiktok.com/@${encodeURIComponent(handle)}`, {
+      headers: { "user-agent": UA, accept: "text/html" },
+    });
+    const html = await res.text();
+    if (res.status === 404) return { status: "not_found" };
+    if (res.ok) {
+      const m = html.match(/"followerCount":(\d+)/);
+      const nameMatch = html.match(/"nickname":"([^"]*)"/);
+      if (m) {
+        return {
+          status: "found",
+          profile: {
+            exists: true,
+            followers: Number(m[1]),
+            full_name: nameMatch?.[1] ?? null,
+            is_verified: /"verified":true/.test(html),
+          },
+        };
+      }
+      if (/couldn't find this account|Page Not Found/i.test(html)) return { status: "not_found" };
+      diag.push("tt:web 200 no-count");
+    } else {
+      diag.push(`tt:web ${res.status}`);
+    }
+  } catch (e) {
+    diag.push(`tt:web threw ${String(e).slice(0, 100)}`);
+  }
+
+  return { status: "unavailable", reason: diag.join(" | ") };
 }
 
 serve(async (req) => {
@@ -147,7 +193,6 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
     // Auth is OPTIONAL: when present, persist updates on the profile.
-    // When absent (e.g. live verification during signup), just return the data.
     let userId: string | null = null;
     if (token) {
       const { data: userData } = await supabase.auth.getUser(token);
@@ -159,25 +204,30 @@ serve(async (req) => {
     const tt = body.tiktok_handle ? clean(body.tiktok_handle) : null;
     const selfReported = Number(body.self_reported_followers) || 0;
 
+    const diag: string[] = [];
     const result: Record<string, any> = {};
     let realTotal = 0;
 
-    if (ig && RAPIDAPI_KEY) {
-      try {
-        const ig_data = await fetchInstagramProfile(ig);
-        if (ig_data) { result.instagram = ig_data; realTotal += ig_data.followers; }
-        else result.instagram = { exists: false, followers: 0 };
-      } catch (e) {
-        result.instagram = { error: String(e) };
+    if (ig) {
+      const r = await fetchInstagram(ig, diag);
+      if (r.status === "found") {
+        result.instagram = { ...r.profile, status: "found" };
+        realTotal += r.profile.followers;
+      } else if (r.status === "not_found") {
+        result.instagram = { exists: false, followers: 0, status: "not_found" };
+      } else {
+        result.instagram = { exists: null, followers: 0, status: "unavailable", reason: r.reason };
       }
     }
-    if (tt && RAPIDAPI_KEY) {
-      try {
-        const tt_data = await fetchTikTokProfile(tt);
-        if (tt_data) { result.tiktok = tt_data; realTotal += tt_data.followers; }
-        else result.tiktok = { exists: false, followers: 0 };
-      } catch (e) {
-        result.tiktok = { error: String(e) };
+    if (tt) {
+      const r = await fetchTikTok(tt, diag);
+      if (r.status === "found") {
+        result.tiktok = { ...r.profile, status: "found" };
+        realTotal += r.profile.followers;
+      } else if (r.status === "not_found") {
+        result.tiktok = { exists: false, followers: 0, status: "not_found" };
+      } else {
+        result.tiktok = { exists: null, followers: 0, status: "unavailable", reason: r.reason };
       }
     }
 
@@ -189,6 +239,12 @@ serve(async (req) => {
       updates.tiktok_followers = result.tiktok.followers;
     }
     if (result.tiktok?.followers) updates.tiktok_followers = result.tiktok.followers;
+    if (ig) {
+      updates.instagram_verified =
+        result.instagram?.status === "found" ? true
+          : result.instagram?.status === "not_found" ? false
+            : null;
+    }
 
     const flagged =
       realTotal > 0 &&
@@ -199,6 +255,8 @@ serve(async (req) => {
       const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
       if (updErr) console.warn("profile update failed:", updErr.message);
     }
+
+    if (diag.length) console.log("fetch-profile-stats diag:", diag.join(" | "));
 
     return new Response(
       JSON.stringify({
