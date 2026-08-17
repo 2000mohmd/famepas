@@ -50,10 +50,9 @@ export function quote(text: string): string {
  */
 export async function sendEmail(args: { to: string; subject: string; html: string }): Promise<{ ok: boolean; error?: string }> {
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      console.error("Email skipped — missing LOVABLE_API_KEY / RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      console.error("Email skipped — missing RESEND_API_KEY");
       return { ok: false, error: "Email service is not configured" };
     }
     if (!args.to) {

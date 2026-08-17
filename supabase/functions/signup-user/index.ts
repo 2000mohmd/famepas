@@ -199,12 +199,11 @@ serve(async (req) => {
       }
 
       // Notify admin that a new venue is awaiting approval.
-      // Required secrets in edge function settings: ADMIN_EMAIL, LOVABLE_API_KEY, RESEND_API_KEY
+      // Required secrets in edge function settings: ADMIN_EMAIL, RESEND_API_KEY
       try {
         const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-        if (ADMIN_EMAIL && LOVABLE_API_KEY && RESEND_API_KEY) {
+        if (ADMIN_EMAIL && RESEND_API_KEY) {
           const html = `
             <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#111;">
               <h1 style="color:#b8860b;margin:0 0 12px;">New venue awaiting approval</h1>
@@ -230,7 +229,7 @@ serve(async (req) => {
             }),
           });
         } else {
-          console.log("Admin venue notification skipped — missing ADMIN_EMAIL / LOVABLE_API_KEY / RESEND_API_KEY");
+          console.log("Admin venue notification skipped — missing ADMIN_EMAIL / RESEND_API_KEY");
         }
       } catch (notifyErr) {
         console.error("Admin venue notification failed", notifyErr);

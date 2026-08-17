@@ -34,9 +34,8 @@ serve(async (req) => {
     }
     const callerEmail = (claimsData.claims as any).email?.toLowerCase();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
+    if (!RESEND_API_KEY) {
       throw new Error("Email service not configured");
     }
 

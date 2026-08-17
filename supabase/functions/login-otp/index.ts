@@ -18,7 +18,6 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
     const { action, email, code } = await req.json();
@@ -54,7 +53,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (!LOVABLE_API_KEY || !RESEND_API_KEY) throw new Error("Email service not configured");
+      if (!RESEND_API_KEY) throw new Error("Email service not configured");
 
       const newCode = String(Math.floor(100000 + Math.random() * 900000));
       const codeHash = await sha256(newCode);

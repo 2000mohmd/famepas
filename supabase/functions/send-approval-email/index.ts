@@ -76,10 +76,9 @@ serve(async (req) => {
 
     if (!email) return json({ error: "No email address on record" }, 400);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      console.error("Missing LOVABLE_API_KEY / RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      console.error("Missing RESEND_API_KEY");
       return json({ success: false, error: "Email service is not configured" }, 200);
     }
 
