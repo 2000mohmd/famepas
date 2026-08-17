@@ -33,6 +33,51 @@ type Lookup =
   | { status: "unavailable"; reason: string };
 
 async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
+  // Primary provider: instagram-scraper-stable-api (returns full profile payload).
+  if (RAPIDAPI_KEY_STABLE) {
+    const host = "instagram-scraper-stable-api.p.rapidapi.com";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(`https://${host}/ig_get_fb_profile.php`, {
+          method: "POST",
+          headers: {
+            "x-rapidapi-key": RAPIDAPI_KEY_STABLE,
+            "x-rapidapi-host": host,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ username_or_url: handle }).toString(),
+        });
+        const text = await res.text();
+        let json: any = null;
+        try { json = JSON.parse(text); } catch { /* ignore */ }
+        if (res.ok && json && (json.username || json.follower_count != null)) {
+          return {
+            status: "found",
+            profile: {
+              exists: true,
+              followers: Number(json.follower_count ?? 0),
+              full_name: json.full_name ?? null,
+              is_verified: !!json.is_verified,
+            },
+          };
+        }
+        const err = String(json?.error ?? json?.message ?? text).slice(0, 160);
+        if (/does not exist|not exist|invalid or missing username/i.test(err)) {
+          diag.push(`ig:stable not_found`);
+          return { status: "not_found" };
+        }
+        diag.push(`ig:stable ${res.status} ${err}`);
+        if (/try again later/i.test(err) && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 1200));
+          continue;
+        }
+      } catch (e) {
+        diag.push(`ig:stable threw ${String(e).slice(0, 100)}`);
+      }
+      break;
+    }
+  }
+
   const rapidHosts = [
     "instagram-scraper-api2.p.rapidapi.com",
     "social-api4.p.rapidapi.com",
