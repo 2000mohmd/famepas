@@ -96,7 +96,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "FamePass <notify@famepass.app>",
+        from: "FamePass <notify@notify.famepass.app>",
         to: [email],
         subject: "Welcome to FamePass",
         html,
