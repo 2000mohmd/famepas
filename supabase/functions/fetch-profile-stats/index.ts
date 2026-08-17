@@ -14,27 +14,109 @@ const corsHeaders = {
 
 const clean = (h: string) => (h || "").trim().replace(/^@+/, "");
 
+const diag: string[] = [];
+
 async function fetchInstagramProfile(handle: string) {
-  const res = await fetch(
-    `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`,
+  const hosts = [
     {
-      headers: {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": "instagram-scraper-api2.p.rapidapi.com",
+      host: "instagram-scraper-api2.p.rapidapi.com",
+      url: (h: string) => `https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
+      parse: (json: any) => {
+        const d = json?.data;
+        if (!d) return null;
+        return {
+          exists: true,
+          followers: d.follower_count ?? d.followers ?? 0,
+          full_name: d.full_name ?? null,
+          is_verified: !!d.is_verified,
+        };
       },
     },
-  );
-  if (!res.ok) return null;
-  const json = await res.json().catch(() => null);
-  const d = json?.data;
-  if (!d) return null;
-  return {
-    exists: true,
-    followers: d.follower_count ?? d.followers ?? 0,
-    full_name: d.full_name ?? null,
-    is_verified: !!d.is_verified,
-  };
+    {
+      host: "social-api4.p.rapidapi.com",
+      url: (h: string) => `https://social-api4.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
+      parse: (json: any) => {
+        const d = json?.data;
+        if (!d) return null;
+        return {
+          exists: true,
+          followers: d.follower_count ?? d.followers ?? 0,
+          full_name: d.full_name ?? null,
+          is_verified: !!d.is_verified,
+        };
+      },
+    },
+    {
+      host: "instagram-social-api.p.rapidapi.com",
+      url: (h: string) => `https://instagram-social-api.p.rapidapi.com/v1/info?username_or_id_or_url=${encodeURIComponent(h)}`,
+      parse: (json: any) => {
+        const d = json?.data;
+        if (!d) return null;
+        return {
+          exists: true,
+          followers: d.follower_count ?? d.followers ?? 0,
+          full_name: d.full_name ?? null,
+          is_verified: !!d.is_verified,
+        };
+      },
+    },
+  ];
+
+  for (const p of hosts) {
+    try {
+      const res = await fetch(p.url(handle), {
+        headers: { "x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": p.host },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        diag.push(`ig:${p.host} ${res.status} ${text.slice(0, 160)}`);
+        continue;
+      }
+      let json: any = null;
+      try { json = JSON.parse(text); } catch { /* ignore */ }
+      const parsed = p.parse(json);
+      if (parsed) return parsed;
+      diag.push(`ig:${p.host} 200 no-data ${text.slice(0, 160)}`);
+    } catch (e) {
+      diag.push(`ig:${p.host} threw ${String(e).slice(0, 120)}`);
+    }
+  }
+
+  // Public fallback: Instagram's own web profile endpoint (no key required).
+  try {
+    const res = await fetch(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`,
+      {
+        headers: {
+          "x-ig-app-id": "936619743392459",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+          "accept": "*/*",
+        },
+      },
+    );
+    const text = await res.text();
+    if (res.ok) {
+      const json = JSON.parse(text);
+      const u = json?.data?.user;
+      if (u) {
+        return {
+          exists: true,
+          followers: u.edge_followed_by?.count ?? 0,
+          full_name: u.full_name ?? null,
+          is_verified: !!u.is_verified,
+        };
+      }
+      diag.push(`ig:web 200 no-user`);
+    } else {
+      diag.push(`ig:web ${res.status} ${text.slice(0, 120)}`);
+    }
+  } catch (e) {
+    diag.push(`ig:web threw ${String(e).slice(0, 120)}`);
+  }
+
+  return null;
 }
+
 
 async function fetchTikTokProfile(handle: string) {
   const res = await fetch(
