@@ -28,7 +28,3 @@ verify_jwt = false
 [functions.influencer-api]
 verify_jwt = false
 
-
-
-[functions.email-diagnostics]
-verify_jwt = false
