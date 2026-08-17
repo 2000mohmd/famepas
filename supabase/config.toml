@@ -29,3 +29,6 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.email-diagnostics]
+verify_jwt = false
