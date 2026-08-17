@@ -211,7 +211,10 @@ const InfluencerSignup = () => {
 
   const accountReady = email.includes("@") && pwdReady;
   const profileReady = fullName.trim().length > 1 && country.trim().length > 0;
-  const socialsReady = !!(instagram || tiktok || youtube);
+  const igBlocked = !!instagram && verifiedIG?.status === "not_found";
+  const ttBlocked = !!tiktok && verifiedTT?.status === "not_found";
+  const socialsReady = !!(instagram || tiktok || youtube) && !igBlocked && !ttBlocked;
+
 
   const toggleNiche = (n: string) =>
     setSelectedNiches((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
