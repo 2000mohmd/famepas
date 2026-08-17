@@ -512,7 +512,7 @@ const InfluencerSignup = () => {
                 )}
               </div>
             </Field>
-            <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT && !verifiedTT.ok ? "Not found" : undefined}>
+            <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT?.status === "not_found" ? "Username not found on TikTok — please correct it to continue." : verifiedTT?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : undefined}>
               <div className="relative">
                 <TextInput
                   value={tiktok}
