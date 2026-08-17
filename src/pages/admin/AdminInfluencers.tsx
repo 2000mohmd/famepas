@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X, Eye } from "lucide-react";
+import { Search, Mail, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X, Eye } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,7 @@ interface Influencer {
   phone: string | null;
   created_at: string;
   avatar_url: string | null;
+  instagram_verified: boolean | null;
 }
 
 const stripAt = (h: string | null) => (h ? h.replace(/^@+/, "") : "");
@@ -53,7 +54,7 @@ const AdminInfluencers = () => {
     const ids = roles.map(r => r.user_id);
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, approval_status, phone, created_at, avatar_url")
+      .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, approval_status, phone, created_at, avatar_url, instagram_verified")
       .in("user_id", ids)
       .order("created_at", { ascending: false });
     setInfluencers((data as any) ?? []);
@@ -113,6 +114,15 @@ const AdminInfluencers = () => {
   };
 
 
+  const resendApproval = async (userId: string) => {
+    const sent = await notifyEmail({ event: "influencer_approved", user_id: userId });
+    toast({
+      title: sent ? "Approval email sent" : "Email could not be sent",
+      description: sent ? undefined : "Check the email service configuration.",
+      variant: sent ? undefined : "destructive",
+    });
+  };
+
   const sendWarning = async () => {
     if (!warningTarget || !warningMessage.trim() || !user) return;
     const { error } = await supabase.from("influencer_warnings" as any).insert({
@@ -139,6 +149,7 @@ const AdminInfluencers = () => {
   if (statusFilter === "verified") filtered = filtered.filter(i => i.is_verified);
   else if (statusFilter === "suspended") filtered = filtered.filter(i => i.is_suspended);
   else if (statusFilter === "pending") filtered = filtered.filter(i => i.approval_status === "pending");
+  else if (statusFilter === "ig_unverified") filtered = filtered.filter(i => i.instagram_verified !== true);
   else if (statusFilter === "active") filtered = filtered.filter(i => !i.is_suspended && !i.is_verified && i.approval_status === "approved");
 
   // Sort
@@ -169,6 +180,7 @@ const AdminInfluencers = () => {
               <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="ig_unverified">Instagram unverified</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -230,7 +242,16 @@ const AdminInfluencers = () => {
                     </td>
                     <td className="p-4 text-sm">
                       {inf.instagram_handle ? (
-                        <a href={`https://instagram.com/${stripAt(inf.instagram_handle)}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">@{stripAt(inf.instagram_handle)}</a>
+                        <div className="flex items-center gap-2">
+                          <a href={`https://instagram.com/${stripAt(inf.instagram_handle)}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">@{stripAt(inf.instagram_handle)}</a>
+                          {inf.instagram_verified === true ? (
+                            <Badge className="bg-success/20 text-success border-success/30 text-[10px] w-fit">IG ✓</Badge>
+                          ) : inf.instagram_verified === false ? (
+                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px] w-fit">IG not found</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] w-fit">IG unchecked</Badge>
+                          )}
+                        </div>
                       ) : "—"}
                     </td>
                     <td className="p-4 text-sm">
@@ -267,6 +288,11 @@ const AdminInfluencers = () => {
                               <X className="w-4 h-4" />
                             </Button>
                           </>
+                        )}
+                        {inf.approval_status === "approved" && (
+                          <Button variant="ghost" size="sm" onClick={() => resendApproval(inf.user_id)} className="text-muted-foreground hover:text-gold h-7 px-2" title="Resend approval email">
+                            <Mail className="w-4 h-4" />
+                          </Button>
                         )}
                         <Button variant="ghost" size="sm" onClick={() => toggleVerified(inf.user_id, inf.is_verified)} className="text-muted-foreground hover:text-gold h-7 px-2" title={inf.is_verified ? "Remove verification" : "Verify"}>
                           {inf.is_verified ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}

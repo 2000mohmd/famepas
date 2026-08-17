@@ -144,8 +144,9 @@ const InfluencerSignup = () => {
   const [youtube, setYoutube] = useState("");
   const [followers, setFollowers] = useState("");
   const [verifyingHandle, setVerifyingHandle] = useState<null | "instagram" | "tiktok">(null);
-  const [verifiedIG, setVerifiedIG] = useState<{ ok: boolean; followers: number } | null>(null);
-  const [verifiedTT, setVerifiedTT] = useState<{ ok: boolean; followers: number } | null>(null);
+  type HandleCheck = { status: "found" | "not_found" | "unavailable"; ok: boolean; followers: number };
+  const [verifiedIG, setVerifiedIG] = useState<HandleCheck | null>(null);
+  const [verifiedTT, setVerifiedTT] = useState<HandleCheck | null>(null);
   const followersLocked = !!(verifiedIG?.ok || verifiedTT?.ok);
 
   const verifyHandle = async (platform: "instagram" | "tiktok", raw: string) => {
@@ -160,38 +161,47 @@ const InfluencerSignup = () => {
       });
       if (error) throw error;
       const v: any = (data as any)?.verified ?? {};
-      const igFollowers = Number(v.instagram?.followers || 0);
-      const ttFollowers = Number(v.tiktok?.followers || 0);
-      if (platform === "instagram") {
-        if (v.instagram?.exists !== false && igFollowers > 0) {
-          setVerifiedIG({ ok: true, followers: igFollowers });
-        } else {
-          setVerifiedIG({ ok: false, followers: 0 });
-          toast({ title: "Instagram handle not found", description: "Double-check the @username.", variant: "destructive" });
-        }
-      } else {
-        if (v.tiktok?.exists !== false && ttFollowers > 0) {
-          setVerifiedTT({ ok: true, followers: ttFollowers });
-        } else {
-          setVerifiedTT({ ok: false, followers: 0 });
-          toast({ title: "TikTok handle not found", description: "Double-check the @username.", variant: "destructive" });
-        }
+      const entry = platform === "instagram" ? v.instagram : v.tiktok;
+      const followersFound = Number(entry?.followers || 0);
+      // "unavailable" = the lookup service could not answer (rate limit / outage).
+      // We must NOT tell the user their account doesn't exist in that case.
+      const status: HandleCheck["status"] =
+        entry?.status === "found" || followersFound > 0
+          ? "found"
+          : entry?.status === "not_found"
+            ? "not_found"
+            : "unavailable";
+      const check: HandleCheck = { status, ok: status === "found", followers: followersFound };
+      if (platform === "instagram") setVerifiedIG(check); else setVerifiedTT(check);
+
+      const label = platform === "instagram" ? "Instagram" : "TikTok";
+      if (status === "not_found") {
+        toast({
+          title: `${label} username not found`,
+          description: `We couldn't find @${h} on ${label}. Please double-check the username.`,
+          variant: "destructive",
+        });
+      } else if (status === "unavailable") {
+        toast({
+          title: `Couldn't check ${label} right now`,
+          description: "The lookup service is temporarily unavailable — you can continue and we'll verify later.",
+        });
       }
-      const total = Number((data as any)?.followers_total || 0) ||
-        Math.max(igFollowers, ttFollowers) +
-        (igFollowers && ttFollowers ? 0 : 0);
-      // Sum both verified counts so far
-      const sum = (platform === "instagram" ? igFollowers : (verifiedIG?.followers || 0)) +
-                  (platform === "tiktok" ? ttFollowers : (verifiedTT?.followers || 0));
+
+      const igFollowers = platform === "instagram" ? followersFound : (verifiedIG?.followers || 0);
+      const ttFollowers = platform === "tiktok" ? followersFound : (verifiedTT?.followers || 0);
+      const sum = igFollowers + ttFollowers;
       if (sum > 0) setFollowers(String(sum));
-      else if (total > 0) setFollowers(String(total));
     } catch (e) {
       console.warn("verify failed", e);
-      toast({ title: "Could not verify handle", description: "We'll re-check after signup.", variant: "destructive" });
+      const check: HandleCheck = { status: "unavailable", ok: false, followers: 0 };
+      if (platform === "instagram") setVerifiedIG(check); else setVerifiedTT(check);
+      toast({ title: "Could not verify handle", description: "We'll re-check after signup." });
     } finally {
       setVerifyingHandle(null);
     }
   };
+
 
   // niches
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
@@ -201,7 +211,10 @@ const InfluencerSignup = () => {
 
   const accountReady = email.includes("@") && pwdReady;
   const profileReady = fullName.trim().length > 1 && country.trim().length > 0;
-  const socialsReady = !!(instagram || tiktok || youtube);
+  const igBlocked = !!instagram && verifiedIG?.status === "not_found";
+  const ttBlocked = !!tiktok && verifiedTT?.status === "not_found";
+  const socialsReady = !!(instagram || tiktok || youtube) && !igBlocked && !ttBlocked;
+
 
   const toggleNiche = (n: string) =>
     setSelectedNiches((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
@@ -236,6 +249,10 @@ const InfluencerSignup = () => {
           country: country || null,
           niche: selectedNiches,
           social_links,
+          instagram_verified: igHandle
+            ? (verifiedIG?.status === "found" ? true : verifiedIG?.status === "not_found" ? false : null)
+            : null,
+
         },
       });
       if (error) {
@@ -483,7 +500,7 @@ const InfluencerSignup = () => {
           <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
             <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
-            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG && !verifiedIG.ok ? "Not found" : "We'll verify and pull your real follower count."}>
+            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG?.status === "not_found" ? "Username not found on Instagram — please correct it to continue." : verifiedIG?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : "We'll verify and pull your real follower count."}>
               <div className="relative">
                 <TextInput
                   value={instagram}
@@ -499,7 +516,7 @@ const InfluencerSignup = () => {
                 )}
               </div>
             </Field>
-            <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT && !verifiedTT.ok ? "Not found" : undefined}>
+            <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT?.status === "not_found" ? "Username not found on TikTok — please correct it to continue." : verifiedTT?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : undefined}>
               <div className="relative">
                 <TextInput
                   value={tiktok}

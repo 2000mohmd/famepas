@@ -1279,6 +1279,8 @@ export type Database = {
           id: string
           influencer_score: number | null
           instagram_handle: string | null
+          instagram_verified: boolean | null
+          instagram_verified_at: string | null
           is_suspended: boolean
           is_verified: boolean
           niche: string[] | null
@@ -1306,6 +1308,8 @@ export type Database = {
           id?: string
           influencer_score?: number | null
           instagram_handle?: string | null
+          instagram_verified?: boolean | null
+          instagram_verified_at?: string | null
           is_suspended?: boolean
           is_verified?: boolean
           niche?: string[] | null
@@ -1333,6 +1337,8 @@ export type Database = {
           id?: string
           influencer_score?: number | null
           instagram_handle?: string | null
+          instagram_verified?: boolean | null
+          instagram_verified_at?: string | null
           is_suspended?: boolean
           is_verified?: boolean
           niche?: string[] | null

@@ -20,7 +20,7 @@ serve(async (req) => {
       email, password, role, full_name, phone,
       instagram_handle, tiktok_handle, tiktok_followers, social_links,
       // influencer profile extras
-      bio, city, country, niche, followers_count,
+      bio, city, country, niche, followers_count, instagram_verified,
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
       // mobile hierarchy
@@ -76,6 +76,8 @@ serve(async (req) => {
         country: country || null,
         niche: Array.isArray(niche) ? niche : (niche ? [niche] : null),
         followers_count: followers_count || 0,
+        instagram_verified: instagram_verified === true ? true : instagram_verified === false ? false : null,
+        instagram_verified_at: instagram_verified === null || instagram_verified === undefined ? null : new Date().toISOString(),
         // Influencers go through the same admin approval gate as venues
         approval_status: "pending",
 
