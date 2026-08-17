@@ -17,7 +17,7 @@ serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* no body */ }
-  const to = typeof body.to === "string" ? body.to : null;
+  const to = typeof body.to === "string" ? body.to : (Deno.env.get("ADMIN_EMAIL") ?? null);
   const from = typeof body.from === "string" ? body.from : "FamePass <notify@notify.famepass.app>";
 
   const domainsRes = await fetch("https://api.resend.com/domains", {
