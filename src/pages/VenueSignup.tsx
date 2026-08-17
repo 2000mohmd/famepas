@@ -436,36 +436,24 @@ const VenueSignup = () => {
             <div className="w-16 h-16 rounded-full bg-[#fbf6e8] mx-auto flex items-center justify-center mb-4">
               <Mail className="w-7 h-7 text-[#b8923a]" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Check your inbox</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Let's finish your setup</h1>
             <p className="text-slate-500 mt-2 text-sm">
-              We'll send a confirmation link to your email. Please check your inbox at{" "}
-              <span className="font-semibold text-slate-800">{email}</span>
+              We'll email <span className="font-semibold text-slate-800">{email}</span> as soon as you complete
+              the next few steps — your account isn't created until then.
             </p>
-            <div className="grid grid-cols-3 gap-3 my-6">
-              {[
-                { label: "Open Gmail", href: "https://mail.google.com" },
-                { label: "Open Outlook", href: "https://outlook.live.com/mail" },
-                { label: "Open Yahoo", href: "https://mail.yahoo.com" },
-              ].map((m) => (
-                <a key={m.label} href={m.href} target="_blank" rel="noreferrer"
-                  className="h-12 rounded-lg border border-slate-200 hover:border-[#b8923a] text-sm font-medium text-slate-700 flex items-center justify-center transition">
-                  {m.label}
-                </a>
-              ))}
+            <div className="text-left bg-[#faf8f3] border border-slate-100 rounded-xl p-4 my-6 text-sm text-slate-600 space-y-2">
+              <p className="font-semibold text-slate-800">What's next</p>
+              <p>1. Tell us about you and your brand</p>
+              <p>2. Add your first location</p>
+              <p>3. We send your confirmation email and open your dashboard</p>
             </div>
-            <p className="text-xs text-slate-400">
-              Can't find the email? Try your spam folder.<br />
-              Still no luck?{" "}
-              <button onClick={handleResend} disabled={sendingResend} className="text-[#b8923a] font-medium hover:underline inline-flex items-center gap-1">
-                {sendingResend && <RefreshCw className="w-3 h-3 animate-spin" />} Resend email
-              </button>
-            </p>
-            <PrimaryButton className="mt-6" onClick={() => setStep("details")}>Continue setup</PrimaryButton>
+            <PrimaryButton onClick={() => setStep("details")}>Continue setup</PrimaryButton>
           </Card>
         </div>
       </Page>
     );
   }
+
 
   if (step === "details") {
     return (
