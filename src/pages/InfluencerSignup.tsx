@@ -496,7 +496,7 @@ const InfluencerSignup = () => {
           <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
             <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
-            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG && !verifiedIG.ok ? "Not found" : "We'll verify and pull your real follower count."}>
+            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG?.status === "not_found" ? "Username not found on Instagram — please correct it to continue." : verifiedIG?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : "We'll verify and pull your real follower count."}>
               <div className="relative">
                 <TextInput
                   value={instagram}
