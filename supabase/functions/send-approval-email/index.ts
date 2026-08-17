@@ -99,15 +99,14 @@ serve(async (req) => {
         <p style="font-size:13px;color:#666;margin-top:24px;">If the button doesn't work, open https://famepass.app/login</p>
       </div>`;
 
-    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "FamePass <onboarding@resend.dev>",
+        from: "FamePass <notify@famepass.app>",
         to: [email],
         subject: "Your FamePass account is approved",
         html,

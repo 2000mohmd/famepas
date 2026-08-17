@@ -216,15 +216,14 @@ serve(async (req) => {
                 <a href="https://famepass.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
               </p>
             </div>`;
-          await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+          await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "X-Connection-Api-Key": RESEND_API_KEY,
+              Authorization: `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: "FamePass <onboarding@resend.dev>",
+              from: "FamePass <notify@famepass.app>",
               to: [ADMIN_EMAIL],
               subject: `New venue awaiting approval: ${venue_name}`,
               html,

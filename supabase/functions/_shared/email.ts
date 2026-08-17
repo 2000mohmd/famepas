@@ -1,6 +1,6 @@
 // Shared FamePass email helpers (Resend via Lovable connector gateway).
 
-export const FAMEPASS_FROM = "FamePass <onboarding@resend.dev>";
+export const FAMEPASS_FROM = "FamePass <notify@famepass.app>";
 
 export function firstName(fullName?: string | null): string {
   const n = (fullName ?? "").trim();
@@ -60,12 +60,11 @@ export async function sendEmail(args: { to: string; subject: string; html: strin
       console.error("Email skipped — no recipient address");
       return { ok: false, error: "No recipient" };
     }
-    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({ from: FAMEPASS_FROM, to: [args.to], subject: args.subject, html: args.html }),
     });

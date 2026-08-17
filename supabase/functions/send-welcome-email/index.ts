@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+const RESEND_URL = "https://api.resend.com";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -90,15 +90,14 @@ serve(async (req) => {
         <p style="color:#666;font-size:12px;">If you didn't create this account, please ignore this email.</p>
       </div>`;
 
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
+    const res = await fetch(`${RESEND_URL}/emails`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "FamePass <onboarding@resend.dev>",
+        from: "FamePass <notify@famepass.app>",
         to: [email],
         subject: "Welcome to FamePass",
         html,
