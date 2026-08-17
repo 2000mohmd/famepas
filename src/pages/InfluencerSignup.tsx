@@ -249,6 +249,10 @@ const InfluencerSignup = () => {
           country: country || null,
           niche: selectedNiches,
           social_links,
+          instagram_verified: igHandle
+            ? (verifiedIG?.status === "found" ? true : verifiedIG?.status === "not_found" ? false : null)
+            : null,
+
         },
       });
       if (error) {
