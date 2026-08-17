@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
-import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail, RefreshCw } from "lucide-react";
+import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
 
 /* ============================================================
    Joli-style light-mode business signup wizard
@@ -152,7 +152,6 @@ const VenueSignup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
-  const [sendingResend, setSendingResend] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -309,18 +308,6 @@ const VenueSignup = () => {
       toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleResend = async () => {
-    if (!email) return;
-    setSendingResend(true);
-    try {
-      // Informational only — actual verification email is sent once the wizard completes.
-      await new Promise(r => setTimeout(r, 600));
-      toast({ title: "We'll resend the link", description: `A fresh confirmation will be sent to ${email} after you finish setup.` });
-    } finally {
-      setSendingResend(false);
     }
   };
 
