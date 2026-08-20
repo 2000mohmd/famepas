@@ -618,16 +618,31 @@ const VenueSignup = () => {
               </div>
               <div className="space-y-2">
                 {DAYS.map(d => (
-                  <div key={d} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-700 w-28">{d}</span>
+                  <div key={d} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-slate-700 w-24 shrink-0">{d}</span>
                     {editHours ? (
-                      <div className="flex items-center gap-2">
-                        <input type="time" value={hours[d].open} onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], open: e.target.value } }))} className="h-9 px-2 rounded border border-slate-200" />
-                        <span className="text-slate-400">-</span>
-                        <input type="time" value={hours[d].close} onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], close: e.target.value } }))} className="h-9 px-2 rounded border border-slate-200" />
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-600 select-none">
+                          <input
+                            type="checkbox"
+                            checked={hours[d].closed}
+                            onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], closed: e.target.checked } }))}
+                            className="w-4 h-4 accent-[#b8923a]"
+                          />
+                          Closed
+                        </label>
+                        {!hours[d].closed && (
+                          <>
+                            <input type="time" value={hours[d].open} onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], open: e.target.value } }))} className="h-9 px-2 rounded border border-slate-200" />
+                            <span className="text-slate-400">-</span>
+                            <input type="time" value={hours[d].close} onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], close: e.target.value } }))} className="h-9 px-2 rounded border border-slate-200" />
+                          </>
+                        )}
                       </div>
                     ) : (
-                      <span className="text-slate-600">{hours[d].open} - {hours[d].close}</span>
+                      <span className={hours[d].closed ? "text-slate-400" : "text-slate-600"}>
+                        {hours[d].closed ? "Closed" : `${hours[d].open} - ${hours[d].close}`}
+                      </span>
                     )}
                   </div>
                 ))}

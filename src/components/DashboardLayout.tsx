@@ -207,9 +207,13 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         {/* Workspace switcher */}
         <div className="px-3 pb-3">
           <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
-            <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
-              {(venueName || initials).slice(0, 2).toUpperCase()}
-            </span>
+            {venueLogo ? (
+              <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-[hsl(42_35%_88%)]" />
+            ) : (
+              <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
+                {(venueName || initials).slice(0, 2).toUpperCase()}
+              </span>
+            )}
             <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
               {venueName || user?.email?.split("@")[0] || "workspace"}
             </span>
