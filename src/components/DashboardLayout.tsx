@@ -152,9 +152,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   useEffect(() => {
     if (type !== "venue" || !user) return;
     (async () => {
-      const { data: venue } = await supabase.from("venues").select("id, name").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id, name, logo_url").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       setVenueName(venue.name);
+      setVenueLogo((venue as any).logo_url ?? null);
       const [ig, camp] = await Promise.all([
         supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected"),
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id),
