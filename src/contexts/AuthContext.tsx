@@ -30,45 +30,84 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
-    const { data } = await supabase
+  // Set while signIn() runs so the auth listener doesn't repeat the approval check.
+  const [passwordFlowInFlight, setPasswordFlowInFlight] = useState(false);
+
+  const fetchRole = async (userId: string): Promise<{ role: UserRole; error?: string }> => {
+    const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
+    if (error) {
+      console.error("fetchRole failed", error);
+      return { role: null, error: error.message };
+    }
     const roles = (data?.map((row) => row.role) ?? []) as UserRole[];
     const nextRole = roles.includes("admin") ? "admin" : roles.includes("venue") ? "venue" : roles.includes("influencer") ? "influencer" : null;
     setRole(nextRole);
+    return { role: nextRole };
   };
 
-  const checkApproved = async (userId: string): Promise<{ ok: boolean; status?: string }> => {
-    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  const checkApproved = async (userId: string): Promise<{ ok: boolean; status?: string; error?: string }> => {
+    const { data: roleRows, error: roleErr } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    if (roleErr) {
+      console.error("checkApproved: role lookup failed", roleErr);
+      return { ok: false, error: "We couldn't verify your account. Please try again." };
+    }
     const roles = (roleRows?.map((row) => row.role) ?? []) as UserRole[];
     if (roles.includes("admin")) return { ok: true };
     if (roles.includes("venue")) {
-      const { data: venues } = await supabase.from("venues").select("approval_status").eq("owner_id", userId);
+      const { data: venues, error: venueErr } = await supabase.from("venues").select("approval_status").eq("owner_id", userId);
+      if (venueErr) {
+        console.error("checkApproved: venue lookup failed", venueErr);
+        return { ok: false, error: "We couldn't verify your account. Please try again." };
+      }
       if (venues && venues.length > 0) {
         if (venues.some((v: any) => v.approval_status === "approved")) return { ok: true };
         if (venues.every((v: any) => v.approval_status === "rejected")) return { ok: false, status: "rejected" };
         return { ok: false, status: "pending" };
       }
     }
-    const { data: profile } = await supabase.from("profiles").select("approval_status").eq("user_id", userId).maybeSingle();
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles").select("approval_status").eq("user_id", userId).maybeSingle();
+    if (profileErr) {
+      console.error("checkApproved: profile lookup failed", profileErr);
+      return { ok: false, error: "We couldn't verify your account. Please try again." };
+    }
     if (profile?.approval_status === "approved") return { ok: true };
-    return { ok: false, status: profile?.approval_status ?? "pending" };
+    if (!profile) return { ok: false, status: "missing" };
+    return { ok: false, status: profile.approval_status ?? "pending" };
+  };
+
+  /** Retries with backoff while the post-signup rows are still being created (OAuth). */
+  const checkApprovedWithRetry = async (userId: string) => {
+    const delays = [0, 300, 700, 1500, 2500];
+    let last = await checkApproved(userId);
+    for (let i = 1; i < delays.length && !last.ok && (last.status === "missing" || last.error); i++) {
+      await new Promise((r) => setTimeout(r, delays[i]));
+      last = await checkApproved(userId);
+    }
+    return last;
   };
 
   const enforceApproval = async (sess: Session): Promise<boolean> => {
     if (!sess.user.email_confirmed_at) {
       await supabase.auth.signOut();
-      alert("Please verify your email before signing in.");
+      toast({ title: "Email not verified", description: "Please verify your email before signing in.", variant: "destructive" });
       return false;
     }
-    const res = await checkApproved(sess.user.id);
+    const res = await checkApprovedWithRetry(sess.user.id);
     if (!res.ok) {
       await supabase.auth.signOut();
-      alert(res.status === "rejected"
-        ? "Your account application was rejected. Please contact support."
-        : "Your account is pending admin approval. You'll be notified once approved.");
+      toast({
+        title: res.error ? "Sign-in problem" : "Account not active yet",
+        description: res.error
+          ? res.error
+          : res.status === "rejected"
+            ? "Your account application was rejected. Please contact support."
+            : "Your account is pending admin approval. You'll be notified once approved.",
+        variant: "destructive",
+      });
       return false;
     }
     return true;
@@ -80,18 +119,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          if (event === "SIGNED_IN") {
-            // Defer to avoid deadlock; give the new-user trigger a moment for OAuth signups
+          if (event === "SIGNED_IN" && !passwordFlowInFlight) {
+            // OAuth / magic-link sign-in: signIn() didn't run, so enforce here.
+            // Deferred to avoid deadlocking the auth callback.
             setTimeout(async () => {
-              await new Promise(r => setTimeout(r, 400));
               const ok = await enforceApproval(session);
               if (ok) await fetchRole(session.user.id);
               setLoading(false);
             }, 0);
             return; // don't flip loading=false yet
-          } else {
-            await fetchRole(session.user.id);
           }
+          await fetchRole(session.user.id);
         } else {
           setRole(null);
         }
@@ -111,7 +149,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [passwordFlowInFlight]);
+
+
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
