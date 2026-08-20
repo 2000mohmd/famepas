@@ -147,6 +147,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   // Onboarding progress (venue only): instagram connected? has a campaign?
   const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string } | null>(null);
   const [venueName, setVenueName] = useState<string>("");
+  const [venueLogo, setVenueLogo] = useState<string | null>(null);
 
   useEffect(() => {
     if (type !== "venue" || !user) return;
