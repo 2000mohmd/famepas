@@ -65,7 +65,35 @@ const AdminBilling = () => {
 
   const handleWithdrawalStatus = async (id: string, status: string) => {
     const withdrawal = withdrawals.find((w) => w.id === id);
-    await supabase.from("withdrawal_requests").update({ status, processed_at: new Date().toISOString() } as any).eq("id", id);
+
+    if (status === "completed" && withdrawal) {
+      // Re-check funds at payout time: earnings minus other in-flight withdrawals.
+      const [{ data: earningRows }, { data: otherRequests }] = await Promise.all([
+        supabase.from("earnings").select("net_amount, status").eq("influencer_id", withdrawal.influencer_id),
+        supabase.from("withdrawal_requests").select("id, amount, status").eq("influencer_id", withdrawal.influencer_id),
+      ]);
+      const earned = (earningRows ?? [])
+        .filter((e: any) => ["confirmed", "paid"].includes(e.status))
+        .reduce((s: number, e: any) => s + Number(e.net_amount), 0);
+      const reserved = (otherRequests ?? [])
+        .filter((w: any) => w.id !== id && ["pending", "processing"].includes(w.status))
+        .reduce((s: number, w: any) => s + Number(w.amount), 0);
+      const available = earned - reserved;
+      if (Number(withdrawal.amount) > available) {
+        toast({
+          title: "Insufficient balance",
+          description: `This influencer only has $${available.toFixed(2)} available. Payout blocked.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const { error } = await supabase.from("withdrawal_requests").update({ status, processed_at: new Date().toISOString() } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
 
     if (status === "completed" && withdrawal) {
       await supabase.from("earnings").insert({
@@ -81,6 +109,7 @@ const AdminBilling = () => {
     toast({ title: `Withdrawal ${status}` });
     fetchAll();
   };
+
 
   return (
     <DashboardLayout type="admin">
