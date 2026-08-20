@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import type { User, Session } from "@supabase/supabase-js";
 
 type UserRole = "admin" | "venue" | "influencer" | null;
+
 
 interface AuthContextType {
   user: User | null;
