@@ -37,7 +37,9 @@ serve(async (req) => {
       user_metadata: {
         full_name: full_name || (venue_name ? `${venue_name} Owner` : email),
         role,
-        ...(venue_name ? { venue_name, venue_category: venue_category || "dining", venue_city: venue_city || null } : {}),
+        // NOTE: venue_name is intentionally omitted so the handle_new_user
+        // trigger does not insert a pending venue row; we insert it below
+        // ourselves with approved status (no race, no duplicates).
       },
     });
     if (createError) return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -49,12 +51,23 @@ serve(async (req) => {
 
     let venue = null;
     if (role === "venue" && venue_name) {
-      const { data: venueData } = await supabaseAdmin
+      const { data: venueData, error: venueError } = await supabaseAdmin
         .from("venues")
-        .update({ approval_status: "approved", is_active: true })
-        .eq("owner_id", userId)
+        .insert({
+          owner_id: userId,
+          name: venue_name,
+          category: venue_category || "dining",
+          city: venue_city || null,
+          email,
+          approval_status: "approved",
+          is_active: true,
+        })
         .select()
         .maybeSingle();
+      if (venueError) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return new Response(JSON.stringify({ error: `Failed to create venue: ${venueError.message}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       venue = venueData;
     }
 
