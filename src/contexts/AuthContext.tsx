@@ -154,23 +154,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error };
-    if (!data.user?.email_confirmed_at) {
-      await supabase.auth.signOut();
-      return { error: { message: "Please verify your email address before signing in. Check your inbox for the verification link." } };
+    setPasswordFlowInFlight(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { error };
+      if (!data.user?.email_confirmed_at) {
+        await supabase.auth.signOut();
+        return { error: { message: "Please verify your email address before signing in. Check your inbox for the verification link." } };
+      }
+      // Single source of truth for approval on password logins.
+      const res = await checkApprovedWithRetry(data.user.id);
+      if (!res.ok) {
+        await supabase.auth.signOut();
+        const msg = res.error
+          ? res.error
+          : res.status === "rejected"
+            ? "Your account application was rejected. Please contact support."
+            : "Your account is pending admin approval. You'll be notified once approved.";
+        return { error: { message: msg } };
+      }
+      await fetchRole(data.user.id);
+      return { error: null };
+    } finally {
+      setPasswordFlowInFlight(false);
     }
-    // Check approval (admins auto-approved; venues approved if any venue is approved)
-    const res = await checkApproved(data.user.id);
-    if (!res.ok) {
-      await supabase.auth.signOut();
-      const msg = res.status === "rejected"
-        ? "Your account application was rejected. Please contact support."
-        : "Your account is pending admin approval. You'll be notified once approved.";
-      return { error: { message: msg } };
-    }
-    return { error: null };
   };
+
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const { error } = await supabase.auth.signUp({
