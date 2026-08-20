@@ -32,6 +32,7 @@ const AdminVenues = () => {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
+  const [approvalFilter, setApprovalFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -64,6 +65,7 @@ const AdminVenues = () => {
   let filtered = venues.filter(v => v.name.toLowerCase().includes(search.toLowerCase()));
   if (categoryFilter !== "all") filtered = filtered.filter(v => v.category === categoryFilter);
   if (cityFilter !== "all") filtered = filtered.filter(v => v.city === cityFilter);
+  if (approvalFilter !== "all") filtered = filtered.filter(v => (v.approval_status || "approved") === approvalFilter);
   filtered = [...filtered].sort((a, b) => {
     switch (sortBy) {
       case "created_asc": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -231,6 +233,15 @@ const AdminVenues = () => {
             <SelectContent>
               <SelectItem value="all">All Cities</SelectItem>
               {allCities.map(c => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={approvalFilter} onValueChange={setApprovalFilter}>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="Approval" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Approvals</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>

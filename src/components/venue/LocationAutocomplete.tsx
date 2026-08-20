@@ -42,7 +42,11 @@ const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
   };
 
   return (
-    <Autocomplete onLoad={a => (ref.current = a)} onPlaceChanged={onPlace}>
+    <Autocomplete
+      onLoad={a => (ref.current = a)}
+      onPlaceChanged={onPlace}
+      options={{ componentRestrictions: { country: ["lb"] } }}
+    >
       <Input defaultValue={defaultValue} placeholder={placeholder || "Search address…"} />
     </Autocomplete>
   );

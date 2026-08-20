@@ -39,7 +39,7 @@ const HEAR_OPTIONS = [
 const DEFAULT_CATEGORIES = [
   "Activities", "Bars/Pubs/Clubs", "Cafe/Coffee", "Delivery",
   "Events", "Festivals", "Hotels", "Restaurants",
-  "Retail", "Street Food", "Takeaway", "Other",
+  "Gyms", "Retail", "Spa", "Street Food", "Takeaway", "Other",
 ];
 
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -213,6 +213,7 @@ const VenueSignup = () => {
       setLocationSearchStatus("Searching…");
       google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: addressQuery.trim(),
+        includedRegionCodes: ["LB"],
         sessionToken: autocompleteSession.current,
       }).then(({ suggestions: results }) => {
         const mapped = (results ?? []).map((item) => {
@@ -375,7 +376,7 @@ const VenueSignup = () => {
               <div className="h-px flex-1 bg-slate-200" />OR<div className="h-px flex-1 bg-slate-200" />
             </div>
 
-            <Field label="Email">
+            <Field label="Email" hint="This will be your login email, and where we'll send approval and account updates.">
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
             <Field label="Password">
@@ -514,7 +515,7 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("hear")} step={4} total={6} />
           <Card>
-            <Heading title="Describe your business" sub={<>Looking to join an existing team? <a className="text-[#b8923a] font-medium">Chat to us</a></>} />
+            <Heading title="Describe your business" />
             <Field label="Name">
               <TextInput value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="e.g. Honest Burgers" />
             </Field>
