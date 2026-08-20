@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { User, Session } from "@supabase/supabase-js";
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // Set while signIn() runs so the auth listener doesn't repeat the approval check.
-  const [passwordFlowInFlight, setPasswordFlowInFlight] = useState(false);
+  const passwordFlowInFlight = useRef(false);
 
   const fetchRole = async (userId: string): Promise<{ role: UserRole; error?: string }> => {
     const { data, error } = await supabase
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          if (event === "SIGNED_IN" && !passwordFlowInFlight) {
+          if (event === "SIGNED_IN" && !passwordFlowInFlight.current) {
             // OAuth / magic-link sign-in: signIn() didn't run, so enforce here.
             // Deferred to avoid deadlocking the auth callback.
             setTimeout(async () => {
@@ -149,12 +149,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [passwordFlowInFlight]);
+  }, []);
 
 
 
   const signIn = async (email: string, password: string) => {
-    setPasswordFlowInFlight(true);
+    passwordFlowInFlight.current = true;
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error };
@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchRole(data.user.id);
       return { error: null };
     } finally {
-      setPasswordFlowInFlight(false);
+      passwordFlowInFlight.current = false;
     }
   };
 
