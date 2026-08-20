@@ -42,7 +42,21 @@ serve(async (req) => {
         // ourselves with approved status (no race, no duplicates).
       },
     });
-    if (createError) return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (createError) {
+      const msg = createError.message || "";
+      const isDuplicate = /already been registered|already registered|email_exists|duplicate/i.test(msg);
+      // Return 200 so supabase-js surfaces the payload instead of a generic
+      // "Edge function returned 400" message in the client.
+      return new Response(
+        JSON.stringify({
+          error: isDuplicate
+            ? "This email is already registered. Use a different email, or find the existing account in the users list."
+            : msg,
+          code: isDuplicate ? "email_exists" : "create_user_error",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const userId = newUser.user.id;
 
