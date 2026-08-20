@@ -115,12 +115,13 @@ const Login = () => {
                     maxLength={6}
                     className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-center tracking-widest text-lg focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
                   />
-                  <p className="text-xs text-slate-500 mt-2">We sent a code to {pendingCreds?.email}. It expires in 10 minutes.</p>
+                  <p className="text-xs text-slate-500 mt-2">We sent a code to {email}. It expires in 10 minutes.</p>
                 </div>
                 <button type="submit" disabled={isLoading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold transition">
                   {isLoading ? "Verifying..." : "Verify & Sign In"}
                 </button>
-                <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }}>
+                <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); }}>
+
                   Cancel
                 </button>
               </form>
