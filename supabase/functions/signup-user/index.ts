@@ -23,6 +23,8 @@ serve(async (req) => {
       bio, city, country, niche, followers_count, instagram_verified,
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
+      // venue signup wizard extras
+      venue_categories, opening_hours, location_email, hear_about_us,
       // mobile hierarchy
       organization_name, organization_legal_name, organization_tax_id, organization_country,
       brand_name, brand_logo_url, brand_description,
@@ -31,6 +33,7 @@ serve(async (req) => {
       contact_person_name, contact_phone, whatsapp_phone,
       latitude, longitude, signup_completed,
     } = body;
+
 
     if (!email || !password || !role) {
       return new Response(JSON.stringify({ error: "Email, password and role are required" }), {
