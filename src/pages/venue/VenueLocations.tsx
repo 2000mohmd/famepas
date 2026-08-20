@@ -31,7 +31,7 @@ const VenueLocations = () => {
     if (!user) return;
     const { data: v } = await supabase
       .from("venues")
-      .select("*")
+      .select("id, name, city, country, address, logo_url, approval_status, is_active, created_at")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)

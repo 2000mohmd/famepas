@@ -147,13 +147,15 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   // Onboarding progress (venue only): instagram connected? has a campaign?
   const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string } | null>(null);
   const [venueName, setVenueName] = useState<string>("");
+  const [venueLogo, setVenueLogo] = useState<string | null>(null);
 
   useEffect(() => {
     if (type !== "venue" || !user) return;
     (async () => {
-      const { data: venue } = await supabase.from("venues").select("id, name").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id, name, logo_url").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       setVenueName(venue.name);
+      setVenueLogo((venue as any).logo_url ?? null);
       const [ig, camp] = await Promise.all([
         supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected"),
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id),
@@ -207,9 +209,13 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         {/* Workspace switcher */}
         <div className="px-3 pb-3">
           <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
-            <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
-              {(venueName || initials).slice(0, 2).toUpperCase()}
-            </span>
+            {venueLogo ? (
+              <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-[hsl(42_35%_88%)]" />
+            ) : (
+              <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
+                {(venueName || initials).slice(0, 2).toUpperCase()}
+              </span>
+            )}
             <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
               {venueName || user?.email?.split("@")[0] || "workspace"}
             </span>

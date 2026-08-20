@@ -378,8 +378,19 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
       </Link>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Building2 className="w-4 h-4" />
-          <span>{offer.venues?.name}</span>
+          {offer.venues?.logo_url ? (
+            <img
+              src={offer.venues.logo_url}
+              alt={`${offer.venues?.name ?? "Venue"} logo`}
+              loading="lazy"
+              className="w-7 h-7 rounded-full object-cover border border-border bg-white"
+            />
+          ) : (
+            <span className="w-7 h-7 rounded-full border border-border bg-muted flex items-center justify-center">
+              <Building2 className="w-3.5 h-3.5" />
+            </span>
+          )}
+          <span className="font-medium text-foreground">{offer.venues?.name}</span>
         </div>
         {offer.venues?.city && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -126,7 +126,12 @@ const InfluencerBookings = () => {
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{booking.venues?.name} • {booking.venues?.city}</p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {booking.venues?.logo_url && (
+                <img src={booking.venues.logo_url} alt={`${booking.venues?.name ?? "Venue"} logo`} loading="lazy" className="w-6 h-6 rounded-full object-cover border border-border bg-white" />
+              )}
+              <span>{booking.venues?.name} • {booking.venues?.city}</span>
+            </div>
             <p className="text-sm text-muted-foreground">📅 {format(new Date(booking.scheduled_date), "PPP p")}</p>
             {booking.checked_in_at && (
               <p className="text-xs text-green-500">Checked in: {format(new Date(booking.checked_in_at), "PPP p")}</p>

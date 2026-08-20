@@ -67,11 +67,25 @@ export async function sendEmail(args: { to: string; subject: string; html: strin
       },
       body: JSON.stringify({ from: FAMEPASS_FROM, to: [args.to], subject: args.subject, html: args.html }),
     });
+    const details = await res.text();
     if (!res.ok) {
-      const details = await res.text();
-      console.error(`Resend request failed [${res.status}]: ${details}`);
-      return { ok: false, error: `Provider error ${res.status}: ${details}` };
+      const lower = details.toLowerCase();
+      let kind = "provider_error";
+      if (res.status === 401 || res.status === 403) kind = "auth_error_invalid_or_revoked_RESEND_API_KEY";
+      else if (res.status === 429) kind = "rate_limited";
+      else if (lower.includes("domain is not verified") || lower.includes("not verified") || lower.includes("verify a domain")) {
+        kind = "sender_domain_not_verified";
+      } else if (lower.includes("testing emails") || lower.includes("own email address")) {
+        kind = "sandbox_restriction_recipient_not_allowed";
+      } else if (res.status === 422 || res.status === 400) kind = "bad_request_invalid_payload";
+      console.error(
+        `[sendEmail] FAILED kind=${kind} status=${res.status} from="${FAMEPASS_FROM}" to="${args.to}" subject="${args.subject}" body=${details}`,
+      );
+      return { ok: false, error: `${kind} (${res.status}): ${details}` };
     }
+    let id = "";
+    try { id = (JSON.parse(details) as { id?: string }).id ?? ""; } catch { /* ignore */ }
+    console.log(`[sendEmail] OK id=${id} to="${args.to}" subject="${args.subject}"`);
     return { ok: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

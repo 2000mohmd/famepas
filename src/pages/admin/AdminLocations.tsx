@@ -35,7 +35,9 @@ const AdminLocations = () => {
       toast({ title: "City is required", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("service_locations").insert({ city: newLoc.city, country: newLoc.country } as any);
+    const { error } = await supabase
+      .from("service_locations")
+      .insert({ city: newLoc.city, country: newLoc.country, is_active: true } as any);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
