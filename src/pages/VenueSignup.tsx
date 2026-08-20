@@ -182,6 +182,7 @@ const VenueSignup = () => {
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [locationEmail, setLocationEmail] = useState("");
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [hours, setHours] = useState<OpeningHours>(createDefaultHours);
   const [editHours, setEditHours] = useState(false);
 
@@ -556,6 +557,7 @@ const VenueSignup = () => {
                     onClick={() => {
                       setLocationAddress(s.description);
                       setLocationName(s.mainText);
+                      setSelectedPlaceId(s.placeId || null);
                       setAddressQuery(s.description);
                       setSuggestions([]);
                       setStep("location-details");
@@ -573,7 +575,7 @@ const VenueSignup = () => {
               <p className="text-xs text-slate-400 mt-2">Loading address search…</p>
             )}
             <button
-              onClick={() => { setLocationAddress(addressQuery); setStep("location-details"); }}
+              onClick={() => { setLocationAddress(addressQuery); setSelectedPlaceId(null); setStep("location-details"); }}
               className="mt-4 text-sm text-[#b8923a] font-medium"
             >
               Skip — enter manually
@@ -651,7 +653,7 @@ const VenueSignup = () => {
           <div className="w-16 h-16 rounded-full bg-[#fbf6e8] mx-auto flex items-center justify-center mb-4">
             <Check className="w-8 h-8 text-[#b8923a]" strokeWidth={3} />
           </div>
-          <Heading title="Check your email" sub="We sent a verification link. After verifying, an admin will review and approve your account." />
+          <Heading title="Application received" sub="Thanks! An admin will review your venue and email you as soon as it's approved. You can sign in once your account is active." />
           <PrimaryButton onClick={() => navigate("/login")}>Go to Sign In</PrimaryButton>
         </Card>
       </div>
