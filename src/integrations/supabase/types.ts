@@ -1876,12 +1876,15 @@ export type Database = {
           created_at: string
           description: string | null
           email: string | null
+          hear_about_us: string[] | null
           id: string
           is_active: boolean
           latitude: number | null
+          location_email: string | null
           logo_url: string | null
           longitude: number | null
           name: string
+          opening_hours: Json | null
           owner_id: string
           phone: string | null
           require_ad_disclosure: boolean
@@ -1912,12 +1915,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          hear_about_us?: string[] | null
           id?: string
           is_active?: boolean
           latitude?: number | null
+          location_email?: string | null
           logo_url?: string | null
           longitude?: number | null
           name: string
+          opening_hours?: Json | null
           owner_id: string
           phone?: string | null
           require_ad_disclosure?: boolean
@@ -1948,12 +1954,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          hear_about_us?: string[] | null
           id?: string
           is_active?: boolean
           latitude?: number | null
+          location_email?: string | null
           logo_url?: string | null
           longitude?: number | null
           name?: string
+          opening_hours?: Json | null
           owner_id?: string
           phone?: string | null
           require_ad_disclosure?: boolean
@@ -2123,12 +2132,15 @@ export type Database = {
           created_at: string
           description: string | null
           email: string | null
+          hear_about_us: string[] | null
           id: string
           is_active: boolean
           latitude: number | null
+          location_email: string | null
           logo_url: string | null
           longitude: number | null
           name: string
+          opening_hours: Json | null
           owner_id: string
           phone: string | null
           require_ad_disclosure: boolean
