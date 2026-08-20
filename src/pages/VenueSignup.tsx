@@ -246,11 +246,26 @@ const VenueSignup = () => {
   };
 
   /* ----- final submit ----- */
+  const resolveCoordinates = async (): Promise<{ lat: number | null; lng: number | null }> => {
+    if (!selectedPlaceId || !isLoaded || !window.google?.maps) return { lat: null, lng: null };
+    try {
+      const { Place } = (await google.maps.importLibrary("places")) as google.maps.PlacesLibrary;
+      const place = new Place({ id: selectedPlaceId });
+      await place.fetchFields({ fields: ["location"] });
+      const loc = place.location;
+      if (loc) return { lat: loc.lat(), lng: loc.lng() };
+    } catch (err) {
+      console.error("Could not resolve place coordinates", err);
+    }
+    return { lat: null, lng: null };
+  };
+
   const handleFinalize = async () => {
     setSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
       const cityGuess = locationAddress.split(",").slice(-2, -1)[0]?.trim() ?? "";
+      const { lat, lng } = await resolveCoordinates();
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
           email,
@@ -259,12 +274,18 @@ const VenueSignup = () => {
           full_name: fullName,
           venue_name: brandName,
           venue_category: brandCategories[0] ?? "dining",
+          venue_categories: brandCategories,
           venue_city: cityGuess,
           address_line1: locationAddress,
           contact_person_name: fullName,
           signup_completed: true,
           organization_name: brandName,
           brand_name: brandName,
+          location_email: locationEmail || null,
+          opening_hours: hours,
+          hear_about_us: hear,
+          latitude: lat,
+          longitude: lng,
         },
       });
       // Parse possible error payload from edge function (supabase-js may surface non-2xx as error)
@@ -295,21 +316,16 @@ const VenueSignup = () => {
         });
         return;
       }
-      // Sign the new user in and route to the venue dashboard
-      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInErr) {
-        toast({ title: "Account created", description: "Please sign in to continue." });
-        navigate("/login");
-        return;
-      }
-      toast({ title: "Welcome to FamePass!", description: "Your business is all set up." });
-      navigate("/venue");
+      // Venues start as pending — never route into the dashboard before approval.
+      await supabase.auth.signOut();
+      setStep("done");
     } catch (e) {
       toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const handleSocial = async () => {
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/venue` });
