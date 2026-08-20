@@ -20,12 +20,35 @@ serve(async (req) => {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
-    const { action, email, code } = await req.json();
+    const { action, email, code, password } = await req.json();
     if (!email) {
       return new Response(JSON.stringify({ error: "email required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // The "send" action emails a one-time code, so it must never be triggerable
+    // by an email address alone — require valid credentials first.
+    if (action === "send") {
+      if (!password) {
+        return new Response(JSON.stringify({ error: "Invalid email or password" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const authClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { auth: { persistSession: false, autoRefreshToken: false } },
+      );
+      const { error: credError } = await authClient.auth.signInWithPassword({ email, password });
+      if (credError) {
+        return new Response(JSON.stringify({ error: "Invalid email or password", code: "invalid_credentials" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await authClient.auth.signOut();
+    }
+
 
     // Look up user (do NOT reveal existence to caller)
     const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });

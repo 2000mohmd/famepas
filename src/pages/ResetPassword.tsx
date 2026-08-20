@@ -10,17 +10,36 @@ const ResetPassword = () => {
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [ready, setReady] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Wait for Supabase to process the recovery hash and establish the session
   useEffect(() => {
+    // Supabase appends an error to the URL hash when a recovery link is invalid.
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const query = new URLSearchParams(window.location.search);
+    const err = hash.get("error_description") || hash.get("error") || query.get("error_description") || query.get("error");
+    if (err) {
+      setLinkError("This reset link is invalid or has expired.");
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
     supabase.auth.getSession().then(({ data }) => { if (data.session) setReady(true); });
-    return () => subscription.unsubscribe();
+
+    const timeout = setTimeout(() => {
+      setReady((current) => {
+        if (!current) setLinkError("This reset link is invalid or has expired.");
+        return current;
+      });
+    }, 7000);
+
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +66,18 @@ const ResetPassword = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <h1 className="text-2xl font-bold mb-2">Set a new password</h1>
             <p className="text-sm text-slate-600 mb-6">Choose a strong password (at least 8 characters).</p>
-            {!ready ? (
+            {linkError && !ready ? (
+              <div className="space-y-4">
+                <p className="text-sm text-red-600">{linkError}</p>
+                <Link to="/forgot-password" className="inline-flex items-center justify-center w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] text-white font-semibold">
+                  Request a new reset link
+                </Link>
+                <Link to="/login" className="block text-center text-sm text-slate-600 hover:underline">Back to sign in</Link>
+              </div>
+            ) : !ready ? (
               <p className="text-sm text-slate-600">Verifying your reset link…</p>
             ) : (
+
               <form onSubmit={submit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold mb-2">New password</label>

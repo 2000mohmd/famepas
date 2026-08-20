@@ -30,18 +30,27 @@ const Login = () => {
 
   const [otpRequired, setOtpRequired] = useState(false);
   const [otpCode, setOtpCode] = useState("");
-  const [pendingCreds, setPendingCreds] = useState<{ email: string; password: string } | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const otpRes = await supabase.functions.invoke("login-otp", { body: { action: "send", email } });
-      if (otpRes.data?.twoFactor) {
-        setPendingCreds({ email, password });
+      // Credentials are verified server-side before any code is emailed.
+      const otpRes = await supabase.functions.invoke("login-otp", { body: { action: "send", email, password } });
+      let payload: any = otpRes.data ?? null;
+      if (otpRes.error) {
+        try {
+          const ctx: any = (otpRes.error as any).context;
+          if (ctx && typeof ctx.json === "function") payload = await ctx.json();
+        } catch { /* ignore */ }
+      }
+      if (payload?.error) {
+        toast({ title: "Login failed", description: payload.error, variant: "destructive" });
+        return;
+      }
+      if (payload?.twoFactor) {
         setOtpRequired(true);
         toast({ title: "Verification code sent", description: "Check your email for the 6-digit code." });
-        setIsLoading(false);
         return;
       }
       const { error } = await signIn(email, password);
@@ -53,19 +62,19 @@ const Login = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pendingCreds) return;
     setIsLoading(true);
-    const verify = await supabase.functions.invoke("login-otp", { body: { action: "verify", email: pendingCreds.email, code: otpCode } });
+    const verify = await supabase.functions.invoke("login-otp", { body: { action: "verify", email, code: otpCode } });
     if (verify.error || verify.data?.error) {
       toast({ title: "Invalid code", description: verify.data?.error || "Try again", variant: "destructive" });
       setIsLoading(false);
       return;
     }
-    const { error } = await signIn(pendingCreds.email, pendingCreds.password);
+    const { error } = await signIn(email, password);
     setIsLoading(false);
     if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    else { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }
+    else { setOtpRequired(false); setOtpCode(""); }
   };
+
 
   const handleSocial = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -106,12 +115,13 @@ const Login = () => {
                     maxLength={6}
                     className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-center tracking-widest text-lg focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
                   />
-                  <p className="text-xs text-slate-500 mt-2">We sent a code to {pendingCreds?.email}. It expires in 10 minutes.</p>
+                  <p className="text-xs text-slate-500 mt-2">We sent a code to {email}. It expires in 10 minutes.</p>
                 </div>
                 <button type="submit" disabled={isLoading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold transition">
                   {isLoading ? "Verifying..." : "Verify & Sign In"}
                 </button>
-                <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); setPendingCreds(null); }}>
+                <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); }}>
+
                   Cancel
                 </button>
               </form>

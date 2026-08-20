@@ -73,12 +73,59 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               {venue.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> {venue.email}</div>}
+              {venue.location_email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> Location: {venue.location_email}</div>}
               {(venue.phone || venue.contact_phone) && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> {venue.phone || venue.contact_phone}</div>}
               {venue.whatsapp_phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> WhatsApp: {venue.whatsapp_phone}</div>}
               {venue.website && <a href={venue.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-gold hover:underline"><Globe className="w-4 h-4" /> Website</a>}
               {venue.contact_person_name && <div className="flex items-center gap-2 text-muted-foreground"><User className="w-4 h-4 text-gold" /> {venue.contact_person_name}</div>}
               {(venue.city || venue.country) && <div className="flex items-center gap-2 text-muted-foreground col-span-2"><MapPin className="w-4 h-4 text-gold" /> {[venue.address_line1, venue.address_line2, venue.city, venue.zip_code, venue.country].filter(Boolean).join(", ")}</div>}
             </div>
+
+            {Array.isArray(venue.categories) && venue.categories.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Categories</p>
+                <div className="flex flex-wrap gap-2">
+                  {venue.categories.map((c: string) => <Badge key={c} variant="secondary">{c}</Badge>)}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(venue.hear_about_us) && venue.hear_about_us.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">How they heard about us</p>
+                <div className="flex flex-wrap gap-2">
+                  {venue.hear_about_us.map((h: string) => <Badge key={h} variant="outline">{h}</Badge>)}
+                </div>
+              </div>
+            )}
+
+            {venue.opening_hours && typeof venue.opening_hours === "object" && (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Opening hours</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                  {Object.entries(venue.opening_hours as Record<string, any>).map(([day, val]) => (
+                    <div key={day} className="flex justify-between text-muted-foreground">
+                      <span>{day}</span>
+                      <span>{val?.closed ? "Closed" : `${val?.open ?? "—"} - ${val?.close ?? "—"}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {venue.latitude != null && venue.longitude != null && (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Location</p>
+                <iframe
+                  title="Venue location"
+                  className="w-full h-56 rounded-lg border border-border"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps?q=${venue.latitude},${venue.longitude}&z=15&output=embed`}
+                />
+              </div>
+            )}
+
 
             {owner && (
               <div className="border-t border-border pt-4">
