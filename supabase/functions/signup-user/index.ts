@@ -142,34 +142,65 @@ serve(async (req) => {
     let brand = null;
 
     if (role === "venue" && venue_name) {
+      // If any step of the venue hierarchy fails we must not leave behind an
+      // account that claims to be a venue owner but has no venue row.
+      const rollback = async (stage: string, dbError: unknown) => {
+        console.error(`Venue signup failed at ${stage}:`, dbError);
+        try {
+          if (venue?.id) await supabaseAdmin.from("venues").delete().eq("id", venue.id);
+          if (brand?.id) await supabaseAdmin.from("brands").delete().eq("id", brand.id);
+          if (organization?.id) await supabaseAdmin.from("organizations").delete().eq("id", organization.id);
+          await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+          await supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+          await supabaseAdmin.auth.admin.deleteUser(userId);
+        } catch (cleanupErr) {
+          console.error("Venue signup rollback failed:", cleanupErr);
+        }
+        const message = (dbError as { message?: string })?.message || String(dbError);
+        return new Response(
+          JSON.stringify({ error: `We couldn't finish creating your venue (${stage}): ${message}`, code: "venue_setup_failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      };
+
       // 1. Organization
-      const { data: orgRow } = await supabaseAdmin.from("organizations").insert({
+      const { data: orgRow, error: orgError } = await supabaseAdmin.from("organizations").insert({
         owner_id: userId,
         name: organization_name || venue_name,
         legal_name: organization_legal_name || null,
         tax_id: organization_tax_id || null,
         country: organization_country || null,
       }).select().single();
+      if (orgError || !orgRow) return await rollback("organization", orgError ?? new Error("No organization returned"));
       organization = orgRow;
 
       // 2. Brand
-      const { data: brandRow } = await supabaseAdmin.from("brands").insert({
-        organization_id: orgRow!.id,
+      const { data: brandRow, error: brandError } = await supabaseAdmin.from("brands").insert({
+        organization_id: orgRow.id,
         name: brand_name || venue_name,
         logo_url: brand_logo_url || null,
         description: brand_description || null,
       }).select().single();
+      if (brandError || !brandRow) return await rollback("brand", brandError ?? new Error("No brand returned"));
       brand = brandRow;
 
       // 3. Venue (establishment)
-      const { data: venueData } = await supabaseAdmin.from("venues").insert({
+      const categoryList: string[] = Array.isArray(venue_categories) && venue_categories.length
+        ? venue_categories
+        : (venue_category ? [venue_category] : []);
+
+      const { data: venueData, error: venueError } = await supabaseAdmin.from("venues").insert({
         owner_id: userId,
-        brand_id: brandRow!.id,
+        brand_id: brandRow.id,
         name: venue_name,
-        category: venue_category || "dining",
+        category: venue_category || categoryList[0] || "dining",
+        categories: categoryList,
         city: venue_city || null,
         country: organization_country || null,
         email,
+        location_email: location_email || null,
+        opening_hours: opening_hours ?? null,
+        hear_about_us: Array.isArray(hear_about_us) ? hear_about_us : (hear_about_us ? [hear_about_us] : null),
         venue_type: venue_type || "physical",
         address_line1: address_line1 || null,
         address_line2: address_line2 || null,
@@ -184,11 +215,12 @@ serve(async (req) => {
         approval_status: "pending",
         is_active: false,
       }).select().single();
+      if (venueError || !venueData) return await rollback("venue", venueError ?? new Error("No venue returned"));
       venue = venueData;
 
       // Application-received email to the venue (best-effort)
       try {
-        await sendEmail({
+        const res = await sendEmail({
           to: email,
           subject: "Your FamePass application has been received",
           html: emailLayout({
@@ -199,47 +231,37 @@ serve(async (req) => {
               paragraph("Your venue application has been received and is now pending review. We'll email you as soon as it's approved."),
           }),
         });
+        if (!res.ok) console.error("Venue welcome email not delivered:", res.error);
       } catch (mailErr) {
         console.error("Venue welcome email failed", mailErr);
       }
 
-      // Notify admin that a new venue is awaiting approval.
-      // Required secrets in edge function settings: ADMIN_EMAIL, RESEND_API_KEY
+      // Notify admin that a new venue is awaiting approval (best-effort, uses shared helper).
       try {
         const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
-        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-        if (ADMIN_EMAIL && RESEND_API_KEY) {
-          const html = `
-            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff;color:#111;">
-              <h1 style="color:#b8860b;margin:0 0 12px;">New venue awaiting approval</h1>
-              <p><strong>Name:</strong> ${venue_name}</p>
-              <p><strong>City:</strong> ${venue_city || "—"}</p>
-              <p><strong>Category:</strong> ${venue_category || "dining"}</p>
-              <p><strong>Owner email:</strong> ${email}</p>
-              <p style="margin-top:24px;">
-                <a href="https://famepass.app/admin/venues" style="background:#b8860b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Review in Admin</a>
-              </p>
-            </div>`;
-          await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-              from: "FamePass <notify@notify.famepass.app>",
-              to: [ADMIN_EMAIL],
-              subject: `New venue awaiting approval: ${venue_name}`,
-              html,
+        if (!ADMIN_EMAIL) {
+          console.error("Admin venue notification skipped — ADMIN_EMAIL secret is not set");
+        } else {
+          const res = await sendEmail({
+            to: ADMIN_EMAIL,
+            subject: `New venue awaiting approval: ${venue_name}`,
+            html: emailLayout({
+              heading: "New venue awaiting approval",
+              bodyHtml:
+                paragraph(`Name: ${venue_name}`) +
+                paragraph(`City: ${venue_city || "—"}`) +
+                paragraph(`Category: ${categoryList.join(", ") || venue_category || "dining"}`) +
+                paragraph(`Owner email: ${email}`),
+              button: { label: "Review in Admin", url: "https://famepass.app/admin/venues" },
             }),
           });
-        } else {
-          console.log("Admin venue notification skipped — missing ADMIN_EMAIL / RESEND_API_KEY");
+          if (!res.ok) console.error("Admin venue notification not delivered:", res.error);
         }
       } catch (notifyErr) {
         console.error("Admin venue notification failed", notifyErr);
       }
     }
+
 
     return new Response(JSON.stringify({ user: newUser.user, venue, organization, brand }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
