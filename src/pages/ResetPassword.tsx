@@ -66,9 +66,18 @@ const ResetPassword = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <h1 className="text-2xl font-bold mb-2">Set a new password</h1>
             <p className="text-sm text-slate-600 mb-6">Choose a strong password (at least 8 characters).</p>
-            {!ready ? (
+            {linkError && !ready ? (
+              <div className="space-y-4">
+                <p className="text-sm text-red-600">{linkError}</p>
+                <Link to="/forgot-password" className="inline-flex items-center justify-center w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] text-white font-semibold">
+                  Request a new reset link
+                </Link>
+                <Link to="/login" className="block text-center text-sm text-slate-600 hover:underline">Back to sign in</Link>
+              </div>
+            ) : !ready ? (
               <p className="text-sm text-slate-600">Verifying your reset link…</p>
             ) : (
+
               <form onSubmit={submit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold mb-2">New password</label>
