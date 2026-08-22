@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
+import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } from "@/lib/validation";
+
 
 const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
 
