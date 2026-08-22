@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isValidEmail } from "@/lib/validation";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -9,8 +10,13 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const [touched, setTouched] = useState(false);
+  const emailError = touched && !isValidEmail(email) ? "Please enter a valid email address" : "";
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched(true);
+    if (!isValidEmail(email)) return;
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -45,10 +51,12 @@ const ForgotPassword = () => {
                 <div>
                   <label className="block text-sm font-semibold mb-2">Email</label>
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setTouched(true)}
                     placeholder="you@email.com"
-                    className="w-full h-12 px-4 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                    className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#b8923a]/20 ${emailError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#b8923a]"}`} />
+                  {emailError && <p className="text-sm text-red-600 mt-1.5">{emailError}</p>}
                 </div>
-                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
+                <button disabled={loading || !isValidEmail(email)} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
                   {loading ? "Sending..." : "Send reset link"}
                 </button>
                 <p className="text-center text-sm text-slate-600">
