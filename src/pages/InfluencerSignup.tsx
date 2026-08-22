@@ -460,9 +460,11 @@ const InfluencerSignup = () => {
                 </p>
               )}
             </Field>
-            <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
+            <Field label="Short bio" hint="Optional — a 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
+              {bioError && <p className="text-xs text-red-600 mt-1">{bioError}</p>}
             </Field>
+
             <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
