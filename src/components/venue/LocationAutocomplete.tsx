@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Autocomplete } from "@react-google-maps/api";
 import { Input } from "@/components/ui/input";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
+import { useServiceCountryCodes } from "@/lib/serviceCountries";
 
 export interface PickedPlace {
   address: string;
@@ -21,6 +22,14 @@ interface Props {
 const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
   const { isLoaded } = useGoogleMaps();
   const ref = useRef<google.maps.places.Autocomplete | null>(null);
+  const countryCodes = useServiceCountryCodes();
+
+  // Keep the restriction in sync when the admin-configured countries load/change.
+  useEffect(() => {
+    ref.current?.setOptions({
+      componentRestrictions: { country: countryCodes.map(c => c.toLowerCase()) },
+    });
+  }, [countryCodes]);
 
   if (!isLoaded) {
     return <Input placeholder="Loading map…" disabled />;
@@ -43,9 +52,11 @@ const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
 
   return (
     <Autocomplete
-      onLoad={a => (ref.current = a)}
+      onLoad={a => {
+        ref.current = a;
+        a.setOptions({ componentRestrictions: { country: countryCodes.map(c => c.toLowerCase()) } });
+      }}
       onPlaceChanged={onPlace}
-      options={{ componentRestrictions: { country: ["lb"] } }}
     >
       <Input defaultValue={defaultValue} placeholder={placeholder || "Search address…"} />
     </Autocomplete>
