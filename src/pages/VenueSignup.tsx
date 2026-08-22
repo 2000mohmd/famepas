@@ -5,6 +5,8 @@ import { lovable } from "@/integrations/lovable/index";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
+import { isValidEmail, isValidName } from "@/lib/validation";
+import { useServiceCountryCodes } from "@/lib/serviceCountries";
 
 /* ============================================================
    Joli-style light-mode business signup wizard
@@ -196,6 +198,7 @@ const VenueSignup = () => {
   }, []);
 
   // google places autocomplete
+  const serviceCountryCodes = useServiceCountryCodes();
   const autocompleteSession = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   useEffect(() => {
     if (isLoaded && window.google?.maps?.places && !autocompleteSession.current) {
@@ -213,7 +216,7 @@ const VenueSignup = () => {
       setLocationSearchStatus("Searching…");
       google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: addressQuery.trim(),
-        includedRegionCodes: ["LB"],
+        includedRegionCodes: serviceCountryCodes,
         sessionToken: autocompleteSession.current,
       }).then(({ suggestions: results }) => {
         const mapped = (results ?? []).map((item) => {
@@ -230,7 +233,7 @@ const VenueSignup = () => {
       }).catch(() => setLocationSearchStatus("Location search is unavailable. You can enter the address manually."));
     }, 250);
     return () => clearTimeout(t);
-  }, [addressQuery, isLoaded]);
+  }, [addressQuery, isLoaded, serviceCountryCodes]);
 
   // sync email to confirm screen
   useEffect(() => { if (email && !locationEmail) setLocationEmail(email); }, [email, locationEmail]);
@@ -469,9 +472,11 @@ const VenueSignup = () => {
             <Heading title="Confirm your details" />
             <Field label="First Name">
               <TextInput value={firstName} onChange={e => setFirstName(e.target.value)} />
+              {firstName.trim() && !isValidName(firstName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
             </Field>
             <Field label="Last Name">
               <TextInput value={lastName} onChange={e => setLastName(e.target.value)} />
+              {lastName.trim() && !isValidName(lastName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
             </Field>
             <Field label="Email">
               <div className="relative">
@@ -481,7 +486,7 @@ const VenueSignup = () => {
                 </div>
               </div>
             </Field>
-            <PrimaryButton disabled={!firstName || !lastName} onClick={() => setStep("hear")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!isValidName(firstName) || !isValidName(lastName)} onClick={() => setStep("hear")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -518,6 +523,7 @@ const VenueSignup = () => {
             <Heading title="Describe your business" />
             <Field label="Name">
               <TextInput value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="e.g. Honest Burgers" />
+              {brandName.trim() && !isValidName(brandName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
             </Field>
             <Field label="Category" hint="Pick all that apply — this helps us find the right influencers">
               <div className="grid grid-cols-2 gap-3">
@@ -528,7 +534,7 @@ const VenueSignup = () => {
                 ))}
               </div>
             </Field>
-            <PrimaryButton disabled={!brandName || brandCategories.length === 0} onClick={() => setStep("location-search")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0} onClick={() => setStep("location-search")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -607,6 +613,9 @@ const VenueSignup = () => {
             </Field>
             <Field label="Email" hint="Add the location's email to let them know about confirmed bookings">
               <TextInput type="email" value={locationEmail} onChange={e => setLocationEmail(e.target.value)} />
+              {locationEmail.trim() && !isValidEmail(locationEmail) && (
+                <p className="text-xs text-red-600 mt-1">Please enter a valid email address.</p>
+              )}
             </Field>
 
             <div className="mb-6">
@@ -650,7 +659,7 @@ const VenueSignup = () => {
             </div>
 
             <PrimaryButton
-              disabled={!locationName || !locationAddress || !locationEmail || submitting}
+              disabled={!isValidName(locationName) || !locationAddress.trim() || !isValidEmail(locationEmail) || submitting}
               onClick={handleFinalize}
             >
               {submitting ? "Creating account..." : "Save"}

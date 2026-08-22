@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
+import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } from "@/lib/validation";
+
 
 const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
 
@@ -151,7 +153,15 @@ const InfluencerSignup = () => {
 
   const verifyHandle = async (platform: "instagram" | "tiktok", raw: string) => {
     const h = normalizeHandle(raw);
-    if (!h) return;
+    if (!h) {
+      // "@" / whitespace only — invalid, don't waste an API call.
+      if (raw.trim()) {
+        const bad: HandleCheck = { status: "not_found", ok: false, followers: 0 };
+        if (platform === "instagram") setVerifiedIG(bad); else setVerifiedTT(bad);
+      }
+      return;
+    }
+
     setVerifyingHandle(platform);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-profile-stats", {
@@ -209,11 +219,26 @@ const InfluencerSignup = () => {
   const pwdChecks = useMemo(() => getPasswordChecks(password), [password]);
   const pwdReady = useMemo(() => isStrongPassword(password), [password]);
 
-  const accountReady = email.includes("@") && pwdReady;
-  const profileReady = fullName.trim().length > 1 && country.trim().length > 0;
-  const igBlocked = !!instagram && verifiedIG?.status === "not_found";
-  const ttBlocked = !!tiktok && verifiedTT?.status === "not_found";
-  const socialsReady = !!(instagram || tiktok || youtube) && !igBlocked && !ttBlocked;
+  const accountReady = isValidEmail(email) && pwdReady;
+
+  // profile validation
+  const nameError =
+    !fullName.trim() ? "" :
+    !isValidName(fullName, 3) ? "Please enter at least 3 characters." :
+    !isValidFullName(fullName) ? "Please enter your first and last name." : "";
+  const usernameError =
+    !username.trim() ? "" :
+    !isValidOptionalHandle(normalizeHandle(username), username) ? "Please enter a valid username (at least 2 letters or numbers)." : "";
+  const bioError = bio.trim().length > 0 && bio.trim().length < 10 ? "Please write at least 10 characters, or leave it empty." : "";
+  const profileReady =
+    isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError;
+
+  const igInvalidFormat = !!instagram.trim() && !normalizeHandle(instagram);
+  const ttInvalidFormat = !!tiktok.trim() && !normalizeHandle(tiktok);
+  const igBlocked = igInvalidFormat || (!!instagram && verifiedIG?.status === "not_found");
+  const ttBlocked = ttInvalidFormat || (!!tiktok && verifiedTT?.status === "not_found");
+  const socialsReady = !!(instagram.trim() || tiktok.trim() || youtube.trim()) && !igBlocked && !ttBlocked;
+
 
 
   const toggleNiche = (n: string) =>
@@ -413,10 +438,13 @@ const InfluencerSignup = () => {
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
             <Field label="Full name">
               <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+              {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
             </Field>
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
+              {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
             </Field>
+
             <Field label="Location" hint="Start typing your city — we'll auto-fill city and country.">
               <LocationAutocomplete
                 defaultValue={city && country ? `${city}, ${country}` : ""}
@@ -432,9 +460,11 @@ const InfluencerSignup = () => {
                 </p>
               )}
             </Field>
-            <Field label="Short bio" hint="A 1–2 sentence intro about you and the content you create.">
+            <Field label="Short bio" hint="Optional — a 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
+              {bioError && <p className="text-xs text-red-600 mt-1">{bioError}</p>}
             </Field>
+
             <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
@@ -515,7 +545,9 @@ const InfluencerSignup = () => {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
                 )}
               </div>
+              {igInvalidFormat && <p className="text-xs text-red-600 mt-1">Please enter a valid Instagram username.</p>}
             </Field>
+
             <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT?.status === "not_found" ? "Username not found on TikTok — please correct it to continue." : verifiedTT?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : undefined}>
               <div className="relative">
                 <TextInput
@@ -531,7 +563,9 @@ const InfluencerSignup = () => {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
                 )}
               </div>
+              {ttInvalidFormat && <p className="text-xs text-red-600 mt-1">Please enter a valid TikTok username.</p>}
             </Field>
+
             <Field label="YouTube channel" hint="Username or full URL.">
               <TextInput value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@yourname or link" />
             </Field>
