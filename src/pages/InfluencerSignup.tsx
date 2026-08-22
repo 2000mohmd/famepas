@@ -151,7 +151,15 @@ const InfluencerSignup = () => {
 
   const verifyHandle = async (platform: "instagram" | "tiktok", raw: string) => {
     const h = normalizeHandle(raw);
-    if (!h) return;
+    if (!h) {
+      // "@" / whitespace only — invalid, don't waste an API call.
+      if (raw.trim()) {
+        const bad: HandleCheck = { status: "not_found", ok: false, followers: 0 };
+        if (platform === "instagram") setVerifiedIG(bad); else setVerifiedTT(bad);
+      }
+      return;
+    }
+
     setVerifyingHandle(platform);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-profile-stats", {
