@@ -563,7 +563,9 @@ const InfluencerSignup = () => {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
                 )}
               </div>
+              {ttInvalidFormat && <p className="text-xs text-red-600 mt-1">Please enter a valid TikTok username.</p>}
             </Field>
+
             <Field label="YouTube channel" hint="Username or full URL.">
               <TextInput value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@yourname or link" />
             </Field>
