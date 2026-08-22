@@ -61,8 +61,8 @@ const AdminCategories = () => {
   };
 
   const handleSave = async () => {
-    if (!newCat.name) {
-      toast({ title: "Name is required", variant: "destructive" });
+    if (newCat.name.trim().length < 2) {
+      toast({ title: "Category name must be at least 2 characters", variant: "destructive" });
       return;
     }
     if (!newCat.image_url) {

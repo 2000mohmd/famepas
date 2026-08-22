@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { notifyEmail } from "@/lib/notify";
+import { isValidEmail, isValidName } from "@/lib/validation";
 
 interface Category { id: string; name: string; }
 interface Location { id: string; city: string; }
@@ -114,8 +115,16 @@ const AdminVenues = () => {
   };
 
   const handleCreateVenue = async () => {
-    if (!newVenue.name || !newVenue.email || !newVenue.password) {
-      toast({ title: "Missing fields", description: "Name, email and password are required", variant: "destructive" });
+    if (!isValidName(newVenue.name)) {
+      toast({ title: "Invalid venue name", description: "Venue name must be at least 2 characters.", variant: "destructive" });
+      return;
+    }
+    if (!isValidEmail(newVenue.email)) {
+      toast({ title: "Invalid email", description: "Please enter a valid login email address.", variant: "destructive" });
+      return;
+    }
+    if (newVenue.password.length < 6) {
+      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
       return;
     }
     setIsCreating(true);
@@ -169,14 +178,23 @@ const AdminVenues = () => {
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Venue Name</Label>
                   <Input value={newVenue.name} onChange={e => setNewVenue(v => ({ ...v, name: e.target.value }))} placeholder="e.g. Sky Lounge" className="bg-secondary border-border" />
+                  {newVenue.name.trim() && !isValidName(newVenue.name) && (
+                    <p className="text-xs text-destructive">Venue name must be at least 2 characters.</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Login Email</Label>
                   <Input type="email" value={newVenue.email} onChange={e => setNewVenue(v => ({ ...v, email: e.target.value }))} placeholder="venue@example.com" className="bg-secondary border-border" />
+                  {newVenue.email.trim() && !isValidEmail(newVenue.email) && (
+                    <p className="text-xs text-destructive">Please enter a valid email address.</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Password</Label>
                   <Input type="password" value={newVenue.password} onChange={e => setNewVenue(v => ({ ...v, password: e.target.value }))} placeholder="Min 6 characters" className="bg-secondary border-border" />
+                  {newVenue.password.length > 0 && newVenue.password.length < 6 && (
+                    <p className="text-xs text-destructive">Password must be at least 6 characters.</p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

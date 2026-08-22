@@ -8,6 +8,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { isValidName } from "@/lib/validation";
 
 interface Location {
   id: string;
@@ -31,13 +32,17 @@ const AdminLocations = () => {
   useEffect(() => { fetchLocations(); }, []);
 
   const handleCreate = async () => {
-    if (!newLoc.city) {
-      toast({ title: "City is required", variant: "destructive" });
+    if (!isValidName(newLoc.city)) {
+      toast({ title: "Invalid city", description: "City must be at least 2 characters.", variant: "destructive" });
+      return;
+    }
+    if (!isValidName(newLoc.country)) {
+      toast({ title: "Invalid country", description: "Country must be at least 2 characters.", variant: "destructive" });
       return;
     }
     const { error } = await supabase
       .from("service_locations")
-      .insert({ city: newLoc.city, country: newLoc.country, is_active: true } as any);
+      .insert({ city: newLoc.city.trim(), country: newLoc.country.trim(), is_active: true } as any);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -80,10 +85,14 @@ const AdminLocations = () => {
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">City</Label>
                   <Input value={newLoc.city} onChange={e => setNewLoc(v => ({ ...v, city: e.target.value }))} placeholder="e.g. Dubai" className="bg-secondary border-border" />
+                  {newLoc.city.trim() && !isValidName(newLoc.city) && (
+                    <p className="text-xs text-destructive">City must be at least 2 characters.</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Country</Label>
                   <Input value={newLoc.country} onChange={e => setNewLoc(v => ({ ...v, country: e.target.value }))} placeholder="e.g. UAE" className="bg-secondary border-border" />
+                  <p className="text-xs text-muted-foreground">Country names drive address search restrictions across the app.</p>
                 </div>
                 <Button onClick={handleCreate} className="w-full gradient-gold text-accent-foreground font-semibold">Add Location</Button>
               </div>
