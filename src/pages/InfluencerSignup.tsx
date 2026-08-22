@@ -545,7 +545,9 @@ const InfluencerSignup = () => {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
                 )}
               </div>
+              {igInvalidFormat && <p className="text-xs text-red-600 mt-1">Please enter a valid Instagram username.</p>}
             </Field>
+
             <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT?.status === "not_found" ? "Username not found on TikTok — please correct it to continue." : verifiedTT?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : undefined}>
               <div className="relative">
                 <TextInput
