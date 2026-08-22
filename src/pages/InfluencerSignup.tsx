@@ -438,10 +438,13 @@ const InfluencerSignup = () => {
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
             <Field label="Full name">
               <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+              {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
             </Field>
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
+              {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
             </Field>
+
             <Field label="Location" hint="Start typing your city — we'll auto-fill city and country.">
               <LocationAutocomplete
                 defaultValue={city && country ? `${city}, ${country}` : ""}
