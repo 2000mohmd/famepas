@@ -217,11 +217,26 @@ const InfluencerSignup = () => {
   const pwdChecks = useMemo(() => getPasswordChecks(password), [password]);
   const pwdReady = useMemo(() => isStrongPassword(password), [password]);
 
-  const accountReady = email.includes("@") && pwdReady;
-  const profileReady = fullName.trim().length > 1 && country.trim().length > 0;
-  const igBlocked = !!instagram && verifiedIG?.status === "not_found";
-  const ttBlocked = !!tiktok && verifiedTT?.status === "not_found";
-  const socialsReady = !!(instagram || tiktok || youtube) && !igBlocked && !ttBlocked;
+  const accountReady = isValidEmail(email) && pwdReady;
+
+  // profile validation
+  const nameError =
+    !fullName.trim() ? "" :
+    !isValidName(fullName, 3) ? "Please enter at least 3 characters." :
+    !isValidFullName(fullName) ? "Please enter your first and last name." : "";
+  const usernameError =
+    !username.trim() ? "" :
+    !isValidOptionalHandle(normalizeHandle(username), username) ? "Please enter a valid username (at least 2 letters or numbers)." : "";
+  const bioError = bio.trim().length > 0 && bio.trim().length < 10 ? "Please write at least 10 characters, or leave it empty." : "";
+  const profileReady =
+    isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError;
+
+  const igInvalidFormat = !!instagram.trim() && !normalizeHandle(instagram);
+  const ttInvalidFormat = !!tiktok.trim() && !normalizeHandle(tiktok);
+  const igBlocked = igInvalidFormat || (!!instagram && verifiedIG?.status === "not_found");
+  const ttBlocked = ttInvalidFormat || (!!tiktok && verifiedTT?.status === "not_found");
+  const socialsReady = !!(instagram.trim() || tiktok.trim() || youtube.trim()) && !igBlocked && !ttBlocked;
+
 
 
   const toggleNiche = (n: string) =>
