@@ -17,7 +17,10 @@ interface Props {
   defaultValue?: string;
   placeholder?: string;
   onPick: (p: PickedPlace) => void;
+  /** Fires on every keystroke so callers can accept a manually typed address. */
+  onTextChange?: (text: string) => void;
 }
+
 
 const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
   const { isLoaded } = useGoogleMaps();

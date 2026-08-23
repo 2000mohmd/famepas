@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Mail, Phone, MapPin, Globe, User } from "lucide-react";
+import { formatLabel } from "@/pages/admin/_format";
 
 interface Props {
   venueId: string | null;
@@ -52,7 +53,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-foreground">{venue.name}</h3>
                 <div className="flex gap-2 mt-2 flex-wrap">
-                  <Badge variant="secondary" className="capitalize">{venue.category}</Badge>
+                  <Badge variant="secondary">{formatLabel(venue.category)}</Badge>
                   <Badge className={
                     venue.approval_status === "approved" ? "bg-success/20 text-success border-success/30" :
                     venue.approval_status === "pending" ? "bg-yellow-500/20 text-yellow-400 border-yellow-400/30" :
@@ -73,19 +74,29 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               {venue.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> {venue.email}</div>}
-              {venue.location_email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> Location: {venue.location_email}</div>}
+              {venue.location_email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> Location email: {venue.location_email}</div>}
               {(venue.phone || venue.contact_phone) && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> {venue.phone || venue.contact_phone}</div>}
               {venue.whatsapp_phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> WhatsApp: {venue.whatsapp_phone}</div>}
               {venue.website && <a href={venue.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-gold hover:underline"><Globe className="w-4 h-4" /> Website</a>}
               {venue.contact_person_name && <div className="flex items-center gap-2 text-muted-foreground"><User className="w-4 h-4 text-gold" /> {venue.contact_person_name}</div>}
-              {(venue.city || venue.country) && <div className="flex items-center gap-2 text-muted-foreground col-span-2"><MapPin className="w-4 h-4 text-gold" /> {[venue.address_line1, venue.address_line2, venue.city, venue.zip_code, venue.country].filter(Boolean).join(", ")}</div>}
+              {(venue.city || venue.country) && (() => {
+                const addressParts = [venue.address_line1, venue.address_line2].filter(Boolean);
+                const addressSoFar = addressParts.join(", ").toLowerCase();
+                const cityAlreadyIncluded = venue.city && addressSoFar.includes(String(venue.city).toLowerCase());
+                const parts = [...addressParts, ...(cityAlreadyIncluded ? [] : [venue.city]), venue.zip_code, venue.country].filter(Boolean);
+                return (
+                  <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                    <MapPin className="w-4 h-4 text-gold" /> {parts.join(", ")}
+                  </div>
+                );
+              })()}
             </div>
 
             {Array.isArray(venue.categories) && venue.categories.length > 0 && (
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Categories</p>
                 <div className="flex flex-wrap gap-2">
-                  {venue.categories.map((c: string) => <Badge key={c} variant="secondary">{c}</Badge>)}
+                  {venue.categories.map((c: string) => <Badge key={c} variant="secondary">{formatLabel(c)}</Badge>)}
                 </div>
               </div>
             )}
@@ -94,7 +105,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">How they heard about us</p>
                 <div className="flex flex-wrap gap-2">
-                  {venue.hear_about_us.map((h: string) => <Badge key={h} variant="outline">{h}</Badge>)}
+                  {venue.hear_about_us.map((h: string) => <Badge key={h} variant="outline">{formatLabel(h)}</Badge>)}
                 </div>
               </div>
             )}
