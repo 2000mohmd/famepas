@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Link } from "react-router-dom";
+import { formatLabel } from "./_format";
 
 
 interface CategoryStat { name: string; count: number; }
@@ -325,7 +326,7 @@ const AdminAnalytics = () => {
                   return (
                     <div key={name}>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-foreground capitalize">{name}</span>
+                        <span className="text-foreground">{formatLabel(name)}</span>
                         <span className="text-gold">{count} venues</span>
                       </div>
                       <div className="h-2 rounded-full bg-secondary overflow-hidden">

@@ -332,7 +332,7 @@ const VenueBookings = () => {
             {data.map(r => {
               const p = r.profile || {};
               return (
-                <div key={r.id} className="bg-white border border-border rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div key={r.id} className="bg-white border border-border rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setApplicantOpen(r)}>
                   <Avatar className="w-12 h-12">
                     <AvatarImage src={p.avatar_url} />
                     <AvatarFallback>{(p.full_name ?? "?").slice(0, 1)}</AvatarFallback>
@@ -349,7 +349,7 @@ const VenueBookings = () => {
                       <span>Applied {new Date(r.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">{actions(r)}</div>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>{actions(r)}</div>
                 </div>
               );
             })}

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { prettyLabel } from "@/lib/format";
 
 const InfluencerDashboard = () => {
   const { user } = useAuth();
@@ -43,12 +44,15 @@ const InfluencerDashboard = () => {
   const { data: recentOffers } = useQuery({
     queryKey: ["recent-offers"],
     queryFn: async () => {
+      // Only live offers: active and not past their end date.
+      const nowIso = new Date().toISOString();
       const { data } = await supabase
         .from("offers")
         .select("*, venues(name, city, logo_url, cover_image_url)")
         .eq("is_active", true)
+        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(6);
       return data ?? [];
     },
   });
@@ -180,7 +184,7 @@ const InfluencerDashboard = () => {
               <div className="flex items-center gap-3">
                 <Star className="w-6 h-6 text-gold" />
                 <div>
-                  <p className="font-semibold capitalize">{rewardPoints.tier} Tier</p>
+                  <p className="font-semibold">{prettyLabel(rewardPoints.tier)} Tier</p>
                   <p className="text-sm text-muted-foreground">{rewardPoints.points} points earned</p>
                 </div>
               </div>
@@ -199,7 +203,14 @@ const InfluencerDashboard = () => {
             {recentOffers?.map((offer: any) => {
               const cover = offer.image_url || offer.venues?.cover_image_url || offer.venues?.image_url;
               return (
-              <Card key={offer.id} className="hover:border-gold/30 transition-colors overflow-hidden">
+              <Card
+                key={offer.id}
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(`/influencer/offers/${offer.id}`)}
+                onKeyDown={(e) => { if (e.key === "Enter") navigate(`/influencer/offers/${offer.id}`); }}
+                className="cursor-pointer hover:border-gold/30 hover:shadow-md transition-all overflow-hidden"
+              >
                 {cover ? (
                   <img src={cover} alt={offer.title} className="w-full h-32 object-cover" />
                 ) : (
@@ -219,7 +230,7 @@ const InfluencerDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <CardTitle className="text-base truncate">{offer.title}</CardTitle>
-                        <Badge variant="outline" className="capitalize flex-shrink-0">{offer.offer_type}</Badge>
+                        <Badge variant="outline" className="flex-shrink-0">{prettyLabel(offer.offer_type)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{offer.venues?.name} • {offer.venues?.city}</p>
                     </div>
@@ -235,6 +246,13 @@ const InfluencerDashboard = () => {
               </Card>
               );
             })}
+            {recentOffers && recentOffers.length === 0 && (
+              <Card className="md:col-span-2 lg:col-span-3">
+                <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                  No live offers right now — check back soon.
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
