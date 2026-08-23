@@ -147,13 +147,15 @@ const VenueCampaignCreate = () => {
   const updateOffer = (which: "ig" | "tk", i: number, key: keyof OfferRow, value: string) => {
     const list = which === "ig" ? [...igOffers] : [...tkOffers];
     list[i] = { ...list[i], [key]: value };
-    which === "ig" ? setIgOffers(list) : setTkOffers(list);
+    if (which === "ig") setIgOffers(list);
+    else setTkOffers(list);
   };
 
   const removeOffer = (which: "ig" | "tk", i: number) => {
     const list = which === "ig" ? igOffers : tkOffers;
     const next = list.filter((_, idx) => idx !== i);
-    which === "ig" ? setIgOffers(next) : setTkOffers(next);
+    if (which === "ig") setIgOffers(next);
+    else setTkOffers(next);
   };
 
   const save = async (mode: "draft" | "live") => {

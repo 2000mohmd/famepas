@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,55 +7,61 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GoogleMapsProvider } from "@/contexts/GoogleMapsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import VenueSignup from "./pages/VenueSignup";
-import InfluencerSignup from "./pages/InfluencerSignup";
-import Welcome from "./pages/Welcome";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminVenues from "./pages/admin/AdminVenues";
-import AdminInfluencers from "./pages/admin/AdminInfluencers";
-import AdminOffers from "./pages/admin/AdminOffers";
-import AdminEvents from "./pages/admin/AdminEvents";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
-import AdminAnalyticsDeep from "./pages/admin/AdminAnalyticsDeep";
-import AdminCategories from "./pages/admin/AdminCategories";
-import AdminLocations from "./pages/admin/AdminLocations";
-import AdminBilling from "./pages/admin/AdminBilling";
-import AdminModeration from "./pages/admin/AdminModeration";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminChatbot from "./pages/admin/AdminChatbot";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminRedemptions from "./pages/admin/AdminRedemptions";
-import EventAttendeesPage from "./pages/EventAttendeesPage";
-import VenueBriefs from "./pages/venue/VenueBriefs";
-import VenueBriefCreate from "./pages/venue/VenueBriefCreate";
-import VenueBookings from "./pages/venue/VenueBookings";
-import VenueReports from "./pages/venue/VenueReports";
-import VenueContent from "./pages/venue/VenueContent";
-import VenueCampaigns from "./pages/venue/VenueCampaigns";
-import VenueCampaignCreate from "./pages/venue/VenueCampaignCreate";
-import VenueLocations from "./pages/venue/VenueLocations";
-import AdminCulturalEvents from "./pages/admin/AdminCulturalEvents";
-import VenueSettings from "./pages/venue/VenueSettings";
-import InfluencerDashboard from "./pages/influencer/InfluencerDashboard";
-import InfluencerExplore from "./pages/influencer/InfluencerExplore";
-import InfluencerInvitations from "./pages/influencer/InfluencerInvitations";
-import InfluencerBookings from "./pages/influencer/InfluencerBookings";
-import InfluencerEarnings from "./pages/influencer/InfluencerEarnings";
-import InfluencerProfile from "./pages/influencer/InfluencerProfile";
-import InfluencerReviews from "./pages/influencer/InfluencerReviews";
-import InfluencerRewards from "./pages/influencer/InfluencerRewards";
-import InfluencerSettings from "./pages/influencer/InfluencerSettings";
-import InfluencerHome from "./pages/influencer/InfluencerHome";
-import InfluencerOffer from "./pages/influencer/InfluencerOffer";
-import MarketingPage from "./pages/MarketingPage";
-import OAuthConsent from "./pages/OAuthConsent";
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const VenueSignup = lazy(() => import("./pages/VenueSignup"));
+const InfluencerSignup = lazy(() => import("./pages/InfluencerSignup"));
+const Welcome = lazy(() => import("./pages/Welcome"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminVenues = lazy(() => import("./pages/admin/AdminVenues"));
+const AdminInfluencers = lazy(() => import("./pages/admin/AdminInfluencers"));
+const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
+const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminAnalyticsDeep = lazy(() => import("./pages/admin/AdminAnalyticsDeep"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const AdminLocations = lazy(() => import("./pages/admin/AdminLocations"));
+const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
+const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminChatbot = lazy(() => import("./pages/admin/AdminChatbot"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminRedemptions = lazy(() => import("./pages/admin/AdminRedemptions"));
+const EventAttendeesPage = lazy(() => import("./pages/EventAttendeesPage"));
+const VenueBriefs = lazy(() => import("./pages/venue/VenueBriefs"));
+const VenueBriefCreate = lazy(() => import("./pages/venue/VenueBriefCreate"));
+const VenueBookings = lazy(() => import("./pages/venue/VenueBookings"));
+const VenueReports = lazy(() => import("./pages/venue/VenueReports"));
+const VenueContent = lazy(() => import("./pages/venue/VenueContent"));
+const VenueCampaigns = lazy(() => import("./pages/venue/VenueCampaigns"));
+const VenueCampaignCreate = lazy(() => import("./pages/venue/VenueCampaignCreate"));
+const VenueLocations = lazy(() => import("./pages/venue/VenueLocations"));
+const AdminCulturalEvents = lazy(() => import("./pages/admin/AdminCulturalEvents"));
+const VenueSettings = lazy(() => import("./pages/venue/VenueSettings"));
+const InfluencerDashboard = lazy(() => import("./pages/influencer/InfluencerDashboard"));
+const InfluencerExplore = lazy(() => import("./pages/influencer/InfluencerExplore"));
+const InfluencerInvitations = lazy(() => import("./pages/influencer/InfluencerInvitations"));
+const InfluencerBookings = lazy(() => import("./pages/influencer/InfluencerBookings"));
+const InfluencerEarnings = lazy(() => import("./pages/influencer/InfluencerEarnings"));
+const InfluencerProfile = lazy(() => import("./pages/influencer/InfluencerProfile"));
+const InfluencerReviews = lazy(() => import("./pages/influencer/InfluencerReviews"));
+const InfluencerRewards = lazy(() => import("./pages/influencer/InfluencerRewards"));
+const InfluencerSettings = lazy(() => import("./pages/influencer/InfluencerSettings"));
+const InfluencerHome = lazy(() => import("./pages/influencer/InfluencerHome"));
+const InfluencerOffer = lazy(() => import("./pages/influencer/InfluencerOffer"));
+const MarketingPage = lazy(() => import("./pages/MarketingPage"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient();
+
+const RouteFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="animate-pulse font-display text-xl text-gold">Loading…</div>
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -64,6 +71,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <GoogleMapsProvider>
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Public marketing site (Framer static, served from /public/site). */}
             <Route path="/" element={<MarketingPage path="" />} />
@@ -143,6 +151,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           </GoogleMapsProvider>
         </AuthProvider>
       </BrowserRouter>
