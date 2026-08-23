@@ -228,11 +228,11 @@ const VenueCampaigns = () => {
                   const todayCell = isToday(cell.day);
                   const dayCampaigns = campaigns.filter(c => {
                     if (!c.start_date) return false;
-                    const s = new Date(c.start_date);
-                    const e = c.end_date ? new Date(c.end_date) : s;
-                    const cur = new Date(cell.date);
-                    return cur >= new Date(s.getFullYear(), s.getMonth(), s.getDate())
-                        && cur <= new Date(e.getFullYear(), e.getMonth(), e.getDate());
+                    // Compare as plain YYYY-MM-DD strings to avoid timezone-driven off-by-one
+                    // errors when converting date-only values through the Date constructor.
+                    const startStr = c.start_date.slice(0, 10);
+                    const endStr = (c.end_date || c.start_date).slice(0, 10);
+                    return cell.date >= startStr && cell.date <= endStr;
                   });
                   return (
                     <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-[hsl(42_65%_50%_/_0.10)]" : ""}`}>

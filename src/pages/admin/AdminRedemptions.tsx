@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatLabel } from "./_format";
 
 interface Row {
   id: string;
@@ -25,9 +26,11 @@ const AdminRedemptions = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchAll = async () => {
+      setLoading(true);
       const { data: reds } = await supabase
         .from("offer_redemptions")
         .select("id, status, created_at, redeemed_at, offer_id, influencer_id")
@@ -51,6 +54,7 @@ const AdminRedemptions = () => {
         venue_name: offerMap.get(r.offer_id)?.venues?.name,
         influencer_name: profMap.get(r.influencer_id)?.full_name,
       })));
+      setLoading(false);
     };
 
   useEffect(() => { fetchAll(); }, []);
@@ -108,6 +112,7 @@ const AdminRedemptions = () => {
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
+          <div className="w-full overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -120,7 +125,9 @@ const AdminRedemptions = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading redemptions…</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -133,7 +140,7 @@ const AdminRedemptions = () => {
                       r.status === "approved" ? "bg-success/20 text-success border-success/30" :
                       r.status === "rejected" ? "bg-destructive/20 text-destructive border-destructive/30" :
                       "bg-yellow-500/20 text-yellow-400 border-yellow-400/30"
-                    }>{r.status}</Badge>
+                    }>{formatLabel(r.status)}</Badge>
                   </td>
                   <td className="p-4">
                     {r.status === "pending" ? (
@@ -153,6 +160,7 @@ const AdminRedemptions = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </DashboardLayout>
