@@ -18,7 +18,15 @@ interface CategoryStat { name: string; count: number; }
 type RangeKey = "7" | "30" | "90" | "custom";
 
 const AdminAnalytics = () => {
-  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0, liveOffers: 0 });
+  const [stats, setStats] = useState({
+    venues: 0,
+    influencers: 0,
+    claims: 0,
+    completedRedemptions: 0,
+    offers: 0,
+    offersInRange: 0,
+    liveOffers: 0,
+  });
   const [sub, setSub] = useState({
     venuesSignedUp: 0, venuesPosted: 0,
     influencersActive: 0, influencersRegistered: 0,
