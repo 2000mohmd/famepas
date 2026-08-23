@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
 import { notifyEmail } from "@/lib/notify";
+import { prettyLabel } from "@/lib/format";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
 const defaultCenter = { lat: 25.2048, lng: 55.2708 };
@@ -29,7 +30,7 @@ const InfluencerExplore = () => {
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title_asc" | "title_desc" | "slots_desc" | "followers_asc" | "followers_desc">("newest");
-  const [countryFilter, setCountryFilter] = useState<"my" | "all">("my");
+  const [countryFilter, setCountryFilter] = useState<"my" | "all">("all");
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
@@ -74,13 +75,15 @@ const InfluencerExplore = () => {
   const { data: offers } = useQuery({
     queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry, sortBy],
     queryFn: async () => {
+      const nowIso = new Date().toISOString();
       let query = supabase
         .from("offers")
-        .select("*, venues!inner(name, city, country, category, logo_url, description, latitude, longitude, address)")
-        .eq("is_active", true);
+        .select("*, categories(name), venues!inner(name, city, country, category, categories, logo_url, description, latitude, longitude, address)")
+        .eq("is_active", true)
+        // Hide offers whose run has already ended.
+        .or(`ends_at.is.null,ends_at.gte.${nowIso}`);
 
       if (typeFilter !== "all") query = query.eq("offer_type", typeFilter);
-      if (categoryFilter !== "all") query = query.eq("venues.category", categoryFilter);
       if (countryFilter === "my" && myCountry) query = query.eq("venues.country", myCountry);
       if (search) {
         const s = search.replace(/[%,()]/g, "");
@@ -97,7 +100,26 @@ const InfluencerExplore = () => {
       }
 
       const { data } = await query.limit(100);
-      return data ?? [];
+      let list = data ?? [];
+      // Category can live on the offer (category / category_id) or on the venue,
+      // so match across all of them instead of only venues.category.
+      if (categoryFilter !== "all") {
+        const wanted = categoryFilter.toLowerCase();
+        list = list.filter((o: any) => {
+          const venueCats: string[] = o.venues?.categories ?? [];
+          return [o.category, o.categories?.name, o.venues?.category, ...venueCats]
+            .filter(Boolean)
+            .some((c: string) => String(c).toLowerCase() === wanted);
+        });
+      }
+      if (sortBy === "slots_desc") {
+        list = [...list].sort((a: any, b: any) => {
+          const left = a.max_redemptions ? a.max_redemptions - (a.current_redemptions ?? 0) : -1;
+          const right = b.max_redemptions ? b.max_redemptions - (b.current_redemptions ?? 0) : -1;
+          return right - left;
+        });
+      }
+      return list;
     },
   });
 
@@ -243,7 +265,7 @@ const InfluencerExplore = () => {
             </Button>
           </div>
         )}
-        {!myCountry && countryFilter === "my" && !userLocation && (
+        {!myCountry && countryFilter === "my" && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
             Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> or allow location access to see offers near you.
           </div>
@@ -343,7 +365,7 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
                       <div key={o.id} className="flex items-center justify-between gap-2">
                         <span className="text-xs truncate" style={{ color: "#333" }}>{o.title}</span>
                         {app ? (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 capitalize">{app.status}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">{prettyLabel(app.status)}</span>
                         ) : (
                           <button onClick={() => onApply(o.id)} className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700">Apply</button>
                         )}
@@ -372,7 +394,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base hover:text-gold transition-colors">{offer.title}</CardTitle>
-            <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
+            <Badge variant="outline">{prettyLabel(offer.offer_type)}</Badge>
           </div>
         </CardHeader>
       </Link>
