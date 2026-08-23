@@ -174,8 +174,8 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const [maintenance, setMaintenance] = useState(false);
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("platform_settings").select("value").eq("key", "maintenance_mode").maybeSingle();
-      const v = data?.value as any;
+      const { data } = await supabase.rpc("get_public_platform_settings");
+      const v = (data ?? []).find((r: any) => r.key === "maintenance_mode")?.value as any;
       setMaintenance(v === true || v === "true");
     })();
   }, [location.pathname]);
