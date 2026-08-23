@@ -208,20 +208,55 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
         {/* Workspace switcher */}
         <div className="px-3 pb-3">
-          <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
-            {venueLogo ? (
-              <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-[hsl(42_35%_88%)]" />
-            ) : (
-              <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
-                {(venueName || initials).slice(0, 2).toUpperCase()}
-              </span>
-            )}
-            <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
-              {venueName || user?.email?.split("@")[0] || "workspace"}
-            </span>
-            <ChevronDown className="w-4 h-4 text-neutral-400" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
+                {venueLogo ? (
+                  <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-[hsl(42_35%_88%)]" />
+                ) : (
+                  <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
+                    {(venueName || initials).slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+                <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
+                  {venueName || user?.email?.split("@")[0] || "workspace"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-neutral-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[196px] bg-white">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-neutral-500">
+                {panelLabel} workspace
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {type === "venue" && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <NavLink to="/venue/settings"><Settings className="w-4 h-4 mr-2" /> Venue settings</NavLink>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <NavLink to="/venue/locations"><MapPin className="w-4 h-4 mr-2" /> Locations</NavLink>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {type === "admin" && (
+                <DropdownMenuItem asChild>
+                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> Platform settings</NavLink>
+                </DropdownMenuItem>
+              )}
+              {type === "influencer" && (
+                <DropdownMenuItem asChild>
+                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => { void signOut(); }}>
+                <LogOut className="w-4 h-4 mr-2" /> Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
 
         <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-5 pb-4">
           {groups.map((group, gi) => (

@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { MapPin, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,9 @@ const VenueLocations = () => {
   const [venue, setVenue] = useState<any>(null);
   const [locations, setLocations] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
   const [place, setPlace] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -48,31 +50,90 @@ const VenueLocations = () => {
   };
   useEffect(() => { load(); }, [user]);
 
+  const openAdd = () => {
+    setEditingId(null);
+    setName("");
+    setAddress("");
+    setPlace(null);
+    setOpen(true);
+  };
+
+  const openEdit = (l: any) => {
+    setEditingId(l.id);
+    setName(l.name || "");
+    setAddress(l.address || "");
+    setPlace(l.address ? {
+      address: l.address,
+      city: l.city ?? undefined,
+      country: l.country ?? undefined,
+      zip: l.zip_code ?? undefined,
+      latitude: l.latitude ?? undefined,
+      longitude: l.longitude ?? undefined,
+    } : null);
+    setOpen(true);
+  };
+
+  const onPick = (p: PickedPlace) => {
+    setPlace(p);
+    setAddress(p.address);
+  };
+
   const save = async () => {
-    if (!venue || !name || !place) {
+    const finalAddress = (place?.address || address).trim();
+    if (!venue || !name.trim() || !finalAddress) {
       toast({ title: "Missing info", description: "Name and address are required.", variant: "destructive" });
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("venue_locations" as any).insert({
-      venue_id: venue.id,
-      name,
-      address: place.address,
-      city: place.city ?? null,
-      country: place.country ?? null,
-      zip_code: place.zip ?? null,
-      latitude: place.latitude ?? null,
-      longitude: place.longitude ?? null,
-      is_primary: locations.length === 0,
-    } as any);
-    setSaving(false);
+
+    const payload: Record<string, any> = {
+      name: name.trim(),
+      address: finalAddress,
+      city: place?.city ?? null,
+      country: place?.country ?? null,
+      zip_code: place?.zip ?? null,
+      latitude: place?.latitude ?? null,
+      longitude: place?.longitude ?? null,
+    };
+
+    let error;
+    let isPrimarySaved = false;
+    if (editingId) {
+      const existing = locations.find(l => l.id === editingId);
+      isPrimarySaved = !!existing?.is_primary;
+      ({ error } = await supabase.from("venue_locations" as any).update(payload).eq("id", editingId));
+    } else {
+      isPrimarySaved = locations.length === 0;
+      ({ error } = await supabase.from("venue_locations" as any).insert({
+        venue_id: venue.id,
+        ...payload,
+        is_primary: isPrimarySaved,
+      } as any));
+    }
+
     if (error) {
+      setSaving(false);
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Location added" });
+
+    // Keep the parent venue's own address in sync when it's empty and we're saving the primary location,
+    // so the venue shows up correctly on the influencer map.
+    if (isPrimarySaved && venue && !venue.address) {
+      await supabase.from("venues").update({
+        address: payload.address,
+        city: payload.city,
+        country: payload.country,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+      } as any).eq("id", venue.id);
+    }
+
+    setSaving(false);
+    toast({ title: editingId ? "Location updated" : "Location added" });
     setOpen(false);
-    setName(""); setPlace(null);
+    setEditingId(null);
+    setName(""); setAddress(""); setPlace(null);
     load();
   };
 
@@ -88,7 +149,7 @@ const VenueLocations = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[28px] font-bold text-foreground">Locations</h1>
-          <Button style={{ background: "#b8923a" }} className="text-white hover:opacity-90" onClick={() => setOpen(true)} disabled={!venue}>
+          <Button style={{ background: "#b8923a" }} className="text-white hover:opacity-90" onClick={openAdd} disabled={!venue}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Location
           </Button>
         </div>
@@ -104,7 +165,12 @@ const VenueLocations = () => {
         ) : (
           <div className="space-y-3">
             {locations.map(l => (
-              <div key={l.id} className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4">
+              <div
+                key={l.id}
+                className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => openEdit(l)}
+                role="button"
+              >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fce7eb" }}>
                   <MapPin className="w-5 h-5" style={{ color: "#b8923a" }} />
                 </div>
@@ -117,8 +183,11 @@ const VenueLocations = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">{l.address || l.city || "No address"}</p>
                 </div>
+                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(l); }}>
+                  <Pencil className="w-4 h-4 text-muted-foreground" />
+                </Button>
                 {!l.is_primary && (
-                  <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(l.id)}>
+                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setConfirmDelete(l.id); }}>
                     <Trash2 className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 )}
@@ -129,7 +198,7 @@ const VenueLocations = () => {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Add Location</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Edit Location" : "Add Location"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Location name</Label>
@@ -137,14 +206,19 @@ const VenueLocations = () => {
               </div>
               <div>
                 <Label>Address</Label>
-                <LocationAutocomplete onPick={setPlace} placeholder="Search Google Maps…" />
-                {place && <p className="text-xs text-muted-foreground mt-2">{place.address}</p>}
+                <LocationAutocomplete defaultValue={address} onPick={onPick} placeholder="Search Google Maps…" />
+                <p className="text-xs text-muted-foreground mt-2 mb-1">Or type/edit the address manually:</p>
+                <Input
+                  value={address}
+                  onChange={e => { setAddress(e.target.value); setPlace(null); }}
+                  placeholder="Street, city, country"
+                />
               </div>
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button onClick={save} disabled={saving} style={{ background: "#b8923a" }} className="text-white">
-                {saving ? "Saving…" : "Add Location"}
+                {saving ? "Saving…" : editingId ? "Save Changes" : "Add Location"}
               </Button>
             </DialogFooter>
           </DialogContent>
