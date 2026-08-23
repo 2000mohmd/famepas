@@ -2069,6 +2069,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_platform_settings: {
+        Args: never
+        Returns: {
+          key: string
+          value: Json
+        }[]
+      }
       get_public_profiles_basic: {
         Args: { _user_ids: string[] }
         Returns: {

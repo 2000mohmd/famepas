@@ -114,12 +114,8 @@ const InfluencerSignup = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("platform_settings")
-        .select("value")
-        .eq("key", "influencer_registration_open")
-        .maybeSingle();
-      const v = data?.value as any;
+      const { data } = await supabase.rpc("get_public_platform_settings");
+      const v = (data ?? []).find((r: any) => r.key === "influencer_registration_open")?.value as any;
       setRegistrationOpen(v === false || v === "false" ? false : true);
     })();
   }, []);
