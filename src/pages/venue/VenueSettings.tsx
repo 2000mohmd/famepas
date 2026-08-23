@@ -480,6 +480,18 @@ const VenueSettings = () => {
             </div>
 
             <div>
+              <Label>Address</Label>
+              <p className="text-xs text-muted-foreground mb-2">Used to show your venue on the influencer map</p>
+              <LocationAutocomplete defaultValue={pAddress} onPick={onAddressPick} placeholder="Search Google Maps…" />
+              <p className="text-xs text-muted-foreground mt-2 mb-1">Or type/edit the address manually:</p>
+              <Input
+                value={pAddress}
+                onChange={e => setPAddress(e.target.value)}
+                placeholder="Street, city, country"
+              />
+            </div>
+
+            <div>
               <Label>Cancellation Policy</Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Require influencers to contact the venue for any changes within 24hrs of their visit
@@ -556,7 +568,10 @@ const VenueSettings = () => {
                     <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-[#b8923a] ring-1 ring-[#b8923a]" : "border-border"}`}>
                       <p className="font-semibold text-foreground">{t.name}</p>
                       <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
-                      {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
+                      {(() => {
+                        const desc = /pro/i.test(t.name) ? "For growing venues" : /premium/i.test(t.name) ? "For high-volume venue groups" : t.description;
+                        return desc ? <p className="text-xs text-muted-foreground mb-3">{desc}</p> : null;
+                      })()}
                       <Button
                         className="w-full"
                         variant={isSelected ? "default" : "outline"}
