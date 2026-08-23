@@ -79,7 +79,14 @@ const VenueBookings = () => {
     const { data: profs } = infIds.length
       ? await supabase.rpc("get_public_profiles_detailed" as any, { _user_ids: infIds })
       : { data: [] as any };
-    const pmap = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+    const pmap = new Map(((profs ?? []) as any[]).map((p: any) => [p.user_id, p]));
+    // The detailed RPC hides suspended creators; fall back to the basic one so a
+    // booking never renders as a nameless "Influencer" with a "?" avatar.
+    const missing = infIds.filter((id: string) => !pmap.has(id));
+    if (missing.length) {
+      const { data: basic } = await supabase.rpc("get_public_profiles_basic" as any, { _user_ids: missing });
+      ((basic ?? []) as any[]).forEach((p: any) => pmap.set(p.user_id, p));
+    }
     const omap = new Map((offers ?? []).map((o: any) => [o.id, o]));
     setRows(list.map((r: any) => ({ ...r, profile: pmap.get(r.influencer_id), offer: omap.get(r.offer_id) })));
 
@@ -317,7 +324,7 @@ const VenueBookings = () => {
                     <div className="mt-1 space-y-1">
                       {items.slice(0, 3).map(r => (
                         <div key={r.id} className="text-[10px] truncate px-1.5 py-0.5 rounded" style={{ background: "#fce7f3", color: "#9d174d" }}>
-                          {r.profile?.full_name ?? "Influencer"}
+                          {r.profile?.full_name || (r.profile?.instagram_handle ? `@${String(r.profile.instagram_handle).replace(/^@/, "")}` : "Influencer")}
                         </div>
                       ))}
                       {items.length > 3 && <p className="text-[10px] text-muted-foreground">+{items.length - 3} more</p>}
@@ -339,7 +346,7 @@ const VenueBookings = () => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground truncate">{p.full_name ?? "Influencer"}</p>
+                      <p className="font-semibold text-foreground truncate">{p.full_name || (p.instagram_handle ? `@${String(p.instagram_handle).replace(/^@/, "")}` : "Influencer")}</p>
                       {statusBadge(r)}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{r.offer?.title ?? "Offer"}</p>
@@ -370,7 +377,7 @@ const VenueBookings = () => {
 
       <Dialog open={!!reviewOpen} onOpenChange={(o) => { if (!o) setReviewOpen(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Review {reviewOpen?.profile?.full_name ?? "Influencer"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Review {reviewOpen?.profile?.full_name || "Influencer"}</DialogTitle></DialogHeader>
           <div className="flex justify-center gap-1 py-2">
             {[1, 2, 3, 4, 5].map(n => (
               <button key={n} type="button" onClick={() => setReviewRating(n)} className="p-1">
@@ -399,7 +406,7 @@ const VenueBookings = () => {
                     <AvatarFallback>{(p.full_name ?? "?").slice(0, 1)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{p.full_name ?? "Influencer"}</p>
+                    <p className="font-semibold text-foreground truncate">{p.full_name || (p.instagram_handle ? `@${String(p.instagram_handle).replace(/^@/, "")}` : "Influencer")}</p>
                     <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                       <MapPin className="w-3 h-3" />{[p.city, p.country].filter(Boolean).join(", ") || "—"}
                     </p>
