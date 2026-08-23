@@ -109,7 +109,7 @@ const AdminDashboard = () => {
           <StatCard title="Total Venues" value={stats.venues} icon={<Building2 className="w-6 h-6" />} trend={`${stats.pendingVenues} pending approval`} trendUp={stats.pendingVenues === 0} />
           <StatCard title="Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="Registered users" trendUp />
           <StatCard title="Active Offers" value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={`${stats.offers} total offers`} trendUp />
-          <StatCard title="Total Redemptions" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={stats.offers > 0 ? `${Math.round((stats.redemptions / stats.offers) * 100)}% rate` : "—"} trendUp />
+          <StatCard title="Total Claims" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed redemption${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp />
         </div>
 
         {/* Alert banners */}
