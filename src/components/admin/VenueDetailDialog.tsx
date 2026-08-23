@@ -20,6 +20,35 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
   const [venue, setVenue] = useState<any>(null);
   const [owner, setOwner] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const [cats, locs] = await Promise.all([
+        supabase.from("categories").select("name").eq("is_active", true).order("name"),
+        supabase.from("service_locations").select("city").eq("is_active", true).order("city"),
+      ]);
+      setCategories([...new Set((cats.data ?? []).map((c: any) => String(c.name).trim()))]);
+      setCities([...new Set((locs.data ?? []).map((l: any) => String(l.city).trim()))]);
+    })();
+  }, [open]);
+
+  const updateVenueField = async (field: "category" | "city", value: string) => {
+    if (!venueId) return;
+    setSaving(true);
+    const { error } = await supabase.from("venues").update({ [field]: value } as any).eq("id", venueId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Could not update venue", description: error.message, variant: "destructive" });
+      return;
+    }
+    setVenue((v: any) => ({ ...v, [field]: value }));
+    toast({ title: field === "category" ? "Category updated" : "City updated" });
+  };
 
   useEffect(() => {
     if (!venueId || !open) return;
