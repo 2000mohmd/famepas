@@ -108,7 +108,11 @@ const InfluencerRewards = () => {
                     <span className={`text-lg font-bold ${idx < 3 ? "text-gold" : "text-muted-foreground"}`}>#{idx + 1}</span>
                     <div>
                       <p className="text-sm font-medium">{entry.full_name || "Anonymous"}</p>
-                      <p className="text-xs text-muted-foreground">{prettyLabel(entry.badge)} • Score: {entry.influencer_score ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[entry.badge ? prettyLabel(entry.badge) : null, (entry.influencer_score ?? 0) > 0 ? `Score: ${entry.influencer_score}` : null]
+                          .filter(Boolean)
+                          .join(" • ") || "New creator"}
+                      </p>
                     </div>
                   </div>
                   <span className="text-sm font-semibold">{entry.points} pts</span>

@@ -26,6 +26,7 @@ const AdminBilling = () => {
   const [editTier, setEditTier] = useState<Tier | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const { toast } = useToast();
 
@@ -41,6 +42,7 @@ const AdminBilling = () => {
     setTotalRevenue(revenue);
     setWithdrawals(withdrawalsRes.data ?? []);
     setPendingWithdrawals(pendingRes.count ?? 0);
+    setLoading(false);
   };
 
   useEffect(() => { fetchAll(); }, []);
@@ -122,7 +124,7 @@ const AdminBilling = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard title="Platform Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="w-6 h-6" />} trend="From commissions" trendUp />
           <StatCard title="Pending Withdrawals" value={pendingWithdrawals} icon={<CreditCard className="w-6 h-6" />} trend="Awaiting processing" trendUp={pendingWithdrawals === 0} />
-          <StatCard title="Active Tiers" value={tiers.filter(t => t.is_active).length} icon={<Percent className="w-6 h-6" />} trend="Subscription plans" trendUp />
+          <StatCard title="Active Tiers" value={loading ? "…" : tiers.filter(t => t.is_active).length} icon={<Percent className="w-6 h-6" />} trend="Subscription plans" trendUp />
         </div>
 
         {/* Subscription Tiers */}

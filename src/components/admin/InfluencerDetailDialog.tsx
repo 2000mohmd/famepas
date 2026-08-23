@@ -53,6 +53,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                   {profile.approval_status === "pending" && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30">Pending</Badge>}
                   {profile.approval_status === "approved" && <Badge className="bg-success/20 text-success border-success/30">Approved</Badge>}
                   {profile.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30">Rejected</Badge>}
+                  {profile.is_suspended && <Badge className="bg-destructive/20 text-destructive border-destructive/30">Suspended</Badge>}
                   {profile.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30">Verified</Badge>}
                   {profile.badge && <Badge variant="secondary">{formatLabel(profile.badge)}</Badge>}
                 </div>

@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Mail, Phone, MapPin, Globe, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { formatLabel } from "@/pages/admin/_format";
 
 interface Props {
@@ -18,6 +20,35 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
   const [venue, setVenue] = useState<any>(null);
   const [owner, setOwner] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const [cats, locs] = await Promise.all([
+        supabase.from("categories").select("name").eq("is_active", true).order("name"),
+        supabase.from("service_locations").select("city").eq("is_active", true).order("city"),
+      ]);
+      setCategories([...new Set((cats.data ?? []).map((c: any) => String(c.name).trim()))]);
+      setCities([...new Set((locs.data ?? []).map((l: any) => String(l.city).trim()))]);
+    })();
+  }, [open]);
+
+  const updateVenueField = async (field: "category" | "city", value: string) => {
+    if (!venueId) return;
+    setSaving(true);
+    const { error } = await supabase.from("venues").update({ [field]: value } as any).eq("id", venueId);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Could not update venue", description: error.message, variant: "destructive" });
+      return;
+    }
+    setVenue((v: any) => ({ ...v, [field]: value }));
+    toast({ title: field === "category" ? "Category updated" : "City updated" });
+  };
 
   useEffect(() => {
     if (!venueId || !open) return;
@@ -62,7 +93,35 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                   <Badge className={venue.is_active ? "bg-success/20 text-success border-success/30" : "bg-muted text-muted-foreground"}>
                     {venue.is_active ? "Active" : "Inactive"}
                   </Badge>
+                  {venue.category && !categories.includes(String(venue.category).trim()) && (
+                    <Badge variant="outline" className="border-yellow-400/40 text-yellow-500">Off-list category</Badge>
+                  )}
+                  {venue.city && cities.length > 0 && !cities.includes(String(venue.city).trim()) && (
+                    <Badge variant="outline" className="border-yellow-400/40 text-yellow-500">Off-list city</Badge>
+                  )}
                 </div>
+              </div>
+            </div>
+
+            {/* Admin: keep venues aligned with the managed Categories and Locations lists */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Category</p>
+                <Select value={categories.includes(String(venue.category ?? "").trim()) ? String(venue.category).trim() : undefined} onValueChange={(v) => updateVenueField("category", v)} disabled={saving}>
+                  <SelectTrigger><SelectValue placeholder={venue.category || "Select category"} /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">City</p>
+                <Select value={cities.includes(String(venue.city ?? "").trim()) ? String(venue.city).trim() : undefined} onValueChange={(v) => updateVenueField("city", v)} disabled={saving}>
+                  <SelectTrigger><SelectValue placeholder={venue.city || "Select city"} /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
