@@ -288,17 +288,45 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
         {/* User profile */}
         <div className="p-3 border-t border-[hsl(42_15%_90%)]">
-          <button onClick={signOut} className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(42_35%_95%)] transition-colors text-left">
-            <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
-              {initials}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-neutral-800 truncate">{user?.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(42_35%_95%)] transition-colors text-left">
+                <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
+                  {initials}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-medium text-neutral-800 truncate">{user?.email?.split("@")[0]}</p>
+                  <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top" className="w-[196px] bg-white">
+              {type === "influencer" && (
+                <DropdownMenuItem asChild>
+                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
+                </DropdownMenuItem>
+              )}
+              {type !== "admin" && (
+                <DropdownMenuItem asChild>
+                  <NavLink to={type === "venue" ? "/venue/settings" : "/influencer/settings"}>
+                    <Settings className="w-4 h-4 mr-2" /> Settings
+                  </NavLink>
+                </DropdownMenuItem>
+              )}
+              {type === "admin" && (
+                <DropdownMenuItem asChild>
+                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> Platform settings</NavLink>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => { void signOut(); }}>
+                <LogOut className="w-4 h-4 mr-2" /> Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
       </aside>
 
       {/* Main */}
