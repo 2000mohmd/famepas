@@ -152,7 +152,7 @@ const AdminOffers = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Offer</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Venue</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Type</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Redemptions</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Completed redemptions</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
