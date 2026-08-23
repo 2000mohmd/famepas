@@ -23,6 +23,7 @@ const VenueCampaigns = () => {
   const [activeOpen, setActiveOpen] = useState(true);
   const [scheduledOpen, setScheduledOpen] = useState(true);
   const [pausedOpen, setPausedOpen] = useState(false);
+  const [endedOpen, setEndedOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [deleteCampaign, setDeleteCampaign] = useState<Campaign | null>(null);
 
@@ -79,9 +80,14 @@ const VenueCampaigns = () => {
     load();
   };
 
-  const active = campaigns.filter(c => c.status === "active");
-  const scheduled = campaigns.filter(c => c.status === "scheduled");
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isEnded = (c: Campaign) => !!c.end_date && c.end_date.slice(0, 10) < todayStr && c.status !== "paused" && c.status !== "draft";
+  const displayStatus = (c: Campaign) => (isEnded(c) ? "ended" : c.status);
+
+  const active = campaigns.filter(c => c.status === "active" && !isEnded(c));
+  const scheduled = campaigns.filter(c => c.status === "scheduled" && !isEnded(c));
   const paused = campaigns.filter(c => c.status === "paused");
+  const ended = campaigns.filter(c => isEnded(c));
 
   // Calendar logic
   const monthName = currentMonth.toLocaleString("default", { month: "long", year: "numeric" });
@@ -128,8 +134,8 @@ const VenueCampaigns = () => {
                     <div className="flex items-start gap-2 mb-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9", color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569" }}>
-                          {c.status}
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: displayStatus(c) === "active" ? "#dcfce7" : displayStatus(c) === "scheduled" ? "#dbeafe" : displayStatus(c) === "ended" ? "#fee2e2" : "#f1f5f9", color: displayStatus(c) === "active" ? "#166534" : displayStatus(c) === "scheduled" ? "#1e40af" : displayStatus(c) === "ended" ? "#991b1b" : "#475569" }}>
+                          {displayStatus(c) === "ended" ? "Ended" : c.status}
                         </span>
                       </div>
                       <DropdownMenu>
@@ -202,6 +208,7 @@ const VenueCampaigns = () => {
             <Section title="Active" items={active} open={activeOpen} setOpen={setActiveOpen} count={active.length} />
             <Section title="Scheduled" items={scheduled} open={scheduledOpen} setOpen={setScheduledOpen} count={scheduled.length} />
             <Section title="Paused" items={paused} open={pausedOpen} setOpen={setPausedOpen} count={paused.length} />
+            <Section title="Ended" items={ended} open={endedOpen} setOpen={setEndedOpen} count={ended.length} />
           </div>
         ) : (
           <div>
@@ -254,8 +261,8 @@ const VenueCampaigns = () => {
                             title={c.title}
                             className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded truncate"
                             style={{
-                              background: c.status === "active" ? "#dcfce7" : c.status === "scheduled" ? "#dbeafe" : "#f1f5f9",
-                              color: c.status === "active" ? "#166534" : c.status === "scheduled" ? "#1e40af" : "#475569",
+                              background: displayStatus(c) === "active" ? "#dcfce7" : displayStatus(c) === "scheduled" ? "#dbeafe" : displayStatus(c) === "ended" ? "#fee2e2" : "#f1f5f9",
+                              color: displayStatus(c) === "active" ? "#166534" : displayStatus(c) === "scheduled" ? "#1e40af" : displayStatus(c) === "ended" ? "#991b1b" : "#475569",
                             }}
                           >
                             {c.title}
