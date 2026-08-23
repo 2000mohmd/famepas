@@ -65,9 +65,14 @@ const VenueReports = () => {
     const sum = (k: string) => deliverables.reduce((a, d) => a + (Number(d[k]) || 0), 0);
     const views = sum("views"), likes = sum("likes"), comments = sum("comments"), shares = sum("shares");
     const engagement = views > 0 ? ((likes + comments + shares) / views) * 100 : 0;
-    const posts = deliverables.filter(d => d.status === "approved" || d.status === "submitted").length;
+    const effectiveType = (d: any) => {
+      const url: string = (d.post_url || d.content_url || "").toLowerCase();
+      if (/\/reels?\//.test(url) || /tiktok\.com\/.+\/video\//.test(url) || /vm\.tiktok\.com/.test(url)) return "reel";
+      return d.content_type;
+    };
+    const posts = deliverables.filter(d => (d.status === "approved" || d.status === "submitted") && effectiveType(d) !== "reel" && effectiveType(d) !== "video").length;
     const byType = { post: 0, reel: 0, story: 0, video: 0, review: 0, other: 0 } as Record<string, number>;
-    deliverables.forEach(d => { byType[d.content_type] = (byType[d.content_type] || 0) + 1; });
+    deliverables.forEach(d => { const t = effectiveType(d); byType[t] = (byType[t] || 0) + 1; });
     const redeemed = redemptions.filter(r => r.status === "redeemed" || r.redeemed_at).length;
     const completed = bookings.filter(b => b.status === "completed").length;
     const noShow = bookings.filter(b => b.status === "no_show").length;
