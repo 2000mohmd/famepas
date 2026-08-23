@@ -269,15 +269,22 @@ const AdminAnalytics = () => {
               <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered</p>
             </div>
           </div>
-          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} redemptions`} trendUp={redemptionRate > 50} />
           <div className="space-y-2">
-            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+            <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend="Completed ÷ claims" trendUp={redemptionRate > 50} />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
-              <p><span className="text-foreground font-medium">{sub.offersDone}</span> done in the {rangeLabel.toLowerCase()}</p>
+              <p><span className="text-foreground font-medium">{stats.claims}</span> claims in range</p>
+              <p><span className="text-foreground font-medium">{stats.completedRedemptions}</span> completed redemptions</p>
             </div>
           </div>
-          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active" trendUp />
+          <div className="space-y-2">
+            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="All time, across all venues" trendUp />
+            <div className="px-1 text-xs text-muted-foreground space-y-0.5">
+              <p><span className="text-foreground font-medium">{stats.offersInRange}</span> created in the {rangeLabel.toLowerCase()}</p>
+              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
+              <p><span className="text-foreground font-medium">{sub.offersDone}</span> with a completed redemption in range</p>
+            </div>
+          </div>
+          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active (all time)" trendUp />
         </div>
 
 
