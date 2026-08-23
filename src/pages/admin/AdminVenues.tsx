@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { notifyEmail } from "@/lib/notify";
 import { isValidEmail, isValidName } from "@/lib/validation";
+import { formatLabel } from "./_format";
 
 interface Category { id: string; name: string; }
 interface Location { id: string; city: string; }
@@ -30,6 +31,7 @@ interface Venue {
 
 const AdminVenues = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
@@ -45,8 +47,10 @@ const AdminVenues = () => {
   const { toast } = useToast();
 
   const fetchVenues = async () => {
+    setLoading(true);
     const { data } = await supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false });
     setVenues((data as any) ?? []);
+    setLoading(false);
   };
 
   useEffect(() => { fetchVenues(); }, []);
@@ -86,12 +90,11 @@ const AdminVenues = () => {
   const setApprovalStatus = async (id: string, status: string) => {
     await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
     if (status === "approved") {
+      toast({ title: "Venue approved", description: "The venue is now active and visible to influencers." });
       const sent = await notifyEmail({ event: "venue_approved", venue_id: id });
-      toast({
-        title: "Venue approved",
-        description: sent ? "Approval email sent." : "Approval email could not be sent.",
-        variant: sent ? undefined : "destructive",
-      });
+      if (!sent) {
+        toast({ title: "Notification email not sent", description: "The venue was approved, but the approval email could not be sent." });
+      }
     } else if (status === "rejected") {
       const sent = await notifyEmail({ event: "venue_rejected", venue_id: id });
       toast({
@@ -275,6 +278,7 @@ const AdminVenues = () => {
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
+          <div className="w-full overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -287,7 +291,9 @@ const AdminVenues = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
               ) : (
                 filtered.map((venue) => (
@@ -302,7 +308,7 @@ const AdminVenues = () => {
                         <span className="font-medium text-foreground">{venue.name}</span>
                       </div>
                     </td>
-                    <td className="p-4"><Badge variant="secondary" className="capitalize">{venue.category}</Badge></td>
+                    <td className="p-4"><Badge variant="secondary">{formatLabel(venue.category)}</Badge></td>
                     <td className="p-4 text-muted-foreground">{venue.city || "—"}</td>
                     <td className="p-4">
                       <Badge className={
@@ -310,7 +316,7 @@ const AdminVenues = () => {
                         venue.approval_status === "pending" ? "bg-yellow-500/20 text-yellow-400 border-yellow-400/30" :
                         "bg-destructive/20 text-destructive border-destructive/30"
                       } variant="outline">
-                        {venue.approval_status || "approved"}
+                        {formatLabel(venue.approval_status || "approved")}
                       </Badge>
                     </td>
                     <td className="p-4">
@@ -358,6 +364,7 @@ const AdminVenues = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         <VenueDetailDialog

@@ -62,7 +62,8 @@ export const countryToCode = (name?: string | null): string | null => {
 };
 
 /** Fallback while loading / when the admin has no active locations configured. */
-export const DEFAULT_SERVICE_COUNTRY_CODES = ["LB"];
+export const DEFAULT_SERVICE_COUNTRY_CODES = ["LB", "AE", "SA"];
+
 
 let cache: string[] | null = null;
 let inflight: Promise<string[]> | null = null;

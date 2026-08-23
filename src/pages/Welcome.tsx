@@ -146,7 +146,7 @@ const Welcome = () => {
               <div>
                 <h2 className="text-xl font-bold">Join as a Creator</h2>
                 <p className="text-sm text-neutral-600 mt-1">
-                  Continue with social or sign up manually.
+                  Sign up with your email to get started.
                 </p>
               </div>
               <button

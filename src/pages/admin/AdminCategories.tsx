@@ -158,7 +158,7 @@ const AdminCategories = () => {
                       {cat.image_url ? (
                         <img src={cat.image_url} alt={cat.name} className="w-16 h-12 object-cover rounded-md border border-border" />
                       ) : (
-                        <div className="w-16 h-12 rounded-md bg-secondary flex items-center justify-center text-xs text-muted-foreground">none</div>
+                        <div className="w-16 h-12 rounded-md bg-secondary flex items-center justify-center text-xs text-muted-foreground">—</div>
                       )}
                     </td>
                     <td className="p-4 font-medium text-foreground capitalize">{cat.name}</td>

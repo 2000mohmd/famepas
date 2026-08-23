@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import InfluencerDetailDialog from "@/components/admin/InfluencerDetailDialog";
 import { notifyEmail } from "@/lib/notify";
+import { formatLabel } from "./_format";
 
 interface Influencer {
   user_id: string;
@@ -46,11 +47,13 @@ const AdminInfluencers = () => {
   const [warningMessage, setWarningMessage] = useState("");
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchInfluencers = async () => {
+    setLoading(true);
     const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "influencer");
-    if (!roles?.length) return;
+    if (!roles?.length) { setInfluencers([]); setLoading(false); return; }
     const ids = roles.map(r => r.user_id);
     const { data } = await supabase
       .from("profiles")
@@ -58,6 +61,7 @@ const AdminInfluencers = () => {
       .in("user_id", ids)
       .order("created_at", { ascending: false });
     setInfluencers((data as any) ?? []);
+    setLoading(false);
   };
 
   useEffect(() => { fetchInfluencers(); }, []);
@@ -198,6 +202,7 @@ const AdminInfluencers = () => {
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
+          <div className="w-full overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -211,7 +216,9 @@ const AdminInfluencers = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Loading influencers…</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No influencers found</td></tr>
               ) : (
                 filtered.map((inf) => (
@@ -329,6 +336,7 @@ const AdminInfluencers = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Warning Dialog */}

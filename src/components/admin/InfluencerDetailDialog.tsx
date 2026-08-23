@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp } from "lucide-react";
+import { formatLabel } from "@/pages/admin/_format";
 
 interface Props {
   userId: string | null;
@@ -53,7 +54,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                   {profile.approval_status === "approved" && <Badge className="bg-success/20 text-success border-success/30">Approved</Badge>}
                   {profile.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30">Rejected</Badge>}
                   {profile.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30">Verified</Badge>}
-                  {profile.badge && <Badge variant="secondary" className="capitalize">{profile.badge}</Badge>}
+                  {profile.badge && <Badge variant="secondary">{formatLabel(profile.badge)}</Badge>}
                 </div>
               </div>
             </div>
@@ -83,7 +84,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Niches</p>
                 <div className="flex gap-2 flex-wrap">
-                  {profile.niche.map((n: string) => <Badge key={n} variant="secondary" className="capitalize">{n}</Badge>)}
+                  {profile.niche.map((n: string) => <Badge key={n} variant="secondary">{formatLabel(n)}</Badge>)}
                 </div>
               </div>
             )}

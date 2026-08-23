@@ -26,6 +26,8 @@ const VenueBriefs = () => {
   const [matchesFor, setMatchesFor] = useState<any | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
+  const [runningMatch, setRunningMatch] = useState(false);
+  const [autoTriggered, setAutoTriggered] = useState<Set<string>>(new Set());
 
   const openMatches = async (b: any) => {
     setMatchesFor(b);
@@ -40,6 +42,21 @@ const VenueBriefs = () => {
       setMatches(list.map((r: any) => ({ ...r, profile: map.get(r.influencer_id) })));
     } else setMatches([]);
     setMatchesLoading(false);
+  };
+
+  const runMatching = async (b: any) => {
+    setRunningMatch(true);
+    try {
+      const { error } = await supabase.functions.invoke("match-brief", { body: { brief_id: b.id } });
+      if (error) throw error;
+      toast({ title: "Matching started", description: "We're ranking influencers for this brief." });
+      await openMatches(b);
+      await load();
+    } catch (err: any) {
+      toast({ title: "Couldn't run matching", description: err?.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setRunningMatch(false);
+    }
   };
 
   const approveMatch = async (m: any) => {
@@ -79,6 +96,18 @@ const VenueBriefs = () => {
   };
 
   useEffect(() => { load(); }, [user]);
+
+  useEffect(() => {
+    briefs
+      .filter(b => b.pipeline_stage === "matching" && (matchCounts[b.id] ?? 0) === 0 && !autoTriggered.has(b.id))
+      .forEach(b => {
+        setAutoTriggered(prev => new Set(prev).add(b.id));
+        supabase.functions.invoke("match-brief", { body: { brief_id: b.id } })
+          .then(() => load())
+          .catch(err => console.warn("auto match-brief failed", err));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [briefs, matchCounts]);
 
   const counts: Record<Stage, number> = {
     draft: briefs.filter(b => (b.pipeline_stage ?? "draft") === "draft").length,
@@ -124,7 +153,7 @@ const VenueBriefs = () => {
 
   const stageActions = (b: any) => {
     const id = b.id;
-    const busy = working === id;
+    const busy = working === id || runningMatch;
     switch (b.pipeline_stage ?? "draft") {
       case "draft":
         return <>
@@ -136,6 +165,9 @@ const VenueBriefs = () => {
       case "matching":
         return <>
           <span className="text-xs text-muted-foreground">{matchCounts[b.id] ?? 0} matches</span>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runMatching(b)}>
+            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null} Run matching
+          </Button>
           <Button size="sm" variant="outline" onClick={() => openMatches(b)}>
             <Users className="w-3.5 h-3.5 mr-1" /> View Matches
           </Button>
@@ -254,7 +286,12 @@ const VenueBriefs = () => {
           {matchesLoading ? (
             <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
           ) : matches.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">No matches yet. The AI is still ranking influencers — check back in a moment.</p>
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">No matches yet.</p>
+              <Button size="sm" disabled={runningMatch} onClick={() => matchesFor && runMatching(matchesFor)} style={{ background: PINK }} className="text-white hover:opacity-90">
+                {runningMatch ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null} Run matching
+              </Button>
+            </div>
           ) : (
             <div className="space-y-2">
               {matches.map(m => {

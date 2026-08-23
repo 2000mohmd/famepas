@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, KeyRound, Upload, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { notifyEmail } from "@/lib/notify";
 
@@ -35,7 +35,7 @@ const InfluencerBookings = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("bookings")
-        .select("*, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
+        .select("*, preferred_date, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
         .eq("influencer_id", user!.id)
         .order("scheduled_date", { ascending: false });
       return data ?? [];
@@ -132,7 +132,13 @@ const InfluencerBookings = () => {
               )}
               <span>{booking.venues?.name} • {booking.venues?.city}</span>
             </div>
-            <p className="text-sm text-muted-foreground">📅 {format(new Date(booking.scheduled_date), "PPP p")}</p>
+            {/* Prefer the date the influencer actually requested; scheduled_date
+                falls back to the row's creation time when none was chosen. */}
+            <p className="text-sm text-muted-foreground">
+              📅 {booking.preferred_date
+                ? format(parseISO(`${booking.preferred_date}T00:00:00`), "PPP")
+                : format(new Date(booking.scheduled_date), "PPP p")}
+            </p>
             {booking.checked_in_at && (
               <p className="text-xs text-green-500">Checked in: {format(new Date(booking.checked_in_at), "PPP p")}</p>
             )}
