@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Trophy, Crown, Award } from "lucide-react";
+import { Trophy, Crown, Award } from "lucide-react";
+import { prettyLabel } from "@/lib/format";
 
 const tierConfig: Record<string, { icon: any; color: string; next: string; pointsNeeded: number }> = {
   bronze: { icon: Award, color: "text-orange-400", next: "Silver", pointsNeeded: 500 },
@@ -13,6 +14,15 @@ const tierConfig: Record<string, { icon: any; color: string; next: string; point
   platinum: { icon: Crown, color: "text-cyan-400", next: "Elite", pointsNeeded: 15000 },
   elite: { icon: Trophy, color: "text-purple-500", next: "", pointsNeeded: 0 },
 };
+
+/** Kept in sync with tierConfig so the benefits table never contradicts the progress bar. */
+const TIER_BENEFITS = [
+  { tier: "Bronze", points: "0 – 499", perks: ["Basic profile", "Standard invitations", "1x point multiplier"] },
+  { tier: "Silver", points: "500 – 1,499", perks: ["Silver badge", "Earlier access to new offers", "1.5x point multiplier"] },
+  { tier: "Gold", points: "1,500 – 4,999", perks: ["Priority invitations", "Gold badge", "2x point multiplier"] },
+  { tier: "Platinum", points: "5,000 – 14,999", perks: ["Featured in venue search", "Platinum badge", "3x point multiplier"] },
+  { tier: "Elite", points: "15,000+", perks: ["VIP events access", "Elite badge", "5x point multiplier", "Dedicated support"] },
+];
 
 const InfluencerRewards = () => {
   const { user } = useAuth();
@@ -54,7 +64,7 @@ const InfluencerRewards = () => {
             <div className="flex items-center gap-4 mb-4">
               <TierIcon className={`w-10 h-10 ${config.color}`} />
               <div>
-                <h2 className="text-2xl font-bold capitalize">{tier} Tier</h2>
+                <h2 className="text-2xl font-bold">{prettyLabel(tier)} Tier</h2>
                 <p className="text-sm text-muted-foreground">{points} points earned</p>
               </div>
             </div>
@@ -73,12 +83,8 @@ const InfluencerRewards = () => {
         </Card>
 
         {/* Tier Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { tier: "Bronze", points: "0-499", perks: ["Basic profile", "Standard invitations", "1x point multiplier"] },
-            { tier: "Gold", points: "500-4999", perks: ["Priority invitations", "Gold badge", "2x point multiplier"] },
-            { tier: "Elite", points: "15000+", perks: ["VIP events access", "Elite badge", "5x point multiplier", "Dedicated support"] },
-          ].map((t) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {TIER_BENEFITS.map((t) => (
             <Card key={t.tier} className={tier === t.tier.toLowerCase() ? "border-gold/30" : ""}>
               <CardHeader><CardTitle className="text-base">{t.tier}</CardTitle></CardHeader>
               <CardContent>
@@ -102,7 +108,7 @@ const InfluencerRewards = () => {
                     <span className={`text-lg font-bold ${idx < 3 ? "text-gold" : "text-muted-foreground"}`}>#{idx + 1}</span>
                     <div>
                       <p className="text-sm font-medium">{entry.full_name || "Anonymous"}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{entry.badge} • Score: {entry.influencer_score}</p>
+                      <p className="text-xs text-muted-foreground">{prettyLabel(entry.badge)} • Score: {entry.influencer_score ?? 0}</p>
                     </div>
                   </div>
                   <span className="text-sm font-semibold">{entry.points} pts</span>
