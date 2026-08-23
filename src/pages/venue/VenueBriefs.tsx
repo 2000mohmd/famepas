@@ -103,7 +103,11 @@ const VenueBriefs = () => {
     const { error } = await supabase.from("venue_briefs").update({ pipeline_stage: "matching", is_active: true, status: "open" }).eq("id", b.id);
     if (error) { setWorking(null); toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     // Kick off matching (best-effort)
-    try { await supabase.functions.invoke("match-brief", { body: { brief_id: b.id } }); } catch {}
+    try {
+      await supabase.functions.invoke("match-brief", { body: { brief_id: b.id } });
+    } catch (err) {
+      console.warn("match-brief invocation failed", err);
+    }
     setWorking(null);
     toast({ title: "Brief is live", description: "We're matching influencers now." });
     load();

@@ -74,7 +74,7 @@ const InfluencerExplore = () => {
   const { data: offers } = useQuery({
     queryKey: ["explore-offers", search, categoryFilter, typeFilter, countryFilter, myCountry, sortBy],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from("offers")
         .select("*, venues!inner(name, city, country, category, logo_url, description, latitude, longitude, address)")
         .eq("is_active", true);
