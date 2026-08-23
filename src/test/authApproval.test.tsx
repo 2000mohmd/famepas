@@ -6,18 +6,22 @@ import type { ReactNode } from "react";
  * Data fixtures the fake Supabase client answers with. Each test mutates these
  * before calling signIn().
  */
-const db = {
-  user_roles: [] as { user_id: string; role: string }[],
-  venues: [] as { owner_id: string; approval_status: string }[],
-  profiles: [] as { user_id: string; approval_status: string }[],
-};
+const { db, signOut, toast } = vi.hoisted(() => ({
+  db: {
+    user_roles: [] as { user_id: string; role: string }[],
+    venues: [] as { owner_id: string; approval_status: string }[],
+    profiles: [] as { user_id: string; approval_status: string }[],
+  },
+  signOut: vi.fn().mockResolvedValue({ error: null }),
+  toast: vi.fn(),
+}));
 
-let signInResult: { data: { user: unknown }; error: unknown } = {
-  data: { user: { id: "u1", email_confirmed_at: "2026-01-01T00:00:00Z" } },
-  error: null,
-};
-
-const signOut = vi.fn().mockResolvedValue({ error: null });
+const signInState = vi.hoisted(() => ({
+  current: {
+    data: { user: { id: "u1", email_confirmed_at: "2026-01-01T00:00:00Z" } as unknown },
+    error: null as unknown,
+  },
+}));
 
 const makeQuery = (table: keyof typeof db) => {
   const filters: [string, unknown][] = [];
@@ -49,14 +53,13 @@ vi.mock("@/integrations/supabase/client", () => ({
     auth: {
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
       getSession: async () => ({ data: { session: null } }),
-      signInWithPassword: async () => signInResult,
+      signInWithPassword: async () => signInState.current,
       signOut,
     },
   },
 }));
 
-const toast = vi.fn();
-vi.mock("@/hooks/use-toast", () => ({ toast: (...args: unknown[]) => toast(...args) }));
+vi.mock("@/hooks/use-toast", () => ({ toast }));
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
@@ -75,14 +78,14 @@ describe("AuthContext sign-in approval gating", () => {
     db.profiles = [];
     signOut.mockClear();
     toast.mockClear();
-    signInResult = {
+    signInState.current = {
       data: { user: { id: "u1", email_confirmed_at: "2026-01-01T00:00:00Z" } },
       error: null,
     };
   });
 
   it("rejects sign-in when the email is not confirmed", async () => {
-    signInResult = { data: { user: { id: "u1", email_confirmed_at: null } }, error: null };
+    signInState.current = { data: { user: { id: "u1", email_confirmed_at: null } }, error: null };
     const { result } = await renderAuth();
 
     let res: { error: { message?: string } | null } = { error: null };
