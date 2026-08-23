@@ -1,4 +1,85 @@
 (function () {
+  // Hide the placeholder brand-logo strip ("Trusted by 1,000+ brands" /
+  // "Brand Section" / "Brand Logos") wherever it appears across pages.
+  try {
+    var style = document.createElement("style");
+    style.setAttribute("id", "famepass-hide-brand-strip");
+    style.textContent =
+      '[data-framer-name="Brand Section"],' +
+      '[data-framer-name="Brand Content"],' +
+      '[data-framer-name="Brand Logos"],' +
+      '[data-framer-name="Trusted by 1,000+ brands"]' +
+      '{ display: none !important; }';
+    (document.head || document.documentElement).appendChild(style);
+  } catch (e) {}
+})();
+
+(function () {
+  // Force-close the mobile hamburger overlay on the first click of its
+  // close ("X") button, in case Framer's own toggle misfires.
+  function findOverlay(start) {
+    var el = start;
+    for (var i = 0; i < 8 && el; i++) {
+      var cs = window.getComputedStyle ? getComputedStyle(el) : null;
+      if (
+        cs &&
+        (cs.position === "fixed" || cs.position === "absolute") &&
+        el.offsetHeight > window.innerHeight * 0.4
+      ) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function forceClose(overlay) {
+    if (overlay) {
+      overlay.style.setProperty("display", "none", "important");
+      overlay.style.setProperty("opacity", "0", "important");
+      overlay.style.setProperty("pointer-events", "none", "important");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+    document.body.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("overflow");
+  }
+
+  document.addEventListener(
+    "click",
+    function (e) {
+      var target =
+        (e.target.closest &&
+          e.target.closest(
+            '[aria-label*="close" i], [data-framer-name*="close" i], [data-testid*="close" i]'
+          )) ||
+        null;
+
+      if (!target && e.target.closest) {
+        var svg = e.target.closest("svg, button");
+        if (svg) {
+          var overlayCandidate = findOverlay(svg);
+          if (overlayCandidate) target = svg;
+        }
+      }
+
+      if (!target) return;
+
+      var overlay = findOverlay(target);
+      // Give Framer's own handler a chance to run first; if the overlay is
+      // still visible shortly after, force it closed.
+      setTimeout(function () {
+        if (!overlay) return;
+        var cs = getComputedStyle(overlay);
+        if (cs.display !== "none" && parseFloat(cs.opacity || "1") > 0) {
+          forceClose(overlay);
+        }
+      }, 80);
+    },
+    true
+  );
+})();
+
+(function () {
   if (window.__framerRangeFetchPatched) return;
   window.__framerRangeFetchPatched = true;
 
