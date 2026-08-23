@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     influencers: 0,
     offers: 0,
     redemptions: 0,
+    completedRedemptions: 0,
     pendingVenues: 0,
     activeOffers: 0,
   });
@@ -28,11 +29,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [venues, influencers, offers, redemptions, pendingVenues, activeOffers, recentVenues, recentRedemptions] = await Promise.all([
+      const [venues, influencers, offers, redemptions, completedRedemptions, pendingVenues, activeOffers, recentVenues, recentRedemptions] = await Promise.all([
         supabase.from("venues").select("id", { count: "exact", head: true }),
         supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
         supabase.from("offers").select("id", { count: "exact", head: true }),
         supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
+        supabase.from("offer_redemptions").select("id", { count: "exact", head: true }).in("status", ["redeemed", "completed"]),
         supabase.from("venues").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("venues").select("id, name, created_at, approval_status").order("created_at", { ascending: false }).limit(3),
@@ -44,6 +46,7 @@ const AdminDashboard = () => {
         influencers: influencers.count ?? 0,
         offers: offers.count ?? 0,
         redemptions: redemptions.count ?? 0,
+        completedRedemptions: completedRedemptions.count ?? 0,
         pendingVenues: pendingVenues.count ?? 0,
         activeOffers: activeOffers.count ?? 0,
       });
