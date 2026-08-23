@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import LocationAutocomplete, { PickedPlace } from "@/components/venue/LocationAutocomplete";
 
 type Tab = "integrations" | "team" | "profile" | "messaging" | "billing" | "compliance";
 
@@ -123,6 +124,12 @@ const VenueSettings = () => {
   const [pLogo, setPLogo] = useState<string | null>(null);
   const [pCats, setPCats] = useState<string[]>([]);
   const [allCats, setAllCats] = useState<any[]>([]);
+  const [pAddress, setPAddress] = useState("");
+  const [pCity, setPCity] = useState<string | null>(null);
+  const [pCountry, setPCountry] = useState<string | null>(null);
+  const [pZip, setPZip] = useState<string | null>(null);
+  const [pLat, setPLat] = useState<number | null>(null);
+  const [pLng, setPLng] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
 
   // billing + compliance
@@ -155,6 +162,12 @@ const VenueSettings = () => {
       : (v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
     setPCats(catsArr);
     setPCancel((v as any).cancellation_policy ?? true);
+    setPAddress((v as any).address || "");
+    setPCity((v as any).city ?? null);
+    setPCountry((v as any).country ?? null);
+    setPZip((v as any).zip_code ?? null);
+    setPLat((v as any).latitude ?? null);
+    setPLng((v as any).longitude ?? null);
     setSelectedTierId((v as any).subscription_tier_id ?? null);
     setRequireAdDisclosure((v as any).require_ad_disclosure ?? false);
     setRequireVenueTag((v as any).require_venue_tag ?? false);
@@ -212,6 +225,15 @@ const VenueSettings = () => {
     toast({ title: "Logo updated" });
   };
 
+  const onAddressPick = (p: PickedPlace) => {
+    setPAddress(p.address);
+    setPCity(p.city ?? null);
+    setPCountry(p.country ?? null);
+    setPZip(p.zip ?? null);
+    setPLat(p.latitude ?? null);
+    setPLng(p.longitude ?? null);
+  };
+
   const saveProfile = async () => {
     if (!venue) return;
     const { error } = await supabase.from("venues").update({
@@ -221,6 +243,12 @@ const VenueSettings = () => {
       category: pCats[0] || "dining",
       categories: pCats,
       cancellation_policy: pCancel,
+      address: pAddress || null,
+      city: pCity,
+      country: pCountry,
+      zip_code: pZip,
+      latitude: pLat,
+      longitude: pLng,
     } as any).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else toast({ title: "Profile saved" });
