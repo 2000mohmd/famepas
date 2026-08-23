@@ -184,7 +184,10 @@ const AdminOffers = () => {
                       </div>
                     </td>
                     <td className="p-4"><Badge variant="secondary" className="capitalize">{offer.offer_type}</Badge></td>
-                    <td className="p-4 text-muted-foreground">{offer.current_redemptions}{offer.max_redemptions ? `/${offer.max_redemptions}` : ""}</td>
+                    <td className="p-4 text-muted-foreground">
+                      <span className="text-foreground">{offer.current_redemptions}</span>{offer.max_redemptions ? `/${offer.max_redemptions}` : ""}
+                      <span className="block text-xs">{offer.claims} claim{offer.claims === 1 ? "" : "s"}</span>
+                    </td>
                     <td className="p-4">
                       <Badge className={offer.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
                         {offer.is_active ? "Active" : "Inactive"}
