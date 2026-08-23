@@ -159,14 +159,24 @@ const AdminAnalytics = () => {
       const catArr = Object.entries(catMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 6);
       setCategoryStats(catArr);
 
-      // Top venues by aggregated redemption counts from offers
+      // Top venues by real completed redemptions (not the stale offers.current_redemptions counter)
       const venueIds = (venueList.data ?? []).map((v: any) => v.id);
       if (venueIds.length > 0) {
-        const { data: offerData } = await supabase.from("offers").select("venue_id, current_redemptions").in("venue_id", venueIds);
+        const { data: offerData } = await supabase.from("offers").select("id, venue_id").in("venue_id", venueIds);
+        const offerIds = (offerData ?? []).map((o: any) => o.id);
+        const offerVenue = new Map((offerData ?? []).map((o: any) => [o.id, o.venue_id]));
         const venueMap: Record<string, number> = {};
-        (offerData ?? []).forEach((o: any) => {
-          venueMap[o.venue_id] = (venueMap[o.venue_id] ?? 0) + (o.current_redemptions ?? 0);
-        });
+        if (offerIds.length > 0) {
+          const { data: redeemedRows } = await supabase
+            .from("offer_redemptions")
+            .select("offer_id, status")
+            .in("offer_id", offerIds)
+            .in("status", ["redeemed", "completed"]);
+          (redeemedRows ?? []).forEach((r: any) => {
+            const vId = offerVenue.get(r.offer_id);
+            if (vId) venueMap[vId] = (venueMap[vId] ?? 0) + 1;
+          });
+        }
         const ranked = (venueList.data ?? [])
           .map((v: any) => ({ name: v.name, redemptions: venueMap[v.id] ?? 0 }))
           .sort((a, b) => b.redemptions - a.redemptions)
@@ -180,7 +190,8 @@ const AdminAnalytics = () => {
     fetchStats();
   }, [cityFilter, fromISO, toISO]);
 
-  const redemptionRate = stats.offers > 0 ? Math.round((stats.redemptions / stats.offers) * 100) : 0;
+  // Rate = completed redemptions out of all claims made in the range (never exceeds 100%)
+  const redemptionRate = stats.claims > 0 ? Math.round((stats.completedRedemptions / stats.claims) * 100) : 0;
   const maxCat = Math.max(...categoryStats.map(c => c.count), 1);
 
   return (
