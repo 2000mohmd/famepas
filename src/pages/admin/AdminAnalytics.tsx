@@ -18,7 +18,15 @@ interface CategoryStat { name: string; count: number; }
 type RangeKey = "7" | "30" | "90" | "custom";
 
 const AdminAnalytics = () => {
-  const [stats, setStats] = useState({ venues: 0, influencers: 0, redemptions: 0, offers: 0, liveOffers: 0 });
+  const [stats, setStats] = useState({
+    venues: 0,
+    influencers: 0,
+    claims: 0,
+    completedRedemptions: 0,
+    offers: 0,
+    offersInRange: 0,
+    liveOffers: 0,
+  });
   const [sub, setSub] = useState({
     venuesSignedUp: 0, venuesPosted: 0,
     influencersActive: 0, influencersRegistered: 0,
@@ -71,12 +79,18 @@ const AdminAnalytics = () => {
       let categoriesQuery = supabase.from("venues").select("category");
       if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
 
-      const [venues, influencers, redemptions, offers, liveOffers, venueList, categoriesRaw] = await Promise.all([
+      const [venues, influencers, claims, completed, offersTotal, offersInRange, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
         inRange(supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer")),
+        // Claims = every application/redemption record created in range
         inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
+        // Completed redemptions = the visit actually happened
+        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true }))
+          .in("status", ["redeemed", "completed"]),
+        // Total offers is an all-time figure so it matches the Dashboard & Offers pages
+        supabase.from("offers").select("id", { count: "exact", head: true }),
         inRange(supabase.from("offers").select("id", { count: "exact", head: true })),
-        inRange(supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true)),
+        supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
         venueListQuery,
         categoriesQuery,
       ]);
@@ -84,8 +98,10 @@ const AdminAnalytics = () => {
       setStats({
         venues: venues.count ?? 0,
         influencers: influencers.count ?? 0,
-        redemptions: redemptions.count ?? 0,
-        offers: offers.count ?? 0,
+        claims: claims.count ?? 0,
+        completedRedemptions: completed.count ?? 0,
+        offers: offersTotal.count ?? 0,
+        offersInRange: offersInRange.count ?? 0,
         liveOffers: liveOffers.count ?? 0,
       });
 
@@ -143,14 +159,24 @@ const AdminAnalytics = () => {
       const catArr = Object.entries(catMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 6);
       setCategoryStats(catArr);
 
-      // Top venues by aggregated redemption counts from offers
+      // Top venues by real completed redemptions (not the stale offers.current_redemptions counter)
       const venueIds = (venueList.data ?? []).map((v: any) => v.id);
       if (venueIds.length > 0) {
-        const { data: offerData } = await supabase.from("offers").select("venue_id, current_redemptions").in("venue_id", venueIds);
+        const { data: offerData } = await supabase.from("offers").select("id, venue_id").in("venue_id", venueIds);
+        const offerIds = (offerData ?? []).map((o: any) => o.id);
+        const offerVenue = new Map((offerData ?? []).map((o: any) => [o.id, o.venue_id]));
         const venueMap: Record<string, number> = {};
-        (offerData ?? []).forEach((o: any) => {
-          venueMap[o.venue_id] = (venueMap[o.venue_id] ?? 0) + (o.current_redemptions ?? 0);
-        });
+        if (offerIds.length > 0) {
+          const { data: redeemedRows } = await supabase
+            .from("offer_redemptions")
+            .select("offer_id, status")
+            .in("offer_id", offerIds)
+            .in("status", ["redeemed", "completed"]);
+          (redeemedRows ?? []).forEach((r: any) => {
+            const vId = offerVenue.get(r.offer_id);
+            if (vId) venueMap[vId] = (venueMap[vId] ?? 0) + 1;
+          });
+        }
         const ranked = (venueList.data ?? [])
           .map((v: any) => ({ name: v.name, redemptions: venueMap[v.id] ?? 0 }))
           .sort((a, b) => b.redemptions - a.redemptions)
@@ -164,7 +190,8 @@ const AdminAnalytics = () => {
     fetchStats();
   }, [cityFilter, fromISO, toISO]);
 
-  const redemptionRate = stats.offers > 0 ? Math.round((stats.redemptions / stats.offers) * 100) : 0;
+  // Rate = completed redemptions out of all claims made in the range (never exceeds 100%)
+  const redemptionRate = stats.claims > 0 ? Math.round((stats.completedRedemptions / stats.claims) * 100) : 0;
   const maxCat = Math.max(...categoryStats.map(c => c.count), 1);
 
   return (
@@ -242,15 +269,22 @@ const AdminAnalytics = () => {
               <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered</p>
             </div>
           </div>
-          <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={`${stats.redemptions} redemptions`} trendUp={redemptionRate > 50} />
           <div className="space-y-2">
-            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="Across all venues" trendUp />
+            <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend="Completed ÷ claims" trendUp={redemptionRate > 50} />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
-              <p><span className="text-foreground font-medium">{sub.offersDone}</span> done in the {rangeLabel.toLowerCase()}</p>
+              <p><span className="text-foreground font-medium">{stats.claims}</span> claims in range</p>
+              <p><span className="text-foreground font-medium">{stats.completedRedemptions}</span> completed redemptions</p>
             </div>
           </div>
-          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active" trendUp />
+          <div className="space-y-2">
+            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="All time, across all venues" trendUp />
+            <div className="px-1 text-xs text-muted-foreground space-y-0.5">
+              <p><span className="text-foreground font-medium">{stats.offersInRange}</span> created in the {rangeLabel.toLowerCase()}</p>
+              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
+              <p><span className="text-foreground font-medium">{sub.offersDone}</span> with a completed redemption in range</p>
+            </div>
+          </div>
+          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active (all time)" trendUp />
         </div>
 
 

@@ -19,6 +19,7 @@ const AdminDashboard = () => {
     influencers: 0,
     offers: 0,
     redemptions: 0,
+    completedRedemptions: 0,
     pendingVenues: 0,
     activeOffers: 0,
   });
@@ -28,11 +29,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [venues, influencers, offers, redemptions, pendingVenues, activeOffers, recentVenues, recentRedemptions] = await Promise.all([
+      const [venues, influencers, offers, redemptions, completedRedemptions, pendingVenues, activeOffers, recentVenues, recentRedemptions] = await Promise.all([
         supabase.from("venues").select("id", { count: "exact", head: true }),
         supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer"),
         supabase.from("offers").select("id", { count: "exact", head: true }),
         supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
+        supabase.from("offer_redemptions").select("id", { count: "exact", head: true }).in("status", ["redeemed", "completed"]),
         supabase.from("venues").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("venues").select("id, name, created_at, approval_status").order("created_at", { ascending: false }).limit(3),
@@ -44,6 +46,7 @@ const AdminDashboard = () => {
         influencers: influencers.count ?? 0,
         offers: offers.count ?? 0,
         redemptions: redemptions.count ?? 0,
+        completedRedemptions: completedRedemptions.count ?? 0,
         pendingVenues: pendingVenues.count ?? 0,
         activeOffers: activeOffers.count ?? 0,
       });
@@ -106,7 +109,7 @@ const AdminDashboard = () => {
           <StatCard title="Total Venues" value={stats.venues} icon={<Building2 className="w-6 h-6" />} trend={`${stats.pendingVenues} pending approval`} trendUp={stats.pendingVenues === 0} />
           <StatCard title="Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="Registered users" trendUp />
           <StatCard title="Active Offers" value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={`${stats.offers} total offers`} trendUp />
-          <StatCard title="Total Redemptions" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={stats.offers > 0 ? `${Math.round((stats.redemptions / stats.offers) * 100)}% rate` : "—"} trendUp />
+          <StatCard title="Total Claims" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed redemption${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp />
         </div>
 
         {/* Alert banners */}
