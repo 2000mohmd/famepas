@@ -81,7 +81,7 @@ const AdminRedemptions = () => {
     <DashboardLayout type="admin">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Offer <span className="text-gold">Attendance</span></h1>
-        <p className="text-muted-foreground mb-6">{rows.length} total redemptions across all venues</p>
+        <p className="text-muted-foreground mb-6">{rows.length} total claims across all venues · {rows.filter(r => ["redeemed", "completed"].includes(r.status)).length} completed redemptions</p>
 
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-md">
