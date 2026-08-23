@@ -18,6 +18,7 @@ interface Offer {
   offer_type: string;
   is_active: boolean;
   current_redemptions: number;
+  claims: number;
   max_redemptions: number | null;
   cover_image_url: string | null;
   image_url: string | null;
@@ -37,9 +38,33 @@ const AdminOffers = () => {
   const fetchOffers = async () => {
     const { data } = await supabase
       .from("offers")
-      .select("id, title, offer_type, is_active, current_redemptions, max_redemptions, cover_image_url, image_url, created_at, venues(name, logo_url, is_active)")
+      .select("id, title, offer_type, is_active, max_redemptions, cover_image_url, image_url, created_at, venues(name, logo_url, is_active)")
       .order("created_at", { ascending: false });
-    setOffers((data as any) ?? []);
+    const list = (data as any[]) ?? [];
+
+    // Derive live counts from offer_redemptions — offers.current_redemptions is a stale counter.
+    const claimsMap: Record<string, number> = {};
+    const completedMap: Record<string, number> = {};
+    if (list.length) {
+      const { data: reds } = await supabase
+        .from("offer_redemptions")
+        .select("offer_id, status")
+        .in("offer_id", list.map((o) => o.id));
+      (reds ?? []).forEach((r: any) => {
+        claimsMap[r.offer_id] = (claimsMap[r.offer_id] ?? 0) + 1;
+        if (["redeemed", "completed"].includes(r.status)) {
+          completedMap[r.offer_id] = (completedMap[r.offer_id] ?? 0) + 1;
+        }
+      });
+    }
+
+    setOffers(
+      list.map((o) => ({
+        ...o,
+        claims: claimsMap[o.id] ?? 0,
+        current_redemptions: completedMap[o.id] ?? 0,
+      })) as Offer[],
+    );
   };
 
   useEffect(() => { fetchOffers(); }, []);
