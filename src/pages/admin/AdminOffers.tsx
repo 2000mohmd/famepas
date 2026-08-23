@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, CheckCircle, XCircle, Building2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatLabel } from "./_format";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -33,9 +34,11 @@ const AdminOffers = () => {
   const [venueStatusFilter, setVenueStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchOffers = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from("offers")
       .select("id, title, offer_type, is_active, max_redemptions, cover_image_url, image_url, created_at, venues(name, logo_url, is_active)")
@@ -65,6 +68,7 @@ const AdminOffers = () => {
         current_redemptions: completedMap[o.id] ?? 0,
       })) as Offer[],
     );
+    setLoading(false);
   };
 
   useEffect(() => { fetchOffers(); }, []);
@@ -146,6 +150,7 @@ const AdminOffers = () => {
         </div>
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
+          <div className="w-full overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -158,7 +163,9 @@ const AdminOffers = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading offers…</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No offers found</td></tr>
               ) : (
                 filtered.map((offer) => (
@@ -183,7 +190,7 @@ const AdminOffers = () => {
                         <span className="text-muted-foreground text-sm">{offer.venues?.name ?? "—"}</span>
                       </div>
                     </td>
-                    <td className="p-4"><Badge variant="secondary" className="capitalize">{offer.offer_type}</Badge></td>
+                    <td className="p-4"><Badge variant="secondary">{formatLabel(offer.offer_type)}</Badge></td>
                     <td className="p-4 text-muted-foreground">
                       <span className="text-foreground">{offer.current_redemptions}</span>{offer.max_redemptions ? `/${offer.max_redemptions}` : ""}
                       <span className="block text-xs">{offer.claims} claim{offer.claims === 1 ? "" : "s"}</span>
@@ -208,6 +215,7 @@ const AdminOffers = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

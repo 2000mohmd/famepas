@@ -22,7 +22,7 @@ interface Props {
 }
 
 
-const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
+const LocationAutocomplete = ({ defaultValue, placeholder, onPick, onTextChange }: Props) => {
   const { isLoaded } = useGoogleMaps();
   const ref = useRef<google.maps.places.Autocomplete | null>(null);
   const countryCodes = useServiceCountryCodes();
@@ -41,6 +41,7 @@ const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
   const onPlace = () => {
     const place = ref.current?.getPlace();
     if (!place) return;
+    if (place.formatted_address) onTextChange?.(place.formatted_address);
     const comps = place.address_components || [];
     const get = (t: string) => comps.find(c => c.types.includes(t))?.long_name;
     onPick({
@@ -61,7 +62,11 @@ const LocationAutocomplete = ({ defaultValue, placeholder, onPick }: Props) => {
       }}
       onPlaceChanged={onPlace}
     >
-      <Input defaultValue={defaultValue} placeholder={placeholder || "Search address…"} />
+      <Input
+        defaultValue={defaultValue}
+        placeholder={placeholder || "Search address…"}
+        onChange={(e) => onTextChange?.(e.target.value)}
+      />
     </Autocomplete>
   );
 };
