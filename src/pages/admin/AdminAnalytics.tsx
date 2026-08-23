@@ -79,12 +79,18 @@ const AdminAnalytics = () => {
       let categoriesQuery = supabase.from("venues").select("category");
       if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
 
-      const [venues, influencers, redemptions, offers, liveOffers, venueList, categoriesRaw] = await Promise.all([
+      const [venues, influencers, claims, completed, offersTotal, offersInRange, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
         inRange(supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer")),
+        // Claims = every application/redemption record created in range
         inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
+        // Completed redemptions = the visit actually happened
+        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true }))
+          .in("status", ["redeemed", "completed"]),
+        // Total offers is an all-time figure so it matches the Dashboard & Offers pages
+        supabase.from("offers").select("id", { count: "exact", head: true }),
         inRange(supabase.from("offers").select("id", { count: "exact", head: true })),
-        inRange(supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true)),
+        supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
         venueListQuery,
         categoriesQuery,
       ]);
@@ -92,8 +98,10 @@ const AdminAnalytics = () => {
       setStats({
         venues: venues.count ?? 0,
         influencers: influencers.count ?? 0,
-        redemptions: redemptions.count ?? 0,
-        offers: offers.count ?? 0,
+        claims: claims.count ?? 0,
+        completedRedemptions: completed.count ?? 0,
+        offers: offersTotal.count ?? 0,
+        offersInRange: offersInRange.count ?? 0,
         liveOffers: liveOffers.count ?? 0,
       });
 
