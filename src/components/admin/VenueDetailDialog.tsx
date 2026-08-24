@@ -108,7 +108,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Category</p>
                 <Select value={categories.includes(String(venue.category ?? "").trim()) ? String(venue.category).trim() : undefined} onValueChange={(v) => updateVenueField("category", v)} disabled={saving}>
-                  <SelectTrigger><SelectValue placeholder={venue.category || "Select category"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={formatLabel(venue.category) || "Select category"} /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
                     {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
