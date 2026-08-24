@@ -85,10 +85,8 @@ const InfluencerExplore = () => {
 
       if (typeFilter !== "all") query = query.eq("offer_type", typeFilter);
       if (countryFilter === "my" && myCountry) query = query.eq("venues.country", myCountry);
-      if (search) {
-        const s = search.replace(/[%,()]/g, "");
-        query = query.or(`title.ilike.%${s}%,description.ilike.%${s}%`);
-      }
+      // Search runs client-side below so it can also match venue name / city,
+      // which PostgREST cannot combine with the other `or` filter in one request.
 
       switch (sortBy) {
         case "oldest": query = query.order("created_at", { ascending: true }); break;
@@ -101,6 +99,14 @@ const InfluencerExplore = () => {
 
       const { data } = await query.limit(100);
       let list = data ?? [];
+      if (search.trim()) {
+        const s = search.trim().toLowerCase();
+        list = list.filter((o: any) =>
+          [o.title, o.description, o.venues?.name, o.venues?.city, o.venues?.address, o.venues?.category]
+            .filter(Boolean)
+            .some((f: string) => String(f).toLowerCase().includes(s))
+        );
+      }
       // Category can live on the offer (category / category_id) or on the venue,
       // so match across all of them instead of only venues.category.
       if (categoryFilter !== "all") {
@@ -180,16 +186,22 @@ const InfluencerExplore = () => {
   };
 
   let displayedOffers: any[] = offers ?? [];
+  let hiddenNoGeoCount = 0;
   if (userLocation && nearbyOnly) {
-    displayedOffers = displayedOffers
-      .map((o: any) => {
-        const lat = o.venues?.latitude;
-        const lng = o.venues?.longitude;
-        const d = lat && lng ? distanceKm(userLocation, { lat, lng }) : Infinity;
-        return { ...o, _distance: d };
-      })
-      .filter((o: any) => o._distance < 100)
+    const withDistance = displayedOffers.map((o: any) => {
+      const lat = o.venues?.latitude;
+      const lng = o.venues?.longitude;
+      const d = lat && lng ? distanceKm(userLocation, { lat, lng }) : null;
+      return { ...o, _distance: d };
+    });
+    // Venues that never saved coordinates would otherwise disappear entirely, so
+    // they stay listed after the geo-sorted ones instead of being dropped.
+    const near = withDistance
+      .filter((o: any) => o._distance !== null && o._distance < 100)
       .sort((a: any, b: any) => a._distance - b._distance);
+    const unknown = withDistance.filter((o: any) => o._distance === null);
+    hiddenNoGeoCount = unknown.length;
+    displayedOffers = [...near, ...unknown];
   }
 
   const mapVenues = venues?.filter((v) => v.latitude && v.longitude) ?? [];
@@ -258,7 +270,12 @@ const InfluencerExplore = () => {
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Navigation className="w-4 h-4 text-gold" />
-              <span>Showing offers near your current location</span>
+              <span>
+                {nearbyOnly ? "Closest offers first, based on your current location" : "Location detected — turn on “Near me” to sort by distance"}
+                {nearbyOnly && hiddenNoGeoCount > 0 && (
+                  <span className="text-muted-foreground"> · {hiddenNoGeoCount} offer{hiddenNoGeoCount > 1 ? "s" : ""} without map coordinates listed last</span>
+                )}
+              </span>
             </div>
             <Button size="sm" variant={nearbyOnly ? "default" : "outline"} onClick={() => setNearbyOnly(v => !v)}>
               {nearbyOnly ? "Near me: ON" : "Near me: OFF"}

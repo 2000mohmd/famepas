@@ -52,9 +52,13 @@ const AdminInfluencers = () => {
 
   const fetchInfluencers = async () => {
     setLoading(true);
-    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "influencer");
-    if (!roles?.length) { setInfluencers([]); setLoading(false); return; }
-    const ids = roles.map(r => r.user_id);
+    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+    const influencerIds = (roles ?? []).filter(r => r.role === "influencer").map(r => r.user_id);
+    // Some seeded/legacy accounts carry both roles; a venue or admin account must
+    // never show up in the influencer roster.
+    const staffIds = new Set((roles ?? []).filter(r => r.role !== "influencer").map(r => r.user_id));
+    const ids = [...new Set(influencerIds)].filter(id => !staffIds.has(id));
+    if (!ids.length) { setInfluencers([]); setLoading(false); return; }
     const { data } = await supabase
       .from("profiles")
       .select("user_id, full_name, instagram_handle, tiktok_handle, followers_count, tiktok_followers, influencer_score, is_verified, is_suspended, approval_status, phone, created_at, avatar_url, instagram_verified")

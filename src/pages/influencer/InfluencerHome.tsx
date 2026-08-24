@@ -51,10 +51,13 @@ const InfluencerHome = () => {
   const { data: offers } = useQuery({
     queryKey: ["all-offers-home"],
     queryFn: async () => {
+      // Never surface offers whose run has already ended — Explore hides them too.
+      const nowIso = new Date().toISOString();
       const { data } = await supabase
         .from("offers")
         .select("*, venues(name, city, category, logo_url, cover_image_url), categories(id, name)")
         .eq("is_active", true)
+        .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
         .limit(60)
         .order("created_at", { ascending: false });
       return data ?? [];
