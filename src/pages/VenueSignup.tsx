@@ -158,11 +158,12 @@ const VenueSignup = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("get_public_platform_settings");
-      const v = (data ?? []).find((r: any) => r.key === "venue_registration_open")?.value as any;
-      setRegistrationOpen(v === false || v === "false" ? false : true);
+      const config = await fetchSignupConfig();
+      setRegistrationOpen(isRegistrationOpen(config, "venue_registration_open"));
+      if (config.categories.length) setCategories(config.categories);
     })();
   }, []);
+
 
   // form state
   const [email, setEmail] = useState("");

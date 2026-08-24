@@ -114,11 +114,11 @@ const InfluencerSignup = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("get_public_platform_settings");
-      const v = (data ?? []).find((r: any) => r.key === "influencer_registration_open")?.value as any;
-      setRegistrationOpen(v === false || v === "false" ? false : true);
+      const config = await fetchSignupConfig();
+      setRegistrationOpen(isRegistrationOpen(config, "influencer_registration_open"));
     })();
   }, []);
+
 
   // account
   const [email, setEmail] = useState("");
