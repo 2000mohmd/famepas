@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
 import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } from "@/lib/validation";
+import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 
 const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");

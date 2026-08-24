@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
 import { isValidEmail, isValidName } from "@/lib/validation";
 import { useServiceCountryCodes } from "@/lib/serviceCountries";
+import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 /* ============================================================
    Joli-style light-mode business signup wizard

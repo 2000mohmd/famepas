@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchSignupConfig } from "@/lib/signupConfig";
 
 /**
  * Maps country names (as stored in service_locations.country by admins) to
