@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
 import { isValidEmail, isValidName } from "@/lib/validation";
 import { useServiceCountryCodes } from "@/lib/serviceCountries";
+import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 /* ============================================================
    Joli-style light-mode business signup wizard
@@ -158,11 +159,12 @@ const VenueSignup = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("get_public_platform_settings");
-      const v = (data ?? []).find((r: any) => r.key === "venue_registration_open")?.value as any;
-      setRegistrationOpen(v === false || v === "false" ? false : true);
+      const config = await fetchSignupConfig();
+      setRegistrationOpen(isRegistrationOpen(config, "venue_registration_open"));
+      if (config.categories.length) setCategories(config.categories);
     })();
   }, []);
+
 
   // form state
   const [email, setEmail] = useState("");

@@ -28,3 +28,6 @@ verify_jwt = false
 [functions.influencer-api]
 verify_jwt = false
 
+
+[functions.public-signup-config]
+verify_jwt = false

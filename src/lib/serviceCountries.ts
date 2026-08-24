@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchSignupConfig } from "@/lib/signupConfig";
 
 /**
  * Maps country names (as stored in service_locations.country by admins) to
@@ -72,16 +73,21 @@ export const fetchServiceCountryCodes = async (): Promise<string[]> => {
   if (cache) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
-    const { data } = await supabase
-      .from("service_locations")
-      .select("country")
-      .eq("is_active", true);
+    let countries: (string | null)[] = [];
+    const { data: session } = await supabase.auth.getSession();
+    if (session.session) {
+      const { data } = await supabase
+        .from("service_locations")
+        .select("country")
+        .eq("is_active", true);
+      countries = (data ?? []).map((r: { country: string | null }) => r.country);
+    } else {
+      // Signup screens are unauthenticated; service_locations is authenticated-only.
+      const config = await fetchSignupConfig();
+      countries = config.countries;
+    }
     const codes = Array.from(
-      new Set(
-        (data ?? [])
-          .map((r: { country: string | null }) => countryToCode(r.country))
-          .filter((c): c is string => !!c),
-      ),
+      new Set(countries.map((c) => countryToCode(c)).filter((c): c is string => !!c)),
     );
     cache = codes.length ? codes : DEFAULT_SERVICE_COUNTRY_CODES;
     return cache;
@@ -90,6 +96,7 @@ export const fetchServiceCountryCodes = async (): Promise<string[]> => {
   inflight = null;
   return result;
 };
+
 
 /** React hook returning the active ISO-2 country codes FamePass operates in. */
 export const useServiceCountryCodes = (): string[] => {
