@@ -1,43 +1,43 @@
-# End-to-End Fixes Plan
+# Full platform E2E audit (Admin, Venue, Creator)
 
-## Critical (data-loss & broken admin controls)
+Goal: drive the live app as three real users, exercise every page, button and cross-role handoff, and produce a defect list — then fix what breaks.
 
-### 1. VenueLocations — stop mutating the `venues` table
-- New migration: create `public.venue_locations` (venue_id FK → venues, name, address, city, country, zip_code, latitude, longitude, is_primary, timestamps) with GRANTs + RLS (owner via `is_venue_owner`, admin via `is_admin`).
-- Rewrite `src/pages/venue/VenueLocations.tsx` to read/insert/delete from `venue_locations` scoped to the user's primary venue.
-- Backfill: for each existing venue, seed one `venue_locations` row from its current address.
+## How it runs
 
-### 2. AdminEvents CRUD
-- Already shipped in prior turn (create / toggle active / delete). Verify and leave as-is.
+Three parallel agents, one per dashboard, all using headless browser sessions against the running preview with seeded `@famepass.e2e` test accounts (venue, influencer, admin). Each agent screenshots every page, records console/network errors, and logs any control that does nothing.
 
-### 3. AdminRedemptions approve/reject
-- Already shipped in prior turn. Verify and leave as-is.
+## Agent 1 — Venue
 
-## UX warnings
+- Sign up a fresh venue through the full wizard (brand, address, hours, compliance), confirm pending screen and admin notification.
+- Create a campaign end to end: cover image upload, deliverables (reel duration / photo count), availability, booking limits, approval type; save, preview, duplicate, edit, publish.
+- Verify the campaign appears as a live offer for creators (campaigns → offers sync).
+- Review incoming applications: applicant name, avatar, followers, niches visible; approve one, reject one.
+- Check-in flow with the creator's booking code.
+- Content page: view submitted deliverable, metrics, approve / reject with feedback, star-rate quality, dispute.
+- Locations, briefs, reports, settings tabs — every button and form.
 
-### 4. Reward points never awarded
-- DB trigger `award_points_on_booking_complete`: when `bookings.status` transitions to `completed`, `INSERT … ON CONFLICT (user_id) DO UPDATE` on `reward_points` (+50 pts).
-- DB trigger `award_points_on_content_approved`: when `deliverables.status` becomes `approved`, +100 pts.
+## Agent 2 — Creator
 
-### 5. Influencers can write reviews
-- Add "Write a review" dialog to `InfluencerReviews.tsx`: lists completed bookings without an existing review, lets influencer rate the venue (1–5 + text), inserts into `reviews` with `reviewer_id = auth.uid()`, `reviewed_id = venue.owner_id`, `venue_id`, `booking_id`.
+- Sign up via the influencer flow (Instagram handle verification, location), confirm pending-review screen.
+- Home: categories with covers, offers per category, all cards clickable.
+- Explore: geolocation, map pins, filters (category, city, sort), saved offers.
+- Single offer page: full detail, venue logo, deliverable requirements, Apply.
+- Post-apply: status panel, booking code for check-in, invitations page.
+- Submit content: post URL, metrics scrape, see venue feedback and rating.
+- Bookings, earnings/wallet (balance vs pending withdrawal), rewards/leaderboard, reviews, profile, settings.
 
-### 6. Content rejection notification
-- Edge trigger / DB trigger on `deliverables` status → `rejected`: insert a row into `messages` from the venue to the influencer with the rejection reason ("Your content for <offer> was rejected: <feedback>").
+## Agent 3 — Admin
 
-### 7. Venue Settings → Billing tab
-- Populate with: current subscription tier (read `subscription_tiers` + venue's tier), monthly price, commission %, "Manage subscription" placeholder button, and recent platform earnings/commission summary from `earnings` for the venue's offers.
+- Dashboard KPIs vs Analytics vs Offers vs Redemptions — confirm the same numbers across screens.
+- Approve the new venue and creator created by agents 1 and 2; confirm approval emails fire and accounts unlock.
+- Venues, Influencers (role filter correctness), Offers, Events, Redemptions, Moderation, Users, Categories, Locations, Billing, Cultural events, Chatbot, Settings (maintenance mode, registration toggles) — every CRUD action.
+- Deep analytics tabs with date ranges.
 
-### 8. Admin Billing approve withdrawal
-- Already present in `AdminBilling.tsx` (Approve/Reject buttons on pending rows). No change.
+## Deliverable
 
-### 9. VenueReports charts
-- Add Recharts visualisations: bookings-over-time line chart, redemptions-by-offer bar chart, top-influencers bar chart. Reuse existing query data.
+A findings list grouped by severity with the exact repro, then a fix pass for every reproducible defect (dead buttons, broken queries, missing role wiring, RLS blocks), re-verified in the browser afterwards.
 
 ## Technical notes
-- Migrations: one for `venue_locations` (+ backfill), one for reward-point triggers + content-rejection trigger.
-- New file: none for triggers (SQL only). Edits: `VenueLocations.tsx`, `InfluencerReviews.tsx`, `VenueSettings.tsx`, `VenueReports.tsx`.
-- All inserts/updates respect existing RLS; trigger functions are `SECURITY DEFINER` with `set search_path = public`.
-- Skip items #2, #3, #8 (already done) — will verify only.
 
-Proceed?
+- Test data is created with real flows where possible; the `seed-e2e-users` function is used only to bootstrap logins (it is gated to the `@famepass.e2e` domain).
+- Test rows are left in place so you can inspect them; say the word and I'll clean them up at the end.
