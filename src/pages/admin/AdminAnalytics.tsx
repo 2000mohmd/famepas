@@ -91,7 +91,8 @@ const AdminAnalytics = () => {
         // Total offers is an all-time figure so it matches the Dashboard & Offers pages
         supabase.from("offers").select("id", { count: "exact", head: true }),
         inRange(supabase.from("offers").select("id", { count: "exact", head: true })),
-        supabase.from("offers").select("id", { count: "exact", head: true }).eq("is_active", true),
+        // Live = active AND not past its end date, matching Deep Analytics.
+        supabase.from("offers").select("id, ends_at").eq("is_active", true),
         venueListQuery,
         categoriesQuery,
       ]);
@@ -103,7 +104,9 @@ const AdminAnalytics = () => {
         completedRedemptions: completed.count ?? 0,
         offers: offersTotal.count ?? 0,
         offersInRange: offersInRange.count ?? 0,
-        liveOffers: liveOffers.count ?? 0,
+        liveOffers: ((liveOffers.data as any[]) ?? []).filter(
+          (o) => !o.ends_at || new Date(o.ends_at).getTime() > Date.now()
+        ).length,
       });
 
       // ---- Sub-metric breakdowns for the same range ----

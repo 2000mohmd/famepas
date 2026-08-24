@@ -89,7 +89,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                     venue.approval_status === "approved" ? "bg-success/20 text-success border-success/30" :
                     venue.approval_status === "pending" ? "bg-yellow-500/20 text-yellow-400 border-yellow-400/30" :
                     "bg-destructive/20 text-destructive border-destructive/30"
-                  }>{venue.approval_status}</Badge>
+                  }>{formatLabel(venue.approval_status)}</Badge>
                   <Badge className={venue.is_active ? "bg-success/20 text-success border-success/30" : "bg-muted text-muted-foreground"}>
                     {venue.is_active ? "Active" : "Inactive"}
                   </Badge>
@@ -108,7 +108,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Category</p>
                 <Select value={categories.includes(String(venue.category ?? "").trim()) ? String(venue.category).trim() : undefined} onValueChange={(v) => updateVenueField("category", v)} disabled={saving}>
-                  <SelectTrigger><SelectValue placeholder={venue.category || "Select category"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={formatLabel(venue.category) || "Select category"} /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
                     {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
