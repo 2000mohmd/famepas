@@ -752,6 +752,27 @@ const VenueCampaignCreate = () => {
               );
             })}
           </div>
+          {approvalType === "smart" && (
+            <div className="mb-5 p-4 rounded-xl border border-[#b8923a]/30 bg-[hsl(42_65%_50%_/_0.06)] space-y-4">
+              <div>
+                <p className="text-sm font-semibold">Auto-approval criteria</p>
+                <p className="text-xs text-muted-foreground">Applicants meeting all of these are approved instantly. Everyone else goes to manual review.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-semibold">Minimum followers</Label>
+                  <Input type="number" min={0} value={critMinFollowers} onChange={e => setCritMinFollowers(e.target.value)} placeholder="e.g. 5000" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Minimum engagement rate (%)</Label>
+                  <Input type="number" min={0} step="0.1" value={critMinEngagement} onChange={e => setCritMinEngagement(e.target.value)} placeholder="e.g. 2.5" className="mt-1" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={critVerified} onCheckedChange={(v) => setCritVerified(!!v)} /> Require a verified creator account
+              </label>
+            </div>
+          )}
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
             <div>
               <p className="text-sm font-semibold">Auto-Approve Top Creators</p>
