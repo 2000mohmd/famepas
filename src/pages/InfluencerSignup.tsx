@@ -25,8 +25,7 @@ const NICHES = [
 
 const getPasswordChecks = (v: string) => ({
   length: v.length >= 8,
-  uppercase: /[A-Z]/.test(v),
-  lowercase: /[a-z]/.test(v),
+  letter: /[a-zA-Z]/.test(v),
   number: /\d/.test(v),
 });
 const isStrongPassword = (v: string) => Object.values(getPasswordChecks(v)).every(Boolean);

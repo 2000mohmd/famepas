@@ -49,8 +49,7 @@ const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sun
 
 const getPasswordChecks = (value: string) => ({
   length: value.length >= 8,
-  uppercase: /[A-Z]/.test(value),
-  lowercase: /[a-z]/.test(value),
+  letter: /[a-zA-Z]/.test(value),
   number: /\d/.test(value),
 });
 
@@ -609,7 +608,7 @@ const VenueSignup = () => {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
               />
             </Field>
-            <Field label="Email" hint="Add the location's email to let them know about confirmed bookings">
+            <Field label="Email" hint="This email will receive notifications when a booking is confirmed at this location.">
               <TextInput type="email" value={locationEmail} onChange={e => setLocationEmail(e.target.value)} />
               {locationEmail.trim() && !isValidEmail(locationEmail) && (
                 <p className="text-xs text-red-600 mt-1">Please enter a valid email address.</p>
