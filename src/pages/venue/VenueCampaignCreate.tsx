@@ -589,47 +589,107 @@ const VenueCampaignCreate = () => {
             })}
           </div>
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Campaign Dates</Label>
-            <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
-                <span className="text-xs text-muted-foreground">Start</span>
-                <Input type="date" className="border-0 p-0 h-7" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          {availabilityType === "event" ? (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Event Date &amp; Time</Label>
+              <p className="text-xs text-muted-foreground mb-2">One-time event — influencers apply for this exact date and time.</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Date</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={eventDate} onChange={e => setEventDate(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Time</span>
+                  <Input type="time" className="border-0 p-0 h-7" value={eventTime} onChange={e => setEventTime(e.target.value)} />
+                </div>
               </div>
-              <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
-                <span className="text-xs text-muted-foreground">End</span>
-                <Input type="date" className="border-0 p-0 h-7" value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="Ongoing" />
+              <label className="flex items-center gap-2 text-sm mt-3">
+                <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before the event date
+              </label>
+            </div>
+          ) : (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Campaign Dates</Label>
+              <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Start</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">End</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="Ongoing" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm mt-3">
+                <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before Campaign Start Date
+              </label>
+            </div>
+          )}
+
+          {availabilityType === "anytime" && (
+            <div className="mb-5 p-4 rounded-xl bg-muted/40 text-sm text-muted-foreground">
+              No scheduling needed — influencers can redeem anytime during the campaign dates.
+            </div>
+          )}
+
+          {availabilityType === "scheduled" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Time Slots</Label>
+              <p className="text-xs text-muted-foreground mb-2">Add the exact times influencers can book on the available days below (e.g. 13:00, 15:00).</p>
+              <div className="flex gap-2 max-w-xs">
+                <Input type="time" value={slotInput} onChange={e => setSlotInput(e.target.value)} />
+                <Button
+                  onClick={() => {
+                    if (slotInput && !timeSlots.includes(slotInput)) setTimeSlots([...timeSlots, slotInput].sort());
+                    setSlotInput("");
+                  }}
+                  disabled={!slotInput}
+                  style={{ background: "#b8923a" }}
+                  className="text-white"
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {timeSlots.map(t => (
+                  <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a] text-sm">
+                    {t}
+                    <button onClick={() => setTimeSlots(timeSlots.filter(x => x !== t))}><X className="w-3 h-3" /></button>
+                  </span>
+                ))}
+                {!timeSlots.length && <span className="text-xs text-muted-foreground">No time slots added yet.</span>}
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm mt-3">
-              <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before Campaign Start Date
-            </label>
-          </div>
+          )}
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Required Days Notice</Label>
-            <p className="text-xs text-muted-foreground mb-2">Set the minimum number of days ahead an influencer can book</p>
-            <div className="inline-flex items-center gap-1 border border-border rounded-lg">
-              <button onClick={() => setDaysNotice(Math.max(0, daysNotice - 1))} className="px-3 py-1.5"><Minus className="w-3 h-3" /></button>
-              <span className="w-8 text-center text-sm">{daysNotice}</span>
-              <button onClick={() => setDaysNotice(daysNotice + 1)} className="px-3 py-1.5"><Plus className="w-3 h-3" /></button>
+          {availabilityType !== "anytime" && availabilityType !== "event" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Required Days Notice</Label>
+              <p className="text-xs text-muted-foreground mb-2">Set the minimum number of days ahead an influencer can book</p>
+              <div className="inline-flex items-center gap-1 border border-border rounded-lg">
+                <button onClick={() => setDaysNotice(Math.max(0, daysNotice - 1))} className="px-3 py-1.5"><Minus className="w-3 h-3" /></button>
+                <span className="w-8 text-center text-sm">{daysNotice}</span>
+                <button onClick={() => setDaysNotice(daysNotice + 1)} className="px-3 py-1.5"><Plus className="w-3 h-3" /></button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Available Days</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {DAYS.map(d => {
-                const on = availableDays.includes(d);
-                return (
-                  <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border"}`}>
-                    {d} {on && <X className="w-3 h-3" />}
-                  </button>
-                );
-              })}
+          {availabilityType !== "anytime" && availabilityType !== "event" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Available Days</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {DAYS.map(d => {
+                  const on = availableDays.includes(d);
+                  return (
+                    <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border"}`}>
+                      {d} {on && <X className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mb-5">
             <Label className="text-sm font-semibold">Locations</Label>
