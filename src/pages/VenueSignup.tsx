@@ -390,9 +390,8 @@ const VenueSignup = () => {
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-slate-600">
               {[
                 ["length", "8+ characters"],
-                ["uppercase", "Uppercase letter"],
-                ["lowercase", "Lowercase letter"],
-                ["number", "Number"],
+                ["letter", "A letter"],
+                ["number", "A number"],
               ].map(([key, label]) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-[#b8923a]" : "bg-slate-200"}`}>

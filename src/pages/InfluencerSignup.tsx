@@ -383,7 +383,7 @@ const InfluencerSignup = () => {
             <Field label="Email">
               <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
             </Field>
-            <Field label="Password" hint="At least 8 chars, with uppercase, lowercase, and a number.">
+            <Field label="Password" hint="At least 8 characters, including a letter and a number.">
               <div className="relative">
                 <TextInput
                   type={showPwd ? "text" : "password"}
@@ -402,8 +402,7 @@ const InfluencerSignup = () => {
               <ul className="mt-2 grid grid-cols-2 gap-1 text-xs">
                 {[
                   ["length", "8+ characters"],
-                  ["uppercase", "Uppercase letter"],
-                  ["lowercase", "Lowercase letter"],
+                  ["letter", "A letter"],
                   ["number", "A number"],
                 ].map(([k, label]) => (
                   <li key={k} className={`flex items-center gap-1 ${pwdChecks[k as keyof typeof pwdChecks] ? "text-emerald-600" : "text-slate-400"}`}>

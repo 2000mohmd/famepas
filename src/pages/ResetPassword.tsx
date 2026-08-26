@@ -43,7 +43,10 @@ const ResetPassword = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) { toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" }); return; }
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      toast({ title: "Password too weak", description: "Use at least 8 characters, including a letter and a number.", variant: "destructive" });
+      return;
+    }
     if (password !== confirm) { toast({ title: "Passwords don't match", variant: "destructive" }); return; }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
@@ -65,7 +68,7 @@ const ResetPassword = () => {
         <div className="w-full max-w-xl">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <h1 className="text-2xl font-bold mb-2">Set a new password</h1>
-            <p className="text-sm text-slate-600 mb-6">Choose a strong password (at least 8 characters).</p>
+            <p className="text-sm text-slate-600 mb-6">Choose a password with at least 8 characters, including a letter and a number.</p>
             {linkError && !ready ? (
               <div className="space-y-4">
                 <p className="text-sm text-red-600">{linkError}</p>
