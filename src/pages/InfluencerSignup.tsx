@@ -29,6 +29,7 @@ const getPasswordChecks = (v: string) => ({
   number: /\d/.test(v),
 });
 const isStrongPassword = (v: string) => Object.values(getPasswordChecks(v)).every(Boolean);
+const isPasswordAllowed = (v: string) => v.length >= 6;
 
 /* ---------- light-mode primitives ---------- */
 const Page = ({ children }: { children: React.ReactNode }) => (
@@ -124,6 +125,8 @@ const InfluencerSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   // profile
   const [fullName, setFullName] = useState("");
@@ -214,8 +217,6 @@ const InfluencerSignup = () => {
 
   const pwdChecks = useMemo(() => getPasswordChecks(password), [password]);
   const pwdReady = useMemo(() => isStrongPassword(password), [password]);
-
-  const accountReady = isValidEmail(email) && pwdReady;
 
   // profile validation
   const nameError =

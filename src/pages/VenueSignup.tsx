@@ -54,6 +54,7 @@ const getPasswordChecks = (value: string) => ({
 });
 
 const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
+const isPasswordAllowed = (value: string) => value.length >= 6;
 
 const createDefaultHours = (): OpeningHours =>
   Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
