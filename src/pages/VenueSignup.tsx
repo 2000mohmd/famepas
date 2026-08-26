@@ -49,8 +49,7 @@ const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sun
 
 const getPasswordChecks = (value: string) => ({
   length: value.length >= 8,
-  uppercase: /[A-Z]/.test(value),
-  lowercase: /[a-z]/.test(value),
+  letter: /[a-zA-Z]/.test(value),
   number: /\d/.test(value),
 });
 
@@ -267,7 +266,9 @@ const VenueSignup = () => {
     setSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-      const cityGuess = locationAddress.split(",").slice(-2, -1)[0]?.trim() ?? "";
+      const addressParts = locationAddress.split(",").map(p => p.trim()).filter(Boolean);
+      const cityGuess = addressParts.length > 1 ? addressParts[addressParts.length - 2] : "";
+      const countryGuess = addressParts.length ? addressParts[addressParts.length - 1] : "";
       const { lat, lng } = await resolveCoordinates();
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
@@ -283,7 +284,9 @@ const VenueSignup = () => {
           contact_person_name: fullName,
           signup_completed: true,
           organization_name: brandName,
+          organization_country: countryGuess || null,
           brand_name: brandName,
+          location_name: locationName || null,
           location_email: locationEmail || null,
           opening_hours: hours,
           hear_about_us: hear,
@@ -391,9 +394,8 @@ const VenueSignup = () => {
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-slate-600">
               {[
                 ["length", "8+ characters"],
-                ["uppercase", "Uppercase letter"],
-                ["lowercase", "Lowercase letter"],
-                ["number", "Number"],
+                ["letter", "A letter"],
+                ["number", "A number"],
               ].map(([key, label]) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-[#b8923a]" : "bg-slate-200"}`}>
@@ -609,7 +611,7 @@ const VenueSignup = () => {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
               />
             </Field>
-            <Field label="Email" hint="Add the location's email to let them know about confirmed bookings">
+            <Field label="Email" hint="This email will receive notifications when a booking is confirmed at this location.">
               <TextInput type="email" value={locationEmail} onChange={e => setLocationEmail(e.target.value)} />
               {locationEmail.trim() && !isValidEmail(locationEmail) && (
                 <p className="text-xs text-red-600 mt-1">Please enter a valid email address.</p>

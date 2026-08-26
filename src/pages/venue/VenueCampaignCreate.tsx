@@ -78,8 +78,16 @@ const VenueCampaignCreate = () => {
   const [bookingLimitCount, setBookingLimitCount] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [slotInput, setSlotInput] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventTime, setEventTime] = useState("");
+
   const [approvalType, setApprovalType] = useState("manual");
   const [autoApproveTop, setAutoApproveTop] = useState(true);
+  const [critMinFollowers, setCritMinFollowers] = useState("");
+  const [critMinEngagement, setCritMinEngagement] = useState("");
+  const [critVerified, setCritVerified] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -127,6 +135,18 @@ const VenueCampaignCreate = () => {
           setBookingLimitCount((c as any).booking_limit_count?.toString() ?? "");
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
+          setTimeSlots((c as any).scheduled_time_slots ?? []);
+          const evt = (c as any).event_datetime;
+          if (evt) {
+            const d = new Date(evt);
+            const pad = (n: number) => String(n).padStart(2, "0");
+            setEventDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+            setEventTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+          }
+          const crit = (c as any).approval_criteria ?? {};
+          setCritMinFollowers(crit.min_followers != null ? String(crit.min_followers) : "");
+          setCritMinEngagement(crit.min_engagement_rate != null ? String(crit.min_engagement_rate) : "");
+          setCritVerified(!!crit.require_verified);
           setCoverVideoUrl((c as any).cover_video_url ?? "");
           setCoverImages((c as any).cover_images ?? []);
         }
@@ -186,16 +206,25 @@ const VenueCampaignCreate = () => {
       post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
       allow_post_or_reel: allowPostOrReel,
       availability_type: availabilityType,
-      start_date: startDate || null,
-      end_date: endDate || null,
+      start_date: availabilityType === "event" ? (eventDate || null) : (startDate || null),
+      end_date: availabilityType === "event" ? (eventDate || null) : (endDate || null),
       visible_before_start: visibleBeforeStart,
-      required_days_notice: daysNotice,
-      available_days: availableDays,
+      required_days_notice: availabilityType === "anytime" ? 0 : daysNotice,
+      available_days: availabilityType === "anytime" ? DAYS : availableDays,
+      scheduled_time_slots: availabilityType === "scheduled" ? timeSlots : [],
+      event_datetime: availabilityType === "event" && eventDate
+        ? new Date(`${eventDate}T${eventTime || "00:00"}`).toISOString()
+        : null,
       location_id: locationId || null,
       booking_limits: bookingLimits,
       booking_limit_count: bookingLimits && bookingLimitCount ? parseInt(bookingLimitCount) : null,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
+      approval_criteria: approvalType === "smart" ? {
+        ...(critMinFollowers ? { min_followers: parseInt(critMinFollowers) } : {}),
+        ...(critMinEngagement ? { min_engagement_rate: parseFloat(critMinEngagement) } : {}),
+        ...(critVerified ? { require_verified: true } : {}),
+      } : {},
       cover_video_url: coverVideoUrl || null,
       cover_images: coverImages,
       cover_image_url: coverImages[0] || null,
@@ -235,8 +264,11 @@ const VenueCampaignCreate = () => {
         offer_type: "experience",
         discount_value: Number.isFinite(discountNum as number) ? discountNum : null,
         min_followers: firstIg?.min_followers ? parseInt(firstIg.min_followers) : null,
-        starts_at: startDate || new Date().toISOString(),
-        ends_at: endDate || null,
+        starts_at: (availabilityType === "event" ? eventDate : startDate) || new Date().toISOString(),
+        ends_at: (availabilityType === "event" ? eventDate : endDate) || null,
+        event_date: availabilityType === "event" ? (eventDate || null) : null,
+        event_time: availabilityType === "event" ? (eventTime || null) : null,
+        available_days: availabilityType === "anytime" ? DAYS : availableDays,
         is_active: mode === "live" && !inviteOnly,
         requirements: firstIg?.offer || null,
         reel_min_duration_seconds: reels > 0 && reelMinDuration ? parseInt(reelMinDuration) : null,
@@ -557,47 +589,107 @@ const VenueCampaignCreate = () => {
             })}
           </div>
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Campaign Dates</Label>
-            <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
-                <span className="text-xs text-muted-foreground">Start</span>
-                <Input type="date" className="border-0 p-0 h-7" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          {availabilityType === "event" ? (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Event Date &amp; Time</Label>
+              <p className="text-xs text-muted-foreground mb-2">One-time event — influencers apply for this exact date and time.</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Date</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={eventDate} onChange={e => setEventDate(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Time</span>
+                  <Input type="time" className="border-0 p-0 h-7" value={eventTime} onChange={e => setEventTime(e.target.value)} />
+                </div>
               </div>
-              <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
-                <span className="text-xs text-muted-foreground">End</span>
-                <Input type="date" className="border-0 p-0 h-7" value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="Ongoing" />
+              <label className="flex items-center gap-2 text-sm mt-3">
+                <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before the event date
+              </label>
+            </div>
+          ) : (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Campaign Dates</Label>
+              <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">Start</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-muted-foreground">End</span>
+                  <Input type="date" className="border-0 p-0 h-7" value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="Ongoing" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm mt-3">
+                <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before Campaign Start Date
+              </label>
+            </div>
+          )}
+
+          {availabilityType === "anytime" && (
+            <div className="mb-5 p-4 rounded-xl bg-muted/40 text-sm text-muted-foreground">
+              No scheduling needed — influencers can redeem anytime during the campaign dates.
+            </div>
+          )}
+
+          {availabilityType === "scheduled" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Time Slots</Label>
+              <p className="text-xs text-muted-foreground mb-2">Add the exact times influencers can book on the available days below (e.g. 13:00, 15:00).</p>
+              <div className="flex gap-2 max-w-xs">
+                <Input type="time" value={slotInput} onChange={e => setSlotInput(e.target.value)} />
+                <Button
+                  onClick={() => {
+                    if (slotInput && !timeSlots.includes(slotInput)) setTimeSlots([...timeSlots, slotInput].sort());
+                    setSlotInput("");
+                  }}
+                  disabled={!slotInput}
+                  style={{ background: "#b8923a" }}
+                  className="text-white"
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {timeSlots.map(t => (
+                  <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a] text-sm">
+                    {t}
+                    <button onClick={() => setTimeSlots(timeSlots.filter(x => x !== t))}><X className="w-3 h-3" /></button>
+                  </span>
+                ))}
+                {!timeSlots.length && <span className="text-xs text-muted-foreground">No time slots added yet.</span>}
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm mt-3">
-              <Checkbox checked={visibleBeforeStart} onCheckedChange={(v) => setVisibleBeforeStart(!!v)} /> Visible to Influencers before Campaign Start Date
-            </label>
-          </div>
+          )}
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Required Days Notice</Label>
-            <p className="text-xs text-muted-foreground mb-2">Set the minimum number of days ahead an influencer can book</p>
-            <div className="inline-flex items-center gap-1 border border-border rounded-lg">
-              <button onClick={() => setDaysNotice(Math.max(0, daysNotice - 1))} className="px-3 py-1.5"><Minus className="w-3 h-3" /></button>
-              <span className="w-8 text-center text-sm">{daysNotice}</span>
-              <button onClick={() => setDaysNotice(daysNotice + 1)} className="px-3 py-1.5"><Plus className="w-3 h-3" /></button>
+          {availabilityType !== "anytime" && availabilityType !== "event" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Required Days Notice</Label>
+              <p className="text-xs text-muted-foreground mb-2">Set the minimum number of days ahead an influencer can book</p>
+              <div className="inline-flex items-center gap-1 border border-border rounded-lg">
+                <button onClick={() => setDaysNotice(Math.max(0, daysNotice - 1))} className="px-3 py-1.5"><Minus className="w-3 h-3" /></button>
+                <span className="w-8 text-center text-sm">{daysNotice}</span>
+                <button onClick={() => setDaysNotice(daysNotice + 1)} className="px-3 py-1.5"><Plus className="w-3 h-3" /></button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mb-5">
-            <Label className="text-sm font-semibold">Available Days</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {DAYS.map(d => {
-                const on = availableDays.includes(d);
-                return (
-                  <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border"}`}>
-                    {d} {on && <X className="w-3 h-3" />}
-                  </button>
-                );
-              })}
+          {availabilityType !== "anytime" && availabilityType !== "event" && (
+            <div className="mb-5">
+              <Label className="text-sm font-semibold">Available Days</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {DAYS.map(d => {
+                  const on = availableDays.includes(d);
+                  return (
+                    <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border"}`}>
+                      {d} {on && <X className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mb-5">
             <Label className="text-sm font-semibold">Locations</Label>
@@ -660,6 +752,27 @@ const VenueCampaignCreate = () => {
               );
             })}
           </div>
+          {approvalType === "smart" && (
+            <div className="mb-5 p-4 rounded-xl border border-[#b8923a]/30 bg-[hsl(42_65%_50%_/_0.06)] space-y-4">
+              <div>
+                <p className="text-sm font-semibold">Auto-approval criteria</p>
+                <p className="text-xs text-muted-foreground">Applicants meeting all of these are approved instantly. Everyone else goes to manual review.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs font-semibold">Minimum followers</Label>
+                  <Input type="number" min={0} value={critMinFollowers} onChange={e => setCritMinFollowers(e.target.value)} placeholder="e.g. 5000" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Minimum engagement rate (%)</Label>
+                  <Input type="number" min={0} step="0.1" value={critMinEngagement} onChange={e => setCritMinEngagement(e.target.value)} placeholder="e.g. 2.5" className="mt-1" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={critVerified} onCheckedChange={(v) => setCritVerified(!!v)} /> Require a verified creator account
+              </label>
+            </div>
+          )}
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
             <div>
               <p className="text-sm font-semibold">Auto-Approve Top Creators</p>

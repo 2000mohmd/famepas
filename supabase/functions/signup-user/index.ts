@@ -24,7 +24,7 @@ serve(async (req) => {
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
       // venue signup wizard extras
-      venue_categories, opening_hours, location_email, hear_about_us,
+      venue_categories, opening_hours, location_email, hear_about_us, location_name,
       // mobile hierarchy
       organization_name, organization_legal_name, organization_tax_id, organization_country,
       brand_name, brand_logo_url, brand_description,
@@ -217,6 +217,25 @@ serve(async (req) => {
       }).select().single();
       if (venueError || !venueData) return await rollback("venue", venueError ?? new Error("No venue returned"));
       venue = venueData;
+
+      // First (primary) location from the signup wizard — keeps the typed location
+      // name/address instead of discarding it. Best-effort: never blocks signup.
+      try {
+        await supabaseAdmin.from("venue_locations").insert({
+          venue_id: venueData.id,
+          name: location_name || venue_name,
+          address: address_line1 || null,
+          city: venue_city || null,
+          country: organization_country || null,
+          zip_code: zip_code || null,
+          latitude: latitude ?? null,
+          longitude: longitude ?? null,
+          is_primary: true,
+        });
+      } catch (locErr) {
+        console.error("Primary venue location insert failed", locErr);
+      }
+
 
       // Application-received email to the venue (best-effort)
       try {
