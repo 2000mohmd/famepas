@@ -29,6 +29,7 @@ const getPasswordChecks = (v: string) => ({
   number: /\d/.test(v),
 });
 const isStrongPassword = (v: string) => Object.values(getPasswordChecks(v)).every(Boolean);
+const isPasswordAllowed = (v: string) => v.length >= 6;
 
 /* ---------- light-mode primitives ---------- */
 const Page = ({ children }: { children: React.ReactNode }) => (
@@ -124,6 +125,8 @@ const InfluencerSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   // profile
   const [fullName, setFullName] = useState("");
@@ -214,8 +217,6 @@ const InfluencerSignup = () => {
 
   const pwdChecks = useMemo(() => getPasswordChecks(password), [password]);
   const pwdReady = useMemo(() => isStrongPassword(password), [password]);
-
-  const accountReady = isValidEmail(email) && pwdReady;
 
   // profile validation
   const nameError =
@@ -374,6 +375,7 @@ const InfluencerSignup = () => {
   }
 
   if (step === "account") {
+    const passwordsMatch = password.length > 0 && password === confirmPassword;
     return (
       <Page>
         <div className="w-full max-w-xl">
@@ -410,8 +412,31 @@ const InfluencerSignup = () => {
                   </li>
                 ))}
               </ul>
+              {password.length >= 6 && !pwdReady && (
+                <p className="mt-2 text-xs text-amber-600">For better security, we recommend a stronger password — but you can continue.</p>
+              )}
             </Field>
-            <PrimaryButton disabled={!accountReady} onClick={() => setStep("profile")}>
+            <Field label="Confirm password">
+              <div className="relative">
+                <TextInput
+                  type={showConfirmPwd ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPwd((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]"
+                >
+                  {showConfirmPwd ? "Hide" : "Show"}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && !passwordsMatch && (
+                <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+              )}
+            </Field>
+            <PrimaryButton disabled={!email || password.length < 6 || !passwordsMatch} onClick={() => setStep("profile")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
             <p className="mt-4 text-center text-sm text-slate-500">

@@ -54,6 +54,7 @@ const getPasswordChecks = (value: string) => ({
 });
 
 const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
+const isPasswordAllowed = (value: string) => value.length >= 6;
 
 const createDefaultHours = (): OpeningHours =>
   Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
@@ -405,6 +406,9 @@ const VenueSignup = () => {
                 </div>
               ))}
             </div>
+            {password.length >= 6 && !passwordReady && (
+              <p className="text-xs text-amber-600 mb-4">For better security, we recommend a stronger password — but you can continue.</p>
+            )}
             <Field label="Confirm password">
               <div className="relative">
                 <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pr-16" />
@@ -417,7 +421,7 @@ const VenueSignup = () => {
               )}
             </Field>
             <PrimaryButton
-              disabled={!email || !passwordReady || !passwordsMatch}
+              disabled={!email || password.length < 6 || !passwordsMatch}
               onClick={() => setStep("check-inbox")}
             >
               Create Account
