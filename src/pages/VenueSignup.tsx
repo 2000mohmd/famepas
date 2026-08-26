@@ -266,7 +266,9 @@ const VenueSignup = () => {
     setSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-      const cityGuess = locationAddress.split(",").slice(-2, -1)[0]?.trim() ?? "";
+      const addressParts = locationAddress.split(",").map(p => p.trim()).filter(Boolean);
+      const cityGuess = addressParts.length > 1 ? addressParts[addressParts.length - 2] : "";
+      const countryGuess = addressParts.length ? addressParts[addressParts.length - 1] : "";
       const { lat, lng } = await resolveCoordinates();
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
