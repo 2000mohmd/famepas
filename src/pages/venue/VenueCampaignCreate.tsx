@@ -78,8 +78,16 @@ const VenueCampaignCreate = () => {
   const [bookingLimitCount, setBookingLimitCount] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [slotInput, setSlotInput] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventTime, setEventTime] = useState("");
+
   const [approvalType, setApprovalType] = useState("manual");
   const [autoApproveTop, setAutoApproveTop] = useState(true);
+  const [critMinFollowers, setCritMinFollowers] = useState("");
+  const [critMinEngagement, setCritMinEngagement] = useState("");
+  const [critVerified, setCritVerified] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -127,6 +135,18 @@ const VenueCampaignCreate = () => {
           setBookingLimitCount((c as any).booking_limit_count?.toString() ?? "");
           setApprovalType((c as any).approval_type ?? "manual");
           setAutoApproveTop((c as any).auto_approve_top ?? true);
+          setTimeSlots((c as any).scheduled_time_slots ?? []);
+          const evt = (c as any).event_datetime;
+          if (evt) {
+            const d = new Date(evt);
+            const pad = (n: number) => String(n).padStart(2, "0");
+            setEventDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+            setEventTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+          }
+          const crit = (c as any).approval_criteria ?? {};
+          setCritMinFollowers(crit.min_followers != null ? String(crit.min_followers) : "");
+          setCritMinEngagement(crit.min_engagement_rate != null ? String(crit.min_engagement_rate) : "");
+          setCritVerified(!!crit.require_verified);
           setCoverVideoUrl((c as any).cover_video_url ?? "");
           setCoverImages((c as any).cover_images ?? []);
         }
@@ -186,16 +206,25 @@ const VenueCampaignCreate = () => {
       post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
       allow_post_or_reel: allowPostOrReel,
       availability_type: availabilityType,
-      start_date: startDate || null,
-      end_date: endDate || null,
+      start_date: availabilityType === "event" ? (eventDate || null) : (startDate || null),
+      end_date: availabilityType === "event" ? (eventDate || null) : (endDate || null),
       visible_before_start: visibleBeforeStart,
-      required_days_notice: daysNotice,
-      available_days: availableDays,
+      required_days_notice: availabilityType === "anytime" ? 0 : daysNotice,
+      available_days: availabilityType === "anytime" ? DAYS : availableDays,
+      scheduled_time_slots: availabilityType === "scheduled" ? timeSlots : [],
+      event_datetime: availabilityType === "event" && eventDate
+        ? new Date(`${eventDate}T${eventTime || "00:00"}`).toISOString()
+        : null,
       location_id: locationId || null,
       booking_limits: bookingLimits,
       booking_limit_count: bookingLimits && bookingLimitCount ? parseInt(bookingLimitCount) : null,
       approval_type: approvalType,
       auto_approve_top: autoApproveTop,
+      approval_criteria: approvalType === "smart" ? {
+        ...(critMinFollowers ? { min_followers: parseInt(critMinFollowers) } : {}),
+        ...(critMinEngagement ? { min_engagement_rate: parseFloat(critMinEngagement) } : {}),
+        ...(critVerified ? { require_verified: true } : {}),
+      } : {},
       cover_video_url: coverVideoUrl || null,
       cover_images: coverImages,
       cover_image_url: coverImages[0] || null,
