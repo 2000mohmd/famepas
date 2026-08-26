@@ -24,7 +24,7 @@ serve(async (req) => {
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
       // venue signup wizard extras
-      venue_categories, opening_hours, location_email, hear_about_us,
+      venue_categories, opening_hours, location_email, hear_about_us, location_name,
       // mobile hierarchy
       organization_name, organization_legal_name, organization_tax_id, organization_country,
       brand_name, brand_logo_url, brand_description,
