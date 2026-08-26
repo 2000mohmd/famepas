@@ -243,6 +243,7 @@ export type Database = {
           age_limit: number | null
           age_restricted: boolean | null
           allow_post_or_reel: boolean | null
+          approval_criteria: Json
           approval_type: string | null
           auto_approve_top: boolean | null
           availability_type: string | null
@@ -258,6 +259,7 @@ export type Database = {
           description: string | null
           dietary_options: string[] | null
           end_date: string | null
+          event_datetime: string | null
           handles: string[] | null
           id: string
           instagram_offers: Json | null
@@ -268,6 +270,7 @@ export type Database = {
           reel_min_duration_seconds: number | null
           require_phone: boolean | null
           required_days_notice: number | null
+          scheduled_time_slots: string[] | null
           start_date: string | null
           status: string
           tiktok_offers: Json | null
@@ -280,6 +283,7 @@ export type Database = {
           age_limit?: number | null
           age_restricted?: boolean | null
           allow_post_or_reel?: boolean | null
+          approval_criteria?: Json
           approval_type?: string | null
           auto_approve_top?: boolean | null
           availability_type?: string | null
@@ -295,6 +299,7 @@ export type Database = {
           description?: string | null
           dietary_options?: string[] | null
           end_date?: string | null
+          event_datetime?: string | null
           handles?: string[] | null
           id?: string
           instagram_offers?: Json | null
@@ -305,6 +310,7 @@ export type Database = {
           reel_min_duration_seconds?: number | null
           require_phone?: boolean | null
           required_days_notice?: number | null
+          scheduled_time_slots?: string[] | null
           start_date?: string | null
           status?: string
           tiktok_offers?: Json | null
@@ -317,6 +323,7 @@ export type Database = {
           age_limit?: number | null
           age_restricted?: boolean | null
           allow_post_or_reel?: boolean | null
+          approval_criteria?: Json
           approval_type?: string | null
           auto_approve_top?: boolean | null
           availability_type?: string | null
@@ -332,6 +339,7 @@ export type Database = {
           description?: string | null
           dietary_options?: string[] | null
           end_date?: string | null
+          event_datetime?: string | null
           handles?: string[] | null
           id?: string
           instagram_offers?: Json | null
@@ -342,6 +350,7 @@ export type Database = {
           reel_min_duration_seconds?: number | null
           require_phone?: boolean | null
           required_days_notice?: number | null
+          scheduled_time_slots?: string[] | null
           start_date?: string | null
           status?: string
           tiktok_offers?: Json | null
