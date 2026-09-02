@@ -50,8 +50,8 @@ const VenueCampaignCreate = () => {
   const [description, setDescription] = useState("");
   const [contentFocus, setContentFocus] = useState("all");
   const [dietary, setDietary] = useState<string[]>([]);
-  
   const [ageRestricted, setAgeRestricted] = useState(false);
+
   const [ageLimit, setAgeLimit] = useState<string>("");
   const [inviteOnly, setInviteOnly] = useState(false);
 
@@ -189,8 +189,8 @@ const VenueCampaignCreate = () => {
       content_focus: contentFocus,
       dietary_options: dietary,
       age_restricted: ageRestricted,
-
       age_limit: ageLimit ? parseInt(ageLimit) : null,
+
       invite_only: inviteOnly,
       instagram_offers: igOffers,
       tiktok_offers: tkEnabled ? tkOffers : [],
@@ -402,8 +402,8 @@ const VenueCampaignCreate = () => {
               <Label className="text-sm font-semibold">Requirements</Label>
               <div className="space-y-2 mt-2">
                 <label className="flex items-center gap-2 text-sm">
-
                   <Checkbox checked={ageRestricted} onCheckedChange={(v) => setAgeRestricted(!!v)} /> Age restricted campaign
+
                   {ageRestricted && (
                     <Select value={ageLimit} onValueChange={setAgeLimit}>
                       <SelectTrigger className="w-24 h-8"><SelectValue placeholder="None" /></SelectTrigger>
