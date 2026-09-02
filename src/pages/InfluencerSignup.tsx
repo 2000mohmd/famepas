@@ -130,6 +130,7 @@ const InfluencerSignup = () => {
 
   // profile
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [username, setUsername] = useState("");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -262,6 +263,7 @@ const InfluencerSignup = () => {
           password,
           role: "influencer",
           full_name: fullName,
+          phone: phone.trim() || null,
           instagram_handle: igHandle,
           tiktok_handle: ttHandle,
           tiktok_followers: 0,
@@ -459,6 +461,9 @@ const InfluencerSignup = () => {
             <Field label="Full name">
               <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
               {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
+            </Field>
+            <Field label="Phone number" hint="So venues can reach you about bookings.">
+              <TextInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961 70 000 000" />
             </Field>
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
