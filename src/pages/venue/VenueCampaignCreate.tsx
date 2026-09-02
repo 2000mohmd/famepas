@@ -50,7 +50,7 @@ const VenueCampaignCreate = () => {
   const [description, setDescription] = useState("");
   const [contentFocus, setContentFocus] = useState("all");
   const [dietary, setDietary] = useState<string[]>([]);
-  const [requirePhone, setRequirePhone] = useState(false);
+  
   const [ageRestricted, setAgeRestricted] = useState(false);
   const [ageLimit, setAgeLimit] = useState<string>("");
   const [inviteOnly, setInviteOnly] = useState(false);
@@ -112,8 +112,8 @@ const VenueCampaignCreate = () => {
           setDescription(c.description ?? "");
           setContentFocus((c as any).content_focus ?? "all");
           setDietary((c as any).dietary_options ?? []);
-          setRequirePhone((c as any).require_phone ?? false);
           setAgeRestricted((c as any).age_restricted ?? false);
+
           setAgeLimit((c as any).age_limit?.toString() ?? "");
           setInviteOnly((c as any).invite_only ?? false);
           const igo = (c as any).instagram_offers; if (Array.isArray(igo) && igo.length) setIgOffers(igo);
@@ -188,8 +188,8 @@ const VenueCampaignCreate = () => {
       description: description || null,
       content_focus: contentFocus,
       dietary_options: dietary,
-      require_phone: requirePhone,
       age_restricted: ageRestricted,
+
       age_limit: ageLimit ? parseInt(ageLimit) : null,
       invite_only: inviteOnly,
       instagram_offers: igOffers,
@@ -402,9 +402,7 @@ const VenueCampaignCreate = () => {
               <Label className="text-sm font-semibold">Requirements</Label>
               <div className="space-y-2 mt-2">
                 <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={requirePhone} onCheckedChange={(v) => setRequirePhone(!!v)} /> Require phone number
-                </label>
-                <label className="flex items-center gap-2 text-sm">
+
                   <Checkbox checked={ageRestricted} onCheckedChange={(v) => setAgeRestricted(!!v)} /> Age restricted campaign
                   {ageRestricted && (
                     <Select value={ageLimit} onValueChange={setAgeLimit}>
