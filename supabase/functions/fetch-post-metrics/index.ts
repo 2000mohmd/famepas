@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 const corsHeaders = {
@@ -101,6 +102,36 @@ serve(async (req) => {
       return json({ error: "Missing deliverable_id or post_url", code: "BAD_REQUEST" }, 400);
     }
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return json({ error: "Missing Authorization header", code: "UNAUTHORIZED" }, 401);
+    }
+
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !user) {
+      console.error("auth.getUser failed", userErr);
+      return json({ error: "Invalid or expired session", code: "UNAUTHORIZED" }, 401);
+    }
+
+    const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const [{ data: roles }, { data: deliverable }] = await Promise.all([
+      userClient.from("user_roles").select("role").eq("user_id", user.id),
+      sbAdmin.from("deliverables").select("influencer_id").eq("id", deliverable_id).maybeSingle(),
+    ]);
+
+    const isAdmin = roles?.some((r: any) => r.role === "admin");
+    const isOwner = deliverable?.influencer_id === user.id;
+
+    if (!isAdmin && !isOwner) {
+      return json({ error: "Forbidden: not the deliverable owner or an admin", code: "FORBIDDEN" }, 403);
+    }
+
     const isInstagram = post_url.includes("instagram.com");
     const isTikTok = post_url.includes("tiktok.com");
     if (!isInstagram && !isTikTok) {
@@ -115,8 +146,7 @@ serve(async (req) => {
       const fallback = !!apiErr?.fallback || true;
       // Still save the post_url so the venue sees the link, just no metrics yet.
       try {
-        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        await sb.from("deliverables").update({ post_url }).eq("id", deliverable_id);
+        await sbAdmin.from("deliverables").update({ post_url }).eq("id", deliverable_id);
       } catch (_) { /* ignore */ }
       return json({
         success: false,
@@ -128,8 +158,7 @@ serve(async (req) => {
       }, 200);
     }
 
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { error } = await sb
+    const { error } = await sbAdmin
       .from("deliverables")
       .update({
         post_url,
