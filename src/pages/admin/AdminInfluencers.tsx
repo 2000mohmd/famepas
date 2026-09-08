@@ -171,7 +171,31 @@ const AdminInfluencers = () => {
   else if (sortBy === "name") filtered.sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
   else if (sortBy === "name_desc") filtered.sort((a, b) => (b.full_name || "").localeCompare(a.full_name || ""));
 
+
+  const exportToExcel = () => {
+    const rows = filtered.map((i) => ({
+      "Full name": i.full_name || "",
+      Phone: i.phone || "",
+      Instagram: stripAt(i.instagram_handle) ? `@${stripAt(i.instagram_handle)}` : "",
+      "Instagram followers": i.followers_count ?? 0,
+      "Instagram verified": i.instagram_verified ? "Yes" : "No",
+      TikTok: stripAt(i.tiktok_handle) ? `@${stripAt(i.tiktok_handle)}` : "",
+      "TikTok followers": i.tiktok_followers ?? 0,
+      Score: i.influencer_score ?? 0,
+      Status: i.is_suspended ? "Suspended" : formatLabel(i.approval_status || "pending"),
+      Verified: i.is_verified ? "Yes" : "No",
+      "Joined": new Date(i.created_at).toLocaleDateString(),
+    }));
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet["!cols"] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 20 }));
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Influencers");
+    XLSX.writeFile(book, `famepass-influencers-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast({ title: `Exported ${rows.length} influencers` });
+  };
+
   return (
+
     <DashboardLayout type="admin">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Manage <span className="text-gold">Influencers</span></h1>
