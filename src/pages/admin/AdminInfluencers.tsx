@@ -203,7 +203,11 @@ const AdminInfluencers = () => {
               <SelectItem value="name_desc">Name Z-A</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={exportToExcel} disabled={filtered.length === 0}>
+            <Download className="w-4 h-4 mr-2" /> Export to Excel
+          </Button>
         </div>
+
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
           <div className="w-full overflow-x-auto">
