@@ -146,8 +146,7 @@ serve(async (req) => {
       const fallback = !!apiErr?.fallback || true;
       // Still save the post_url so the venue sees the link, just no metrics yet.
       try {
-        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        await sb.from("deliverables").update({ post_url }).eq("id", deliverable_id);
+        await sbAdmin.from("deliverables").update({ post_url }).eq("id", deliverable_id);
       } catch (_) { /* ignore */ }
       return json({
         success: false,
@@ -159,8 +158,7 @@ serve(async (req) => {
       }, 200);
     }
 
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { error } = await sb
+    const { error } = await sbAdmin
       .from("deliverables")
       .update({
         post_url,
