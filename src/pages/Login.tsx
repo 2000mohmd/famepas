@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { UserCheck } from "lucide-react";
 
 const safeNext = (value: string | null) =>
@@ -17,10 +18,13 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [params] = useSearchParams();
-  const next = safeNext(params.get("next"));
+  const nextParam = safeNext(params.get("next"));
+  const stored = sessionStorage.getItem("postLoginRedirect");
+  const next = nextParam ?? safeNext(stored);
 
   useEffect(() => {
     if (user && role) {
+      sessionStorage.removeItem("postLoginRedirect");
       if (next) navigate(next, { replace: true });
       else if (role === "admin") navigate("/admin", { replace: true });
       else if (role === "venue") navigate("/venue", { replace: true });
@@ -77,11 +81,13 @@ const Login = () => {
 
 
   const handleSocial = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: next ? `${window.location.origin}${next}` : window.location.origin },
+    if (next) sessionStorage.setItem("postLoginRedirect", next);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
-    if (error) toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+    if (result.error) {
+      toast({ title: "Google sign-in failed", description: result.error.message, variant: "destructive" });
+    }
   };
 
   return (
