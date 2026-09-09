@@ -18,10 +18,13 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [params] = useSearchParams();
-  const next = safeNext(params.get("next"));
+  const nextParam = safeNext(params.get("next"));
+  const stored = sessionStorage.getItem("postLoginRedirect");
+  const next = nextParam ?? safeNext(stored);
 
   useEffect(() => {
     if (user && role) {
+      sessionStorage.removeItem("postLoginRedirect");
       if (next) navigate(next, { replace: true });
       else if (role === "admin") navigate("/admin", { replace: true });
       else if (role === "venue") navigate("/venue", { replace: true });
