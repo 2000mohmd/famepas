@@ -45,7 +45,9 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover border border-border" />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-secondary" />
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-xl font-semibold text-muted-foreground">
+                  {(profile.full_name || "?").split(" ").map((w: string) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()}
+                </div>
               )}
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-foreground">{profile.full_name || "—"}</h3>

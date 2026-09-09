@@ -270,7 +270,9 @@ const AdminInfluencers = () => {
                             </HoverCardContent>
                           </HoverCard>
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-secondary" />
+                          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+                            {(inf.full_name || "?").split(" ").map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()}
+                          </div>
                         )}
                         <div>
                           <div className="flex items-center gap-2">

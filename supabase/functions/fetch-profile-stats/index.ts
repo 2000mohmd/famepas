@@ -25,6 +25,7 @@ type Profile = {
   followers: number;
   full_name: string | null;
   is_verified: boolean;
+  profile_pic_url: string | null;
 };
 
 type Lookup =
@@ -58,6 +59,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(json.follower_count ?? 0),
               full_name: json.full_name ?? null,
               is_verified: !!json.is_verified,
+              profile_pic_url: json.profile_pic_url ?? json.profile_pic_url_hd ?? null,
             },
           };
         }
@@ -107,6 +109,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(d.follower_count ?? d.followers ?? 0),
               full_name: d.full_name ?? null,
               is_verified: !!d.is_verified,
+              profile_pic_url: d.profile_pic_url_hd ?? d.profile_pic_url ?? null,
             },
           };
         }
@@ -142,6 +145,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
             followers: Number(u.edge_followed_by?.count ?? 0),
             full_name: u.full_name ?? null,
             is_verified: !!u.is_verified,
+            profile_pic_url: u.profile_pic_url_hd ?? u.profile_pic_url ?? null,
           },
         };
       }
@@ -185,6 +189,7 @@ async function fetchTikTok(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(s.followerCount ?? 0),
               full_name: json?.data?.user?.nickname ?? null,
               is_verified: !!json?.data?.user?.verified,
+              profile_pic_url: json?.data?.user?.avatarLarger ?? json?.data?.user?.avatarMedium ?? null,
             },
           };
         }
@@ -217,6 +222,7 @@ async function fetchTikTok(handle: string, diag: string[]): Promise<Lookup> {
             followers: Number(m[1]),
             full_name: nameMatch?.[1] ?? null,
             is_verified: /"verified":true/.test(html),
+            profile_pic_url: html.match(/"avatarLarger":"([^"]*)"/)?.[1]?.replace(/\\u002F/g, "/") ?? null,
           },
         };
       }
@@ -236,6 +242,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const body = await req.json().catch(() => ({}));
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
     // Auth is OPTIONAL: when present, persist updates on the profile.
@@ -243,9 +250,12 @@ serve(async (req) => {
     if (token) {
       const { data: userData } = await supabase.auth.getUser(token);
       userId = userData?.user?.id ?? null;
+      // Service-role callers (backfills, cron) may target a specific user.
+      if (!userId && token === SUPABASE_SERVICE_ROLE_KEY && typeof body?.user_id === "string") {
+        userId = body.user_id;
+      }
     }
 
-    const body = await req.json().catch(() => ({}));
     const ig = body.instagram_handle ? clean(body.instagram_handle) : null;
     const tt = body.tiktok_handle ? clean(body.tiktok_handle) : null;
     const selfReported = Number(body.self_reported_followers) || 0;
@@ -297,9 +307,23 @@ serve(async (req) => {
       selfReported > 0 &&
       (selfReported > realTotal * 2 || selfReported * 2 < realTotal);
 
-    if (userId && Object.keys(updates).length) {
-      const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
-      if (updErr) console.warn("profile update failed:", updErr.message);
+    // Adopt the social profile picture as the account avatar when the user
+    // hasn't uploaded one themselves.
+    const picUrl = result.instagram?.profile_pic_url || result.tiktok?.profile_pic_url || null;
+
+    if (userId) {
+      if (picUrl) {
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (!existing?.avatar_url) updates.avatar_url = picUrl;
+      }
+      if (Object.keys(updates).length) {
+        const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
+        if (updErr) console.warn("profile update failed:", updErr.message);
+      }
     }
 
     if (diag.length) console.log("fetch-profile-stats diag:", diag.join(" | "));
