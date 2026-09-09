@@ -109,6 +109,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(d.follower_count ?? d.followers ?? 0),
               full_name: d.full_name ?? null,
               is_verified: !!d.is_verified,
+              profile_pic_url: d.profile_pic_url_hd ?? d.profile_pic_url ?? null,
             },
           };
         }
@@ -144,6 +145,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
             followers: Number(u.edge_followed_by?.count ?? 0),
             full_name: u.full_name ?? null,
             is_verified: !!u.is_verified,
+            profile_pic_url: u.profile_pic_url_hd ?? u.profile_pic_url ?? null,
           },
         };
       }
@@ -187,6 +189,7 @@ async function fetchTikTok(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(s.followerCount ?? 0),
               full_name: json?.data?.user?.nickname ?? null,
               is_verified: !!json?.data?.user?.verified,
+              profile_pic_url: json?.data?.user?.avatarLarger ?? json?.data?.user?.avatarMedium ?? null,
             },
           };
         }
@@ -219,6 +222,7 @@ async function fetchTikTok(handle: string, diag: string[]): Promise<Lookup> {
             followers: Number(m[1]),
             full_name: nameMatch?.[1] ?? null,
             is_verified: /"verified":true/.test(html),
+            profile_pic_url: html.match(/"avatarLarger":"([^"]*)"/)?.[1]?.replace(/\\u002F/g, "/") ?? null,
           },
         };
       }
