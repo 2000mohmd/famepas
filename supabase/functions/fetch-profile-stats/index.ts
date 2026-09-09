@@ -242,6 +242,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const body = await req.json().catch(() => ({}));
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
     // Auth is OPTIONAL: when present, persist updates on the profile.
@@ -255,7 +256,6 @@ serve(async (req) => {
       }
     }
 
-    const body = await req.json().catch(() => ({}));
     const ig = body.instagram_handle ? clean(body.instagram_handle) : null;
     const tt = body.tiktok_handle ? clean(body.tiktok_handle) : null;
     const selfReported = Number(body.self_reported_followers) || 0;
