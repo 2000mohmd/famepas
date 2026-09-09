@@ -249,6 +249,10 @@ serve(async (req) => {
     if (token) {
       const { data: userData } = await supabase.auth.getUser(token);
       userId = userData?.user?.id ?? null;
+      // Service-role callers (backfills, cron) may target a specific user.
+      if (!userId && token === SUPABASE_SERVICE_ROLE_KEY && typeof body?.user_id === "string") {
+        userId = body.user_id;
+      }
     }
 
     const body = await req.json().catch(() => ({}));
