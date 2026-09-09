@@ -1,33 +1,25 @@
 project_id = "dvauueqtqrveqcckfrjx"
 
-[functions.signup-user]
-verify_jwt = false
-
-[functions.google-maps-key]
-verify_jwt = false
-
-[functions.send-auth-email]
-verify_jwt = false
-
-[functions.send-welcome-email]
-verify_jwt = false
-
-[functions.login-otp]
-verify_jwt = false
-
-[functions.chatbot]
-verify_jwt = false
-
-[functions.match-brief]
-verify_jwt = true
-
-
-[functions.fetch-profile-stats]
-verify_jwt = false
-
-[functions.influencer-api]
-verify_jwt = false
-
-
-[functions.public-signup-config]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.chatbot]
+    verify_jwt = false
+  [functions.fetch-profile-stats]
+    verify_jwt = false
+  [functions.google-maps-key]
+    verify_jwt = false
+  [functions.influencer-api]
+    verify_jwt = false
+  [functions.login-otp]
+    verify_jwt = false
+  [functions.match-brief]
+    verify_jwt = true
+  [functions.public-signup-config]
+    verify_jwt = false
+  [functions.send-auth-email]
+    verify_jwt = false
+  [functions.send-welcome-email]
+    verify_jwt = false
+  [functions.signup-user]
+    verify_jwt = false
