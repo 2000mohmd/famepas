@@ -303,9 +303,23 @@ serve(async (req) => {
       selfReported > 0 &&
       (selfReported > realTotal * 2 || selfReported * 2 < realTotal);
 
-    if (userId && Object.keys(updates).length) {
-      const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
-      if (updErr) console.warn("profile update failed:", updErr.message);
+    // Adopt the social profile picture as the account avatar when the user
+    // hasn't uploaded one themselves.
+    const picUrl = result.instagram?.profile_pic_url || result.tiktok?.profile_pic_url || null;
+
+    if (userId) {
+      if (picUrl) {
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (!existing?.avatar_url) updates.avatar_url = picUrl;
+      }
+      if (Object.keys(updates).length) {
+        const { error: updErr } = await supabase.from("profiles").update(updates).eq("user_id", userId);
+        if (updErr) console.warn("profile update failed:", updErr.message);
+      }
     }
 
     if (diag.length) console.log("fetch-profile-stats diag:", diag.join(" | "));
