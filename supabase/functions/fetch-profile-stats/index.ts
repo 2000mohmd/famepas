@@ -59,6 +59,7 @@ async function fetchInstagram(handle: string, diag: string[]): Promise<Lookup> {
               followers: Number(json.follower_count ?? 0),
               full_name: json.full_name ?? null,
               is_verified: !!json.is_verified,
+              profile_pic_url: json.profile_pic_url ?? json.profile_pic_url_hd ?? null,
             },
           };
         }
