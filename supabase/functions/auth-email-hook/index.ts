@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "Remix of Connect \u0026 Create Platform"
+const SITE_NAME = "FamePass"
 const SENDER_DOMAIN = "notify.famepass.app"
 const ROOT_DOMAIN = "famepass.app"
 const FROM_DOMAIN = "notify.famepass.app"
