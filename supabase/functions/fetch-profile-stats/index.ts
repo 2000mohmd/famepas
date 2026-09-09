@@ -25,6 +25,7 @@ type Profile = {
   followers: number;
   full_name: string | null;
   is_verified: boolean;
+  profile_pic_url: string | null;
 };
 
 type Lookup =
