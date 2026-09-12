@@ -49,7 +49,8 @@ browser bundle (data access is protected by Row Level Security, not by hiding th
 | `VITE_SUPABASE_PROJECT_ID` | The project ref (the subdomain of the project URL) |
 
 Server-side secrets (`SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `RAPIDAPI_KEY`,
-`GOOGLE_MAPS_API_KEY`, `LOVABLE_API_KEY`, `ADMIN_EMAIL`) are **never** placed in `.env`.
+`GOOGLE_MAPS_API_KEY`, `LOVABLE_API_KEY`, `ADMIN_EMAIL`, `INSTAGRAM_CLIENT_ID`,
+`INSTAGRAM_CLIENT_SECRET`, `PUBLIC_SITE_URL`) are **never** placed in `.env`.
 They are configured as edge-function secrets in the backend project. The Google Maps browser
 key is fetched at runtime through the `google-maps-key` edge function, so it is not bundled.
 
@@ -70,8 +71,12 @@ key is fetched at runtime through the `google-maps-key` edge function, so it is 
    ```
 4. Set function secrets:
    ```sh
-   supabase secrets set RESEND_API_KEY=... RAPIDAPI_KEY=... GOOGLE_MAPS_API_KEY=... ADMIN_EMAIL=...
+   supabase secrets set RESEND_API_KEY=... RAPIDAPI_KEY=... GOOGLE_MAPS_API_KEY=... ADMIN_EMAIL=... \
+     INSTAGRAM_CLIENT_ID=... INSTAGRAM_CLIENT_SECRET=... PUBLIC_SITE_URL=https://famepass.app
    ```
+   `INSTAGRAM_CLIENT_ID`/`INSTAGRAM_CLIENT_SECRET` come from the Meta App Dashboard → your app →
+   Instagram → API setup with Instagram business login. Add `PUBLIC_SITE_URL` + `/instagram/callback`
+   as the app's OAuth redirect URI there — it must match exactly what `instagram-oauth` builds.
 5. Configure Auth: enable Email + Google providers, set the Site URL and redirect URLs to your
    app origin (`http://localhost:8080` for local development).
 6. Seed test accounts. The `seed-e2e-users` function creates approved users, but only for the

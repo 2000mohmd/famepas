@@ -9,6 +9,8 @@ project_id = "dvauueqtqrveqcckfrjx"
     verify_jwt = false
   [functions.google-maps-key]
     verify_jwt = false
+  [functions.instagram-oauth]
+    verify_jwt = true # both actions are POSTed by the app itself, see index.ts
   [functions.influencer-api]
     verify_jwt = false
   [functions.login-otp]

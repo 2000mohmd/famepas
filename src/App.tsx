@@ -54,6 +54,7 @@ const InfluencerHome = lazy(() => import("./pages/influencer/InfluencerHome"));
 const InfluencerOffer = lazy(() => import("./pages/influencer/InfluencerOffer"));
 const MarketingPage = lazy(() => import("./pages/MarketingPage"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const InstagramCallback = lazy(() => import("./pages/InstagramCallback"));
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/instagram/callback" element={<InstagramCallback />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
