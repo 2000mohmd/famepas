@@ -1513,7 +1513,6 @@ export type Database = {
           display_name: string | null
           handle: string | null
           id: string
-          influencer_id: string | null
           open_id: string | null
           platform: string
           refresh_token: string | null
@@ -1521,7 +1520,7 @@ export type Database = {
           status: string
           token_expires_at: string | null
           updated_at: string
-          venue_id: string | null
+          venue_id: string
         }
         Insert: {
           access_token?: string | null
@@ -1531,7 +1530,6 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string
-          influencer_id?: string | null
           open_id?: string | null
           platform: string
           refresh_token?: string | null
@@ -1539,7 +1537,7 @@ export type Database = {
           status?: string
           token_expires_at?: string | null
           updated_at?: string
-          venue_id?: string | null
+          venue_id: string
         }
         Update: {
           access_token?: string | null
@@ -1549,7 +1547,6 @@ export type Database = {
           display_name?: string | null
           handle?: string | null
           id?: string
-          influencer_id?: string | null
           open_id?: string | null
           platform?: string
           refresh_token?: string | null
@@ -1557,7 +1554,7 @@ export type Database = {
           status?: string
           token_expires_at?: string | null
           updated_at?: string
-          venue_id?: string | null
+          venue_id?: string
         }
         Relationships: [
           {
