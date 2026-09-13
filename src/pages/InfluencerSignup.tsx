@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
@@ -108,8 +108,17 @@ const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; to
 const InfluencerSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  const [step, setStep] = useState<Step>("account");
+  // Present only when arriving from "Continue with Instagram" on the Login
+  // page via a brand-new-creator identify() response (see InstagramCallback.tsx).
+  // The Instagram identity behind it is already verified server-side — this
+  // page never re-collects or re-verifies it, just displays it and passes the
+  // token through to signup-user at the end.
+  const igLinkToken = searchParams.get("ig_link_token");
+  const igUsername = searchParams.get("ig_username");
+
+  const [step, setStep] = useState<Step>(igLinkToken ? "profile" : "account");
   const [submitting, setSubmitting] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
@@ -147,38 +156,34 @@ const InfluencerSignup = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
 
-  // socials
-  const [instagram, setInstagram] = useState("");
+  // socials — Instagram is never manually typed/scraped here anymore; it's
+  // only ever set via a real OAuth connection (at signup via igLinkToken, or
+  // later from Settings). TikTok has no OAuth login yet, so it keeps the
+  // manual-handle + scrape-verify flow.
   const [tiktok, setTiktok] = useState("");
   const [youtube, setYoutube] = useState("");
   const [followers, setFollowers] = useState("");
-  const [verifyingHandle, setVerifyingHandle] = useState<null | "instagram" | "tiktok">(null);
+  const [verifyingTiktok, setVerifyingTiktok] = useState(false);
   type HandleCheck = { status: "found" | "not_found" | "unavailable"; ok: boolean; followers: number };
-  const [verifiedIG, setVerifiedIG] = useState<HandleCheck | null>(null);
   const [verifiedTT, setVerifiedTT] = useState<HandleCheck | null>(null);
-  const followersLocked = !!(verifiedIG?.ok || verifiedTT?.ok);
+  const followersLocked = !!verifiedTT?.ok;
 
-  const verifyHandle = async (platform: "instagram" | "tiktok", raw: string) => {
+  const verifyTiktokHandle = async (raw: string) => {
     const h = normalizeHandle(raw);
     if (!h) {
       // "@" / whitespace only — invalid, don't waste an API call.
-      if (raw.trim()) {
-        const bad: HandleCheck = { status: "not_found", ok: false, followers: 0 };
-        if (platform === "instagram") setVerifiedIG(bad); else setVerifiedTT(bad);
-      }
+      if (raw.trim()) setVerifiedTT({ status: "not_found", ok: false, followers: 0 });
       return;
     }
 
-    setVerifyingHandle(platform);
+    setVerifyingTiktok(true);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-profile-stats", {
-        body: platform === "instagram"
-          ? { instagram_handle: h }
-          : { tiktok_handle: h },
+        body: { tiktok_handle: h },
       });
       if (error) throw error;
       const v: any = (data as any)?.verified ?? {};
-      const entry = platform === "instagram" ? v.instagram : v.tiktok;
+      const entry = v.tiktok;
       const followersFound = Number(entry?.followers || 0);
       // "unavailable" = the lookup service could not answer (rate limit / outage).
       // We must NOT tell the user their account doesn't exist in that case.
@@ -189,33 +194,28 @@ const InfluencerSignup = () => {
             ? "not_found"
             : "unavailable";
       const check: HandleCheck = { status, ok: status === "found", followers: followersFound };
-      if (platform === "instagram") setVerifiedIG(check); else setVerifiedTT(check);
+      setVerifiedTT(check);
 
-      const label = platform === "instagram" ? "Instagram" : "TikTok";
       if (status === "not_found") {
         toast({
-          title: `${label} username not found`,
-          description: `We couldn't find @${h} on ${label}. Please double-check the username.`,
+          title: "TikTok username not found",
+          description: `We couldn't find @${h} on TikTok. Please double-check the username.`,
           variant: "destructive",
         });
       } else if (status === "unavailable") {
         toast({
-          title: `Couldn't check ${label} right now`,
+          title: "Couldn't check TikTok right now",
           description: "The lookup service is temporarily unavailable — you can continue and we'll verify later.",
         });
       }
 
-      const igFollowers = platform === "instagram" ? followersFound : (verifiedIG?.followers || 0);
-      const ttFollowers = platform === "tiktok" ? followersFound : (verifiedTT?.followers || 0);
-      const sum = igFollowers + ttFollowers;
-      if (sum > 0) setFollowers(String(sum));
+      if (followersFound > 0) setFollowers(String(followersFound));
     } catch (e) {
       console.warn("verify failed", e);
-      const check: HandleCheck = { status: "unavailable", ok: false, followers: 0 };
-      if (platform === "instagram") setVerifiedIG(check); else setVerifiedTT(check);
+      setVerifiedTT({ status: "unavailable", ok: false, followers: 0 });
       toast({ title: "Could not verify handle", description: "We'll re-check after signup." });
     } finally {
-      setVerifyingHandle(null);
+      setVerifyingTiktok(false);
     }
   };
 
@@ -235,14 +235,17 @@ const InfluencerSignup = () => {
     !username.trim() ? "" :
     !isValidOptionalHandle(normalizeHandle(username), username) ? "Please enter a valid username (at least 2 letters or numbers)." : "";
   const bioError = bio.trim().length > 0 && bio.trim().length < 10 ? "Please write at least 10 characters, or leave it empty." : "";
+  const emailError = !igLinkToken ? "" : !email.trim() ? "" : !isValidEmail(email) ? "Please enter a valid email." : "";
   const profileReady =
-    isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError;
+    isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError &&
+    (!igLinkToken || (email.trim().length > 0 && !emailError));
 
-  const igInvalidFormat = !!instagram.trim() && !normalizeHandle(instagram);
   const ttInvalidFormat = !!tiktok.trim() && !normalizeHandle(tiktok);
-  const igBlocked = igInvalidFormat || (!!instagram && verifiedIG?.status === "not_found");
   const ttBlocked = ttInvalidFormat || (!!tiktok && verifiedTT?.status === "not_found");
-  const socialsReady = !!(instagram.trim() || tiktok.trim() || youtube.trim()) && !igBlocked && !ttBlocked;
+  // Instagram is no longer collected on this step, so there's nothing to
+  // require here — a creator with no TikTok/YouTube yet can still finish
+  // signup and connect Instagram afterward.
+  const socialsReady = !ttBlocked;
 
 
 
@@ -254,12 +257,10 @@ const InfluencerSignup = () => {
   const handleFinalize = async () => {
     setSubmitting(true);
     try {
-      const igHandle = instagram ? normalizeHandle(instagram) : null;
       const ttHandle = tiktok ? normalizeHandle(tiktok) : null;
       const ytHandle = youtube ? normalizeHandle(youtube) : null;
 
       const social_links: Record<string, string> = {};
-      if (igHandle) social_links.instagram = igHandle;
       if (ttHandle) social_links.tiktok = ttHandle;
       if (ytHandle) social_links.youtube = ytHandle;
       if (username) social_links.username = normalizeHandle(username);
@@ -267,11 +268,10 @@ const InfluencerSignup = () => {
       const { data, error } = await supabase.functions.invoke("signup-user", {
         body: {
           email,
-          password,
+          ...(igLinkToken ? { instagram_link_token: igLinkToken } : { password }),
           role: "influencer",
           full_name: fullName,
           phone: phone.trim() || null,
-          instagram_handle: igHandle,
           tiktok_handle: ttHandle,
           tiktok_followers: 0,
           followers_count: Number(followers) || 0,
@@ -280,10 +280,6 @@ const InfluencerSignup = () => {
           country: country || null,
           niche: selectedNiches,
           social_links,
-          instagram_verified: igHandle
-            ? (verifiedIG?.status === "found" ? true : verifiedIG?.status === "not_found" ? false : null)
-            : null,
-
         },
       });
       if (error) {
@@ -300,9 +296,20 @@ const InfluencerSignup = () => {
       }
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      // Sign in so we have an authed session for avatar upload & routing
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
+      // Sign in so we have an authed session for avatar upload & routing.
+      // Instagram-verified signups have no password — they're signed in via
+      // the magic-link token signup-user handed back instead.
+      if (igLinkToken) {
+        const { error: otpErr } = await supabase.auth.verifyOtp({
+          email,
+          token: (data as any).hashed_token,
+          type: "magiclink",
+        });
+        if (otpErr) throw otpErr;
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+      }
 
       // Optional avatar upload (best-effort, non-blocking on failure)
       if (avatarFile) {
@@ -325,15 +332,13 @@ const InfluencerSignup = () => {
         }
       }
 
-      // Best-effort: verify handles & pull real follower counts via RapidAPI
-      if (igHandle || ttHandle) {
+      // Best-effort: verify TikTok handle & pull real follower count via RapidAPI.
+      // Instagram is never scraped here — it's either already verified via
+      // OAuth (igLinkToken) or connected later from Settings.
+      if (ttHandle) {
         try {
           await supabase.functions.invoke("fetch-profile-stats", {
-            body: {
-              instagram_handle: igHandle,
-              tiktok_handle: ttHandle,
-              self_reported_followers: Number(followers) || 0,
-            },
+            body: { tiktok_handle: ttHandle, self_reported_followers: Number(followers) || 0 },
           });
         } catch (e) {
           console.warn("Profile stats fetch skipped:", e);
@@ -462,9 +467,15 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={2} total={5} />
+          <BackBar onBack={() => (igLinkToken ? navigate("/login") : setStep("account"))} step={2} total={5} />
           <Card>
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
+            {igLinkToken && (
+              <Field label="Email" hint="We'll use this to notify you once your account is approved.">
+                <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
+                {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
+              </Field>
+            )}
             <Field label="Full name">
               <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
               {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
@@ -525,7 +536,9 @@ const InfluencerSignup = () => {
                   ? "Enter your first and last name to continue."
                   : !country.trim()
                     ? "Select your country to continue."
-                    : "Please fix the highlighted fields to continue."}
+                    : igLinkToken && !email.trim()
+                      ? "Enter your email to continue."
+                      : "Please fix the highlighted fields to continue."}
               </p>
             )}
 
@@ -594,34 +607,31 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("photo")} step={4} total={5} />
           <Card>
-            <Heading title="Connect your socials" sub="Add at least one to help brands find you." />
-            <Field label="Instagram handle" hint={verifiedIG?.ok ? `✓ Verified — ${verifiedIG.followers.toLocaleString()} followers` : verifiedIG?.status === "not_found" ? "Username not found on Instagram — please correct it to continue." : verifiedIG?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : "We'll verify and pull your real follower count."}>
-              <div className="relative">
-                <TextInput
-                  value={instagram}
-                  onChange={(e) => { setInstagram(e.target.value); setVerifiedIG(null); }}
-                  onBlur={(e) => verifyHandle("instagram", e.target.value)}
-                  placeholder="@yourname"
-                />
-                {verifyingHandle === "instagram" && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Verifying...</span>
-                )}
-                {verifiedIG?.ok && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-600 font-semibold">✓</span>
-                )}
+            <Heading title="Connect your socials" sub="Brands use these to see your real reach — add what you have, connect the rest later." />
+
+            {igLinkToken ? (
+              <Field label="Instagram">
+                <div className="h-11 px-3 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center justify-between text-sm">
+                  <span className="text-slate-700">@{igUsername || "your account"}</span>
+                  <span className="text-emerald-600 font-semibold">✓ Connected</span>
+                </div>
+              </Field>
+            ) : (
+              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+                Instagram isn't collected here anymore — connect it from Settings after you're approved, using
+                Instagram login for the fastest, most accurate way to verify your reach.
               </div>
-              {igInvalidFormat && <p className="text-xs text-red-600 mt-1">Please enter a valid Instagram username.</p>}
-            </Field>
+            )}
 
             <Field label="TikTok handle" hint={verifiedTT?.ok ? `✓ Verified — ${verifiedTT.followers.toLocaleString()} followers` : verifiedTT?.status === "not_found" ? "Username not found on TikTok — please correct it to continue." : verifiedTT?.status === "unavailable" ? "Couldn't check right now — you can continue, we'll verify later." : undefined}>
               <div className="relative">
                 <TextInput
                   value={tiktok}
                   onChange={(e) => { setTiktok(e.target.value); setVerifiedTT(null); }}
-                  onBlur={(e) => verifyHandle("tiktok", e.target.value)}
+                  onBlur={(e) => verifyTiktokHandle(e.target.value)}
                   placeholder="@yourname"
                 />
-                {verifyingHandle === "tiktok" && (
+                {verifyingTiktok && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">Verifying...</span>
                 )}
                 {verifiedTT?.ok && (
@@ -636,7 +646,7 @@ const InfluencerSignup = () => {
             </Field>
             <Field
               label="Total followers"
-              hint={followersLocked ? "Auto-filled from verified accounts (read-only)." : "We'll auto-fill this once you verify a handle above."}
+              hint={followersLocked ? "Auto-filled from your verified TikTok (read-only)." : "We'll auto-fill this once you verify your TikTok above."}
             >
               <TextInput
                 type="number"
@@ -713,4 +723,3 @@ const InfluencerSignup = () => {
 };
 
 export default InfluencerSignup;
-

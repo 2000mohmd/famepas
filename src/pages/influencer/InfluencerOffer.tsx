@@ -68,6 +68,19 @@ const InfluencerOffer = () => {
 
 
 
+  // Distinct query key from the "influencer-profile" one used elsewhere (e.g.
+  // InfluencerDashboard.tsx) — this fetches a narrower column set, and
+  // sharing a key would let one page's cached shape leak into the other.
+  const { data: profile } = useQuery({
+    queryKey: ["influencer-instagram-status", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("instagram_verified").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const hasInstagram = !!profile?.instagram_verified;
+
   const { data: isSaved } = useQuery({
     queryKey: ["saved-offer", id, user?.id],
     queryFn: async () => {
@@ -299,11 +312,13 @@ const InfluencerOffer = () => {
               <Button
                 size="lg"
                 variant={myApplication ? "outline" : "default"}
-                disabled={!myApplication && (apply.isPending || (slotsLeft != null && slotsLeft <= 0))}
+                disabled={!myApplication && (apply.isPending || !hasInstagram || (slotsLeft != null && slotsLeft <= 0))}
                 onClick={() => (myApplication ? navigate("/influencer/bookings") : apply.mutate())}
               >
                 {myApplication
                   ? "Go to my bookings"
+                  : !hasInstagram
+                  ? "Connect Instagram to apply"
                   : slotsLeft != null && slotsLeft <= 0
                   ? "No slots left"
                   : apply.isPending

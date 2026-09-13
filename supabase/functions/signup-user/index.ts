@@ -18,9 +18,9 @@ serve(async (req) => {
     const body = await req.json();
     const {
       email, password, role, full_name, phone,
-      instagram_handle, tiktok_handle, tiktok_followers, social_links,
+      instagram_link_token, tiktok_handle, tiktok_followers, social_links,
       // influencer profile extras
-      bio, city, country, niche, followers_count, instagram_verified,
+      bio, city, country, niche, followers_count,
       // venue (legacy + mobile)
       venue_name, venue_category, venue_city,
       // venue signup wizard extras
@@ -35,8 +35,8 @@ serve(async (req) => {
     } = body;
 
 
-    if (!email || !password || !role) {
-      return new Response(JSON.stringify({ error: "Email, password and role are required" }), {
+    if (!email || !role || (!password && !instagram_link_token)) {
+      return new Response(JSON.stringify({ error: "Email, and either a password or a verified Instagram sign-in, are required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -45,9 +45,34 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (instagram_link_token && role !== "influencer") {
+      return new Response(JSON.stringify({ error: "Instagram sign-in is only available for creator accounts" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Instagram-verified signup: pull the identity confirmed by instagram-oauth's
+    // "identify" action out of its short-lived holding row. Never trust a
+    // client-supplied Instagram handle/verified flag for this path.
+    let igPending: { ig_user_id: string; ig_username: string | null; access_token: string; token_expires_at: string | null; scope: string | null } | null = null;
+    if (instagram_link_token) {
+      const { data: pending, error: pendingErr } = await supabaseAdmin
+        .from("pending_instagram_signups")
+        .select("ig_user_id, ig_username, access_token, token_expires_at, scope, expires_at")
+        .eq("id", instagram_link_token)
+        .maybeSingle();
+      if (pendingErr || !pending || new Date(pending.expires_at) < new Date()) {
+        return new Response(JSON.stringify({ error: "Your Instagram sign-in expired. Please try again.", code: "INSTAGRAM_LINK_EXPIRED" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      igPending = pending;
+    }
 
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email, password, email_confirm: true,
+      email,
+      email_confirm: true,
+      ...(igPending ? {} : { password }),
       user_metadata: { full_name: full_name || (venue_name ? `${venue_name} Owner` : email) },
     });
     if (createError) {
@@ -72,21 +97,40 @@ serve(async (req) => {
       await new Promise(r => setTimeout(r, 500));
       const profileData: Record<string, unknown> = {
         user_id: userId, full_name: full_name || null, phone: phone || null,
-        instagram_handle: instagram_handle || null, tiktok_handle: tiktok_handle || null,
+        instagram_handle: igPending?.ig_username || null, tiktok_handle: tiktok_handle || null,
         tiktok_followers: tiktok_followers || 0, social_links: social_links || {},
         bio: bio || null,
         city: city || null,
         country: country || null,
         niche: Array.isArray(niche) ? niche : (niche ? [niche] : null),
         followers_count: followers_count || 0,
-        instagram_verified: instagram_verified === true ? true : instagram_verified === false ? false : null,
-        instagram_verified_at: instagram_verified === null || instagram_verified === undefined ? null : new Date().toISOString(),
-        // Influencers go through the same admin approval gate as venues
+        instagram_verified: igPending ? true : null,
+        instagram_verified_at: igPending ? new Date().toISOString() : null,
+        // Influencers go through the same admin approval gate as venues,
+        // regardless of signup method — Instagram sign-in doesn't bypass review.
         approval_status: "pending",
 
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);
+
+      if (igPending) {
+        await supabaseAdmin.from("social_integrations").upsert({
+          influencer_id: userId,
+          venue_id: null,
+          platform: "instagram",
+          handle: igPending.ig_username,
+          display_name: igPending.ig_username,
+          access_token: igPending.access_token,
+          refresh_token: null,
+          token_expires_at: igPending.token_expires_at,
+          open_id: igPending.ig_user_id,
+          scope: igPending.scope,
+          status: "connected",
+          connected_at: new Date().toISOString(),
+        }, { onConflict: "influencer_id,platform" });
+        await supabaseAdmin.from("pending_instagram_signups").delete().eq("id", instagram_link_token);
+      }
 
       // Welcome / waiting-list email to the influencer (best-effort)
       try {
@@ -117,7 +161,7 @@ serve(async (req) => {
               bodyHtml:
                 paragraph(`Name: ${full_name || "—"}`) +
                 paragraph(`Email: ${email}`) +
-                paragraph(`Instagram: ${instagram_handle || "—"}`) +
+                paragraph(`Instagram: ${igPending?.ig_username ? `@${igPending.ig_username} (verified via Instagram login)` : "—"}`) +
                 paragraph(`TikTok: ${tiktok_handle || "—"}`) +
                 paragraph(`City: ${city || "—"}`),
               button: { label: "Review in Admin", url: "https://famepass.app/admin/influencers" },
@@ -282,7 +326,20 @@ serve(async (req) => {
     }
 
 
-    return new Response(JSON.stringify({ user: newUser.user, venue, organization, brand }), {
+    // Instagram-verified signups have no password — hand back a magic-link
+    // token so the client can establish a session via supabase.auth.verifyOtp
+    // instead of signInWithPassword.
+    let hashed_token: string | undefined;
+    if (igPending) {
+      const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+      if (linkErr || !link?.properties?.hashed_token) {
+        console.error("signup-user: generateLink failed for Instagram signup", linkErr);
+      } else {
+        hashed_token = link.properties.hashed_token;
+      }
+    }
+
+    return new Response(JSON.stringify({ user: newUser.user, venue, organization, brand, hashed_token }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

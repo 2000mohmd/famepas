@@ -8,16 +8,30 @@
 //     header), not a client-supplied id, so a crafted `state`/body can't
 //     attach a token to someone else's row.
 //
+// Two families of actions:
+//   - "initiate" / "exchange": an already-logged-in creator connecting (or
+//     reconnecting) Instagram from Settings. Requires Authorization: Bearer
+//     <user JWT>, which supabase.functions.invoke() attaches automatically
+//     for a signed-in user.
+//   - "login_initiate" / "identify": "Continue with Instagram" from the
+//     Login page — no Supabase session exists yet, so these are public.
+//     "identify" either signs a returning creator straight in (their
+//     Instagram is already linked to a social_integrations row) or, for a
+//     brand-new creator, stashes the verified Instagram identity in
+//     pending_instagram_signups for the signup wizard to pick up.
+//
 // Required secrets (Supabase project settings -> Edge Functions -> Secrets):
 //   INSTAGRAM_CLIENT_ID       - Instagram App ID (Meta App Dashboard -> Instagram -> API setup with Instagram business login)
 //   INSTAGRAM_CLIENT_SECRET   - Instagram App Secret (same page)
 //   PUBLIC_SITE_URL           - e.g. https://famepass.app (must match the
 //                               redirect URI registered on the Instagram app)
 //
-// Actions (both POST, both require Authorization: Bearer <user JWT>, which
-// supabase.functions.invoke() attaches automatically for a signed-in user):
-//   { action: "initiate" }                  -> { url }
-//   { action: "exchange", code, state }     -> { success, handle }
+// Actions (all POST):
+//   { action: "initiate" }                          -> { url }                                   [auth required]
+//   { action: "exchange", code, state }              -> { success, handle }                       [auth required]
+//   { action: "login_initiate" }                     -> { url }                                   [public]
+//   { action: "identify", code, state }              -> { mode: "login", email, hashed_token }
+//                                                     |  { mode: "new", link_token, username, account_type } [public]
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -49,10 +63,166 @@ async function safeJson(res: Response) {
   try { return JSON.parse(txt); } catch { return { _raw: txt }; }
 }
 
+function buildAuthUrl(state: string) {
+  const authUrl = new URL("https://www.instagram.com/oauth/authorize");
+  authUrl.searchParams.set("client_id", CLIENT_ID);
+  authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
+  authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("scope", SCOPES);
+  authUrl.searchParams.set("state", state);
+  return authUrl.toString();
+}
+
+type ExchangeResult =
+  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null }
+  | { ok: false; error: string };
+
+/** Shared by "exchange" (logged-in connect) and "identify" (logged-out login/signup): code -> long-lived token + basic profile. */
+async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
+  // Instagram sometimes appends "#_" to the redirected code — strip it.
+  const code = rawCode.replace(/#_$/, "");
+  if (!code) return { ok: false, error: "Missing code" };
+
+  // Step 1: short-lived token (~1 hour)
+  const shortRes = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      grant_type: "authorization_code",
+      redirect_uri: REDIRECT_URI,
+      code,
+    }),
+  });
+  const shortTok = await safeJson(shortRes);
+  if (!shortRes.ok || !shortTok.access_token) {
+    console.error("instagram short-lived token error", shortTok);
+    return { ok: false, error: shortTok?.error_message || "Could not exchange the authorization code" };
+  }
+
+  // Step 2: exchange for a long-lived token (~60 days)
+  const longUrl = new URL("https://graph.instagram.com/access_token");
+  longUrl.searchParams.set("grant_type", "ig_exchange_token");
+  longUrl.searchParams.set("client_secret", CLIENT_SECRET);
+  longUrl.searchParams.set("access_token", shortTok.access_token);
+  const longRes = await fetch(longUrl.toString());
+  const longTok = await safeJson(longRes);
+  if (!longRes.ok || !longTok.access_token) {
+    console.error("instagram long-lived token error", longTok);
+    return { ok: false, error: longTok?.error?.message || "Could not get a long-lived token" };
+  }
+
+  // Step 3: basic profile
+  let username: string | null = null;
+  let accountType: string | null = null;
+  try {
+    const profRes = await fetch(
+      `https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(longTok.access_token)}`,
+    );
+    const prof = await safeJson(profRes);
+    username = prof?.username ?? null;
+    accountType = prof?.account_type ?? null;
+  } catch (_e) { /* non-fatal — we still have the token */ }
+
+  const expiresAt = new Date(Date.now() + (longTok.expires_in ?? 0) * 1000).toISOString();
+
+  return {
+    ok: true,
+    accessToken: longTok.access_token,
+    expiresAt,
+    igUserId: shortTok.user_id ? String(shortTok.user_id) : null,
+    scope: shortTok.permissions ? String(shortTok.permissions) : SCOPES,
+    username,
+    accountType,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      return json({
+        error: "Instagram app keys not configured yet. Add INSTAGRAM_CLIENT_ID and INSTAGRAM_CLIENT_SECRET in backend secrets.",
+        code: "MISSING_KEYS",
+      }, 503);
+    }
+
+    // --- Public actions: no Supabase session exists yet (Login page's "Continue with Instagram") ---
+
+    if (body.action === "login_initiate") {
+      const state = `login:${crypto.randomUUID()}`;
+      return json({ url: buildAuthUrl(state) });
+    }
+
+    if (body.action === "identify") {
+      const state: string = body.state ?? "";
+      if (!state.startsWith("login:")) {
+        return json({ error: "Invalid state", code: "BAD_REQUEST" }, 400);
+      }
+
+      const result = await exchangeCode(String(body.code ?? ""));
+      if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
+      if (!result.igUserId) return json({ error: "Instagram did not return an account id", code: "PROVIDER_ERROR" }, 200);
+
+      const { data: existing } = await admin
+        .from("social_integrations")
+        .select("influencer_id")
+        .eq("platform", "instagram")
+        .eq("open_id", result.igUserId)
+        .not("influencer_id", "is", null)
+        .maybeSingle();
+
+      if (existing?.influencer_id) {
+        // Returning creator — refresh the stored token, then hand back a
+        // magic-link token the client exchanges for a session (no password).
+        const { data: userRes, error: userErr } = await admin.auth.admin.getUserById(existing.influencer_id);
+        if (userErr || !userRes?.user?.email) {
+          console.error("identify: could not load user for existing link", userErr);
+          return json({ error: "Could not find the account for this Instagram profile", code: "PROVIDER_ERROR" }, 200);
+        }
+        const email = userRes.user.email;
+
+        await admin.from("social_integrations").update({
+          handle: result.username,
+          display_name: result.username,
+          access_token: result.accessToken,
+          token_expires_at: result.expiresAt,
+          scope: result.scope,
+          status: "connected",
+        }).eq("influencer_id", existing.influencer_id).eq("platform", "instagram");
+
+        const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: "magiclink", email });
+        if (linkErr || !link?.properties?.hashed_token) {
+          console.error("identify: generateLink failed", linkErr);
+          return json({ error: "Could not sign you in — please try again", code: "PROVIDER_ERROR" }, 200);
+        }
+        return json({ mode: "login", email, hashed_token: link.properties.hashed_token });
+      }
+
+      // Brand-new creator — stash the verified identity for the signup wizard.
+      const { data: pending, error: pendingErr } = await admin.from("pending_instagram_signups").insert({
+        ig_user_id: result.igUserId,
+        ig_username: result.username,
+        ig_account_type: result.accountType,
+        access_token: result.accessToken,
+        scope: result.scope,
+        token_expires_at: result.expiresAt,
+      }).select("id").single();
+      if (pendingErr || !pending) {
+        console.error("identify: pending_instagram_signups insert failed", pendingErr);
+        return json({ error: "Could not start signup — please try again", code: "DB_UPDATE_FAILED" }, 200);
+      }
+
+      return json({ mode: "new", link_token: pending.id, username: result.username, account_type: result.accountType });
+    }
+
+    // --- Authenticated actions: an already-logged-in creator connecting Instagram from Settings ---
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Missing Authorization header", code: "UNAUTHORIZED" }, 401);
 
@@ -63,25 +233,9 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) return json({ error: "Invalid or expired session", code: "UNAUTHORIZED" }, 401);
 
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const body = await req.json().catch(() => ({}));
-
-    if (!CLIENT_ID || !CLIENT_SECRET) {
-      return json({
-        error: "Instagram app keys not configured yet. Add INSTAGRAM_CLIENT_ID and INSTAGRAM_CLIENT_SECRET in backend secrets.",
-        code: "MISSING_KEYS",
-      }, 503);
-    }
-
     if (body.action === "initiate") {
       const state = `${user.id}:${crypto.randomUUID()}`;
-      const authUrl = new URL("https://www.instagram.com/oauth/authorize");
-      authUrl.searchParams.set("client_id", CLIENT_ID);
-      authUrl.searchParams.set("redirect_uri", REDIRECT_URI);
-      authUrl.searchParams.set("response_type", "code");
-      authUrl.searchParams.set("scope", SCOPES);
-      authUrl.searchParams.set("state", state);
-      return json({ url: authUrl.toString() });
+      return json({ url: buildAuthUrl(state) });
     }
 
     if (body.action === "exchange") {
@@ -91,69 +245,20 @@ Deno.serve(async (req) => {
         return json({ error: "State does not match the signed-in user", code: "FORBIDDEN" }, 403);
       }
 
-      // Instagram sometimes appends "#_" to the redirected code — strip it.
-      const code: string = String(body.code ?? "").replace(/#_$/, "");
-      if (!code) return json({ error: "Missing code", code: "BAD_REQUEST" }, 400);
-
-      // Step 1: short-lived token (~1 hour)
-      const shortRes = await fetch("https://api.instagram.com/oauth/access_token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-          grant_type: "authorization_code",
-          redirect_uri: REDIRECT_URI,
-          code,
-        }),
-      });
-      const shortTok = await safeJson(shortRes);
-      if (!shortRes.ok || !shortTok.access_token) {
-        console.error("instagram short-lived token error", shortTok);
-        return json({
-          error: shortTok?.error_message || "Could not exchange the authorization code",
-          code: "PROVIDER_ERROR",
-        }, 200);
-      }
-
-      // Step 2: exchange for a long-lived token (~60 days)
-      const longUrl = new URL("https://graph.instagram.com/access_token");
-      longUrl.searchParams.set("grant_type", "ig_exchange_token");
-      longUrl.searchParams.set("client_secret", CLIENT_SECRET);
-      longUrl.searchParams.set("access_token", shortTok.access_token);
-      const longRes = await fetch(longUrl.toString());
-      const longTok = await safeJson(longRes);
-      if (!longRes.ok || !longTok.access_token) {
-        console.error("instagram long-lived token error", longTok);
-        return json({
-          error: longTok?.error?.message || "Could not get a long-lived token",
-          code: "PROVIDER_ERROR",
-        }, 200);
-      }
-
-      // Step 3: basic profile, so we have something to show in the UI
-      let username: string | null = null;
-      try {
-        const profRes = await fetch(
-          `https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(longTok.access_token)}`,
-        );
-        const prof = await safeJson(profRes);
-        username = prof?.username ?? null;
-      } catch (_e) { /* non-fatal — we still have the token */ }
-
-      const expiresAt = new Date(Date.now() + (longTok.expires_in ?? 0) * 1000).toISOString();
+      const result = await exchangeCode(String(body.code ?? ""));
+      if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
 
       const { error: dbErr } = await admin.from("social_integrations").upsert({
         influencer_id: user.id,
         venue_id: null,
         platform: "instagram",
-        handle: username,
-        display_name: username,
-        access_token: longTok.access_token,
+        handle: result.username,
+        display_name: result.username,
+        access_token: result.accessToken,
         refresh_token: null, // Instagram has no refresh token; re-exchange the long-lived token before it expires instead.
-        token_expires_at: expiresAt,
-        open_id: shortTok.user_id ? String(shortTok.user_id) : null,
-        scope: shortTok.permissions ? String(shortTok.permissions) : SCOPES,
+        token_expires_at: result.expiresAt,
+        open_id: result.igUserId,
+        scope: result.scope,
         status: "connected",
         connected_at: new Date().toISOString(),
       }, { onConflict: "influencer_id,platform" });
@@ -163,7 +268,15 @@ Deno.serve(async (req) => {
         return json({ error: dbErr.message, code: "DB_UPDATE_FAILED" }, 200);
       }
 
-      return json({ success: true, handle: username });
+      // Keep profiles.instagram_verified in sync — it's the single source of
+      // truth the dashboard nudge and offer-apply gate check.
+      await admin.from("profiles").update({
+        instagram_handle: result.username,
+        instagram_verified: true,
+        instagram_verified_at: new Date().toISOString(),
+      }).eq("user_id", user.id);
+
+      return json({ success: true, handle: result.username });
     }
 
     return json({ error: "Unknown action", code: "BAD_REQUEST" }, 400);

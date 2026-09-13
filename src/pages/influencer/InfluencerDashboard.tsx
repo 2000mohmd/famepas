@@ -119,6 +119,21 @@ const InfluencerDashboard = () => {
           </Card>
         )}
 
+        {/* Connect Instagram nudge — offers can't be applied to until this is done (see InfluencerOffer.tsx) */}
+        {profile && !profile.instagram_verified && (
+          <Card className="border-[#b8923a]/40 bg-[#b8923a]/5">
+            <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h3 className="font-semibold text-foreground">Connect your Instagram</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Venues need your real follower count to review applications — connect Instagram to start applying for offers.
+                </p>
+              </div>
+              <Button onClick={() => navigate("/influencer/settings")}>Connect Instagram</Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Profile Strength */}
         <Card className="border-gold/20">
           <CardContent className="pt-6">
