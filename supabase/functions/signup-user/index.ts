@@ -181,9 +181,9 @@ serve(async (req) => {
       }
     }
 
-    let venue = null;
-    let organization = null;
-    let brand = null;
+    let venue: { id: string } | null = null;
+    let organization: { id: string } | null = null;
+    let brand: { id: string } | null = null;
 
     if (role === "venue" && venue_name) {
       // If any step of the venue hierarchy fails we must not leave behind an
