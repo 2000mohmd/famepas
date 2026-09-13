@@ -752,6 +752,7 @@ serve(async (req) => {
     return errorResponse("Not found", 404);
 
   } catch (err) {
-    return errorResponse(err.message, 500);
+    const message = err instanceof Error ? err.message : String(err);
+    return errorResponse(message, 500);
   }
 });
