@@ -112,13 +112,20 @@ const InfluencerSignup = () => {
   const [step, setStep] = useState<Step>("account");
   const [submitting, setSubmitting] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
+  const [countryOptions, setCountryOptions] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       const config = await fetchSignupConfig();
       setRegistrationOpen(isRegistrationOpen(config, "influencer_registration_open"));
+      setCountryOptions(
+        config.countries?.length
+          ? config.countries
+          : ["Lebanon", "United Arab Emirates", "Saudi Arabia"],
+      );
     })();
   }, []);
+
 
 
   // account
@@ -485,14 +492,47 @@ const InfluencerSignup = () => {
                 </p>
               )}
             </Field>
+
+            {/* Manual fallback — the map suggestions don't always appear, and
+                without a country the Continue button used to stay disabled. */}
+            <Field label="Country" hint="Pick your country if the suggestions above didn't work.">
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
+              >
+                <option value="">Select your country</option>
+                {countryOptions.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                {country && !countryOptions.includes(country) && (
+                  <option value={country}>{country}</option>
+                )}
+              </select>
+            </Field>
+            <Field label="City" hint="Optional.">
+              <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Beirut" />
+            </Field>
+
             <Field label="Short bio" hint="Optional — a 1–2 sentence intro about you and the content you create.">
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
               {bioError && <p className="text-xs text-red-600 mt-1">{bioError}</p>}
             </Field>
 
+            {!profileReady && (
+              <p className="text-xs text-amber-600 mb-3">
+                {!isValidFullName(fullName)
+                  ? "Enter your first and last name to continue."
+                  : !country.trim()
+                    ? "Select your country to continue."
+                    : "Please fix the highlighted fields to continue."}
+              </p>
+            )}
+
             <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
               Continue <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
+
           </Card>
         </div>
       </Page>
