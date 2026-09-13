@@ -112,13 +112,20 @@ const InfluencerSignup = () => {
   const [step, setStep] = useState<Step>("account");
   const [submitting, setSubmitting] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null);
+  const [countryOptions, setCountryOptions] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       const config = await fetchSignupConfig();
       setRegistrationOpen(isRegistrationOpen(config, "influencer_registration_open"));
+      setCountryOptions(
+        config.countries?.length
+          ? config.countries
+          : ["Lebanon", "United Arab Emirates", "Saudi Arabia"],
+      );
     })();
   }, []);
+
 
 
   // account
