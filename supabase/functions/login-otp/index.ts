@@ -31,8 +31,8 @@ serve(async (req) => {
     // by an email address alone — require valid credentials first.
     if (action === "send") {
       if (!password) {
-        return new Response(JSON.stringify({ error: "Invalid email or password" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "Invalid email or password", code: "invalid_credentials" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const authClient = createClient(
@@ -42,8 +42,9 @@ serve(async (req) => {
       );
       const { error: credError } = await authClient.auth.signInWithPassword({ email, password });
       if (credError) {
+        // Return 200 so the browser SDK surfaces the payload instead of throwing
         return new Response(JSON.stringify({ error: "Invalid email or password", code: "invalid_credentials" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       await authClient.auth.signOut();
