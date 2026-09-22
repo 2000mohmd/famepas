@@ -98,6 +98,89 @@ const InstagramConnectRow = () => {
   );
 };
 
+const TikTokLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
+    <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.84-2.48V9.77a5.68 5.68 0 1 0 4.93 5.63V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3a4.29 4.29 0 0 1-3.24-1.48z" />
+  </svg>
+);
+
+// Creator-side TikTok Login Kit connection (per-creator OAuth), separate from
+// the venue-side TikTok link in VenueSettings.tsx.
+const TikTokConnectRow = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const { data: social } = useQuery({
+    queryKey: ["tiktok-integration", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("social_integrations")
+        .select("id, handle, status, connected_at")
+        .eq("influencer_id", user!.id)
+        .eq("platform", "tiktok")
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("tiktok");
+    if (!v) return;
+    if (v === "connected") toast({ title: "TikTok connected ✓", description: "Your TikTok account is now linked." });
+    else toast({ title: "TikTok error", description: "Could not complete connection.", variant: "destructive" });
+    window.history.replaceState({}, "", window.location.pathname);
+    queryClient.invalidateQueries({ queryKey: ["tiktok-integration"] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const connect = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("tiktok-oauth", { body: { action: "initiate" } });
+    setBusy(false);
+    if (error || !(data as any)?.url) {
+      toast({ title: "TikTok not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
+      return;
+    }
+    window.location.href = (data as any).url;
+  };
+
+  const disconnect = async () => {
+    if (!user) return;
+    await supabase.from("social_integrations").delete().eq("influencer_id", user.id).eq("platform", "tiktok");
+    toast({ title: "Disconnected" });
+    queryClient.invalidateQueries({ queryKey: ["tiktok-integration"] });
+  };
+
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-foreground">
+          <TikTokLogo />
+        </div>
+        <div>
+          <p className="font-medium text-foreground">TikTok</p>
+          <p className="text-xs text-muted-foreground">
+            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : "Connected") : "Not connected"}
+          </p>
+        </div>
+      </div>
+      {social?.status === "connected" ? (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+        </div>
+      ) : (
+        <Button size="sm" onClick={connect} disabled={busy}>
+          {busy ? "Redirecting…" : "Connect TikTok"}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const InfluencerSettings = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -178,8 +261,9 @@ const InfluencerSettings = () => {
 
         <Card>
           <CardHeader><CardTitle>Connected Accounts</CardTitle></CardHeader>
-          <CardContent>
+          <CardContent className="divide-y divide-border">
             <InstagramConnectRow />
+            <TikTokConnectRow />
           </CardContent>
         </Card>
 
