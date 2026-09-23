@@ -298,7 +298,17 @@ const InfluencerBookings = () => {
             </div>
             <div>
               <Label className="text-xs">Post URL</Label>
-              <Input value={contentUrl} onChange={e => setContentUrl(e.target.value)} placeholder="https://instagram.com/p/..." />
+              <Input
+                value={contentUrl}
+                onChange={e => setContentUrl(e.target.value)}
+                placeholder={platform === "tiktok" ? "https://tiktok.com/@you/video/..." : "https://instagram.com/p/..."}
+              />
+              {(platform === "instagram" || platform === "tiktok") && !connectedPlatforms.includes(platform) && (
+                <p className="text-[11px] text-amber-600 mt-1">
+                  Link your {platform === "tiktok" ? "TikTok" : "Instagram"} account in{" "}
+                  <Link to="/influencer/settings" className="underline">Settings</Link> so the venue can see your post performance.
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-xs">Caption (optional)</Label>
