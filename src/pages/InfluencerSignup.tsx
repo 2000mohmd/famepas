@@ -327,18 +327,11 @@ const InfluencerSignup = () => {
         }
       }
 
-      // Best-effort: verify TikTok handle & pull real follower count via RapidAPI.
-      // Instagram is never scraped here — it's either already verified via
-      // OAuth (igLinkToken) or connected later from Settings.
-      if (ttHandle) {
-        try {
-          await supabase.functions.invoke("fetch-profile-stats", {
-            body: { tiktok_handle: ttHandle, self_reported_followers: Number(followers) || 0 },
-          });
-        } catch (e) {
-          console.warn("Profile stats fetch skipped:", e);
-        }
-      }
+      // Social follower counts are no longer self-reported at signup — they
+      // come from the official Instagram / TikTok integrations once the
+      // creator links their accounts from Settings.
+
+
 
       // New influencers start as "pending" — sign the temporary session out and
       // show a review confirmation instead of routing into the dashboard.
