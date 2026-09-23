@@ -18,6 +18,7 @@ const VenueReports = () => {
   const [deliverables, setDeliverables] = useState<any[]>([]);
   const [redemptions, setRedemptions] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
 
   const sinceISO = useMemo(() => {
     if (period === "all") return null;
@@ -35,7 +36,7 @@ const VenueReports = () => {
       if (venueIds.length === 0) { setLoading(false); return; }
 
       // bookings for these venues
-      let bq = supabase.from("bookings").select("id,status,created_at,completed_at,venue_id").in("venue_id", venueIds);
+      let bq = supabase.from("bookings").select("id,status,created_at,completed_at,venue_id,offer_id").in("venue_id", venueIds);
       if (sinceISO) bq = bq.gte("created_at", sinceISO);
       const { data: bks } = await bq;
       setBookings(bks ?? []);
@@ -48,7 +49,8 @@ const VenueReports = () => {
       } else setDeliverables([]);
 
       // redemptions via offers
-      const { data: offers } = await supabase.from("offers").select("id").in("venue_id", venueIds);
+      const { data: offers } = await supabase.from("offers").select("id,title").in("venue_id", venueIds);
+      setOffers(offers ?? []);
       const offerIds = (offers ?? []).map((o: any) => o.id);
       if (offerIds.length > 0) {
         let rq = supabase.from("offer_redemptions").select("id,status,created_at,redeemed_at,offer_id").in("offer_id", offerIds);
