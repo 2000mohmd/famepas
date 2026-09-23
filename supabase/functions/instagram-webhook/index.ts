@@ -13,15 +13,16 @@
 //     ourselves; the SAME value must be pasted into the "Verify Token"
 //     field in Meta App Dashboard -> Instagram -> Webhooks, next to this
 //     function's URL as the "Callback URL".
-//   INSTAGRAM_CLIENT_SECRET        - the existing Instagram App Secret,
-//     reused here to verify the x-hub-signature-256 payload signature.
+//   META_APP_SECRET                - the Meta App Secret (Settings -> Basic
+//     in the Meta App Dashboard), used to verify the x-hub-signature-256
+//     payload signature. Falls back to INSTAGRAM_CLIENT_SECRET if unset.
 //
 // NOTE: no Supabase Authorization check anywhere — Meta's servers call
 // this directly and never send a user JWT (see config.toml verify_jwt=false).
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const VERIFY_TOKEN = Deno.env.get("INSTAGRAM_WEBHOOK_VERIFY_TOKEN") ?? "";
-const APP_SECRET = Deno.env.get("INSTAGRAM_CLIENT_SECRET") ?? "";
+const APP_SECRET = Deno.env.get("META_APP_SECRET") ?? Deno.env.get("INSTAGRAM_CLIENT_SECRET") ?? "";
 
 function toHex(buffer: ArrayBuffer): string {
   return Array.from(new Uint8Array(buffer))
