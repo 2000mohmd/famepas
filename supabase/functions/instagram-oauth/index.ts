@@ -148,7 +148,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
 
   return {
     ok: true,
-    accessToken: longTok.access_token,
+    accessToken,
     expiresAt,
     igUserId: shortTok.user_id ? String(shortTok.user_id) : null,
     scope: shortTok.permissions ? String(shortTok.permissions) : SCOPES,
