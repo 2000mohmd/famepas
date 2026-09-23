@@ -565,7 +565,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("profile")} step={3} total={5} />
+          <BackBar onBack={() => setStep("profile")} step={3} total={4} />
           <Card>
             <Heading title="Add a profile photo" sub="Optional, but creators with a photo get 3× more matches." />
             <div className="flex flex-col items-center gap-4 mb-6">
