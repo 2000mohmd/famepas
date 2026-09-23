@@ -240,12 +240,6 @@ const InfluencerSignup = () => {
     isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError &&
     (!igLinkToken || (email.trim().length > 0 && !emailError));
 
-  const ttInvalidFormat = !!tiktok.trim() && !normalizeHandle(tiktok);
-  const ttBlocked = ttInvalidFormat || (!!tiktok && verifiedTT?.status === "not_found");
-  // Instagram is no longer collected on this step, so there's nothing to
-  // require here — a creator with no TikTok/YouTube yet can still finish
-  // signup and connect Instagram afterward.
-  const socialsReady = !ttBlocked;
 
 
 
