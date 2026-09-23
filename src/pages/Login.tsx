@@ -163,30 +163,8 @@ const Login = () => {
                     </svg>
                     Sign in with Google
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleInstagram}
-                    disabled={instagramLoading}
-                    className="w-full h-12 rounded-full border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-800 font-medium flex items-center justify-center gap-2 transition"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig-gradient)" />
-                      <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm0 6.27a2.47 2.47 0 1 1 0-4.94 2.47 2.47 0 0 1 0 4.94Z" fill="#fff" />
-                      <circle cx="16.2" cy="7.8" r="0.9" fill="#fff" />
-                      <defs>
-                        <linearGradient id="ig-gradient" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#FFDD55" />
-                          <stop offset="0.5" stopColor="#E1306C" />
-                          <stop offset="1" stopColor="#5851DB" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    {instagramLoading ? "Redirecting…" : "Continue with Instagram"}
-                  </button>
                 </div>
-                <p className="text-xs text-center text-slate-400 -mt-3 mb-3">
-                  Creators only — connects your creator account, sets up your profile from your Instagram, and skips the password.
-                </p>
+
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
