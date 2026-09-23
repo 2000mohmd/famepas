@@ -43,6 +43,21 @@ const InfluencerBookings = () => {
     enabled: !!user,
   });
 
+  const { data: connections } = useQuery({
+    queryKey: ["my-social-connections", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("social_integrations")
+        .select("platform,status")
+        .eq("influencer_id", user!.id);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+  const connectedPlatforms = (connections ?? [])
+    .filter((c: any) => c.status === "connected")
+    .map((c: any) => c.platform);
+
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
   };
