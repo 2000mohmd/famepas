@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star, Flag } from "lucide-react";
+import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star, Flag, BarChart3 } from "lucide-react";
+import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +26,7 @@ const VenueContent = () => {
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [disputeFor, setDisputeFor] = useState<any | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
+  const [statsFor, setStatsFor] = useState<{ id: string; name?: string } | null>(null);
 
   const submitDispute = async () => {
     if (!disputeFor) return;
@@ -194,10 +196,15 @@ const VenueContent = () => {
                       "bg-amber-100 text-amber-700"}`}>{d.status}</span>
                   </div>
                   <div className="p-4 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setStatsFor({ id: d.influencer_id, name: p?.full_name })}
+                      className="flex items-center gap-2 mb-2 text-left hover:opacity-80"
+                    >
                       {p?.avatar_url ? <img src={p.avatar_url} className="w-6 h-6 rounded-full object-cover" /> : <div className="w-6 h-6 rounded-full bg-muted" />}
-                      <span className="text-sm font-medium">{p?.full_name || "Influencer"}</span>
-                    </div>
+                      <span className="text-sm font-medium underline-offset-2 hover:underline">{p?.full_name || "Influencer"}</span>
+                      <BarChart3 className="w-3 h-3 text-muted-foreground" />
+                    </button>
                     {d.caption && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{d.caption}</p>}
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
