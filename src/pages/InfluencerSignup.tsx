@@ -467,7 +467,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => (igLinkToken ? navigate("/login") : setStep("account"))} step={2} total={5} />
+          <BackBar onBack={() => (igLinkToken ? navigate("/login") : setStep("account"))} step={2} total={4} />
           <Card>
             <Heading title="Tell us about you" sub="This is how brands will discover you." />
             {igLinkToken && (
