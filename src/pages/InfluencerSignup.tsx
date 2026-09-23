@@ -15,7 +15,7 @@ const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
    Route: /signup/influencer
    ============================================================ */
 
-type Step = "account" | "profile" | "photo" | "socials" | "niche" | "done";
+type Step = "account" | "profile" | "photo" | "niche" | "done";
 
 const NICHES = [
   "Food & Dining", "Travel", "Fashion", "Beauty", "Fitness",
