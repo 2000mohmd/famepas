@@ -156,68 +156,6 @@ const InfluencerSignup = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
 
-  // socials — Instagram is never manually typed/scraped here anymore; it's
-  // only ever set via a real OAuth connection (at signup via igLinkToken, or
-  // later from Settings). TikTok has no OAuth login yet, so it keeps the
-  // manual-handle + scrape-verify flow.
-  const [tiktok, setTiktok] = useState("");
-  const [youtube, setYoutube] = useState("");
-  const [followers, setFollowers] = useState("");
-  const [verifyingTiktok, setVerifyingTiktok] = useState(false);
-  type HandleCheck = { status: "found" | "not_found" | "unavailable"; ok: boolean; followers: number };
-  const [verifiedTT, setVerifiedTT] = useState<HandleCheck | null>(null);
-  const followersLocked = !!verifiedTT?.ok;
-
-  const verifyTiktokHandle = async (raw: string) => {
-    const h = normalizeHandle(raw);
-    if (!h) {
-      // "@" / whitespace only — invalid, don't waste an API call.
-      if (raw.trim()) setVerifiedTT({ status: "not_found", ok: false, followers: 0 });
-      return;
-    }
-
-    setVerifyingTiktok(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("fetch-profile-stats", {
-        body: { tiktok_handle: h },
-      });
-      if (error) throw error;
-      const v: any = (data as any)?.verified ?? {};
-      const entry = v.tiktok;
-      const followersFound = Number(entry?.followers || 0);
-      // "unavailable" = the lookup service could not answer (rate limit / outage).
-      // We must NOT tell the user their account doesn't exist in that case.
-      const status: HandleCheck["status"] =
-        entry?.status === "found" || followersFound > 0
-          ? "found"
-          : entry?.status === "not_found"
-            ? "not_found"
-            : "unavailable";
-      const check: HandleCheck = { status, ok: status === "found", followers: followersFound };
-      setVerifiedTT(check);
-
-      if (status === "not_found") {
-        toast({
-          title: "TikTok username not found",
-          description: `We couldn't find @${h} on TikTok. Please double-check the username.`,
-          variant: "destructive",
-        });
-      } else if (status === "unavailable") {
-        toast({
-          title: "Couldn't check TikTok right now",
-          description: "The lookup service is temporarily unavailable — you can continue and we'll verify later.",
-        });
-      }
-
-      if (followersFound > 0) setFollowers(String(followersFound));
-    } catch (e) {
-      console.warn("verify failed", e);
-      setVerifiedTT({ status: "unavailable", ok: false, followers: 0 });
-      toast({ title: "Could not verify handle", description: "We'll re-check after signup." });
-    } finally {
-      setVerifyingTiktok(false);
-    }
-  };
 
 
   // niches
