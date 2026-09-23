@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp } from "lucide-react";
 import { formatLabel } from "@/pages/admin/_format";
+import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
 
 interface Props {
   userId: string | null;
@@ -82,6 +83,15 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
               {profile.engagement_rate != null && <div className="flex items-center gap-2 text-muted-foreground"><TrendingUp className="w-4 h-4 text-gold" /> ER: {profile.engagement_rate}%</div>}
               {profile.influencer_score != null && <div className="flex items-center gap-2 text-muted-foreground"><TrendingUp className="w-4 h-4 text-gold" /> Score: {profile.influencer_score}</div>}
             </div>
+
+            {userId && (
+              <div className="border-t border-border pt-4">
+                <CreatorInsightsPanel
+                  influencerId={userId}
+                  fallback={{ followers_count: profile.followers_count, tiktok_followers: profile.tiktok_followers }}
+                />
+              </div>
+            )}
 
             {Array.isArray(profile.niche) && profile.niche.length > 0 && (
               <div>
