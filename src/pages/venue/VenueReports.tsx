@@ -236,6 +236,42 @@ const VenueReports = () => {
               </ResponsiveContainer>
             </div>
 
+            <div className="bg-white border border-border rounded-2xl p-5 mb-8 overflow-x-auto">
+              <h3 className="text-sm font-semibold mb-3">Campaign performance</h3>
+              {campaignRows.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-6 text-center">No campaign activity yet</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                      <th className="py-2 pr-4 font-medium">Campaign</th>
+                      <th className="py-2 pr-4 font-medium">Bookings</th>
+                      <th className="py-2 pr-4 font-medium">Posts</th>
+                      <th className="py-2 pr-4 font-medium">Views</th>
+                      <th className="py-2 pr-4 font-medium">Likes</th>
+                      <th className="py-2 pr-4 font-medium">Comments</th>
+                      <th className="py-2 pr-4 font-medium">Engagement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaignRows.map((r: any) => {
+                      const er = r.views > 0 ? ((r.likes + r.comments + r.shares) / r.views) * 100 : 0;
+                      return (
+                        <tr key={r.key} className="border-b border-border/60 last:border-0">
+                          <td className="py-2 pr-4 font-medium text-foreground">{r.title}</td>
+                          <td className="py-2 pr-4">{r.bookings}</td>
+                          <td className="py-2 pr-4">{r.posts}</td>
+                          <td className="py-2 pr-4">{r.views.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{r.likes.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{r.comments.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{er.toFixed(2)}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
             {deliverables.length === 0 && bookings.length === 0 && (
               <div className="bg-white border border-border rounded-2xl py-12 text-center text-muted-foreground text-sm">
