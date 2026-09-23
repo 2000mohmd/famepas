@@ -322,6 +322,13 @@ const VenueContent = () => {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={!!statsFor} onOpenChange={(o) => !o && setStatsFor(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>{statsFor?.name || "Creator"} — audience & performance</DialogTitle></DialogHeader>
+            {statsFor && <CreatorInsightsPanel influencerId={statsFor.id} />}
+          </DialogContent>
+        </Dialog>
+
       </div>
     </DashboardLayout>
   );
