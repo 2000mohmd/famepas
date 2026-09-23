@@ -591,7 +591,7 @@ const InfluencerSignup = () => {
                 </button>
               )}
             </div>
-            <PrimaryButton onClick={() => setStep("socials")}>
+            <PrimaryButton onClick={() => setStep("niche")}>
               {avatarFile ? "Continue" : "Skip for now"} <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
           </Card>
