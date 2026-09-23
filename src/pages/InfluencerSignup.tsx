@@ -672,7 +672,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("socials")} step={5} total={5} />
+          <BackBar onBack={() => setStep("photo")} step={4} total={4} />
           <Card>
             <Heading title="Pick your content niches" sub="Choose all that apply — we'll match you with relevant offers." />
             <div className="flex flex-wrap gap-2 mb-6">
