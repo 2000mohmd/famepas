@@ -104,6 +104,31 @@ const VenueReports = () => {
   );
   const pieColors = ["#b8923a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
 
+  // Per-offer (campaign) performance: posts delivered and the reach they earned.
+  const campaignRows = useMemo(() => {
+    const offerTitle: Record<string, string> = {};
+    offers.forEach((o: any) => { offerTitle[o.id] = o.title; });
+    const bookingOffer: Record<string, string | null> = {};
+    bookings.forEach((b: any) => { bookingOffer[b.id] = b.offer_id ?? null; });
+
+    const rows: Record<string, any> = {};
+    const bump = (key: string) => (rows[key] ??= {
+      key, title: key === "none" ? "Direct bookings" : (offerTitle[key] || "Campaign"),
+      posts: 0, views: 0, likes: 0, comments: 0, shares: 0, bookings: 0,
+    });
+
+    bookings.forEach((b: any) => { bump(b.offer_id ?? "none").bookings += 1; });
+    deliverables.forEach((d: any) => {
+      const r = bump(bookingOffer[d.booking_id] ?? "none");
+      r.posts += 1;
+      r.views += Number(d.views) || 0;
+      r.likes += Number(d.likes) || 0;
+      r.comments += Number(d.comments) || 0;
+      r.shares += Number(d.shares) || 0;
+    });
+    return Object.values(rows).sort((a: any, b: any) => b.views - a.views);
+  }, [offers, bookings, deliverables]);
+
   const Stat = ({ icon: Icon, label, value, sub }: any) => (
     <div className="bg-white border border-border rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
