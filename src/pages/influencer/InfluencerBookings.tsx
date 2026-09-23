@@ -68,6 +68,17 @@ const InfluencerBookings = () => {
       toast({ title: "Add a post URL or upload a file", variant: "destructive" });
       return;
     }
+    const typedUrl = contentUrl.trim().toLowerCase();
+    if (typedUrl) {
+      if (platform === "instagram" && !typedUrl.includes("instagram.com")) {
+        toast({ title: "That link isn't an Instagram post", description: "Paste the link to your Instagram post or reel.", variant: "destructive" });
+        return;
+      }
+      if (platform === "tiktok" && !typedUrl.includes("tiktok.com")) {
+        toast({ title: "That link isn't a TikTok video", description: "Paste the link to your TikTok video.", variant: "destructive" });
+        return;
+      }
+    }
     setSubmitting(true);
     let mediaUrl: string | null = null;
     try {
