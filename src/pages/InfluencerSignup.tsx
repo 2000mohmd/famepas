@@ -393,7 +393,7 @@ const InfluencerSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => navigate("/login")} step={1} total={5} />
+          <BackBar onBack={() => navigate("/login")} step={1} total={4} />
           <Card>
             <Heading title="Create your creator account" sub="Join FamePass and start collaborating with brands." />
             <Field label="Email">
