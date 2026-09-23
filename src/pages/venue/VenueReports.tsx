@@ -49,9 +49,9 @@ const VenueReports = () => {
       } else setDeliverables([]);
 
       // redemptions via offers
-      const { data: offers } = await supabase.from("offers").select("id,title").in("venue_id", venueIds);
-      setOffers(offers ?? []);
-      const offerIds = (offers ?? []).map((o: any) => o.id);
+      const { data: offerRows } = await supabase.from("offers").select("id,title").in("venue_id", venueIds);
+      setOffers(offerRows ?? []);
+      const offerIds = (offerRows ?? []).map((o: any) => o.id);
       if (offerIds.length > 0) {
         let rq = supabase.from("offer_redemptions").select("id,status,created_at,redeemed_at,offer_id").in("offer_id", offerIds);
         if (sinceISO) rq = rq.gte("created_at", sinceISO);
