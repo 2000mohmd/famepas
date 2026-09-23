@@ -90,21 +90,6 @@ const Login = () => {
     }
   };
 
-  const [instagramLoading, setInstagramLoading] = useState(false);
-  const handleInstagram = async () => {
-    if (next) sessionStorage.setItem("postLoginRedirect", next);
-    setInstagramLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("instagram-oauth", { body: { action: "login_initiate" } });
-      if (error || !data?.url) {
-        toast({ title: "Instagram sign-in failed", description: (data as any)?.error || error?.message || "Please try again.", variant: "destructive" });
-        return;
-      }
-      window.location.href = data.url;
-    } finally {
-      setInstagramLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
