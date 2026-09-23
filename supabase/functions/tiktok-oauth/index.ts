@@ -198,7 +198,9 @@ Deno.serve(async (req) => {
 
       const handle = result.username ?? result.displayName;
 
-      const { error: dbErr } = await admin.from("social_integrations").upsert({
+      // Partial unique index on (influencer_id, platform) — ON CONFLICT can't
+      // target it, so update-then-insert manually.
+      const row = {
         influencer_id: user.id,
         venue_id: null,
         platform: "tiktok",
@@ -212,10 +214,21 @@ Deno.serve(async (req) => {
         scope: result.scope,
         status: "connected",
         connected_at: new Date().toISOString(),
-      }, { onConflict: "influencer_id,platform" });
+      };
+
+      const { data: existing } = await admin
+        .from("social_integrations")
+        .select("id")
+        .eq("influencer_id", user.id)
+        .eq("platform", "tiktok")
+        .maybeSingle();
+
+      const { error: dbErr } = existing
+        ? await admin.from("social_integrations").update(row).eq("id", existing.id)
+        : await admin.from("social_integrations").insert(row);
 
       if (dbErr) {
-        console.error("social_integrations upsert failed", dbErr);
+        console.error("social_integrations save failed", dbErr);
         return json({ error: dbErr.message, code: "DB_UPDATE_FAILED" }, 200);
       }
 

@@ -267,7 +267,9 @@ Deno.serve(async (req) => {
       const result = await exchangeCode(String(body.code ?? ""));
       if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
 
-      const { error: dbErr } = await admin.from("social_integrations").upsert({
+      // The (influencer_id, platform) unique index is partial, so PostgREST
+      // upsert/ON CONFLICT can't target it — update-then-insert instead.
+      const row = {
         influencer_id: user.id,
         venue_id: null,
         platform: "instagram",
@@ -280,10 +282,21 @@ Deno.serve(async (req) => {
         scope: result.scope,
         status: "connected",
         connected_at: new Date().toISOString(),
-      }, { onConflict: "influencer_id,platform" });
+      };
+
+      const { data: existing } = await admin
+        .from("social_integrations")
+        .select("id")
+        .eq("influencer_id", user.id)
+        .eq("platform", "instagram")
+        .maybeSingle();
+
+      const { error: dbErr } = existing
+        ? await admin.from("social_integrations").update(row).eq("id", existing.id)
+        : await admin.from("social_integrations").insert(row);
 
       if (dbErr) {
-        console.error("social_integrations upsert failed", dbErr);
+        console.error("social_integrations save failed", dbErr);
         return json({ error: dbErr.message, code: "DB_UPDATE_FAILED" }, 200);
       }
 
