@@ -16,8 +16,19 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import InfluencerDetailDialog from "@/components/admin/InfluencerDetailDialog";
+import PageControls from "@/components/admin/PageControls";
+import { usePagination } from "@/hooks/usePagination";
 import { notifyEmail } from "@/lib/notify";
 import { formatLabel } from "./_format";
+import { creatorTier, tierBadgeClass, LOW_FOLLOWER_THRESHOLD } from "./_creatorTier";
+
+const REJECTION_REASONS = [
+  "Fake account",
+  "Too few followers",
+  "Wrong city",
+  "Duplicate account",
+  "Other",
+] as const;
 
 interface Influencer {
   user_id: string;
@@ -61,6 +72,9 @@ const AdminInfluencers = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
+  const [rejectNote, setRejectNote] = useState("");
   const { toast } = useToast();
 
   const fetchInfluencers = async () => {
@@ -113,7 +127,7 @@ const AdminInfluencers = () => {
     }
   };
 
-  const setApprovalStatus = async (userId: string, status: "approved" | "rejected") => {
+  const setApprovalStatus = async (userId: string, status: "approved" | "rejected", reason?: string) => {
     const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     if (status === "approved") {
@@ -124,7 +138,7 @@ const AdminInfluencers = () => {
         variant: sent ? undefined : "destructive",
       });
     } else {
-      const sent = await notifyEmail({ event: "influencer_rejected", user_id: userId });
+      const sent = await notifyEmail({ event: "influencer_rejected", user_id: userId, reason });
       toast({
         title: "Influencer rejected",
         description: sent ? "Notification email sent." : "Notification email could not be sent.",
@@ -132,6 +146,19 @@ const AdminInfluencers = () => {
       });
     }
     fetchInfluencers();
+  };
+
+  const openReject = (userId: string) => {
+    setRejectTarget(userId);
+    setRejectReason(REJECTION_REASONS[0]);
+    setRejectNote("");
+  };
+
+  const submitReject = async () => {
+    if (!rejectTarget) return;
+    const reason = rejectReason === "Other" ? (rejectNote.trim() || "Other") : rejectReason;
+    await setApprovalStatus(rejectTarget, "rejected", reason);
+    setRejectTarget(null);
   };
 
 
@@ -188,6 +215,7 @@ const AdminInfluencers = () => {
   else if (sortBy === "name") filtered.sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
   else if (sortBy === "name_desc") filtered.sort((a, b) => (b.full_name || "").localeCompare(a.full_name || ""));
 
+  const { page, pageCount, setPage, paged } = usePagination(filtered);
 
   const exportToExcel = () => {
     const rows = filtered.map((i) => ({
@@ -272,7 +300,7 @@ const AdminInfluencers = () => {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No influencers found</td></tr>
               ) : (
-                filtered.map((inf) => (
+                paged.map((inf) => (
                   <tr key={inf.user_id} className={`border-b border-border/50 hover:bg-secondary/30 transition-colors ${inf.is_suspended ? "opacity-60" : ""}`}>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -327,9 +355,25 @@ const AdminInfluencers = () => {
                       ) : "—"}
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">
-                      {inf.followers_count ? `IG: ${inf.followers_count.toLocaleString()}` : ""}
-                      {inf.tiktok_followers ? ` / TK: ${inf.tiktok_followers.toLocaleString()}` : ""}
-                      {!inf.followers_count && !inf.tiktok_followers ? "—" : ""}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>
+                          {inf.followers_count ? `IG: ${inf.followers_count.toLocaleString()}` : ""}
+                          {inf.tiktok_followers ? ` / TK: ${inf.tiktok_followers.toLocaleString()}` : ""}
+                          {!inf.followers_count && !inf.tiktok_followers ? "—" : ""}
+                        </span>
+                        {(inf.followers_count || inf.tiktok_followers) ? (() => {
+                          const max = Math.max(inf.followers_count || 0, inf.tiktok_followers || 0);
+                          const tier = creatorTier(max);
+                          return (
+                            <>
+                              <Badge className={`text-[10px] px-1.5 py-0 h-4 ${tierBadgeClass[tier]}`}>{tier}</Badge>
+                              {max < LOW_FOLLOWER_THRESHOLD && inf.approval_status === "pending" && (
+                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">Low followers</Badge>
+                              )}
+                            </>
+                          );
+                        })() : null}
+                      </div>
                     </td>
                     <td className="p-4">{statusBadge(inf)}</td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
@@ -343,7 +387,7 @@ const AdminInfluencers = () => {
                             <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="text-success hover:bg-success/10 h-7 px-2" title="Approve">
                               <Check className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 px-2" title="Reject">
+                            <Button variant="ghost" size="sm" onClick={() => openReject(inf.user_id)} className="text-destructive hover:bg-destructive/10 h-7 px-2" title="Reject">
                               <X className="w-4 h-4" />
                             </Button>
                           </>
@@ -389,7 +433,38 @@ const AdminInfluencers = () => {
             </tbody>
           </table>
           </div>
+          <PageControls page={page} pageCount={pageCount} onChange={setPage} />
         </div>
+
+        {/* Reject Dialog */}
+        <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
+          <DialogContent className="bg-card border-border max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display text-foreground">Reject application</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div>
+                <Label className="text-muted-foreground">Reason</Label>
+                <Select value={rejectReason} onValueChange={setRejectReason}>
+                  <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {REJECTION_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {rejectReason === "Other" && (
+                <div>
+                  <Label className="text-muted-foreground">Details</Label>
+                  <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Reason for rejection..." className="bg-secondary border-border mt-1" rows={3} />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">This reason is included in the automatic email sent to the applicant.</p>
+              <Button onClick={submitReject} className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold">
+                Reject &amp; Notify
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Warning Dialog */}
         <Dialog open={warningOpen} onOpenChange={setWarningOpen}>

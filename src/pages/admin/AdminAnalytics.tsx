@@ -71,7 +71,10 @@ const AdminAnalytics = () => {
       setLoading(true);
       const inRange = (q: any) => q.gte("created_at", fromISO).lte("created_at", toISO);
 
-      let venueQuery = inRange(supabase.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true));
+      // "Active Venues" is a status, not a date-range metric — approved and
+      // currently active, full stop. (Previously scoped to "created in range",
+      // which is why this card showed 1 while the venues list showed 12.)
+      let venueQuery = supabase.from("venues").select("id", { count: "exact", head: true }).eq("is_active", true).eq("approval_status", "approved");
       if (cityFilter !== "all") venueQuery = venueQuery.eq("city", cityFilter);
 
       let venueListQuery = supabase.from("venues").select("name, id, category").eq("is_active", true).limit(20);
@@ -80,9 +83,8 @@ const AdminAnalytics = () => {
       let categoriesQuery = supabase.from("venues").select("category");
       if (cityFilter !== "all") categoriesQuery = categoriesQuery.eq("city", cityFilter);
 
-      const [venues, influencers, claims, completed, offersTotal, offersInRange, liveOffers, venueList, categoriesRaw] = await Promise.all([
+      const [venues, claims, completed, offersTotal, offersInRange, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
-        inRange(supabase.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "influencer")),
         // Claims = every application/redemption record created in range
         inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
         // Completed redemptions = the visit actually happened
@@ -97,9 +99,9 @@ const AdminAnalytics = () => {
         categoriesQuery,
       ]);
 
-      setStats({
+      setStats((s) => ({
+        ...s,
         venues: venues.count ?? 0,
-        influencers: influencers.count ?? 0,
         claims: claims.count ?? 0,
         completedRedemptions: completed.count ?? 0,
         offers: offersTotal.count ?? 0,
@@ -107,7 +109,7 @@ const AdminAnalytics = () => {
         liveOffers: ((liveOffers.data as any[]) ?? []).filter(
           (o) => !o.ends_at || new Date(o.ends_at).getTime() > Date.now()
         ).length,
-      });
+      }));
 
       // ---- Sub-metric breakdowns for the same range ----
       const [signups, postedRows, redRows, delRows, infProfiles, liveNow] = await Promise.all([
@@ -153,6 +155,10 @@ const AdminAnalytics = () => {
         offersLive: liveRightNow,
         offersDone: doneOfferIds.size,
       });
+      // The "Active Influencers" card must actually mean active (claimed/delivered
+      // in range), not "registered in range" — those are two different numbers
+      // and conflating them is exactly what made the three admin pages disagree.
+      setStats((s) => ({ ...s, influencers: activeInfluencerIds.size }));
 
 
       // Build category distribution from venues

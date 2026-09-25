@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp, ArrowLeftRight } from "lucide-react";
 import { formatLabel } from "@/pages/admin/_format";
+import { creatorTier, tierBadgeClass } from "@/pages/admin/_creatorTier";
 import { useToast } from "@/hooks/use-toast";
 import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
 
@@ -81,6 +82,10 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                 <h3 className="text-xl font-semibold text-foreground">{profile.full_name || "—"}</h3>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {statusBadge(profile)}
+                  {(profile.followers_count || profile.tiktok_followers) ? (() => {
+                    const tier = creatorTier(Math.max(profile.followers_count || 0, profile.tiktok_followers || 0));
+                    return <Badge className={tierBadgeClass[tier]}>{tier}</Badge>;
+                  })() : null}
                   {profile.badge && <Badge variant="secondary">{formatLabel(profile.badge)}</Badge>}
                 </div>
               </div>

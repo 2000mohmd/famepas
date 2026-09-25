@@ -36,6 +36,12 @@ const TOGGLES: ToggleDef[] = [
     description: "Shows a maintenance banner to all logged-in users across the platform.",
     default: false,
   },
+  {
+    key: "billing_numbers_hidden",
+    title: "Hide Billing Numbers From Demo",
+    description: "Hides the revenue and withdrawal figures on the Billing page (mostly test data right now). Turn off once there are ~10 live venues generating real numbers.",
+    default: true,
+  },
 ];
 
 const parseBool = (v: any, d: boolean) => {

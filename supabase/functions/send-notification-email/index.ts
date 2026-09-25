@@ -92,13 +92,16 @@ serve(async (req) => {
         const inf = await influencerRecipient(admin, body.user_id);
         if (!inf.email) return json({ success: false, error: "No email on record" });
         const approved = event === "influencer_approved";
+        const reason: string = approved ? "" : (body.reason ?? "");
         const html = emailLayout({
           heading: approved ? "You're approved 🎉" : "Update on your application",
           bodyHtml:
             paragraph(`Hi ${inf.name},`) +
             (approved
               ? paragraph("Your FamePass account has been activated. Log in now to start browsing offers from venues near you.")
-              : paragraph("Thank you for applying to FamePass. After review, we're unable to activate your account at this time. If you have questions, reply to this email.")),
+              : paragraph("Thank you for applying to FamePass. After review, we're unable to activate your account at this time.") +
+                (reason ? quote(reason) : "") +
+                paragraph("If you have questions, reply to this email.")),
           button: approved ? { label: "Sign in to FamePass", url: LOGIN_URL } : undefined,
         });
         const r = await sendEmail({

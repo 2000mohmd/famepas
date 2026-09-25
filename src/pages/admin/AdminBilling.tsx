@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, DollarSign, Percent, CreditCard } from "lucide-react";
+import { Edit, DollarSign, Percent, CreditCard, EyeOff } from "lucide-react";
 import StatCard from "@/components/StatCard";
 
 interface Tier {
@@ -28,15 +28,19 @@ const AdminBilling = () => {
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
   const [loading, setLoading] = useState(true);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [numbersHidden, setNumbersHidden] = useState(true);
   const { toast } = useToast();
 
   const fetchAll = async () => {
-    const [tiersRes, earningsRes, withdrawalsRes, pendingRes] = await Promise.all([
+    const [tiersRes, earningsRes, withdrawalsRes, pendingRes, settingRes] = await Promise.all([
       supabase.from("subscription_tiers").select("*").order("price"),
       supabase.from("earnings").select("net_amount, commission"),
       supabase.from("withdrawal_requests").select("id, influencer_id, amount, status, created_at, payment_method").order("created_at", { ascending: false }).limit(20),
       supabase.from("withdrawal_requests").select("amount", { count: "exact" }).eq("status", "pending"),
+      supabase.from("platform_settings").select("value").eq("key", "billing_numbers_hidden").maybeSingle(),
     ]);
+    const hidden = settingRes.data?.value;
+    setNumbersHidden(hidden === undefined || hidden === null ? true : hidden === true || hidden === "true");
     setTiers((tiersRes.data as any) ?? []);
     const revenue = (earningsRes.data ?? []).reduce((sum: number, e: any) => sum + (e.commission ?? 0), 0);
     setTotalRevenue(revenue);
@@ -121,11 +125,21 @@ const AdminBilling = () => {
         </h1>
         <p className="text-muted-foreground mb-8">Manage subscription tiers, commissions and transactions</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard title="Platform Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="w-6 h-6" />} trend="From commissions" trendUp />
-          <StatCard title="Pending Withdrawals" value={pendingWithdrawals} icon={<CreditCard className="w-6 h-6" />} trend="Awaiting processing" trendUp={pendingWithdrawals === 0} />
-          <StatCard title="Active Tiers" value={loading ? "…" : tiers.filter(t => t.is_active).length} icon={<Percent className="w-6 h-6" />} trend="Subscription plans" trendUp />
-        </div>
+        {numbersHidden ? (
+          <div className="mb-8 flex items-center gap-3 p-4 rounded-lg border border-border bg-secondary/40">
+            <EyeOff className="w-5 h-5 text-muted-foreground shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              Revenue and withdrawal numbers are hidden — mostly test data with real venues still ramping up.
+              Turn this off in <strong>Platform Settings</strong> once there's real volume to show.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatCard title="Platform Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="w-6 h-6" />} trend="From commissions" trendUp />
+            <StatCard title="Pending Withdrawals" value={pendingWithdrawals} icon={<CreditCard className="w-6 h-6" />} trend="Awaiting processing" trendUp={pendingWithdrawals === 0} />
+            <StatCard title="Active Tiers" value={loading ? "…" : tiers.filter(t => t.is_active).length} icon={<Percent className="w-6 h-6" />} trend="Subscription plans" trendUp />
+          </div>
+        )}
 
         {/* Subscription Tiers */}
         <div className="mb-8">

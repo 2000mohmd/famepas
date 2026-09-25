@@ -2,7 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 type NotifyPayload =
   | { event: "venue_approved" | "venue_rejected"; venue_id: string }
-  | { event: "influencer_approved" | "influencer_rejected"; user_id: string }
+  | { event: "influencer_approved"; user_id: string }
+  | { event: "influencer_rejected"; user_id: string; reason?: string }
   | { event: "application_submitted" | "application_approved" | "application_rejected"; redemption_id: string }
   | { event: "content_submitted" | "content_approved"; deliverable_id: string }
   | { event: "content_rejected"; deliverable_id: string; feedback?: string };

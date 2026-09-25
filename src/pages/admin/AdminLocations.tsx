@@ -13,6 +13,7 @@ import { isValidName } from "@/lib/validation";
 interface Location {
   id: string;
   city: string;
+  area: string | null;
   country: string;
   is_active: boolean;
   created_at: string;
@@ -21,11 +22,11 @@ interface Location {
 const AdminLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [open, setOpen] = useState(false);
-  const [newLoc, setNewLoc] = useState({ city: "", country: "UAE" });
+  const [newLoc, setNewLoc] = useState({ city: "", area: "", country: "UAE" });
   const { toast } = useToast();
 
   const fetchLocations = async () => {
-    const { data } = await supabase.from("service_locations").select("*").order("city");
+    const { data } = await supabase.from("service_locations").select("*").order("area").order("city");
     setLocations((data as Location[]) ?? []);
   };
 
@@ -42,13 +43,13 @@ const AdminLocations = () => {
     }
     const { error } = await supabase
       .from("service_locations")
-      .insert({ city: newLoc.city.trim(), country: newLoc.country.trim(), is_active: true } as any);
+      .insert({ city: newLoc.city.trim(), area: newLoc.area.trim() || null, country: newLoc.country.trim(), is_active: true } as any);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Location added" });
       setOpen(false);
-      setNewLoc({ city: "", country: "UAE" });
+      setNewLoc({ city: "", area: "", country: "UAE" });
       fetchLocations();
     }
   };
@@ -90,6 +91,11 @@ const AdminLocations = () => {
                   )}
                 </div>
                 <div className="space-y-2">
+                  <Label className="text-muted-foreground">Area / Region (optional)</Label>
+                  <Input value={newLoc.area} onChange={e => setNewLoc(v => ({ ...v, area: e.target.value }))} placeholder="e.g. Metn" className="bg-secondary border-border" />
+                  <p className="text-xs text-muted-foreground">Groups towns under a region in the venue signup city picker.</p>
+                </div>
+                <div className="space-y-2">
                   <Label className="text-muted-foreground">Country</Label>
                   <Input value={newLoc.country} onChange={e => setNewLoc(v => ({ ...v, country: e.target.value }))} placeholder="e.g. UAE" className="bg-secondary border-border" />
                   <p className="text-xs text-muted-foreground">Country names drive address search restrictions across the app.</p>
@@ -105,6 +111,7 @@ const AdminLocations = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">City</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Area</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Country</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
@@ -112,11 +119,12 @@ const AdminLocations = () => {
             </thead>
             <tbody>
               {locations.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No locations yet</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No locations yet</td></tr>
               ) : (
                 locations.map((loc) => (
                   <tr key={loc.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="p-4 font-medium text-foreground">{loc.city}</td>
+                    <td className="p-4 text-muted-foreground">{loc.area || "—"}</td>
                     <td className="p-4 text-muted-foreground">{loc.country}</td>
                     <td className="p-4">
                       <Badge className={loc.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>

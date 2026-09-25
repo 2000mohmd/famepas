@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Trash2, Eye, UserCog } from "lucide-react";
 import VenueDetailDialog from "@/components/admin/VenueDetailDialog";
+import PageControls from "@/components/admin/PageControls";
+import { usePagination } from "@/hooks/usePagination";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -89,6 +91,7 @@ const AdminVenues = () => {
     }
   });
   const allCities = [...new Set(venues.map(v => v.city).filter(Boolean))].sort();
+  const { page, pageCount, setPage, paged } = usePagination(filtered);
 
   const toggleActive = async (id: string, active: boolean) => {
     await supabase.from("venues").update({ is_active: !active } as any).eq("id", id);
@@ -314,7 +317,7 @@ const AdminVenues = () => {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
               ) : (
-                filtered.map((venue) => (
+                paged.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -407,6 +410,7 @@ const AdminVenues = () => {
             </tbody>
           </table>
           </div>
+          <PageControls page={page} pageCount={pageCount} onChange={setPage} />
         </div>
 
         <VenueDetailDialog

@@ -10,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Plus, ShieldCheck, Trash2, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ALL_PERMISSIONS = [
   { key: "manage_venues", label: "Manage Venues" },
@@ -27,8 +28,23 @@ const ALL_PERMISSIONS = [
 
 const AdminUsers = () => {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", full_name: "", permissions: [] as string[] });
+
+  // Gate this page itself, matching the DB policy: only manage_users holders
+  // get in, unless nobody holds it yet (first-time bootstrap).
+  const { data: canManage, isLoading: permLoading } = useQuery({
+    queryKey: ["can-manage-admins", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data: hasPerm } = await supabase.rpc("has_admin_permission", { _user_id: user.id, _permission: "manage_users" });
+      if (hasPerm) return true;
+      const { count } = await supabase.from("admin_user_permissions").select("id", { count: "exact", head: true }).eq("permission", "manage_users");
+      return !count;
+    },
+    enabled: !!user,
+  });
 
   const { data: admins } = useQuery({
     queryKey: ["admin-users"],
@@ -113,6 +129,20 @@ const AdminUsers = () => {
   const toggle = (key: string, list: string[], set: (v: string[]) => void) => {
     set(list.includes(key) ? list.filter((p) => p !== key) : [...list, key]);
   };
+
+  if (!permLoading && !canManage) {
+    return (
+      <DashboardLayout type="admin">
+        <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+          <h1 className="text-xl font-display font-bold text-foreground">Manage Admin Users</h1>
+          <p className="text-muted-foreground max-w-sm">
+            You don't have the "Manage Admin Users" permission. Ask whoever holds it to grant it to you.
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout type="admin">

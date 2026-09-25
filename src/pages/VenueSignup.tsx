@@ -178,7 +178,7 @@ const VenueSignup = () => {
   const [brandCategories, setBrandCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [venueCity, setVenueCity] = useState("");
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<{ city: string; area: string | null }[]>([]);
 
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -201,8 +201,8 @@ const VenueSignup = () => {
 
   // load the active city list — the same allow-list AdminVenues validates against
   useEffect(() => {
-    supabase.from("service_locations").select("city").eq("is_active", true).order("city").then(({ data }) => {
-      if (data && data.length) setCities(data.map((c) => c.city));
+    supabase.from("service_locations").select("city, area").eq("is_active", true).order("area").order("city").then(({ data }) => {
+      if (data && data.length) setCities(data as { city: string; area: string | null }[]);
     });
   }, []);
 
@@ -560,7 +560,18 @@ const VenueSignup = () => {
                 className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
               >
                 <option value="">Select a city…</option>
-                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                {(() => {
+                  const groups = new Map<string, string[]>();
+                  cities.forEach(({ city, area }) => {
+                    const key = area || "Other";
+                    groups.set(key, [...(groups.get(key) ?? []), city]);
+                  });
+                  return Array.from(groups.entries()).map(([area, list]) => (
+                    <optgroup key={area} label={area}>
+                      {list.map(c => <option key={c} value={c}>{c}</option>)}
+                    </optgroup>
+                  ));
+                })()}
               </select>
             </Field>
             <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("location-search")}>Next</PrimaryButton>
