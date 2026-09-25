@@ -34,6 +34,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [noShowCount, setNoShowCount] = useState(0);
+  const [recentClaims, setRecentClaims] = useState<any[]>([]);
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const { toast } = useToast();
@@ -42,13 +43,16 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
     if (!userId || !open) return;
     setLoading(true);
     (async () => {
-      const [{ data }, { count }] = await Promise.all([
+      const [{ data }, { count }, { data: claims }] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("bookings").select("id", { count: "exact", head: true }).eq("influencer_id", userId).eq("status", "no_show"),
+        supabase.from("offer_redemptions").select("id, status, created_at, offers(title, venues(name))")
+          .eq("influencer_id", userId).order("created_at", { ascending: false }).limit(5),
       ]);
       setProfile(data);
       setNotes(data?.admin_notes ?? "");
       setNoShowCount(count ?? 0);
+      setRecentClaims(claims ?? []);
       setLoading(false);
     })();
   }, [userId, open]);
@@ -178,6 +182,25 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                 <ul className="text-sm space-y-1">
                   {Object.entries(profile.social_links as Record<string, string>).map(([k, v]) => (
                     <li key={k}><a href={v} target="_blank" rel="noreferrer" className="text-gold hover:underline">{k}: {v}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {recentClaims.length > 0 && (
+              <div className="border-t border-border pt-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Previous Claims</p>
+                <ul className="text-sm space-y-1.5">
+                  {recentClaims.map((c: any) => (
+                    <li key={c.id} className="flex items-center justify-between gap-2 text-muted-foreground">
+                      <span className="text-foreground truncate">
+                        {c.offers?.title || "Offer"}{c.offers?.venues?.name ? ` — ${c.offers.venues.name}` : ""}
+                      </span>
+                      <span className="flex items-center gap-2 shrink-0">
+                        <Badge variant="secondary" className="text-[10px] capitalize">{c.status}</Badge>
+                        {new Date(c.created_at).toLocaleDateString()}
+                      </span>
+                    </li>
                   ))}
                 </ul>
               </div>

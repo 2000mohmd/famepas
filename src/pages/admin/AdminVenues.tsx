@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Eye, UserCog } from "lucide-react";
+import { Plus, Search, Trash2, Eye, UserCog, MoreHorizontal, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import VenueDetailDialog from "@/components/admin/VenueDetailDialog";
 import PageControls from "@/components/admin/PageControls";
 import { usePagination } from "@/hooks/usePagination";
@@ -54,6 +55,7 @@ const AdminVenues = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: "convert" | "delete"; venue: Venue } | null>(null);
   const { toast } = useToast();
 
   const fetchVenues = async () => {
@@ -349,59 +351,38 @@ const AdminVenues = () => {
                       </Badge>
                     </td>
                     <td className="p-4">
-                      <div className="flex gap-1 flex-wrap">
-                        <Button variant="ghost" size="sm" onClick={() => { setDetailId(venue.id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View details">
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                      <div className="flex items-center gap-1">
                         {venue.approval_status === "pending" && (
-                          <>
-                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="text-success hover:bg-success/10 h-7 text-xs">Approve</Button>
-                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(venue.id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 text-xs">Reject</Button>
-                          </>
+                          <Button size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">Approve</Button>
                         )}
-                        <Button variant="ghost" size="sm" onClick={() => toggleActive(venue.id, venue.is_active)} className="text-muted-foreground hover:text-gold h-7 text-xs">
-                          {venue.is_active ? "Deactivate" : "Activate"}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="Move to Creator — this account signed up as a venue by mistake">
-                              <UserCog className="w-4 h-4" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="More actions">
+                              <MoreHorizontal className="w-4 h-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-card border-border">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Move to Creator?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Converts {venue.name} from a venue into a creator account. This deletes the venue's
-                                brand/location records and moves the account into the influencer queue as pending.
-                                This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => convertToCreator(venue.id, venue.name)}>Move to Creator</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-card border-border">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete venue?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This permanently deletes {venue.name} and its owner account. This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteVenue(venue.id, venue.name)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover z-50">
+                            <DropdownMenuItem onClick={() => { setDetailId(venue.id); setDetailOpen(true); }}>
+                              <Eye className="w-4 h-4 mr-2" /> View details
+                            </DropdownMenuItem>
+                            {venue.approval_status === "pending" && (
+                              <DropdownMenuItem onClick={() => setApprovalStatus(venue.id, "rejected")} className="text-destructive focus:text-destructive">
+                                <X className="w-4 h-4 mr-2" /> Reject
+                              </DropdownMenuItem>
+                            )}
+                            {venue.approval_status === "approved" && (
+                              <DropdownMenuItem onClick={() => toggleActive(venue.id, venue.is_active)}>
+                                {venue.is_active ? "Deactivate" : "Activate"}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "convert", venue })}>
+                              <UserCog className="w-4 h-4 mr-2" /> Move to Creator
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "delete", venue })} className="text-destructive focus:text-destructive">
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -420,6 +401,40 @@ const AdminVenues = () => {
           onApprove={(id) => setApprovalStatus(id, "approved")}
           onReject={(id) => setApprovalStatus(id, "rejected")}
         />
+
+        <AlertDialog open={!!confirmAction} onOpenChange={(o) => !o && setConfirmAction(null)}>
+          <AlertDialogContent className="bg-card border-border">
+            {confirmAction?.type === "convert" ? (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Move to Creator?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Converts {confirmAction.venue.name} from a venue into a creator account. This deletes the venue's
+                    brand/location records and moves the account into the influencer queue as pending.
+                    This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => { convertToCreator(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }}>Move to Creator</AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            ) : confirmAction?.type === "delete" ? (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete venue?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently deletes {confirmAction.venue.name} and its owner account. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => { deleteVenue(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            ) : null}
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

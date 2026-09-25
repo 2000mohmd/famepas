@@ -85,10 +85,11 @@ const AdminAnalytics = () => {
 
       const [venues, claims, completed, offersTotal, offersInRange, liveOffers, venueList, categoriesRaw] = await Promise.all([
         venueQuery,
-        // Claims = every application/redemption record created in range
-        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true })),
-        // Completed redemptions = the visit actually happened
-        inRange(supabase.from("offer_redemptions").select("id", { count: "exact", head: true }))
+        // Claims/completed are all-time totals so they match the Dashboard &
+        // Redemptions list pages (previously scoped to range, which is why
+        // this showed "2, 0 completed" while those pages showed "14, 2").
+        supabase.from("offer_redemptions").select("id", { count: "exact", head: true }),
+        supabase.from("offer_redemptions").select("id", { count: "exact", head: true })
           .in("status", ["redeemed", "completed"]),
         // Total offers is an all-time figure so it matches the Dashboard & Offers pages
         supabase.from("offers").select("id", { count: "exact", head: true }),
@@ -273,16 +274,15 @@ const AdminAnalytics = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend="New in range" trendUp />
+            <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={`Claimed/delivered in the ${rangeLabel.toLowerCase()}`} trendUp />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{sub.influencersActive}</span> claimed or delivered something</p>
-              <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered</p>
+              <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered in the {rangeLabel.toLowerCase()}</p>
             </div>
           </div>
           <div className="space-y-2">
-            <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend="Completed ÷ claims" trendUp={redemptionRate > 50} />
+            <StatCard title="Redemption Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend="Completed ÷ claims (all time)" trendUp={redemptionRate > 50} />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{stats.claims}</span> claims in range</p>
+              <p><span className="text-foreground font-medium">{stats.claims}</span> total claims</p>
               <p><span className="text-foreground font-medium">{stats.completedRedemptions}</span> completed redemptions</p>
             </div>
           </div>

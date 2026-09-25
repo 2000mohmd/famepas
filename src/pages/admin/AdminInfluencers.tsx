@@ -21,6 +21,7 @@ import { usePagination } from "@/hooks/usePagination";
 import { notifyEmail } from "@/lib/notify";
 import { formatLabel } from "./_format";
 import { creatorTier, tierBadgeClass, LOW_FOLLOWER_THRESHOLD } from "./_creatorTier";
+import { findNameDuplicateIds } from "./_dupes";
 
 const REJECTION_REASONS = [
   "Fake account",
@@ -193,6 +194,7 @@ const AdminInfluencers = () => {
     const p = normalizePhone(i.phone);
     if (p) phoneCounts.set(p, (phoneCounts.get(p) || 0) + 1);
   });
+  const nameDupeIds = findNameDuplicateIds(influencers.map((i) => ({ id: i.user_id, name: i.full_name })));
 
   let filtered = influencers.filter(i =>
     (i.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -291,7 +293,7 @@ const AdminInfluencers = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Followers</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Joined</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground sticky right-0 bg-card">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -323,6 +325,9 @@ const AdminInfluencers = () => {
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-foreground">{inf.full_name || "—"}</span>
                             {inf.is_verified && <ShieldCheck className="w-4 h-4 text-gold shrink-0" />}
+                            {nameDupeIds.has(inf.user_id) && (
+                              <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4" title="Similar name found elsewhere in this list">Similar name</Badge>
+                            )}
                           </div>
                           {inf.phone && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -377,7 +382,7 @@ const AdminInfluencers = () => {
                     </td>
                     <td className="p-4">{statusBadge(inf)}</td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
-                    <td className="p-4">
+                    <td className="p-4 sticky right-0 bg-card">
                       <div className="flex gap-1 flex-wrap">
                         <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View profile">
                           <Eye className="w-4 h-4" />
