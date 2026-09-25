@@ -8,7 +8,13 @@ import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } fro
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 
-const normalizeHandle = (v: string) => v.trim().replace(/^@+/, "");
+const normalizeHandle = (v: string) => {
+  let s = v.trim();
+  // Pull the username out of a pasted profile URL (instagram.com/user, tiktok.com/@user, ...).
+  const urlMatch = s.match(/^https?:\/\/[^/]+\/(@?[^/?#]+)/i);
+  if (urlMatch) s = urlMatch[1];
+  return s.replace(/^@+/, "").trim();
+};
 
 /* ============================================================
    Joli-style light-mode creator (influencer) signup wizard

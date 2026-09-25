@@ -8,6 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { formatLabel } from "@/pages/admin/_format";
 
+// Single-word, obviously-placeholder business names — flagged for admin review.
+const GENERIC_NAME_WORDS = ["creator", "influencer", "fashion", "test", "venue", "business", "brand", "sample"];
+const isGenericName = (name: string) => {
+  const words = String(name || "").trim().toLowerCase().split(/\s+/);
+  return words.length === 1 && GENERIC_NAME_WORDS.includes(words[0]);
+};
+
 interface Props {
   venueId: string | null;
   open: boolean;
@@ -98,6 +105,9 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                   )}
                   {venue.city && cities.length > 0 && !cities.includes(String(venue.city).trim()) && (
                     <Badge variant="outline" className="border-yellow-400/40 text-yellow-500">Off-list city</Badge>
+                  )}
+                  {isGenericName(venue.name) && (
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30">Generic name — review</Badge>
                   )}
                 </div>
               </div>

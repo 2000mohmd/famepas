@@ -287,13 +287,10 @@ serve(async (req) => {
       }
     }
 
+    // Instagram and TikTok followers must never cross columns: followers_count
+    // is read everywhere as "Instagram followers", tiktok_followers as TikTok's.
     const updates: Record<string, any> = {};
-    if (result.instagram?.followers) {
-      updates.followers_count = result.instagram.followers;
-    } else if (result.tiktok?.followers) {
-      updates.followers_count = result.tiktok.followers;
-      updates.tiktok_followers = result.tiktok.followers;
-    }
+    if (result.instagram?.followers) updates.followers_count = result.instagram.followers;
     if (result.tiktok?.followers) updates.tiktok_followers = result.tiktok.followers;
     if (ig) {
       updates.instagram_verified =

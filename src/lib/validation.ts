@@ -11,8 +11,11 @@ export const isValidFullName = (v: string, min = 3) => {
   return t.length >= min && /\S+\s+\S+/.test(t);
 };
 
-/** Handle is acceptable when empty (optional) or has >= 2 alphanumeric chars. */
+/** Real handle shape: letters/numbers/dots/underscores only, 2-30 chars — no URLs, no spaces. */
+export const HANDLE_REGEX = /^[a-zA-Z0-9._]{2,30}$/;
+
+/** Handle is acceptable when empty (optional) or matches a real handle's shape. */
 export const isValidOptionalHandle = (normalized: string, raw: string) => {
   if (!raw.trim()) return true;
-  return (normalized.match(/[a-zA-Z0-9]/g)?.length ?? 0) >= 2;
+  return HANDLE_REGEX.test(normalized);
 };

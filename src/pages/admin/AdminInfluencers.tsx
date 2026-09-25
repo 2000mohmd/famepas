@@ -37,6 +37,17 @@ interface Influencer {
 }
 
 const stripAt = (h: string | null) => (h ? h.replace(/^@+/, "") : "");
+const normalizePhone = (p: string | null) => (p || "").replace(/\D/g, "");
+
+/** Suspended/pending/rejected/verified are independent flags in the schema —
+ * show one priority-ordered pill instead of stacking all of them. */
+const statusBadge = (inf: Influencer) => {
+  if (inf.is_suspended) return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Suspended</Badge>;
+  if (inf.approval_status === "pending") return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">Pending</Badge>;
+  if (inf.approval_status === "rejected") return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Rejected</Badge>;
+  if (inf.is_verified) return <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">Verified</Badge>;
+  return <Badge variant="secondary" className="text-xs w-fit">Active</Badge>;
+};
 
 const AdminInfluencers = () => {
   const { user } = useAuth();
@@ -149,6 +160,12 @@ const AdminInfluencers = () => {
       setWarningTarget(null);
     }
   };
+
+  const phoneCounts = new Map<string, number>();
+  influencers.forEach((i) => {
+    const p = normalizePhone(i.phone);
+    if (p) phoneCounts.set(p, (phoneCounts.get(p) || 0) + 1);
+  });
 
   let filtered = influencers.filter(i =>
     (i.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -279,7 +296,14 @@ const AdminInfluencers = () => {
                             <span className="font-medium text-foreground">{inf.full_name || "—"}</span>
                             {inf.is_verified && <ShieldCheck className="w-4 h-4 text-gold shrink-0" />}
                           </div>
-                          {inf.phone && <p className="text-xs text-muted-foreground">{inf.phone}</p>}
+                          {inf.phone && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              {inf.phone}
+                              {(phoneCounts.get(normalizePhone(inf.phone)) ?? 0) > 1 && (
+                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">Possible duplicate</Badge>
+                              )}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -307,15 +331,7 @@ const AdminInfluencers = () => {
                       {inf.tiktok_followers ? ` / TK: ${inf.tiktok_followers.toLocaleString()}` : ""}
                       {!inf.followers_count && !inf.tiktok_followers ? "—" : ""}
                     </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        {inf.approval_status === "pending" && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">Pending</Badge>}
-                        {inf.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Rejected</Badge>}
-                        {inf.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">Verified</Badge>}
-                        {inf.is_suspended && <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Suspended</Badge>}
-                        {inf.approval_status === "approved" && !inf.is_verified && !inf.is_suspended && <Badge variant="secondary" className="text-xs w-fit">Active</Badge>}
-                      </div>
-                    </td>
+                    <td className="p-4">{statusBadge(inf)}</td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4">
                       <div className="flex gap-1 flex-wrap">

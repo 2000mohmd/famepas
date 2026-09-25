@@ -3,8 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp, ArrowLeftRight } from "lucide-react";
 import { formatLabel } from "@/pages/admin/_format";
+import { useToast } from "@/hooks/use-toast";
+
+/** Suspended/pending/rejected/verified are independent flags — show one priority pill. */
+const statusBadge = (p: any) => {
+  if (p.is_suspended) return <Badge className="bg-destructive/20 text-destructive border-destructive/30">Suspended</Badge>;
+  if (p.approval_status === "pending") return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30">Pending</Badge>;
+  if (p.approval_status === "rejected") return <Badge className="bg-destructive/20 text-destructive border-destructive/30">Rejected</Badge>;
+  if (p.is_verified) return <Badge className="bg-gold/20 text-gold border-gold/30">Verified</Badge>;
+  if (p.approval_status === "approved") return <Badge className="bg-success/20 text-success border-success/30">Approved</Badge>;
+  return null;
+};
 
 interface Props {
   userId: string | null;
@@ -18,6 +30,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
   const [profile, setProfile] = useState<any>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!userId || !open) return;
@@ -30,6 +43,20 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
   }, [userId, open]);
 
   const stripAt = (h?: string | null) => (h ? h.replace(/^@+/, "") : "");
+
+  const swapHandles = async () => {
+    if (!userId || !profile?.tiktok_handle) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ instagram_handle: profile.tiktok_handle, tiktok_handle: null, tiktok_followers: 0 } as any)
+      .eq("user_id", userId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    setProfile((p: any) => ({ ...p, instagram_handle: profile.tiktok_handle, tiktok_handle: null, tiktok_followers: 0 }));
+    toast({ title: "Fields swapped", description: "Moved the TikTok field's value to Instagram and cleared TikTok." });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,11 +79,7 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-foreground">{profile.full_name || "—"}</h3>
                 <div className="flex gap-2 mt-2 flex-wrap">
-                  {profile.approval_status === "pending" && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30">Pending</Badge>}
-                  {profile.approval_status === "approved" && <Badge className="bg-success/20 text-success border-success/30">Approved</Badge>}
-                  {profile.approval_status === "rejected" && <Badge className="bg-destructive/20 text-destructive border-destructive/30">Rejected</Badge>}
-                  {profile.is_suspended && <Badge className="bg-destructive/20 text-destructive border-destructive/30">Suspended</Badge>}
-                  {profile.is_verified && <Badge className="bg-gold/20 text-gold border-gold/30">Verified</Badge>}
+                  {statusBadge(profile)}
                   {profile.badge && <Badge variant="secondary">{formatLabel(profile.badge)}</Badge>}
                 </div>
               </div>
@@ -73,9 +96,30 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                 </a>
               )}
               {profile.tiktok_handle && (
-                <a href={`https://tiktok.com/@${stripAt(profile.tiktok_handle)}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-gold hover:underline">
-                  <Music2 className="w-4 h-4" /> @{stripAt(profile.tiktok_handle)}
-                </a>
+                <div className="flex items-center gap-2">
+                  <a href={`https://tiktok.com/@${stripAt(profile.tiktok_handle)}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-gold hover:underline">
+                    <Music2 className="w-4 h-4" /> @{stripAt(profile.tiktok_handle)}
+                  </a>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-gold" title="This is actually an Instagram handle — swap it">
+                        <ArrowLeftRight className="w-3 h-3 mr-1" /> Swap
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-card border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Swap Instagram ⇄ TikTok?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Moves "@{stripAt(profile.tiktok_handle)}" from the TikTok field into Instagram, and clears the TikTok handle and follower count. Use this when a creator's Instagram data landed in the wrong field.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={swapHandles}>Swap</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
               {profile.followers_count != null && <div className="flex items-center gap-2 text-muted-foreground"><Users className="w-4 h-4 text-gold" /> IG: {Number(profile.followers_count).toLocaleString()}</div>}
               {profile.tiktok_followers != null && <div className="flex items-center gap-2 text-muted-foreground"><Users className="w-4 h-4 text-gold" /> TK: {Number(profile.tiktok_followers).toLocaleString()}</div>}

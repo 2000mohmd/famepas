@@ -55,6 +55,7 @@ const getPasswordChecks = (value: string) => ({
 
 const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
 const isPasswordAllowed = (value: string) => value.length >= 6;
+const isValidPhone = (v: string) => v.replace(/\D/g, "").length >= 7;
 
 const createDefaultHours = (): OpeningHours =>
   Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
@@ -172,9 +173,12 @@ const VenueSignup = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [hear, setHear] = useState<string[]>([]);
+  const [phone, setPhone] = useState("");
   const [brandName, setBrandName] = useState("");
   const [brandCategories, setBrandCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [venueCity, setVenueCity] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
 
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -192,6 +196,13 @@ const VenueSignup = () => {
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
       if (data && data.length) setCategories(data.map((c) => c.name));
+    });
+  }, []);
+
+  // load the active city list — the same allow-list AdminVenues validates against
+  useEffect(() => {
+    supabase.from("service_locations").select("city").eq("is_active", true).order("city").then(({ data }) => {
+      if (data && data.length) setCities(data.map((c) => c.city));
     });
   }, []);
 
@@ -268,7 +279,6 @@ const VenueSignup = () => {
     try {
       const fullName = `${firstName} ${lastName}`.trim();
       const addressParts = locationAddress.split(",").map(p => p.trim()).filter(Boolean);
-      const cityGuess = addressParts.length > 1 ? addressParts[addressParts.length - 2] : "";
       const countryGuess = addressParts.length ? addressParts[addressParts.length - 1] : "";
       const { lat, lng } = await resolveCoordinates();
       const { data, error } = await supabase.functions.invoke("signup-user", {
@@ -280,9 +290,10 @@ const VenueSignup = () => {
           venue_name: brandName,
           venue_category: brandCategories[0] ?? "dining",
           venue_categories: brandCategories,
-          venue_city: cityGuess,
+          venue_city: venueCity,
           address_line1: locationAddress,
           contact_person_name: fullName,
+          contact_phone: phone,
           signup_completed: true,
           organization_name: brandName,
           organization_country: countryGuess || null,
@@ -490,7 +501,11 @@ const VenueSignup = () => {
                 </div>
               </div>
             </Field>
-            <PrimaryButton disabled={!isValidName(firstName) || !isValidName(lastName)} onClick={() => setStep("hear")}>Next</PrimaryButton>
+            <Field label="Phone">
+              <TextInput type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+961 70 000 000" />
+              {phone.trim() && !isValidPhone(phone) && <p className="text-xs text-red-600 mt-1">Please enter a valid phone number.</p>}
+            </Field>
+            <PrimaryButton disabled={!isValidName(firstName) || !isValidName(lastName) || !isValidPhone(phone)} onClick={() => setStep("hear")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -538,7 +553,17 @@ const VenueSignup = () => {
                 ))}
               </div>
             </Field>
-            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0} onClick={() => setStep("location-search")}>Next</PrimaryButton>
+            <Field label="City" hint="Which city is your business based in?">
+              <select
+                value={venueCity}
+                onChange={e => setVenueCity(e.target.value)}
+                className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
+              >
+                <option value="">Select a city…</option>
+                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("location-search")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>

@@ -7,6 +7,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Server-side mirror of src/lib/validation.ts's handle check — the client
+// check alone doesn't protect this endpoint from a direct/mobile caller.
+// Strips a pasted profile URL down to the username, then rejects anything
+// that isn't a real handle shape (no spaces, no slashes).
+const HANDLE_REGEX = /^[a-zA-Z0-9._]{2,30}$/;
+function sanitizeHandle(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  let s = raw.trim();
+  const urlMatch = s.match(/^https?:\/\/[^/]+\/(@?[^/?#]+)/i);
+  if (urlMatch) s = urlMatch[1];
+  s = s.replace(/^@+/, "").trim();
+  return HANDLE_REGEX.test(s) ? s : null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -97,7 +111,7 @@ serve(async (req) => {
       await new Promise(r => setTimeout(r, 500));
       const profileData: Record<string, unknown> = {
         user_id: userId, full_name: full_name || null, phone: phone || null,
-        instagram_handle: igPending?.ig_username || null, tiktok_handle: tiktok_handle || null,
+        instagram_handle: igPending?.ig_username || null, tiktok_handle: sanitizeHandle(tiktok_handle),
         tiktok_followers: tiktok_followers || 0, social_links: social_links || {},
         bio: bio || null,
         city: city || null,

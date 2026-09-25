@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Eye } from "lucide-react";
+import { Plus, Search, Trash2, Eye, UserCog } from "lucide-react";
 import VenueDetailDialog from "@/components/admin/VenueDetailDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,6 +28,14 @@ interface Venue {
   created_at: string;
   logo_url: string | null;
 }
+
+// Single-word, obviously-placeholder business names — flagged for admin review,
+// not blocked (business name stays free text per product decision).
+const GENERIC_NAME_WORDS = ["creator", "influencer", "fashion", "test", "venue", "business", "brand", "sample"];
+const isGenericName = (name: string) => {
+  const words = name.trim().toLowerCase().split(/\s+/);
+  return words.length === 1 && GENERIC_NAME_WORDS.includes(words[0]);
+};
 
 const AdminVenues = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -113,6 +121,16 @@ const AdminVenues = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `${name} deleted` });
+      fetchVenues();
+    }
+  };
+
+  const convertToCreator = async (id: string, name: string) => {
+    const { error, data } = await supabase.functions.invoke("convert-venue-to-influencer", { body: { venue_id: id } });
+    if (error || data?.error) {
+      toast({ title: "Error", description: data?.error || error?.message, variant: "destructive" });
+    } else {
+      toast({ title: `${name} moved to creators`, description: "Now sitting in the influencer queue, pending approval." });
       fetchVenues();
     }
   };
@@ -306,6 +324,9 @@ const AdminVenues = () => {
                           <div className="w-8 h-8 rounded-full bg-secondary" />
                         )}
                         <span className="font-medium text-foreground">{venue.name}</span>
+                        {isGenericName(venue.name) && (
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-[10px]">Generic name — review</Badge>
+                        )}
                       </div>
                     </td>
                     <td className="p-4"><Badge variant="secondary">{formatLabel(venue.category)}</Badge></td>
@@ -338,6 +359,27 @@ const AdminVenues = () => {
                         <Button variant="ghost" size="sm" onClick={() => toggleActive(venue.id, venue.is_active)} className="text-muted-foreground hover:text-gold h-7 text-xs">
                           {venue.is_active ? "Deactivate" : "Activate"}
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="Move to Creator — this account signed up as a venue by mistake">
+                              <UserCog className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-card border-border">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Move to Creator?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Converts {venue.name} from a venue into a creator account. This deletes the venue's
+                                brand/location records and moves the account into the influencer queue as pending.
+                                This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => convertToCreator(venue.id, venue.name)}>Move to Creator</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete">
