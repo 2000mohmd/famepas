@@ -29,6 +29,7 @@ import {
   Home,
   Menu,
   X,
+  MessageCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -68,6 +69,8 @@ const adminGroups: NavGroup[] = [
       { to: "/admin/event-attendees", icon: Users, label: "Event Attendees" },
       { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
       { to: "/admin/billing", icon: CreditCard, label: "Billing" },
+      { to: "/admin/broadcast", icon: Megaphone, label: "Broadcast" },
+      { to: "/admin/messages", icon: MessageCircle, label: "Messages" },
     ],
   },
   {
@@ -123,6 +126,7 @@ const influencerGroups: NavGroup[] = [
       { to: "/influencer/invitations", icon: Send, label: "Invitations" },
       { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
       { to: "/influencer/reviews", icon: ShieldAlert, label: "Reviews" },
+      { to: "/influencer/messages", icon: MessageCircle, label: "Messages" },
     ],
   },
   {

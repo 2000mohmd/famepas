@@ -29,6 +29,8 @@ const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminChatbot = lazy(() => import("./pages/admin/AdminChatbot"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminBroadcast = lazy(() => import("./pages/admin/AdminBroadcast"));
+const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const AdminRedemptions = lazy(() => import("./pages/admin/AdminRedemptions"));
 const EventAttendeesPage = lazy(() => import("./pages/EventAttendeesPage"));
 const VenueBriefs = lazy(() => import("./pages/venue/VenueBriefs"));
@@ -48,6 +50,7 @@ const InfluencerBookings = lazy(() => import("./pages/influencer/InfluencerBooki
 const InfluencerEarnings = lazy(() => import("./pages/influencer/InfluencerEarnings"));
 const InfluencerProfile = lazy(() => import("./pages/influencer/InfluencerProfile"));
 const InfluencerReviews = lazy(() => import("./pages/influencer/InfluencerReviews"));
+const InfluencerMessages = lazy(() => import("./pages/influencer/InfluencerMessages"));
 const InfluencerRewards = lazy(() => import("./pages/influencer/InfluencerRewards"));
 const InfluencerSettings = lazy(() => import("./pages/influencer/InfluencerSettings"));
 const InfluencerHome = lazy(() => import("./pages/influencer/InfluencerHome"));
@@ -115,6 +118,8 @@ const App = () => (
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/broadcast" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBroadcast /></ProtectedRoute>} />
+            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/cultural-events" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCulturalEvents /></ProtectedRoute>} />
 
             {/* Venue Routes */}
@@ -153,6 +158,7 @@ const App = () => (
             <Route path="/influencer/earnings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerEarnings /></ProtectedRoute>} />
             <Route path="/influencer/profile" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerProfile /></ProtectedRoute>} />
             <Route path="/influencer/reviews" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerReviews /></ProtectedRoute>} />
+            <Route path="/influencer/messages" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerMessages /></ProtectedRoute>} />
             <Route path="/influencer/rewards" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerRewards /></ProtectedRoute>} />
             <Route path="/influencer/settings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerSettings /></ProtectedRoute>} />
 
