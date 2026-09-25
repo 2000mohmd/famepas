@@ -55,6 +55,7 @@ const InfluencerOffer = lazy(() => import("./pages/influencer/InfluencerOffer"))
 const MarketingPage = lazy(() => import("./pages/MarketingPage"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const InstagramCallback = lazy(() => import("./pages/InstagramCallback"));
+const TikTokCallback = lazy(() => import("./pages/TikTokCallback"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/instagram/callback" element={<InstagramCallback />} />
+            <Route path="/tiktok/callback" element={<TikTokCallback />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

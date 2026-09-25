@@ -43,6 +43,21 @@ const InfluencerBookings = () => {
     enabled: !!user,
   });
 
+  const { data: connections } = useQuery({
+    queryKey: ["my-social-connections", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("social_integrations")
+        .select("platform,status")
+        .eq("influencer_id", user!.id);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+  const connectedPlatforms = (connections ?? [])
+    .filter((c: any) => c.status === "connected")
+    .map((c: any) => c.platform);
+
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
   };
@@ -52,6 +67,17 @@ const InfluencerBookings = () => {
     if (!contentUrl.trim() && !file) {
       toast({ title: "Add a post URL or upload a file", variant: "destructive" });
       return;
+    }
+    const typedUrl = contentUrl.trim().toLowerCase();
+    if (typedUrl) {
+      if (platform === "instagram" && !typedUrl.includes("instagram.com")) {
+        toast({ title: "That link isn't an Instagram post", description: "Paste the link to your Instagram post or reel.", variant: "destructive" });
+        return;
+      }
+      if (platform === "tiktok" && !typedUrl.includes("tiktok.com")) {
+        toast({ title: "That link isn't a TikTok video", description: "Paste the link to your TikTok video.", variant: "destructive" });
+        return;
+      }
     }
     setSubmitting(true);
     let mediaUrl: string | null = null;
@@ -298,7 +324,17 @@ const InfluencerBookings = () => {
             </div>
             <div>
               <Label className="text-xs">Post URL</Label>
-              <Input value={contentUrl} onChange={e => setContentUrl(e.target.value)} placeholder="https://instagram.com/p/..." />
+              <Input
+                value={contentUrl}
+                onChange={e => setContentUrl(e.target.value)}
+                placeholder={platform === "tiktok" ? "https://tiktok.com/@you/video/..." : "https://instagram.com/p/..."}
+              />
+              {(platform === "instagram" || platform === "tiktok") && !connectedPlatforms.includes(platform) && (
+                <p className="text-[11px] text-amber-600 mt-1">
+                  Link your {platform === "tiktok" ? "TikTok" : "Instagram"} account in{" "}
+                  <Link to="/influencer/settings" className="underline">Settings</Link> so the venue can see your post performance.
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-xs">Caption (optional)</Label>

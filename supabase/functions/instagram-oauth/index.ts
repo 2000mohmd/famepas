@@ -101,16 +101,35 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     return { ok: false, error: shortTok?.error_message || "Could not exchange the authorization code" };
   }
 
-  // Step 2: exchange for a long-lived token (~60 days)
+  // Step 2: exchange for a long-lived token (~60 days).
+  // Instagram's docs say GET, but some app configurations answer GET with
+  // IGApiException "Unsupported request - method type: get" — so fall back to
+  // POST, and if both fail keep the short-lived token rather than failing the
+  // whole sign-in (the creator is still authenticated; we just re-link sooner).
+  const longParams = {
+    grant_type: "ig_exchange_token",
+    client_secret: CLIENT_SECRET,
+    access_token: shortTok.access_token,
+  };
   const longUrl = new URL("https://graph.instagram.com/access_token");
-  longUrl.searchParams.set("grant_type", "ig_exchange_token");
-  longUrl.searchParams.set("client_secret", CLIENT_SECRET);
-  longUrl.searchParams.set("access_token", shortTok.access_token);
-  const longRes = await fetch(longUrl.toString());
-  const longTok = await safeJson(longRes);
-  if (!longRes.ok || !longTok.access_token) {
-    console.error("instagram long-lived token error", longTok);
-    return { ok: false, error: longTok?.error?.message || "Could not get a long-lived token" };
+  for (const [k, v] of Object.entries(longParams)) longUrl.searchParams.set(k, v);
+
+  let longTok = await safeJson(await fetch(longUrl.toString()));
+  if (!longTok?.access_token) {
+    console.error("instagram long-lived token error (GET), retrying with POST", longTok);
+    longTok = await safeJson(await fetch("https://graph.instagram.com/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(longParams),
+    }));
+  }
+
+  const accessToken: string = longTok?.access_token ?? shortTok.access_token;
+  const expiresInSec: number = longTok?.access_token
+    ? (longTok.expires_in ?? 5184000)
+    : 3600;
+  if (!longTok?.access_token) {
+    console.error("instagram long-lived token error (POST too) — using short-lived token", longTok);
   }
 
   // Step 3: basic profile
@@ -118,18 +137,18 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
   let accountType: string | null = null;
   try {
     const profRes = await fetch(
-      `https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(longTok.access_token)}`,
+      `https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
     username = prof?.username ?? null;
     accountType = prof?.account_type ?? null;
   } catch (_e) { /* non-fatal — we still have the token */ }
 
-  const expiresAt = new Date(Date.now() + (longTok.expires_in ?? 0) * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
 
   return {
     ok: true,
-    accessToken: longTok.access_token,
+    accessToken,
     expiresAt,
     igUserId: shortTok.user_id ? String(shortTok.user_id) : null,
     scope: shortTok.permissions ? String(shortTok.permissions) : SCOPES,
@@ -248,7 +267,9 @@ Deno.serve(async (req) => {
       const result = await exchangeCode(String(body.code ?? ""));
       if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
 
-      const { error: dbErr } = await admin.from("social_integrations").upsert({
+      // The (influencer_id, platform) unique index is partial, so PostgREST
+      // upsert/ON CONFLICT can't target it — update-then-insert instead.
+      const row = {
         influencer_id: user.id,
         venue_id: null,
         platform: "instagram",
@@ -261,10 +282,21 @@ Deno.serve(async (req) => {
         scope: result.scope,
         status: "connected",
         connected_at: new Date().toISOString(),
-      }, { onConflict: "influencer_id,platform" });
+      };
+
+      const { data: existing } = await admin
+        .from("social_integrations")
+        .select("id")
+        .eq("influencer_id", user.id)
+        .eq("platform", "instagram")
+        .maybeSingle();
+
+      const { error: dbErr } = existing
+        ? await admin.from("social_integrations").update(row).eq("id", existing.id)
+        : await admin.from("social_integrations").insert(row);
 
       if (dbErr) {
-        console.error("social_integrations upsert failed", dbErr);
+        console.error("social_integrations save failed", dbErr);
         return json({ error: dbErr.message, code: "DB_UPDATE_FAILED" }, 200);
       }
 

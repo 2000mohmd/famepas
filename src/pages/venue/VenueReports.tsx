@@ -18,6 +18,7 @@ const VenueReports = () => {
   const [deliverables, setDeliverables] = useState<any[]>([]);
   const [redemptions, setRedemptions] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
 
   const sinceISO = useMemo(() => {
     if (period === "all") return null;
@@ -35,7 +36,7 @@ const VenueReports = () => {
       if (venueIds.length === 0) { setLoading(false); return; }
 
       // bookings for these venues
-      let bq = supabase.from("bookings").select("id,status,created_at,completed_at,venue_id").in("venue_id", venueIds);
+      let bq = supabase.from("bookings").select("id,status,created_at,completed_at,venue_id,offer_id").in("venue_id", venueIds);
       if (sinceISO) bq = bq.gte("created_at", sinceISO);
       const { data: bks } = await bq;
       setBookings(bks ?? []);
@@ -48,8 +49,9 @@ const VenueReports = () => {
       } else setDeliverables([]);
 
       // redemptions via offers
-      const { data: offers } = await supabase.from("offers").select("id").in("venue_id", venueIds);
-      const offerIds = (offers ?? []).map((o: any) => o.id);
+      const { data: offerRows } = await supabase.from("offers").select("id,title").in("venue_id", venueIds);
+      setOffers(offerRows ?? []);
+      const offerIds = (offerRows ?? []).map((o: any) => o.id);
       if (offerIds.length > 0) {
         let rq = supabase.from("offer_redemptions").select("id,status,created_at,redeemed_at,offer_id").in("offer_id", offerIds);
         if (sinceISO) rq = rq.gte("created_at", sinceISO);
@@ -101,6 +103,31 @@ const VenueReports = () => {
     [m.byType]
   );
   const pieColors = ["#b8923a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
+
+  // Per-offer (campaign) performance: posts delivered and the reach they earned.
+  const campaignRows = useMemo(() => {
+    const offerTitle: Record<string, string> = {};
+    offers.forEach((o: any) => { offerTitle[o.id] = o.title; });
+    const bookingOffer: Record<string, string | null> = {};
+    bookings.forEach((b: any) => { bookingOffer[b.id] = b.offer_id ?? null; });
+
+    const rows: Record<string, any> = {};
+    const bump = (key: string) => (rows[key] ??= {
+      key, title: key === "none" ? "Direct bookings" : (offerTitle[key] || "Campaign"),
+      posts: 0, views: 0, likes: 0, comments: 0, shares: 0, bookings: 0,
+    });
+
+    bookings.forEach((b: any) => { bump(b.offer_id ?? "none").bookings += 1; });
+    deliverables.forEach((d: any) => {
+      const r = bump(bookingOffer[d.booking_id] ?? "none");
+      r.posts += 1;
+      r.views += Number(d.views) || 0;
+      r.likes += Number(d.likes) || 0;
+      r.comments += Number(d.comments) || 0;
+      r.shares += Number(d.shares) || 0;
+    });
+    return Object.values(rows).sort((a: any, b: any) => b.views - a.views);
+  }, [offers, bookings, deliverables]);
 
   const Stat = ({ icon: Icon, label, value, sub }: any) => (
     <div className="bg-white border border-border rounded-2xl p-5">
@@ -209,6 +236,42 @@ const VenueReports = () => {
               </ResponsiveContainer>
             </div>
 
+            <div className="bg-white border border-border rounded-2xl p-5 mb-8 overflow-x-auto">
+              <h3 className="text-sm font-semibold mb-3">Campaign performance</h3>
+              {campaignRows.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-6 text-center">No campaign activity yet</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                      <th className="py-2 pr-4 font-medium">Campaign</th>
+                      <th className="py-2 pr-4 font-medium">Bookings</th>
+                      <th className="py-2 pr-4 font-medium">Posts</th>
+                      <th className="py-2 pr-4 font-medium">Views</th>
+                      <th className="py-2 pr-4 font-medium">Likes</th>
+                      <th className="py-2 pr-4 font-medium">Comments</th>
+                      <th className="py-2 pr-4 font-medium">Engagement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaignRows.map((r: any) => {
+                      const er = r.views > 0 ? ((r.likes + r.comments + r.shares) / r.views) * 100 : 0;
+                      return (
+                        <tr key={r.key} className="border-b border-border/60 last:border-0">
+                          <td className="py-2 pr-4 font-medium text-foreground">{r.title}</td>
+                          <td className="py-2 pr-4">{r.bookings}</td>
+                          <td className="py-2 pr-4">{r.posts}</td>
+                          <td className="py-2 pr-4">{r.views.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{r.likes.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{r.comments.toLocaleString()}</td>
+                          <td className="py-2 pr-4">{er.toFixed(2)}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
             {deliverables.length === 0 && bookings.length === 0 && (
               <div className="bg-white border border-border rounded-2xl py-12 text-center text-muted-foreground text-sm">
