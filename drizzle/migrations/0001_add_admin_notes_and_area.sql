@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS admin_notes text;
+ALTER TABLE public.service_locations ADD COLUMN IF NOT EXISTS area text;

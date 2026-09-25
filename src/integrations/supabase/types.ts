@@ -1273,6 +1273,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_notes: string | null
           approval_status: string
           audience_demographics: Json | null
           avatar_url: string | null
@@ -1302,6 +1303,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           approval_status?: string
           audience_demographics?: Json | null
           avatar_url?: string | null
@@ -1331,6 +1333,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           approval_status?: string
           audience_demographics?: Json | null
           avatar_url?: string | null
@@ -1482,6 +1485,7 @@ export type Database = {
       }
       service_locations: {
         Row: {
+          area: string | null
           city: string
           country: string | null
           created_at: string
@@ -1489,6 +1493,7 @@ export type Database = {
           is_active: boolean
         }
         Insert: {
+          area?: string | null
           city: string
           country?: string | null
           created_at?: string
@@ -1496,6 +1501,7 @@ export type Database = {
           is_active?: boolean
         }
         Update: {
+          area?: string | null
           city?: string
           country?: string | null
           created_at?: string

@@ -8,6 +8,20 @@
       "when": 1788857019840,
       "tag": "0000_categories_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790327858725,
+      "tag": "0001_add_admin_notes_and_area",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790327869779,
+      "tag": "0002_protect_admin_notes",
+      "breakpoints": true
     }
   ]
 }
