@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import MfaGate from "@/components/MfaGate";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     if (!allowedRoles.includes(role)) return <Navigate to="/" replace />;
   }
 
+  if (role === "admin") return <MfaGate>{children}</MfaGate>;
   return <>{children}</>;
 };
 
