@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Mail, Phone, MapPin, Globe, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { formatLabel } from "@/pages/admin/_format";
 
@@ -30,7 +31,18 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
   const [categories, setCategories] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
   const { toast } = useToast();
+
+  const saveNotes = async () => {
+    if (!venueId) return;
+    setSavingNotes(true);
+    const { error } = await supabase.from("venues").update({ admin_notes: notes } as any).eq("id", venueId);
+    setSavingNotes(false);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else toast({ title: "Notes saved" });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -64,6 +76,7 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
       const { data: vRows } = await supabase.rpc("get_venue_full" as any, { _venue_id: venueId });
       const v: any = (vRows as any[])?.[0] ?? null;
       setVenue(v);
+      setNotes(v?.admin_notes ?? "");
       if (v?.owner_id) {
         const { data: p } = await supabase.from("profiles").select("full_name, avatar_url, phone").eq("user_id", v.owner_id).maybeSingle();
         setOwner(p);
@@ -223,6 +236,14 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                 </div>
               </div>
             )}
+
+            <div className="border-t border-border pt-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Admin Notes</p>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Internal notes about this venue..." rows={3} className="bg-secondary border-border" />
+              <Button size="sm" variant="outline" onClick={saveNotes} disabled={savingNotes} className="mt-2">
+                {savingNotes ? "Saving..." : "Save Notes"}
+              </Button>
+            </div>
 
             {venue.approval_status === "pending" && (
               <div className="flex gap-2 pt-4 border-t border-border">

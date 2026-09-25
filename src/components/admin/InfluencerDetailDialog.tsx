@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp, ArrowLeftRight } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Check, X, Instagram, Music2, Mail, Phone, MapPin, Users, TrendingUp, ArrowLeftRight, UserX } from "lucide-react";
 import { formatLabel } from "@/pages/admin/_format";
 import { creatorTier, tierBadgeClass } from "@/pages/admin/_creatorTier";
 import { useToast } from "@/hooks/use-toast";
@@ -32,17 +33,34 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
   const [profile, setProfile] = useState<any>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [noShowCount, setNoShowCount] = useState(0);
+  const [notes, setNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!userId || !open) return;
     setLoading(true);
     (async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle();
+      const [{ data }, { count }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("bookings").select("id", { count: "exact", head: true }).eq("influencer_id", userId).eq("status", "no_show"),
+      ]);
       setProfile(data);
+      setNotes(data?.admin_notes ?? "");
+      setNoShowCount(count ?? 0);
       setLoading(false);
     })();
   }, [userId, open]);
+
+  const saveNotes = async () => {
+    if (!userId) return;
+    setSavingNotes(true);
+    const { error } = await supabase.from("profiles").update({ admin_notes: notes } as any).eq("user_id", userId);
+    setSavingNotes(false);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else toast({ title: "Notes saved" });
+  };
 
   const stripAt = (h?: string | null) => (h ? h.replace(/^@+/, "") : "");
 
@@ -131,6 +149,9 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
               {profile.tiktok_followers != null && <div className="flex items-center gap-2 text-muted-foreground"><Users className="w-4 h-4 text-gold" /> TK: {Number(profile.tiktok_followers).toLocaleString()}</div>}
               {profile.engagement_rate != null && <div className="flex items-center gap-2 text-muted-foreground"><TrendingUp className="w-4 h-4 text-gold" /> ER: {profile.engagement_rate}%</div>}
               {profile.influencer_score != null && <div className="flex items-center gap-2 text-muted-foreground"><TrendingUp className="w-4 h-4 text-gold" /> Score: {profile.influencer_score}</div>}
+              <div className={`flex items-center gap-2 ${noShowCount > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                <UserX className="w-4 h-4" /> No-shows: {noShowCount}
+              </div>
             </div>
 
             {userId && (
@@ -161,6 +182,14 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                 </ul>
               </div>
             )}
+
+            <div className="border-t border-border pt-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Admin Notes</p>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Internal notes about this creator..." rows={3} className="bg-secondary border-border" />
+              <Button size="sm" variant="outline" onClick={saveNotes} disabled={savingNotes} className="mt-2">
+                {savingNotes ? "Saving..." : "Save Notes"}
+              </Button>
+            </div>
 
             {profile.approval_status === "pending" && userId && (
               <div className="flex gap-2 pt-4 border-t border-border">

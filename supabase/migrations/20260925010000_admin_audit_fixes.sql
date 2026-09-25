@@ -1,5 +1,9 @@
 -- Follow-up data/schema fixes from Adnan's 2026-09-24 admin panel audit.
 
+-- §7: admin notes on the detail view for both account types.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS admin_notes text;
+ALTER TABLE public.venues ADD COLUMN IF NOT EXISTS admin_notes text;
+
 -- §6: "Manage Admin Users should be mine alone." The existing policy let ANY
 -- admin insert/update/delete admin_user_permissions (including granting
 -- themselves manage_users), which defeats the whole point of the permission.
