@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Mail, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X, Eye, Download } from "lucide-react";
+import { Search, Mail, ShieldCheck, ShieldOff, UserX, UserCheck, AlertTriangle, Trash2, Check, X, Eye, Download, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import * as XLSX from "xlsx";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -73,6 +74,7 @@ const AdminInfluencers = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Influencer | null>(null);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [rejectNote, setRejectNote] = useState("");
@@ -383,53 +385,46 @@ const AdminInfluencers = () => {
                     <td className="p-4">{statusBadge(inf)}</td>
                     <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4 sticky right-0 bg-card">
-                      <div className="flex gap-1 flex-wrap">
+                      <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View profile">
                           <Eye className="w-4 h-4" />
                         </Button>
                         {inf.approval_status === "pending" && (
-                          <>
-                            <Button variant="ghost" size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="text-success hover:bg-success/10 h-7 px-2" title="Approve">
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => openReject(inf.user_id)} className="text-destructive hover:bg-destructive/10 h-7 px-2" title="Reject">
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
+                          <Button size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">Approve</Button>
                         )}
-                        {inf.approval_status === "approved" && (
-                          <Button variant="ghost" size="sm" onClick={() => resendApproval(inf.user_id)} className="text-muted-foreground hover:text-gold h-7 px-2" title="Resend approval email">
-                            <Mail className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={() => toggleVerified(inf.user_id, inf.is_verified)} className="text-muted-foreground hover:text-gold h-7 px-2" title={inf.is_verified ? "Remove verification" : "Verify"}>
-                          {inf.is_verified ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => toggleSuspended(inf.user_id, inf.is_suspended)} className="text-muted-foreground hover:text-destructive h-7 px-2" title={inf.is_suspended ? "Reinstate" : "Suspend"}>
-                          {inf.is_suspended ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setWarningTarget(inf.user_id); setWarningOpen(true); }} className="text-muted-foreground hover:text-warning h-7 px-2" title="Send Warning">
-                          <AlertTriangle className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-7 px-2" title="Delete">
-                              <Trash2 className="w-4 h-4" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="More actions">
+                              <MoreHorizontal className="w-4 h-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-card border-border">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete influencer?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This permanently deletes {inf.full_name || "this influencer"} and all related data. This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteInfluencer(inf.user_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover z-50">
+                            {inf.approval_status === "pending" && (
+                              <DropdownMenuItem onClick={() => openReject(inf.user_id)} className="text-destructive focus:text-destructive">
+                                <X className="w-4 h-4 mr-2" /> Reject
+                              </DropdownMenuItem>
+                            )}
+                            {inf.approval_status === "approved" && (
+                              <DropdownMenuItem onClick={() => resendApproval(inf.user_id)}>
+                                <Mail className="w-4 h-4 mr-2" /> Resend approval email
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => toggleVerified(inf.user_id, inf.is_verified)}>
+                              {inf.is_verified ? <ShieldOff className="w-4 h-4 mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                              {inf.is_verified ? "Remove verification" : "Verify"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toggleSuspended(inf.user_id, inf.is_suspended)}>
+                              {inf.is_suspended ? <UserCheck className="w-4 h-4 mr-2" /> : <UserX className="w-4 h-4 mr-2" />}
+                              {inf.is_suspended ? "Reinstate" : "Suspend"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setWarningTarget(inf.user_id); setWarningOpen(true); }}>
+                              <AlertTriangle className="w-4 h-4 mr-2" /> Send Warning
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDeleteTarget(inf)} className="text-destructive focus:text-destructive">
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -440,6 +435,21 @@ const AdminInfluencers = () => {
           </div>
           <PageControls page={page} pageCount={pageCount} onChange={setPage} />
         </div>
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete influencer?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently deletes {deleteTarget?.full_name || "this influencer"} and all related data. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (deleteTarget) deleteInfluencer(deleteTarget.user_id); setDeleteTarget(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Reject Dialog */}
         <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
