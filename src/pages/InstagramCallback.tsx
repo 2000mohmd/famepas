@@ -65,7 +65,8 @@ const InstagramCallback = () => {
         .then(async ({ data, error }) => {
           if (error || (data as any)?.error) {
             setStatus("error");
-            setMessage((data as any)?.error || error?.message || "Could not complete the Instagram sign-in.");
+            const m = (data as any)?.error || error?.message || "";
+            setMessage(/already.*used|has been used/i.test(m) ? "Instagram sign-in is no longer available on the login page. Please sign in with Google or email, then connect Instagram from Settings." : m || "Could not complete the Instagram sign-in.");
             return;
           }
           if ((data as any).mode === "login") {

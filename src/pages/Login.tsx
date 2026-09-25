@@ -83,7 +83,7 @@ const Login = () => {
   const handleSocial = async () => {
     if (next) sessionStorage.setItem("postLoginRedirect", next);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/login`,
     });
     if (result.error) {
       toast({ title: "Google sign-in failed", description: result.error.message, variant: "destructive" });

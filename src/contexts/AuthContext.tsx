@@ -105,7 +105,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ? res.error
           : res.status === "rejected"
             ? "Your account application was rejected. Please contact support."
-            : "Your account is pending admin approval. You'll be notified once approved.",
+            : res.status === "missing"
+              ? "We couldn't find a FamePass account for this Google email. Please create an account first."
+              : "Your account is pending admin approval. You'll be notified once approved.",
         variant: "destructive",
       });
       return false;
