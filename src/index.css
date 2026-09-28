@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Marketing homepage only (src/pages/MarketingHome.tsx) — matches the original landing site's type system. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Mrs+Saint+Delafield&display=swap');
 
 @tailwind base;
 @tailwind components;

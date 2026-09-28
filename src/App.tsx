@@ -56,6 +56,7 @@ const InfluencerSettings = lazy(() => import("./pages/influencer/InfluencerSetti
 const InfluencerHome = lazy(() => import("./pages/influencer/InfluencerHome"));
 const InfluencerOffer = lazy(() => import("./pages/influencer/InfluencerOffer"));
 const MarketingPage = lazy(() => import("./pages/MarketingPage"));
+const MarketingHome = lazy(() => import("./pages/MarketingHome"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const InstagramCallback = lazy(() => import("./pages/InstagramCallback"));
 const TikTokCallback = lazy(() => import("./pages/TikTokCallback"));
@@ -79,7 +80,7 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
           <Routes>
             {/* Public marketing site (Framer static, served from /public/site). */}
-            <Route path="/" element={<MarketingPage path="" />} />
+            <Route path="/" element={<MarketingHome />} />
             <Route path="/about" element={<MarketingPage path="about" />} />
             <Route path="/pricing" element={<MarketingPage path="pricing" />} />
             <Route path="/contact" element={<MarketingPage path="contact" />} />
