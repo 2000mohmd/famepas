@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import famepassLogo from "@/assets/famepass-logo.png";
 
 /* ============================================================
    FamePass marketing homepage — recreated as real React code
@@ -118,8 +119,8 @@ const MarketingHome = () => {
     <div className="min-h-screen bg-white text-[#272218]" style={body}>
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-black/5 bg-white/95 px-5 py-3 backdrop-blur md:px-10">
-        <a href="/" aria-label="FamePass home" className="text-xl font-bold" style={heading}>
-          Fame<span style={script} className="text-[#c8aa68]">Pass</span>
+        <a href="/" aria-label="FamePass home" className="shrink-0">
+          <img src={famepassLogo} alt="FamePass" className="h-11 w-auto" />
         </a>
         <nav aria-label="Main navigation" className={`${menuOpen ? "flex" : "hidden"} absolute inset-x-0 top-full flex-col gap-1 border-b border-black/5 bg-white p-5 md:static md:flex md:flex-row md:gap-8 md:border-0 md:bg-transparent md:p-0`}>
           {NAV_LINKS.map(([label, id]) => (
@@ -296,7 +297,7 @@ const MarketingHome = () => {
       {/* Footer */}
       <footer className="border-t border-black/5 px-5 py-10 md:px-10">
         <div className="mx-auto flex max-w-[1500px] flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <span className="text-xl font-bold" style={heading}>Fame<span style={script} className="text-[#c8aa68]">Pass</span></span>
+          <img src={famepassLogo} alt="FamePass" className="h-10 w-auto" />
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-5 text-sm text-[#272218]/70" style={body}>
             <button onClick={() => scrollTo("experiences")}>Experiences</button>
             <button onClick={() => scrollTo("creators")}>For Creators</button>
