@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
-import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } from "@/lib/validation";
+import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle, normalizePhone } from "@/lib/validation";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 
@@ -204,7 +204,7 @@ const InfluencerSignup = () => {
           ...(igLinkToken ? { instagram_link_token: igLinkToken } : { password }),
           role: "influencer",
           full_name: fullName,
-          phone: phone.trim() || null,
+          phone: normalizePhone(phone),
           tiktok_followers: 0,
           followers_count: 0,
           bio: bio || null,
