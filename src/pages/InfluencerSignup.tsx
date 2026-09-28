@@ -157,6 +157,12 @@ const InfluencerSignup = () => {
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
+  const [svcLocations, setSvcLocations] = useState<{ city: string; area: string | null; country: string | null }[]>([]);
+  useEffect(() => {
+    supabase.from("service_locations").select("city, area, country").eq("is_active", true).order("area").order("city").then(({ data }) => {
+      if (data) setSvcLocations(data as { city: string; area: string | null; country: string | null }[]);
+    });
+  }, []);
 
   // avatar
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -414,41 +420,29 @@ const InfluencerSignup = () => {
               {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
             </Field>
 
-            <Field label="Location" hint="Start typing your city — we'll auto-fill city and country.">
-              <LocationAutocomplete
-                defaultValue={city && country ? `${city}, ${country}` : ""}
-                placeholder="e.g. Dubai, United Arab Emirates"
-                onPick={(p) => {
-                  if (p.city) setCity(p.city);
-                  if (p.country) setCountry(p.country);
-                }}
-              />
-              {(city || country) && (
-                <p className="text-xs text-slate-500 mt-1">
-                  Selected: {[city, country].filter(Boolean).join(", ")}
-                </p>
-              )}
-            </Field>
-
-            {/* Manual fallback — the map suggestions don't always appear, and
-                without a country the Continue button used to stay disabled. */}
-            <Field label="Country" hint="Pick your country if the suggestions above didn't work.">
+            <Field label="Location" hint="Choose your city from the list.">
               <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={city}
+                onChange={(e) => {
+                  const loc = svcLocations.find((l) => l.city === e.target.value);
+                  setCity(e.target.value);
+                  setCountry(loc?.country || "Lebanon");
+                }}
                 className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
               >
-                <option value="">Select your country</option>
-                {countryOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                <option value="">Select your city…</option>
+                {Array.from(
+                  svcLocations.reduce((m, l) => {
+                    const k = l.area || "Other";
+                    m.set(k, [...(m.get(k) ?? []), l]);
+                    return m;
+                  }, new Map<string, typeof svcLocations>())
+                ).map(([area, list]) => (
+                  <optgroup key={area} label={area}>
+                    {list.map((l) => <option key={l.city} value={l.city}>{l.city}</option>)}
+                  </optgroup>
                 ))}
-                {country && !countryOptions.includes(country) && (
-                  <option value={country}>{country}</option>
-                )}
               </select>
-            </Field>
-            <Field label="City" hint="Optional.">
-              <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Beirut" />
             </Field>
 
             <Field label="Short bio" hint="Optional — a 1–2 sentence intro about you and the content you create.">

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import famepassLogo from "@/assets/famepass-logo.png";
 
 /* ============================================================
    FamePass marketing homepage — recreated as real React code
@@ -98,12 +97,12 @@ const Eyebrow = ({ children, dark }: { children: string; dark?: boolean }) => (
 
 const MarketingHome = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [categories, setCategories] = useState<string[]>(Object.keys(CATEGORY_META));
+  const [categories, setCategories] = useState<{ name: string; image_url: string | null }[]>([]);
   const [topCreators, setTopCreators] = useState<TopCreator[]>([]);
 
   useEffect(() => {
-    supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
-      if (data && data.length) setCategories(data.map((c) => c.name));
+    supabase.from("categories").select("name, image_url").eq("is_active", true).order("name").then(({ data }) => {
+      if (data) setCategories(data as { name: string; image_url: string | null }[]);
     });
     (supabase.rpc as (fn: string, args?: Record<string, unknown>) => { then: (cb: (r: { data: unknown }) => void) => void })(
       "get_top_creators_public",
@@ -123,7 +122,7 @@ const MarketingHome = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-black/5 bg-white/95 px-5 py-3 backdrop-blur md:px-10">
         <a href="/" aria-label="FamePass home" className="shrink-0">
-          <img src={famepassLogo} alt="FamePass" className="h-11 w-auto" />
+          <span className="font-display text-2xl font-semibold tracking-tight text-neutral-900">Fame<span className="italic text-[hsl(38_60%_38%)]">Pass</span></span>
         </a>
         <nav aria-label="Main navigation" className={`${menuOpen ? "flex" : "hidden"} absolute inset-x-0 top-full flex-col gap-1 border-b border-black/5 bg-white p-5 md:static md:flex md:flex-row md:gap-8 md:border-0 md:bg-transparent md:p-0`}>
           {NAV_LINKS.map(([label, id]) => (
@@ -178,11 +177,11 @@ const MarketingHome = () => {
             <h2 className="text-3xl font-semibold uppercase tracking-tight md:text-4xl" style={heading}>What are you into?</h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-            {categories.map((name) => {
+            {categories.map(({ name, image_url }) => {
               const meta = CATEGORY_META[name] ?? DEFAULT_CATEGORY_META;
               return (
                 <div key={name} className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-[#e9edeb]">
-                  <img src={`${IMG}/${meta.image}.jpg`} alt={name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <img src={image_url || `${IMG}/${meta.image}.jpg`} alt={name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-white" style={heading}>{name}</p>
@@ -300,7 +299,7 @@ const MarketingHome = () => {
       {/* Footer */}
       <footer className="border-t border-black/5 px-5 py-10 md:px-10">
         <div className="mx-auto flex max-w-[1500px] flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <img src={famepassLogo} alt="FamePass" className="h-10 w-auto" />
+          <span className="font-display text-xl font-semibold tracking-tight text-neutral-900">Fame<span className="italic text-[hsl(38_60%_38%)]">Pass</span></span>
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-5 text-sm text-[#272218]/70" style={body}>
             <button onClick={() => scrollTo("experiences")}>Experiences</button>
             <button onClick={() => scrollTo("creators")}>For Creators</button>
