@@ -1,9 +1,7 @@
-// Required secret: RAPIDAPI_KEY — get it from https://rapidapi.com
 // Subscribe to: instagram-scraper-api2 and tiktok-scraper7
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -25,68 +23,6 @@ function pickNumber(...vals: any[]): number {
     if (typeof n === "number" && !isNaN(n)) return n;
   }
   return 0;
-}
-
-async function safeJson(res: Response) {
-  const txt = await res.text();
-  try { return JSON.parse(txt); } catch { return { _raw: txt }; }
-}
-
-async function fetchInstagramMetrics(postUrl: string) {
-  const shortcode = postUrl.match(/\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/)?.[2];
-  if (!shortcode) throw new Error("Invalid Instagram URL — expected /p/, /reel/, /reels/ or /tv/ link");
-
-  const res = await fetch(
-    `https://instagram-scraper-api2.p.rapidapi.com/v1/post_info?code_or_id_or_url=${encodeURIComponent(shortcode)}`,
-    {
-      headers: {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": "instagram-scraper-api2.p.rapidapi.com",
-      },
-    },
-  );
-
-  const body = await safeJson(res);
-  if (!res.ok) {
-    const err: any = new Error(`Instagram API ${res.status}: ${body?.message || body?._raw || "request failed"}`);
-    err.status = res.status;
-    err.fallback = res.status >= 500 || res.status === 429;
-    throw err;
-  }
-
-  const d = body?.data || body;
-  return {
-    likes: pickNumber(d?.like_count, d?.likes_count, d?.likes),
-    comments: pickNumber(d?.comment_count, d?.comments_count, d?.comments),
-    views: pickNumber(d?.video_view_count, d?.play_count, d?.view_count, d?.views),
-    shares: pickNumber(d?.share_count, d?.shares),
-  };
-}
-
-async function fetchTikTokMetrics(postUrl: string) {
-  const res = await fetch(
-    `https://tiktok-scraper7.p.rapidapi.com/video/info?url=${encodeURIComponent(postUrl)}`,
-    {
-      headers: {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": "tiktok-scraper7.p.rapidapi.com",
-      },
-    },
-  );
-  const body = await safeJson(res);
-  if (!res.ok) {
-    const err: any = new Error(`TikTok API ${res.status}: ${body?.message || body?._raw || "request failed"}`);
-    err.status = res.status;
-    err.fallback = res.status >= 500 || res.status === 429;
-    throw err;
-  }
-  const s = body?.data?.stats || body?.data || {};
-  return {
-    likes: pickNumber(s?.diggCount, s?.likeCount),
-    comments: pickNumber(s?.commentCount),
-    views: pickNumber(s?.playCount, s?.viewCount),
-    shares: pickNumber(s?.shareCount),
-  };
 }
 
 async function fetchOfficial(sb: any, influencerId: string | undefined, url: string, isIg: boolean) {
@@ -185,7 +121,6 @@ serve(async (req) => {
       return json({ error: "URL must be from instagram.com or tiktok.com", code: "UNSUPPORTED_URL" }, 400);
     }
 
-    let metrics: Record<string, any> = { likes: 0, comments: 0, views: 0, shares: 0 };
     // 1) Official APIs via the creator's linked account (preferred).
     const official = await fetchOfficial(sbAdmin, deliverable?.influencer_id, post_url, isInstagram);
     if (official) {
@@ -198,46 +133,10 @@ serve(async (req) => {
       if (error) console.error("DB update error:", error.message);
       return json({ success: true, source: "official", metrics: official });
     }
-    if (!RAPIDAPI_KEY) {
-      return json({ success: false, fallback: true, error: "Creator hasn't linked this account yet", code: "NOT_LINKED" }, 200);
-    }
-    try {
-      metrics = isInstagram ? await fetchInstagramMetrics(post_url) : await fetchTikTokMetrics(post_url);
-    } catch (apiErr: any) {
-      console.error("Provider error:", apiErr?.message);
-      const fallback = !!apiErr?.fallback || true;
-      // Still save the post_url so the venue sees the link, just no metrics yet.
-      try {
-        await sbAdmin.from("deliverables").update({ post_url }).eq("id", deliverable_id);
-      } catch (_) { /* ignore */ }
-      return json({
-        success: false,
-        fallback,
-        error: apiErr?.message || "Provider request failed",
-        code: apiErr?.status === 401 ? "PROVIDER_UNAUTHORIZED"
-            : apiErr?.status === 429 ? "PROVIDER_RATE_LIMITED"
-            : "PROVIDER_UNAVAILABLE",
-      }, 200);
-    }
+    // Only official APIs are used. Keep the link so the venue can open the post.
+    await sbAdmin.from("deliverables").update({ post_url }).eq("id", deliverable_id);
+    return json({ success: false, fallback: true, error: "Creator hasn't linked this account yet", code: "NOT_LINKED" }, 200);
 
-    const { error } = await sbAdmin
-      .from("deliverables")
-      .update({
-        post_url,
-        likes: metrics.likes,
-        comments: metrics.comments,
-        views: metrics.views,
-        shares: metrics.shares,
-        metrics_updated_at: new Date().toISOString(),
-      })
-      .eq("id", deliverable_id);
-
-    if (error) {
-      console.error("DB update error:", error.message);
-      return json({ success: false, error: error.message, code: "DB_UPDATE_FAILED", fallback: true }, 200);
-    }
-
-    return json({ success: true, metrics });
   } catch (err: any) {
     console.error("Unexpected error:", err?.message);
     return json({ success: false, error: err?.message || "Unexpected error", code: "INTERNAL", fallback: true }, 200);

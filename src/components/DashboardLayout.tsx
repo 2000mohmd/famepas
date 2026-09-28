@@ -1,3 +1,4 @@
+import ConnectAccountsGate from "@/components/influencer/ConnectAccountsGate";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -400,6 +401,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           <div className="hidden md:block" />
           <button
             onClick={signOut}
+            data-allow-without-link
             className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[hsl(42_15%_90%)] bg-white px-3 py-1.5 text-sm font-medium text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
           >
             <LogOut className="w-4 h-4" />
@@ -407,6 +409,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </button>
         </header>
         <div className="p-4 md:p-8">{children}</div>
+        {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
       </main>
     </div>
   );
