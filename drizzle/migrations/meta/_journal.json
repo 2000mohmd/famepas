@@ -29,6 +29,13 @@
       "when": 1790582572857,
       "tag": "0003_admin_permissions_and_messages_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790584444485,
+      "tag": "0004_scope_public_bucket_listing",
+      "breakpoints": true
     }
   ]
 }
