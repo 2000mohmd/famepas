@@ -8,13 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
    design tokens), so it can actually be edited and fixed going
    forward instead of living as an opaque pre-built asset.
 
-   Two content fixes applied vs. the original:
-   - All "Experiences" example cards now use real Lebanon cities
-     (the original mixed in Dubai/Riyadh examples, undercutting
-     the Lebanon launch).
+   Content fixes applied vs. the original:
    - Categories are fetched live from the same `categories` table
      the admin panel uses, so this list can never drift out of
      sync with it again.
+   - The "Experiences" section (originally 6 fictional cards, two
+     tagged Dubai/Riyadh) now shows real top creators instead, via
+     a new public-safe RPC (get_top_creators_public — deliberately
+     narrower than the existing authenticated-only profile lookups,
+     exposing only name/photo/handle/follower count). Renders
+     nothing if fewer than 3 qualify, rather than show a half-empty
+     grid — as of this build only 2 approved creators have a photo,
+     so this section won't show until the approval queue moves.
 
    Known asset debt, not fixed here (can't be coded around):
    every image in public/site/images/ is a low-resolution
@@ -56,16 +61,16 @@ const CATEGORY_META: Record<string, { image: string; line: string }> = {
 };
 const DEFAULT_CATEGORY_META = { image: "coast", line: "Beyond the everyday" };
 
-// Kept in Lebanon throughout — the original mixed in Dubai/Riyadh, which
-// undercut a Lebanon-only launch (flagged directly by the partner).
-const EXPERIENCES = [
-  { name: "A seat at the chef's table", city: "Beirut", category: "Dining", image: "dining", label: "TASTE SOMETHING NEW", desc: "Good food. Beautiful spaces. Stories worth sharing. Discover dining that turns an ordinary evening into a memory." },
-  { name: "Your next slow escape", city: "Jbeil", category: "Stays", image: "hotel", label: "STAY A LITTLE LONGER", desc: "Poolside afternoons and a change of scenery. Explore memorable stays and new perspectives." },
-  { name: "After-dark discoveries", city: "Beirut", category: "Nightlife", image: "nightlife", label: "MAKE A NIGHT OF IT", desc: "Intimate bars, beautiful cocktails and a different side of the city. Find your next evening out." },
-  { name: "The art of slowing down", city: "Jounieh", category: "Wellness", image: "wellness", label: "RESET & RECONNECT", desc: "Make room for yourself with restorative wellness and beauty experiences." },
-  { name: "A different point of view", city: "Achrafieh", category: "Experiences", image: "coast", label: "GO SOMEWHERE NEW", desc: "Discover open-air moments, remarkable settings and experiences beyond your usual plans." },
-  { name: "Move to your own rhythm", city: "Beirut", category: "Fitness", image: "fitness", label: "FEEL YOUR BEST", desc: "Fresh energy, inspiring spaces and a new way to move. Explore fitness experiences for your lifestyle." },
-];
+interface TopCreator {
+  full_name: string | null;
+  avatar_url: string | null;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  follower_count: number;
+}
+
+const stripAt = (h?: string | null) => (h ? h.replace(/^@+/, "") : "");
+const formatFollowers = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}K` : String(n));
 
 const AUDIENCES = [
   {
@@ -93,10 +98,14 @@ const Eyebrow = ({ children, dark }: { children: string; dark?: boolean }) => (
 const MarketingHome = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>(Object.keys(CATEGORY_META));
+  const [topCreators, setTopCreators] = useState<TopCreator[]>([]);
 
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
       if (data && data.length) setCategories(data.map((c) => c.name));
+    });
+    supabase.rpc("get_top_creators_public", { _limit: 6 }).then(({ data }) => {
+      if (data && data.length >= 3) setTopCreators(data as TopCreator[]);
     });
   }, []);
 
@@ -182,29 +191,37 @@ const MarketingHome = () => {
         </section>
 
         {/* Experiences */}
-        <section id="experiences" className="bg-[#faf9f6] px-5 py-16 md:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="mb-10 text-center">
-              <Eyebrow>ACROSS LEBANON</Eyebrow>
-              <h2 className="mt-2 text-3xl font-semibold uppercase tracking-tight md:text-4xl" style={heading}>Experiences worth the story</h2>
+        {topCreators.length >= 3 && (
+          <section id="experiences" className="bg-[#faf9f6] px-5 py-16 md:px-10">
+            <div className="mx-auto max-w-[1500px]">
+              <div className="mb-10 text-center">
+                <Eyebrow>REAL CREATORS. REAL REACH.</Eyebrow>
+                <h2 className="mt-2 text-3xl font-semibold uppercase tracking-tight md:text-4xl" style={heading}>Meet our top creators</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+                {topCreators.map((c) => {
+                  const handle = c.instagram_handle ? { label: stripAt(c.instagram_handle), url: `https://instagram.com/${stripAt(c.instagram_handle)}` }
+                    : c.tiktok_handle ? { label: stripAt(c.tiktok_handle), url: `https://tiktok.com/@${stripAt(c.tiktok_handle)}` }
+                    : null;
+                  return (
+                    <article key={c.full_name} className="overflow-hidden rounded-lg border border-black/5 bg-white text-center">
+                      <div className="aspect-square">
+                        <img src={c.avatar_url ?? ""} alt={c.full_name ?? "FamePass creator"} loading="lazy" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-base font-semibold" style={heading}>{c.full_name}</h3>
+                        {handle && (
+                          <a href={handle.url} target="_blank" rel="noreferrer" className="text-xs text-[#8a6f36] hover:underline" style={body}>@{handle.label}</a>
+                        )}
+                        <p className="mt-1 text-sm font-medium text-[#272218]/70" style={body}>{formatFollowers(c.follower_count)} followers</p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {EXPERIENCES.map((e) => (
-                <article key={e.name} className="overflow-hidden rounded-lg border border-black/5 bg-white">
-                  <div className="relative aspect-[4/3]">
-                    <img src={`${IMG}/${e.image}.jpg`} alt={e.name} loading="lazy" className="h-full w-full object-cover" />
-                    <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-[#272218]">{e.city}</span>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-[10px] font-semibold tracking-[1.5px] text-[#8a6f36]" style={body}>{e.label}</p>
-                    <h3 className="mt-1 text-xl font-semibold" style={heading}>{e.name}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-[#272218]/70" style={body}>{e.desc}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Creators / Venues */}
         {AUDIENCES.map((a, i) => (
