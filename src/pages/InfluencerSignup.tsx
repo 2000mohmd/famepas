@@ -407,6 +407,7 @@ const InfluencerSignup = () => {
             </Field>
             <Field label="Phone number" hint="So venues can reach you about bookings.">
               <TextInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961 70 000 000" />
+              {phone.trim() && !normalizePhone(phone) && <p className="text-xs text-red-600 mt-1">Please enter a valid phone number.</p>}
             </Field>
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
