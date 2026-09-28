@@ -105,7 +105,10 @@ const MarketingHome = () => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {
       if (data && data.length) setCategories(data.map((c) => c.name));
     });
-    supabase.rpc("get_top_creators_public", { _limit: 6 }).then(({ data }) => {
+    (supabase.rpc as (fn: string, args?: Record<string, unknown>) => { then: (cb: (r: { data: unknown }) => void) => void })(
+      "get_top_creators_public",
+      { _limit: 6 }
+    ).then(({ data }) => {
       if (Array.isArray(data) && data.length >= 3) setTopCreators(data as unknown as TopCreator[]);
     });
   }, []);
