@@ -8,6 +8,7 @@ import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Penci
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import DeliveredVideosInsights from "@/components/venue/DeliveredVideosInsights";
 
 type Campaign = { id: string; title: string; status: string; start_date: string | null; end_date: string | null; description?: string | null; cover_image_url?: string | null; cover_video_url?: string | null; cover_images?: string[] | null; deliverables?: any };
 type CulturalEvent = { id: string; title: string; start_date: string; end_date: string; has_notification: boolean; color: string | null };
@@ -190,6 +191,9 @@ const VenueCampaigns = () => {
             <Plus className="w-4 h-4 mr-1.5" /> New Campaign
           </Button>
         </div>
+
+        <DeliveredVideosInsights />
+
 
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-6">
