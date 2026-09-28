@@ -22,6 +22,13 @@
       "when": 1790327869779,
       "tag": "0002_protect_admin_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790582572857,
+      "tag": "0003_admin_permissions_and_messages_policies",
+      "breakpoints": true
     }
   ]
 }
