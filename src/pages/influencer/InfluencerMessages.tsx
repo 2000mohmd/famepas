@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -57,10 +58,15 @@ const InfluencerMessages = () => {
     const lastFromAdmin = [...thread].reverse().find((m) => m.sender_id !== user.id);
     let receiverId = lastFromAdmin?.sender_id;
     if (!receiverId) {
-      const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "admin").order("user_id").limit(1);
-      receiverId = admins?.[0]?.user_id;
+      // Creators can't read other users' roles, so ask the backend for the support inbox.
+      const { data: adminId } = await supabase.rpc("get_support_admin_id" as any);
+      receiverId = (adminId as string) || undefined;
     }
-    if (!receiverId) { setSending(false); return; }
+    if (!receiverId) {
+      setSending(false);
+      toast({ title: "Couldn't send message", description: "Please try again in a moment.", variant: "destructive" });
+      return;
+    }
     const { data, error } = await supabase
       .from("messages")
       .insert({ sender_id: user.id, receiver_id: receiverId, content: draft.trim() } as any)
