@@ -17,6 +17,10 @@ const functionDirs = readdirSync(FUNCTIONS_DIR, { withFileTypes: true })
   .map((d) => d.name)
   .sort();
 
+// Webhook receivers ack the caller (Meta, etc.) with an empty/plain-text 200
+// by design — they're not a JSON API and shouldn't be held to that check.
+const WEBHOOK_RECEIVERS = new Set(["instagram-webhook"]);
+
 describe("supabase edge functions", () => {
   it("discovers the deployed function set", () => {
     expect(functionDirs.length).toBeGreaterThan(0);
@@ -47,7 +51,7 @@ describe("supabase edge functions", () => {
       expect(source).not.toMatch(/re_[A-Za-z0-9]{20,}/);
     });
 
-    it.skipIf(generated)("returns JSON responses with an explicit content type", () => {
+    it.skipIf(generated || WEBHOOK_RECEIVERS.has(name))("returns JSON responses with an explicit content type", () => {
       expect(source).toContain("application/json");
     });
 

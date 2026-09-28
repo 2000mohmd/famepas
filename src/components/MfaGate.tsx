@@ -14,8 +14,13 @@ const MfaGate = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      setState(data && data.nextLevel === "aal2" && data.currentLevel !== "aal2" ? "needed" : "ok");
+      try {
+        const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        setState(data && data.nextLevel === "aal2" && data.currentLevel !== "aal2" ? "needed" : "ok");
+      } catch {
+        // 2FA is optional — a failed check must never leave an admin stuck on a blank screen.
+        setState("ok");
+      }
     })();
   }, [user?.id]);
 
