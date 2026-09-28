@@ -253,7 +253,11 @@ Deno.serve(async (req) => {
     if (userErr || !user) return json({ error: "Invalid or expired session", code: "UNAUTHORIZED" }, 401);
 
     if (body.action === "initiate") {
-      const state = `${user.id}:${crypto.randomUUID()}`;
+      // Remember where the creator started (preview, famepass.app, www…) so the
+      // callback page can forward the code back to the domain holding their session.
+      const origin = req.headers.get("origin") ?? "";
+      const originTag = origin ? btoa(origin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") : "";
+      const state = `${user.id}:${crypto.randomUUID()}${originTag ? `:${originTag}` : ""}`;
       return json({ url: buildAuthUrl(state) });
     }
 
