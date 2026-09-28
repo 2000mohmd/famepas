@@ -106,7 +106,7 @@ const MarketingHome = () => {
       if (data && data.length) setCategories(data.map((c) => c.name));
     });
     supabase.rpc("get_top_creators_public", { _limit: 6 }).then(({ data }) => {
-      if (data && data.length >= 3) setTopCreators(data as TopCreator[]);
+      if (data && data.length >= 3) setTopCreators(data as unknown as TopCreator[]);
     });
   }, []);
 
