@@ -20,7 +20,8 @@
     ".fp-msg.bot{background:#fff;color:#1a1a1a;align-self:flex-start;border:1px solid #eee}" +
     ".fp-msg.user{background:#b8923a;color:#fff;align-self:flex-end}" +
     "#fp-chat-form{display:flex;border-top:1px solid #eee;padding:8px;gap:6px}" +
-    "#fp-chat-input{flex:1;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none}" +
+    "#fp-chat-input{flex:1;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;color:#1a1a1a;background:#fff}" +
+    "#fp-chat-input::placeholder{color:#999}" +
     "#fp-chat-send{background:#b8923a;color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-size:13px}" +
     "#fp-chat-send:disabled{opacity:.5;cursor:default}";
   document.head.appendChild(style);
