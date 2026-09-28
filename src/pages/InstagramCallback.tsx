@@ -98,6 +98,21 @@ const InstagramCallback = () => {
     }
 
     // mode === "connect": an already-logged-in creator linking Instagram from Settings.
+    // If they started on another domain (e.g. the preview or www), send the code
+    // back there — that's where their login lives.
+    const originTag = state.split(":")[2];
+    if (originTag) {
+      try {
+        const origin = atob(originTag.replace(/-/g, "+").replace(/_/g, "/"));
+        const host = new URL(origin).hostname;
+        const trusted = /(^|\.)famepass\.app$/.test(host) || /\.lovable\.app$/.test(host) || /\.lovableproject\.com$/.test(host) || host === "localhost";
+        if (trusted && origin !== window.location.origin) {
+          ran.current = true;
+          window.location.replace(`${origin}/instagram/callback${window.location.search}`);
+          return;
+        }
+      } catch { /* ignore malformed tag */ }
+    }
     if (authLoading) return;
 
     if (!user) {
