@@ -2129,6 +2129,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_support_admin_id: { Args: never; Returns: string }
       get_venue_contact: {
         Args: { _venue_id: string }
         Returns: {
