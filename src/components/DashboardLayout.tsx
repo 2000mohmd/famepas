@@ -153,6 +153,12 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : "Creator";
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setAvatarUrl((data as any)?.avatar_url ?? null));
+  }, [user]);
 
   // Mobile sidebar (influencer only)
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -340,9 +346,13 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(42_35%_95%)] transition-colors text-left">
-                <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
-                  {initials}
-                </span>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" onError={() => setAvatarUrl(null)} />
+                ) : (
+                  <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
+                    {initials}
+                  </span>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-medium text-neutral-800 truncate">{user?.email?.split("@")[0]}</p>
                   <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
