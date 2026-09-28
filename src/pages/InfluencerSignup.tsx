@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
-import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle } from "@/lib/validation";
+import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle, normalizePhone } from "@/lib/validation";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
 
@@ -204,7 +204,7 @@ const InfluencerSignup = () => {
           ...(igLinkToken ? { instagram_link_token: igLinkToken } : { password }),
           role: "influencer",
           full_name: fullName,
-          phone: phone.trim() || null,
+          phone: normalizePhone(phone),
           tiktok_followers: 0,
           followers_count: 0,
           bio: bio || null,
@@ -407,6 +407,7 @@ const InfluencerSignup = () => {
             </Field>
             <Field label="Phone number" hint="So venues can reach you about bookings.">
               <TextInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961 70 000 000" />
+              {phone.trim() && !normalizePhone(phone) && <p className="text-xs text-red-600 mt-1">Please enter a valid phone number.</p>}
             </Field>
             <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />

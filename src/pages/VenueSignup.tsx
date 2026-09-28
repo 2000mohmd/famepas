@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
-import { isValidEmail, isValidName } from "@/lib/validation";
+import { isValidEmail, isValidName, isValidPhoneNumber, normalizePhone } from "@/lib/validation";
 import { useServiceCountryCodes } from "@/lib/serviceCountries";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
@@ -55,7 +55,7 @@ const getPasswordChecks = (value: string) => ({
 
 const isStrongPassword = (value: string) => Object.values(getPasswordChecks(value)).every(Boolean);
 const isPasswordAllowed = (value: string) => value.length >= 6;
-const isValidPhone = (v: string) => v.replace(/\D/g, "").length >= 7;
+const isValidPhone = (v: string) => isValidPhoneNumber(v);
 
 const createDefaultHours = (): OpeningHours =>
   Object.fromEntries(DAYS.map((day) => [day, { open: "10:00", close: "18:00", closed: false }])) as OpeningHours;
@@ -293,7 +293,7 @@ const VenueSignup = () => {
           venue_city: venueCity,
           address_line1: locationAddress,
           contact_person_name: fullName,
-          contact_phone: phone,
+          contact_phone: normalizePhone(phone) ?? phone.trim(),
           signup_completed: true,
           organization_name: brandName,
           organization_country: countryGuess || null,
