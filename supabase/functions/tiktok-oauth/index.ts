@@ -197,6 +197,7 @@ Deno.serve(async (req) => {
       if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
 
       const handle = result.username ?? result.displayName;
+      const storedAvatar = await mirrorAvatar(admin, user.id, "tiktok", result.avatarUrl);
 
       // Partial unique index on (influencer_id, platform) — ON CONFLICT can't
       // target it, so update-then-insert manually.
@@ -206,7 +207,7 @@ Deno.serve(async (req) => {
         platform: "tiktok",
         handle,
         display_name: result.displayName,
-        avatar_url: result.avatarUrl,
+        avatar_url: storedAvatar ?? result.avatarUrl,
         access_token: result.accessToken,
         refresh_token: result.refreshToken,
         token_expires_at: result.expiresAt,
@@ -238,6 +239,7 @@ Deno.serve(async (req) => {
       if (Object.keys(profileUpdate).length) {
         await admin.from("profiles").update(profileUpdate).eq("user_id", user.id);
       }
+      await applyProfileAvatar(admin, user.id, storedAvatar);
 
       return json({ success: true, handle, followers: result.followers });
     }
