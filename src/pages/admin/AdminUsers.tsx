@@ -48,6 +48,14 @@ const AdminUsers = () => {
 
   const { data: admins } = useQuery({
     queryKey: ["admin-users"],
+    // Without this, the query can fire before the Supabase client has
+    // finished attaching the restored session's JWT to outgoing requests —
+    // it then runs as anon, admin_user_permissions' policies are scoped to
+    // `authenticated` only, and the query quietly succeeds with 0 rows
+    // instead of erroring. React Query then caches that empty result as
+    // fresh and never retries. Matches exactly what Adnan reported: every
+    // admin shows 0 permissions, even after a hard refresh.
+    enabled: !!user,
     queryFn: async () => {
       const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
       const ids = (roles ?? []).map((r) => r.user_id);

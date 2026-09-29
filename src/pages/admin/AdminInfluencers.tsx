@@ -204,7 +204,11 @@ const AdminInfluencers = () => {
   );
 
   // Status filter
-  if (statusFilter === "verified") filtered = filtered.filter(i => i.is_verified);
+  // Verified is meant as "show my active, verified creators" — a still-pending
+  // or suspended account that also happens to have is_verified=true shouldn't
+  // surface here (that combination is exactly the "two statuses at once" data
+  // problem flagged separately; this keeps the filter from surfacing it).
+  if (statusFilter === "verified") filtered = filtered.filter(i => i.is_verified && !i.is_suspended && i.approval_status === "approved");
   else if (statusFilter === "suspended") filtered = filtered.filter(i => i.is_suspended);
   else if (statusFilter === "pending") filtered = filtered.filter(i => i.approval_status === "pending");
   else if (statusFilter === "ig_unverified") filtered = filtered.filter(i => i.instagram_verified !== true);
@@ -248,7 +252,11 @@ const AdminInfluencers = () => {
     <DashboardLayout type="admin">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Manage <span className="text-gold">Influencers</span></h1>
-        <p className="text-muted-foreground mb-8">{influencers.length} influencers registered</p>
+        <p className="text-muted-foreground mb-8">
+          {statusFilter === "all" && !search
+            ? `${influencers.length} influencers registered`
+            : `${filtered.length} of ${influencers.length} influencers`}
+        </p>
 
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -286,7 +294,7 @@ const AdminInfluencers = () => {
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
           <div className="w-full overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[1040px]">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
@@ -383,7 +391,7 @@ const AdminInfluencers = () => {
                       </div>
                     </td>
                     <td className="p-4">{statusBadge(inf)}</td>
-                    <td className="p-4 text-muted-foreground text-sm">{new Date(inf.created_at).toLocaleDateString()}</td>
+                    <td className="p-4 text-muted-foreground text-sm whitespace-nowrap">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4 sticky right-0 bg-card">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View profile">

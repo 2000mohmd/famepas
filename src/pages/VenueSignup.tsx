@@ -19,6 +19,7 @@ type Step =
   | "check-inbox"
   | "details"
   | "hear"
+  | "business-check"
   | "brand"
   | "location-search"
   | "location-details"
@@ -454,7 +455,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={1} total={6} />
+          <BackBar onBack={() => setStep("account")} step={1} total={7} />
           <Card className="text-center">
             <div className="w-16 h-16 rounded-full bg-[#fbf6e8] mx-auto flex items-center justify-center mb-4">
               <Mail className="w-7 h-7 text-[#b8923a]" />
@@ -482,7 +483,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("check-inbox")} step={2} total={6} />
+          <BackBar onBack={() => setStep("check-inbox")} step={2} total={7} />
           <Card>
             <Heading title="Confirm your details" />
             <Field label="First Name">
@@ -516,7 +517,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("details")} step={3} total={6} />
+          <BackBar onBack={() => setStep("details")} step={3} total={7} />
           <Card>
             <Heading title="How did you hear about us?" sub="Please pick any that apply:" />
             <div className="grid grid-cols-2 gap-3 mb-6">
@@ -526,7 +527,30 @@ const VenueSignup = () => {
                 </ChoicePill>
               ))}
             </div>
-            <PrimaryButton disabled={hear.length === 0} onClick={() => setStep("brand")}>Next</PrimaryButton>
+            <PrimaryButton disabled={hear.length === 0} onClick={() => setStep("business-check")}>Next</PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
+
+  if (step === "business-check") {
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <BackBar onBack={() => setStep("hear")} step={4} total={7} />
+          <Card>
+            <Heading title="Is this sign-up for a registered business?" sub="This form is for venues and businesses only — not for individual creators or freelancers." />
+            <div className="space-y-3">
+              <PrimaryButton onClick={() => setStep("brand")}>Yes, I'm signing up a business</PrimaryButton>
+              <button
+                type="button"
+                onClick={() => navigate("/signup/influencer")}
+                className="w-full h-12 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold hover:border-slate-300 transition"
+              >
+                No, I'm an individual creator
+              </button>
+            </div>
           </Card>
         </div>
       </Page>
@@ -537,7 +561,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("hear")} step={4} total={6} />
+          <BackBar onBack={() => setStep("business-check")} step={5} total={7} />
           <Card>
             <Heading title="Describe your business" />
             <Field label="Name">
@@ -585,7 +609,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("brand")} step={5} total={6} />
+          <BackBar onBack={() => setStep("brand")} step={6} total={7} />
           <Card>
             <Heading title="Add your first location" sub="A location can be any physical place for influencer visits, such as hotels, restaurants, cafes, entertainment venues, and more" />
             <Field label="Search for address">
@@ -637,7 +661,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("location-search")} step={6} total={6} />
+          <BackBar onBack={() => setStep("location-search")} step={7} total={7} />
           <Card>
             <Heading title="Add your first location" />
             <Field label="Name">

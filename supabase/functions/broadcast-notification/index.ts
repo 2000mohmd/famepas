@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type Audience = "all_venues" | "all_influencers" | "venue" | "influencer";
+type Audience = "all_venues" | "approved_venues" | "all_influencers" | "approved_influencers" | "venue" | "influencer";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -36,9 +36,10 @@ serve(async (req) => {
     type Recipient = { email: string; name: string };
     let recipients: Recipient[] = [];
 
-    if (audience === "all_venues" || audience === "venue") {
-      let q = admin.from("venues").select("email, owner_id, name, contact_person_name");
+    if (audience === "all_venues" || audience === "approved_venues" || audience === "venue") {
+      let q = admin.from("venues").select("email, owner_id, name, contact_person_name, approval_status");
       if (audience === "venue") q = q.eq("id", targetId);
+      if (audience === "approved_venues") q = q.eq("approval_status", "approved");
       const { data: venues } = await q;
       recipients = await Promise.all(
         (venues ?? []).map(async (v: any) => {
@@ -55,6 +56,10 @@ serve(async (req) => {
         const infIds = (roles ?? []).filter((r: any) => r.role === "influencer").map((r: any) => r.user_id);
         const staffIds = new Set((roles ?? []).filter((r: any) => r.role !== "influencer").map((r: any) => r.user_id));
         ids = [...new Set(infIds)].filter((id) => !staffIds.has(id));
+        if (audience === "approved_influencers") {
+          const { data: approved } = await admin.from("profiles").select("user_id").in("user_id", ids).eq("approval_status", "approved");
+          ids = (approved ?? []).map((p: any) => p.user_id);
+        }
       }
       const { data: profiles } = await admin.from("profiles").select("user_id, full_name").in("user_id", ids);
       recipients = await Promise.all(
