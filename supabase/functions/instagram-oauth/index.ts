@@ -74,7 +74,7 @@ function buildAuthUrl(state: string) {
 }
 
 type ExchangeResult =
-  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null }
+  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null; pictureUrl: string | null }
   | { ok: false; error: string };
 
 /** Shared by "exchange" (logged-in connect) and "identify" (logged-out login/signup): code -> long-lived token + basic profile. */
@@ -135,13 +135,15 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
   // Step 3: basic profile
   let username: string | null = null;
   let accountType: string | null = null;
+  let pictureUrl: string | null = null;
   try {
     const profRes = await fetch(
-      `https://graph.instagram.com/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(accessToken)}`,
+      `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
     username = prof?.username ?? null;
     accountType = prof?.account_type ?? null;
+    pictureUrl = prof?.profile_picture_url ?? null;
   } catch (_e) { /* non-fatal — we still have the token */ }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
@@ -154,6 +156,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     scope: shortTok.permissions ? String(shortTok.permissions) : SCOPES,
     username,
     accountType,
+    pictureUrl,
   };
 }
 
@@ -311,6 +314,8 @@ Deno.serve(async (req) => {
         instagram_verified: true,
         instagram_verified_at: new Date().toISOString(),
       }).eq("user_id", user.id);
+
+      await applyProfileAvatar(admin, user.id, await mirrorAvatar(admin, user.id, "instagram", result.pictureUrl));
 
       return json({ success: true, handle: result.username });
     }
