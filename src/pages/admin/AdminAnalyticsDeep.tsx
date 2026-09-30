@@ -471,7 +471,7 @@ const AdminAnalyticsDeep = () => {
                 </Section>
                 <Section title="Value redeemed per venue">
                   <div className="space-y-2 max-h-64 overflow-auto">
-                    {m.valueRows.length === 0 ? <p className="text-sm text-muted-foreground">No redemptions in this range.</p> :
+                    {m.valueRows.length === 0 ? <p className="text-sm text-muted-foreground">No creator visits in this range.</p> :
                       m.valueRows.map(r => (
                         <div key={r.venue} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
                           <span className="text-foreground">{r.venue}</span><span className="text-gold">${r.value.toLocaleString()}</span>

@@ -126,9 +126,9 @@ const AdminRedemptions = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading redemptions…</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading creator visits…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No redemptions found</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No creator visits found</td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                   <td className="p-4 font-medium text-foreground">{r.offer_title || "—"}</td>
