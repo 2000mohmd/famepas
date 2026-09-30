@@ -301,7 +301,7 @@ const AdminAnalytics = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Venues */}
           <div className="gradient-card rounded-xl border border-border p-6">
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">Top Venues by Redemptions</h2>
+            <h2 className="font-display text-xl font-bold text-foreground mb-4">Top Venues by Creator Visits</h2>
             {loading ? (
               <div className="space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="h-10 rounded-lg bg-secondary/50 animate-pulse" />)}</div>
             ) : topVenues.length === 0 ? (
@@ -314,7 +314,7 @@ const AdminAnalytics = () => {
                       <span className="text-gold font-bold text-sm w-6">#{i + 1}</span>
                       <span className="text-foreground text-sm">{v.name}</span>
                     </div>
-                    <span className="text-muted-foreground text-sm">{v.redemptions} redemptions</span>
+                    <span className="text-muted-foreground text-sm">{v.redemptions} creator visits</span>
                   </div>
                 ))}
               </div>

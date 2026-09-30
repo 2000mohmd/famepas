@@ -289,7 +289,7 @@ const VenueSignup = () => {
           role: "venue",
           full_name: fullName,
           venue_name: brandName,
-          venue_category: brandCategories[0] ?? "dining",
+          venue_category: brandCategories[0],
           venue_categories: brandCategories,
           venue_city: venueCity,
           address_line1: locationAddress,
