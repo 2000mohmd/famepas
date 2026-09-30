@@ -2202,6 +2202,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       is_venue_owner: { Args: { _venue_id: string }; Returns: boolean }
+      manage_users_unclaimed: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "venue" | "influencer"
