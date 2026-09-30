@@ -129,7 +129,7 @@ const AdminDashboard = () => {
           <StatCard title="Total Venues" value={stats.venues} icon={<Building2 className="w-6 h-6" />} trend={`+${stats.newVenuesThisWeek} this week`} trendUp={stats.newVenuesThisWeek > 0} />
           <StatCard title="Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={`+${stats.newInfluencersThisWeek} this week`} trendUp={stats.newInfluencersThisWeek > 0} />
           <StatCard title="Active Offers" value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={`${stats.offers} total offers`} trendUp={stats.offers > 0} />
-          <StatCard title="Total Claims" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed redemption${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp={stats.completedRedemptions > 0} />
+          <StatCard title="Total Creator Visits" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed visit${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp={stats.completedRedemptions > 0} />
         </div>
 
         {/* Alert banners */}

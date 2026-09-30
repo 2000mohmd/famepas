@@ -39,7 +39,12 @@ serve(async (req) => {
     if (audience === "all_venues" || audience === "approved_venues" || audience === "venue") {
       let q = admin.from("venues").select("email, owner_id, name, contact_person_name, approval_status");
       if (audience === "venue") q = q.eq("id", targetId);
-      if (audience === "approved_venues") q = q.eq("approval_status", "approved");
+      // A rejected venue was explicitly told no — it never belongs in a
+      // broadcast, "all" or otherwise.
+      else if (audience === "approved_venues") q = q.eq("approval_status", "approved");
+      // approval_status is nullable on older rows, where it's treated as
+      // approved elsewhere in the app — .neq alone would drop those too.
+      else q = q.or("approval_status.is.null,approval_status.neq.rejected");
       const { data: venues } = await q;
       recipients = await Promise.all(
         (venues ?? []).map(async (v: any) => {
@@ -56,10 +61,12 @@ serve(async (req) => {
         const infIds = (roles ?? []).filter((r: any) => r.role === "influencer").map((r: any) => r.user_id);
         const staffIds = new Set((roles ?? []).filter((r: any) => r.role !== "influencer").map((r: any) => r.user_id));
         ids = [...new Set(infIds)].filter((id) => !staffIds.has(id));
-        if (audience === "approved_influencers") {
-          const { data: approved } = await admin.from("profiles").select("user_id").in("user_id", ids).eq("approval_status", "approved");
-          ids = (approved ?? []).map((p: any) => p.user_id);
-        }
+        // Suspended is a block, not a status — it's excluded from every
+        // audience, not just "approved only".
+        let activeQ = admin.from("profiles").select("user_id").in("user_id", ids).eq("is_suspended", false);
+        if (audience === "approved_influencers") activeQ = activeQ.eq("approval_status", "approved");
+        const { data: active } = await activeQ;
+        ids = (active ?? []).map((p: any) => p.user_id);
       }
       const { data: profiles } = await admin.from("profiles").select("user_id, full_name").in("user_id", ids);
       recipients = await Promise.all(

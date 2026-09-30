@@ -22,7 +22,7 @@ const AUDIENCE_LABELS: Record<Audience, string> = {
 };
 
 interface Venue { id: string; name: string; approval_status: string | null; }
-interface Influencer { user_id: string; full_name: string | null; approval_status: string | null; }
+interface Influencer { user_id: string; full_name: string | null; approval_status: string | null; is_suspended: boolean; }
 
 const AdminBroadcast = () => {
   const { toast } = useToast();
@@ -43,19 +43,22 @@ const AdminBroadcast = () => {
       const staffIds = new Set((roles ?? []).filter((r) => r.role !== "influencer").map((r) => r.user_id));
       const ids = [...new Set(infIds)].filter((id) => !staffIds.has(id));
       if (!ids.length) return;
-      const { data } = await supabase.from("profiles").select("user_id, full_name, approval_status").in("user_id", ids).order("full_name");
+      const { data } = await supabase.from("profiles").select("user_id, full_name, approval_status, is_suspended").in("user_id", ids).order("full_name");
       setInfluencers(data ?? []);
     })();
   }, []);
 
   const needsTarget = audience === "venue" || audience === "influencer";
 
+  // Mirrors the edge function's filtering exactly, so the preview count is
+  // never higher than what actually gets sent — a rejected venue or a
+  // suspended creator doesn't belong in any audience, "all" included.
   const recipientCount = (() => {
     switch (audience) {
-      case "all_venues": return venues.length;
+      case "all_venues": return venues.filter((v) => v.approval_status !== "rejected").length;
       case "approved_venues": return venues.filter((v) => v.approval_status === "approved").length;
-      case "all_influencers": return influencers.length;
-      case "approved_influencers": return influencers.filter((i) => i.approval_status === "approved").length;
+      case "all_influencers": return influencers.filter((i) => !i.is_suspended).length;
+      case "approved_influencers": return influencers.filter((i) => i.approval_status === "approved" && !i.is_suspended).length;
       case "venue": case "influencer": return targetId ? 1 : 0;
       default: return 0;
     }
