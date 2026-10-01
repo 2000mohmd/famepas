@@ -148,7 +148,7 @@ const MarketingHome = () => {
         <section className="relative mx-auto max-h-[570px] min-h-[420px] max-w-[1500px] overflow-hidden bg-[#e9edeb] md:min-h-[570px]">
           <div className="absolute inset-y-0 right-0 w-full overflow-hidden">
             <img
-              src={heroBrand.url}
+              src={heroBrand}
               alt="A creator in a white dress at a crowded FamePass event, with the FamePass logo and the words Your Pass to Influence"
               className="h-full w-full object-cover object-[50%_40%]"
             />
