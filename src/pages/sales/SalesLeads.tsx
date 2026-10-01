@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, LayoutGrid, List as ListIcon, AlertCircle, Download, Users as UsersIcon } from "lucide-react";
+import { Plus, Search, LayoutGrid, List as ListIcon, AlertCircle, Download, Upload, Users as UsersIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import LeadDialog from "./LeadDialog";
+import LeadImportDialog from "./LeadImportDialog";
 import {
-  STAGES, isOpenStage, isOverdue, lostReasonLabel, sourceLabel, stageLabel, toCsv, type Lead,
+  STAGES, DEFAULT_SCORE_CONFIG, isOpenStage, isOverdue, leadScore, lostReasonLabel,
+  sourceLabel, stageLabel, toCsv, type Lead, type ScoreConfig,
 } from "./leadMeta";
 
 const db = supabase as any;
@@ -34,6 +36,9 @@ const SalesLeads = () => {
   const [dragging, setDragging] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reassigning, setReassigning] = useState(false);
+  const [scoreConfig, setScoreConfig] = useState<ScoreConfig>(DEFAULT_SCORE_CONFIG);
+  const [sortBy, setSortBy] = useState<"follow_up" | "score" | "newest">("follow_up");
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +51,8 @@ const SalesLeads = () => {
   useEffect(() => { void load(); }, []);
 
   useEffect(() => {
+    supabase.from("platform_settings").select("value").eq("key", "lead_score_weights").maybeSingle()
+      .then(({ data }) => { if (data?.value) setScoreConfig(data.value as unknown as ScoreConfig); });
     supabase.from("categories").select("name").eq("is_active", true).order("name")
       .then(({ data }) => setCategories((data ?? []).map((c: any) => c.name)));
     supabase.from("service_locations").select("area, city").eq("is_active", true)
@@ -73,12 +80,22 @@ const SalesLeads = () => {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return leads.filter((l) =>
+    const rows = leads.filter((l) =>
       (stageFilter === "all" || l.stage === stageFilter) &&
       (ownerFilter === "all" || l.owner_id === ownerFilter) &&
       (!q || l.venue_name.toLowerCase().includes(q) || l.contact_name.toLowerCase().includes(q) || l.phone.includes(q))
     );
-  }, [leads, search, stageFilter, ownerFilter]);
+    if (sortBy === "newest") {
+      return [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    }
+    if (sortBy === "score") {
+      // Unscored leads sink rather than sorting as zero — they're unresearched,
+      // not bad, and a rep should still reach them after the best ones.
+      return [...rows].sort((a, b) => (leadScore(b, scoreConfig) ?? -1) - (leadScore(a, scoreConfig) ?? -1));
+    }
+    return [...rows].sort((a, b) =>
+      (a.next_action_date ?? "9999-12-31").localeCompare(b.next_action_date ?? "9999-12-31"));
+  }, [leads, search, stageFilter, ownerFilter, sortBy, scoreConfig]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openLead = (lead: Lead) => { setEditing(lead); setDialogOpen(true); };
@@ -115,11 +132,11 @@ const SalesLeads = () => {
     if (!rows.length) return;
     const csv = toCsv(
       ["Venue", "Contact", "Role", "Phone", "Instagram", "Category", "Area", "City",
-       "Source", "Stage", "Owner", "Next action", "Follow up", "Lost reason", "Created"],
+       "Source", "Stage", "Score", "Owner", "Next action", "Follow up", "Lost reason", "Created"],
       rows.map((l) => [
         l.venue_name, l.contact_name, l.contact_role, l.phone, l.instagram_handle,
         l.category, l.area, l.city, sourceLabel(l.source), stageLabel(l.stage),
-        ownerName(l.owner_id), l.next_action, l.next_action_date,
+        leadScore(l, scoreConfig), ownerName(l.owner_id), l.next_action, l.next_action_date,
         l.lost_reason ? lostReasonLabel(l.lost_reason) : "",
         l.created_at.slice(0, 10),
       ]),
@@ -189,6 +206,19 @@ const SalesLeads = () => {
       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
         <Badge variant="secondary" className="text-[10px]">{sourceLabel(lead.source)}</Badge>
         {isManager && <Badge variant="secondary" className="text-[10px]">{ownerName(lead.owner_id)}</Badge>}
+        {(() => {
+          const score = leadScore(lead, scoreConfig);
+          if (score === null) return null;
+          return (
+            <Badge
+              className="text-[10px] border-gold/40"
+              style={{ background: `hsl(42 65% 50% / ${0.12 + (score / 100) * 0.3})` }}
+              title="Lead score"
+            >
+              {score}
+            </Badge>
+          );
+        })()}
       </div>
     </div>
   );
@@ -206,11 +236,16 @@ const SalesLeads = () => {
               {!isManager && " assigned to you"}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {isManager && (
-              <Button variant="outline" onClick={() => void exportCsv()} disabled={!filtered.length}>
-                <Download className="w-4 h-4 mr-1.5" /> Export
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => setImportOpen(true)}>
+                  <Upload className="w-4 h-4 mr-1.5" /> Import
+                </Button>
+                <Button variant="outline" onClick={() => void exportCsv()} disabled={!filtered.length}>
+                  <Download className="w-4 h-4 mr-1.5" /> Export
+                </Button>
+              </>
             )}
             <Button onClick={openNew} className="gradient-gold text-accent-foreground font-semibold">
               <Plus className="w-4 h-4 mr-1.5" /> Add lead
@@ -257,6 +292,14 @@ const SalesLeads = () => {
               </SelectContent>
             </Select>
           )}
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-[170px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="follow_up">Follow-up date</SelectItem>
+              <SelectItem value="score">Best leads first</SelectItem>
+              <SelectItem value="newest">Newest first</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button onClick={() => setView("list")} aria-label="List view"
               className={`px-3 py-2 ${view === "list" ? "bg-secondary text-foreground" : "text-muted-foreground"}`}>
@@ -333,6 +376,14 @@ const SalesLeads = () => {
         canReassign={isManager}
         categories={categories}
         areas={areas}
+      />
+
+      <LeadImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={load}
+        owners={owners}
+        fallbackOwner={user?.id ?? ""}
       />
     </DashboardLayout>
   );

@@ -193,6 +193,26 @@ const VenueSignup = () => {
 
   const [submitting, setSubmitting] = useState(false);
 
+  // Opened from a rep's lead link (/signup/business?lead=<id>): prefill what
+  // the rep already captured. Best effort only — a bad or already-converted
+  // id just yields an ordinary blank signup, never an error page.
+  useEffect(() => {
+    const leadId = new URLSearchParams(window.location.search).get("lead");
+    if (!leadId) return;
+    // Cast: generated Supabase types predate this function.
+    (supabase as any).rpc("get_lead_prefill", { _lead_id: leadId }).then(({ data }: any) => {
+      const lead = (data as any[])?.[0];
+      if (!lead) return;
+      setBrandName((v) => v || lead.venue_name || "");
+      setPhone((v) => v || lead.phone || "");
+      setVenueCity((v) => v || lead.city || lead.area || "");
+      if (lead.category) setBrandCategories((v) => (v.length ? v : [lead.category]));
+      const [first, ...rest] = (lead.contact_name || "").split(" ");
+      if (first) setFirstName((v) => v || first);
+      if (rest.length) setLastName((v) => v || rest.join(" "));
+    });
+  }, []);
+
   // load categories from db (fallback to defaults)
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name").then(({ data }) => {

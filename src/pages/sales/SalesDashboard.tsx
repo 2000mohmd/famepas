@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STAGES, daysInStage, isOverdue, median, stageLabel, type Lead, type LeadActivity } from "./leadMeta";
+import {
+  STAGES, daysInStage, isOverdue, lostReasonLabel, median, sourceLabel, stageLabel,
+  type Lead, type LeadActivity,
+} from "./leadMeta";
 
 const db = supabase as any;
 
@@ -17,18 +20,28 @@ const SalesDashboard = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [owners, setOwners] = useState<Record<string, string>>({});
+  const [activation, setActivation] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [tiers, setTiers] = useState<any[]>([]);
   const [days, setDays] = useState("7");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: leadRows }, { data: actRows }] = await Promise.all([
-        db.from("leads").select("*"),
-        db.from("lead_activities").select("*").gte("happened_at", sinceISO(90)),
-      ]);
+      const [{ data: leadRows }, { data: actRows }, { data: activationRows }, { data: venueRows }, { data: tierRows }] =
+        await Promise.all([
+          db.from("leads").select("*"),
+          db.from("lead_activities").select("*").gte("happened_at", sinceISO(90)),
+          db.from("venue_activation").select("*"),
+          supabase.from("venues").select("id, approval_status, created_at, subscription_tier_id, subscription_renews_at, payment_status"),
+          supabase.from("subscription_tiers").select("id, name, price"),
+        ]);
       setLeads(leadRows ?? []);
       setActivities(actRows ?? []);
+      setActivation(activationRows ?? []);
+      setVenues(venueRows ?? []);
+      setTiers(tierRows ?? []);
       const ids = [...new Set((leadRows ?? []).map((l: any) => l.owner_id))];
       if (ids.length) {
         const { data: profiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids as string[]);
@@ -91,6 +104,46 @@ const SalesDashboard = () => {
       .sort((a, b) => b.signings - a.signings || b.meetings - a.meetings || b.contacts - a.contacts);
   }, [inRange, leadOwner, overdueLeads, owners]);
 
+  // Phase 2 metrics.
+  const pendingAges = venues
+    .filter((v) => v.approval_status === "pending")
+    .map((v) => Math.round((Date.now() - new Date(v.created_at).getTime()) / 3600000));
+  const medianPendingHours = median(pendingAges);
+  const breachingSla = pendingAges.filter((h) => h > 48).length;
+
+  const signedVenues = activation.filter((a) => a.lead_id);
+  const activated = signedVenues.filter((a) => a.first_offer_posted).length;
+  const activationRate = signedVenues.length ? Math.round((activated / signedVenues.length) * 100) : null;
+
+  const sourcePerformance = useMemo(() => {
+    const rows: Record<string, { total: number; signed: number; live: number }> = {};
+    for (const l of leads) {
+      const r = (rows[l.source] ??= { total: 0, signed: 0, live: 0 });
+      r.total++;
+      if (["signed_up", "approved", "live"].includes(l.stage)) r.signed++;
+      if (l.stage === "live") r.live++;
+    }
+    return Object.entries(rows).sort((a, b) => b[1].live - a[1].live || b[1].signed - a[1].signed);
+  }, [leads]);
+
+  const lostReasons = useMemo(() => {
+    const rows: Record<string, number> = {};
+    for (const l of leads.filter((x) => x.stage === "lost" && x.lost_reason)) {
+      rows[l.lost_reason!] = (rows[l.lost_reason!] ?? 0) + 1;
+    }
+    return Object.entries(rows).sort((a, b) => b[1] - a[1]);
+  }, [leads]);
+
+  const tierPrice = (id: string | null) => Number(tiers.find((t) => t.id === id)?.price ?? 0);
+  const mrr = venues
+    .filter((v) => v.subscription_tier_id && v.payment_status !== "cancelled")
+    .reduce((sum, v) => sum + tierPrice(v.subscription_tier_id), 0);
+  const renewingSoon = venues.filter((v) => {
+    if (!v.subscription_renews_at) return false;
+    const days = (new Date(v.subscription_renews_at).getTime() - Date.now()) / 86400000;
+    return days >= 0 && days <= 30;
+  }).length;
+
   const Stat = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
     <div className="gradient-card rounded-xl border border-border p-5">
       <p className="text-sm text-muted-foreground mb-1">{label}</p>
@@ -130,6 +183,23 @@ const SalesDashboard = () => {
               <Stat label="Overdue follow-ups" value={overdueLeads.length} sub={overdueLeads.length ? "Needs chasing" : "All current"} />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Stat
+                label="Waiting for approval"
+                value={pendingAges.length}
+                sub={medianPendingHours === null
+                  ? "Nothing pending"
+                  : `${breachingSla} past the 48h mark · median ${medianPendingHours}h`}
+              />
+              <Stat
+                label="Activation rate"
+                value={activationRate === null ? "—" : `${activationRate}%`}
+                sub={`${activated} of ${signedVenues.length} signed venues posted an offer`}
+              />
+              <Stat label="Monthly recurring revenue" value={mrr ? `$${mrr.toLocaleString()}` : "—"} sub="From venues on a paid plan" />
+              <Stat label="Renewing in 30 days" value={renewingSoon} />
+            </div>
+
             <div className="gradient-card rounded-xl border border-border p-5 mb-6">
               <h2 className="font-display text-lg font-bold text-foreground mb-1">Funnel</h2>
               <p className="text-xs text-muted-foreground mb-4">
@@ -152,6 +222,74 @@ const SalesDashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+              <div className="gradient-card rounded-xl border border-border p-5">
+                <h2 className="font-display text-lg font-bold text-foreground mb-4">Where signings come from</h2>
+                {sourcePerformance.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No leads yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {sourcePerformance.map(([src, r]) => (
+                      <div key={src} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{sourceLabel(src)}</span>
+                        <span className="text-muted-foreground">
+                          {r.total} leads · {r.signed} signed · <strong className="text-foreground">{r.live} live</strong>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="gradient-card rounded-xl border border-border p-5">
+                <h2 className="font-display text-lg font-bold text-foreground mb-4">Why leads are lost</h2>
+                {lostReasons.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nothing marked lost yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {lostReasons.map(([reason, count]) => (
+                      <div key={reason} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{lostReasonLabel(reason)}</span>
+                        <span className="text-muted-foreground">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="gradient-card rounded-xl border border-border p-5 mb-6">
+              <h2 className="font-display text-lg font-bold text-foreground mb-1">Signed but not live yet</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Venues that signed up but haven't finished activating. A venue only counts as Live once it posts an offer.
+              </p>
+              {(() => {
+                const stalled = activation.filter((a) => a.lead_id && !a.first_offer_posted);
+                if (!stalled.length) return <p className="text-sm text-muted-foreground">Every signed venue has posted an offer.</p>;
+                const step = (done: boolean, label: string) => (
+                  <span className={done ? "text-success" : "text-muted-foreground"}>
+                    {done ? "✓" : "○"} {label}
+                  </span>
+                );
+                return (
+                  <div className="space-y-3">
+                    {stalled.map((a) => (
+                      <div key={a.venue_id} className="border-b border-border/50 pb-2 last:border-0">
+                        <p className="text-sm font-medium text-foreground">{a.name}</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-1">
+                          {step(a.profile_complete, "Profile")}
+                          {step(a.photos_uploaded, "Photos")}
+                          {step(a.first_offer_posted, "First offer")}
+                          {step(a.first_creator_visit, "First visit")}
+                          {step(a.first_content_published, "First content")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="gradient-card rounded-xl border border-border p-5">

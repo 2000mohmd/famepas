@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "react-router-dom";
-import { Phone, MessageCircle, CalendarDays } from "lucide-react";
+import { Phone, MessageCircle, CalendarDays, AlertTriangle } from "lucide-react";
 import LeadDialog from "./LeadDialog";
 import { isOpenStage, sourceLabel, stageLabel, todayISO, type Lead } from "./leadMeta";
 
@@ -19,6 +19,7 @@ const SalesMyDay = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
 
   const load = async () => {
     if (!user) return;
@@ -27,6 +28,12 @@ const SalesMyDay = () => {
     // manager, whose RLS would otherwise return the whole team's pipeline.
     const { data } = await db.from("leads").select("*").eq("owner_id", user.id).order("next_action_date");
     setLeads(data ?? []);
+
+    // Admins see every alert; a rep sees the ones on venues they brought in.
+    let alertQuery = db.from("sales_alerts").select("*");
+    if (role !== "admin") alertQuery = alertQuery.eq("rep_id", user.id);
+    const { data: alertRows } = await alertQuery;
+    setAlerts(alertRows ?? []);
     setLoading(false);
   };
 
@@ -100,6 +107,20 @@ const SalesMyDay = () => {
           <CalendarDays className="w-4 h-4 inline mr-1.5 -mt-0.5" />
           {new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
         </p>
+
+        {alerts.length > 0 && (
+          <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
+            <h2 className="font-display text-lg font-bold text-foreground mb-2">Needs chasing</h2>
+            <div className="space-y-1.5">
+              {alerts.map((a, i) => (
+                <p key={i} className="text-sm text-foreground">
+                  <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5 text-gold" />
+                  <strong>{a.subject}</strong> — {a.detail}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <p className="text-muted-foreground">Loading…</p>

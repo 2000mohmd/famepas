@@ -86,6 +86,7 @@ const adminGroups: NavGroup[] = [
       { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events" },
       { to: "/admin/users", icon: Users, label: "Admin Users" },
       { to: "/admin/sales-team", icon: Target, label: "Sales Team" },
+      { to: "/admin/sales-config", icon: TrendingUp, label: "Sales Scoring" },
       { to: "/admin/chatbot", icon: Bot, label: "Train Chatbot" },
       { to: "/admin/settings", icon: Settings, label: "Settings" },
     ],

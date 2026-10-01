@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isOpenStage, isOverdue, isDueToday, todayISO, stageLabel, sourceLabel, STAGES,
-  toCsv, median, daysInStage,
+  toCsv, median, daysInStage, leadScore, DEFAULT_SCORE_CONFIG,
 } from "@/pages/sales/leadMeta";
 
 const dayOffset = (n: number) => {
@@ -88,6 +88,53 @@ describe("CSV export", () => {
 
   it("keeps a zero rather than blanking it", () => {
     expect(toCsv(["Reviews"], [[0]])).toBe("Reviews\r\n0");
+  });
+});
+
+describe("lead score", () => {
+  const bare = { category: null, area: null, google_rating: null, google_review_count: null, instagram_followers: null, price_level: null };
+
+  it("is null, not zero, when nothing scoreable is known", () => {
+    // Zero would read as "bad lead"; this lead is simply unresearched.
+    expect(leadScore(bare)).toBeNull();
+  });
+
+  it("scores a perfect lead at 100 and a floor lead at 0", () => {
+    const cfg = { ...DEFAULT_SCORE_CONFIG, targets: { google_reviews: 200, instagram_followers: 10000 } };
+    expect(leadScore({ ...bare, google_rating: 5, google_review_count: 200, instagram_followers: 10000, price_level: 4 }, cfg)).toBe(100);
+    expect(leadScore({ ...bare, google_rating: 0, google_review_count: 0, instagram_followers: 0, price_level: 0 }, cfg)).toBe(0);
+  });
+
+  it("caps values above target instead of scoring over 100", () => {
+    const viral = leadScore({ ...bare, instagram_followers: 5_000_000 });
+    expect(viral).toBe(100);
+  });
+
+  it("averages only the fields that have data", () => {
+    // Rating alone at 5/5 is a full score on the one known component.
+    expect(leadScore({ ...bare, google_rating: 5 })).toBe(100);
+    expect(leadScore({ ...bare, google_rating: 2.5 })).toBe(50);
+  });
+
+  it("ignores category and area until a preference is configured", () => {
+    const noPref = leadScore({ ...bare, category: "Cafes", google_rating: 5 });
+    expect(noPref).toBe(100);
+
+    const withPref = leadScore(
+      { ...bare, category: "Cafes", google_rating: 5 },
+      { ...DEFAULT_SCORE_CONFIG, preferred_categories: ["Gyms"] },
+    );
+    // Cafes is now explicitly not preferred, so it drags the score down.
+    expect(withPref).toBeLessThan(100);
+  });
+
+  it("respects reweighting from configuration", () => {
+    const cfg = {
+      ...DEFAULT_SCORE_CONFIG,
+      weights: { ...DEFAULT_SCORE_CONFIG.weights, google_rating: 0, price_level: 100 },
+    };
+    // Rating is switched off entirely, so only price level counts.
+    expect(leadScore({ ...bare, google_rating: 0, price_level: 4 }, cfg)).toBe(100);
   });
 });
 

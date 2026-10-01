@@ -119,3 +119,63 @@ export const median = (values: number[]) => {
 /** Days each lead has been sitting in the stage it's in now. */
 export const daysInStage = (lead: Pick<Lead, "stage_changed_at">, now = Date.now()) =>
   Math.floor((now - new Date(lead.stage_changed_at).getTime()) / 86400000);
+
+export interface ScoreConfig {
+  weights: {
+    category: number; area: number; google_rating: number;
+    google_reviews: number; instagram_followers: number; price_level: number;
+  };
+  preferred_categories: string[];
+  preferred_areas: string[];
+  targets: { google_reviews: number; instagram_followers: number };
+}
+
+export const DEFAULT_SCORE_CONFIG: ScoreConfig = {
+  weights: { category: 20, area: 20, google_rating: 20, google_reviews: 15, instagram_followers: 15, price_level: 10 },
+  preferred_categories: [],
+  preferred_areas: [],
+  targets: { google_reviews: 200, instagram_followers: 10000 },
+};
+
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+/**
+ * 0–100, or null when the lead carries none of the scored data — null shows as
+ * "—" rather than a zero, which would read as "bad lead" instead of "unknown".
+ * Each component only counts if it has both a weight and a value, so the score
+ * is a weighted average of what's actually known.
+ */
+export const leadScore = (
+  lead: Pick<Lead, "category" | "area" | "google_rating" | "google_review_count" | "instagram_followers" | "price_level">,
+  cfg: ScoreConfig = DEFAULT_SCORE_CONFIG,
+): number | null => {
+  const parts: { weight: number; value: number }[] = [];
+  const add = (weight: number, value: number) => {
+    if (weight > 0) parts.push({ weight, value: clamp01(value) });
+  };
+
+  // An empty preference list means "no preference stated yet", so category and
+  // area sit out rather than scoring every lead zero.
+  if (cfg.preferred_categories.length && lead.category) {
+    add(cfg.weights.category, cfg.preferred_categories.includes(lead.category) ? 1 : 0);
+  }
+  if (cfg.preferred_areas.length && lead.area) {
+    add(cfg.weights.area, cfg.preferred_areas.includes(lead.area) ? 1 : 0);
+  }
+  if (lead.google_rating !== null && lead.google_rating !== undefined) {
+    add(cfg.weights.google_rating, lead.google_rating / 5);
+  }
+  if (lead.google_review_count !== null && lead.google_review_count !== undefined) {
+    add(cfg.weights.google_reviews, lead.google_review_count / (cfg.targets.google_reviews || 1));
+  }
+  if (lead.instagram_followers !== null && lead.instagram_followers !== undefined) {
+    add(cfg.weights.instagram_followers, lead.instagram_followers / (cfg.targets.instagram_followers || 1));
+  }
+  if (lead.price_level !== null && lead.price_level !== undefined) {
+    add(cfg.weights.price_level, lead.price_level / 4);
+  }
+
+  const totalWeight = parts.reduce((sum, p) => sum + p.weight, 0);
+  if (!totalWeight) return null;
+  return Math.round((parts.reduce((sum, p) => sum + p.weight * p.value, 0) / totalWeight) * 100);
+};

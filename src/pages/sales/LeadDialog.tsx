@@ -55,11 +55,36 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [newActivity, setNewActivity] = useState({ type: "call", outcome: "" });
   const [tiers, setTiers] = useState<{ id: string; name: string }[]>([]);
+  const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     supabase.from("subscription_tiers").select("id, name").eq("is_active", true).order("price")
       .then(({ data }) => setTiers((data ?? []) as any));
   }, []);
+
+  // Only offered to managers, and only for venues no other lead has claimed —
+  // this is the escape hatch for when a venue signed up on a different number
+  // than the rep recorded, so phone matching never fired.
+  useEffect(() => {
+    if (!open || !canReassign || !lead || lead.venue_id) return;
+    (async () => {
+      const [{ data: allVenues }, { data: linked }] = await Promise.all([
+        supabase.from("venues").select("id, name").order("name"),
+        db.from("leads").select("venue_id").not("venue_id", "is", null),
+      ]);
+      const taken = new Set((linked ?? []).map((l: any) => l.venue_id));
+      setVenues((allVenues ?? []).filter((v: any) => !taken.has(v.id)));
+    })();
+  }, [open, canReassign, lead]);
+
+  const linkVenue = async (venueId: string) => {
+    if (!lead) return;
+    const { error } = await db.from("leads").update({ venue_id: venueId }).eq("id", lead.id);
+    if (error) { toast({ title: "Couldn't link that venue", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Linked to venue", description: "The lead can now move through the rest of the funnel." });
+    onSaved();
+    onOpenChange(false);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -151,9 +176,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     setActivities(data ?? []);
   };
 
-  // Plain signup URL: the lead attaches itself when the venue signs up with
-  // this phone number, so nothing has to survive the signup flow.
-  const signupLink = `${window.location.origin}/signup/business`;
+  const signupLink = lead ? `${window.location.origin}/signup/business?lead=${lead.id}` : "";
   const digits = form.phone.replace(/\D/g, "");
 
   return (
@@ -337,12 +360,22 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
             {lead.venue_id ? (
               <Badge className="bg-success/20 text-success border-success/30">Signed up — linked to venue</Badge>
             ) : (
-              <Button
-                size="sm" variant="outline"
-                onClick={() => { void navigator.clipboard.writeText(signupLink); toast({ title: "Signup link copied", description: `Send it to them. If they sign up using ${form.phone}, this lead links to the venue automatically.` }); }}
-              >
-                <Link2 className="w-3.5 h-3.5 mr-1.5" /> Copy signup link
-              </Button>
+              <>
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => { void navigator.clipboard.writeText(signupLink); toast({ title: "Signup link copied", description: "Their details are prefilled, so signing up links them back to this lead." }); }}
+                >
+                  <Link2 className="w-3.5 h-3.5 mr-1.5" /> Copy signup link
+                </Button>
+                {canReassign && venues.length > 0 && (
+                  <Select onValueChange={(v) => void linkVenue(v)}>
+                    <SelectTrigger className="w-[220px] h-9 text-sm"><SelectValue placeholder="Already signed up? Link venue" /></SelectTrigger>
+                    <SelectContent>
+                      {venues.map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </>
             )}
           </div>
         )}

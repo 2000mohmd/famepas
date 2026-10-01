@@ -43,6 +43,7 @@ const VenueCampaignCreate = lazy(() => import("./pages/venue/VenueCampaignCreate
 const VenueLocations = lazy(() => import("./pages/venue/VenueLocations"));
 const AdminCulturalEvents = lazy(() => import("./pages/admin/AdminCulturalEvents"));
 const AdminSalesTeam = lazy(() => import("./pages/admin/AdminSalesTeam"));
+const AdminSalesConfig = lazy(() => import("./pages/admin/AdminSalesConfig"));
 const SalesMyDay = lazy(() => import("./pages/sales/SalesMyDay"));
 const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
 const SalesDashboard = lazy(() => import("./pages/sales/SalesDashboard"));
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/sales-team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesTeam /></ProtectedRoute>} />
+            <Route path="/admin/sales-config" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesConfig /></ProtectedRoute>} />
             <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/broadcast" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBroadcast /></ProtectedRoute>} />
