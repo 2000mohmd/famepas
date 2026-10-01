@@ -171,7 +171,7 @@ const VenueReports = () => {
               <Stat icon={Film} label="Stories" value={m.byType.story || 0} />
             </div>
 
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Redemptions & Bookings</h2>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Creator Visits & Bookings</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <Stat icon={Ticket} label="Offers redeemed" value={m.redeemed} sub={`of ${m.totalRedemptions} claims`} />
               <Stat icon={CalendarCheck} label="Bookings completed" value={m.completed} sub={`of ${m.totalBookings}`} />

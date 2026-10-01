@@ -222,8 +222,9 @@ const VenueSignup = () => {
 
   // load the active city list — the same allow-list AdminVenues validates against
   useEffect(() => {
-    supabase.from("service_locations").select("city, area").eq("is_active", true).order("area").order("city").then(({ data }) => {
-      if (data && data.length) setCities(data as { city: string; area: string | null }[]);
+    supabase.functions.invoke("public-signup-config").then(({ data }) => {
+      const locs = (data as { locations?: { city: string; area: string | null }[] } | null)?.locations;
+      if (locs && locs.length) setCities(locs);
     });
   }, []);
 
@@ -309,7 +310,7 @@ const VenueSignup = () => {
           role: "venue",
           full_name: fullName,
           venue_name: brandName,
-          venue_category: brandCategories[0] ?? "dining",
+          venue_category: brandCategories[0],
           venue_categories: brandCategories,
           venue_city: venueCity,
           address_line1: locationAddress,
