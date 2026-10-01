@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Send } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface Person {
   user_id: string;
@@ -32,17 +33,26 @@ const AdminMessages = () => {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Waits for `user` so the request carries the restored session's JWT. Without
+  // it the query can run as anon, RLS returns nothing, and an empty creator
+  // list looks identical to "there are no creators".
   useEffect(() => {
+    if (!user) return;
     (async () => {
-      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const { data: roles, error: rolesErr } = await supabase.from("user_roles").select("user_id, role");
+      if (rolesErr) { setLoadError(rolesErr.message); return; }
       const infIds = (roles ?? []).filter((r) => r.role === "influencer").map((r) => r.user_id);
       const staffIds = new Set((roles ?? []).filter((r) => r.role !== "influencer").map((r) => r.user_id));
       const ids = [...new Set(infIds)].filter((id) => !staffIds.has(id));
-      if (!ids.length) return;
-      const { data } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids).order("full_name");
+      if (!ids.length) { setLoadError(null); setInfluencers([]); return; }
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids).order("full_name");
+      if (error) { setLoadError(error.message); return; }
+      setLoadError(null);
       setInfluencers((data as Person[]) ?? []);
     })();
-  }, []);
+  }, [user]);
 
   // Team-wide unread — any admin may have received it, not just the one viewing this page.
   useEffect(() => {
@@ -91,7 +101,13 @@ const AdminMessages = () => {
       .select()
       .single();
     setSending(false);
-    if (!error && data) {
+    if (error) {
+      // Previously swallowed: a failed send looked identical to a successful
+      // one that simply rendered nothing.
+      toast({ title: "Message not sent", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (data) {
       setThread((prev) => [...prev, data as Message]);
       setDraft("");
     }
@@ -116,6 +132,13 @@ const AdminMessages = () => {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
+              {loadError ? (
+                <p className="p-3 text-sm text-destructive">Couldn't load creators: {loadError}</p>
+              ) : filtered.length === 0 ? (
+                <p className="p-3 text-sm text-muted-foreground">
+                  {influencers.length === 0 ? "No creators yet." : "No creators match that search."}
+                </p>
+              ) : null}
               {filtered.map((p) => (
                 <button
                   key={p.user_id}
