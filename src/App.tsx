@@ -42,6 +42,10 @@ const VenueCampaigns = lazy(() => import("./pages/venue/VenueCampaigns"));
 const VenueCampaignCreate = lazy(() => import("./pages/venue/VenueCampaignCreate"));
 const VenueLocations = lazy(() => import("./pages/venue/VenueLocations"));
 const AdminCulturalEvents = lazy(() => import("./pages/admin/AdminCulturalEvents"));
+const AdminSalesTeam = lazy(() => import("./pages/admin/AdminSalesTeam"));
+const SalesMyDay = lazy(() => import("./pages/sales/SalesMyDay"));
+const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
+const SalesDashboard = lazy(() => import("./pages/sales/SalesDashboard"));
 const VenueSettings = lazy(() => import("./pages/venue/VenueSettings"));
 const InfluencerDashboard = lazy(() => import("./pages/influencer/InfluencerDashboard"));
 const InfluencerExplore = lazy(() => import("./pages/influencer/InfluencerExplore"));
@@ -117,11 +121,18 @@ const App = () => (
             <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling /></ProtectedRoute>} />
             <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/sales-team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesTeam /></ProtectedRoute>} />
             <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/broadcast" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBroadcast /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/cultural-events" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCulturalEvents /></ProtectedRoute>} />
+
+            {/* Sales Routes — reps and managers; admins get the same pages
+                inside their own panel, so Adnan runs it all from one login. */}
+            <Route path="/sales" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesMyDay /></ProtectedRoute>} />
+            <Route path="/sales/leads" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesLeads /></ProtectedRoute>} />
+            <Route path="/sales/dashboard" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><SalesDashboard /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><Navigate to="/venue/campaigns" replace /></ProtectedRoute>} />

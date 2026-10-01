@@ -31,6 +31,8 @@ import {
   Menu,
   X,
   MessageCircle,
+  Target,
+  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,11 +54,13 @@ const adminGroups: NavGroup[] = [
     items: [
       { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales" },
     ],
   },
   {
     label: "Marketplace",
     items: [
+      { to: "/sales/leads", icon: Target, label: "Leads" },
       { to: "/admin/venues", icon: Building2, label: "Venues" },
       { to: "/admin/influencers", icon: Users, label: "Influencers" },
       { to: "/admin/offers", icon: Tag, label: "Offers" },
@@ -81,6 +85,7 @@ const adminGroups: NavGroup[] = [
       { to: "/admin/locations", icon: MapPin, label: "Locations" },
       { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events" },
       { to: "/admin/users", icon: Users, label: "Admin Users" },
+      { to: "/admin/sales-team", icon: Target, label: "Sales Team" },
       { to: "/admin/chatbot", icon: Bot, label: "Train Chatbot" },
       { to: "/admin/settings", icon: Settings, label: "Settings" },
     ],
@@ -108,6 +113,16 @@ const venueGroups: NavGroup[] = [
     items: [
       { to: "/venue/locations", icon: MapPin, label: "Locations" },
       { to: "/venue/settings", icon: Settings, label: "Settings" },
+    ],
+  },
+];
+
+const salesGroups: NavGroup[] = [
+  {
+    items: [
+      { to: "/sales", icon: CalendarDays, label: "My day" },
+      { to: "/sales/leads", icon: Target, label: "Leads" },
+      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales dashboard" },
     ],
   },
 ];
@@ -146,11 +161,11 @@ const influencerGroups: NavGroup[] = [
   },
 ];
 
-const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" }) => {
+const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" | "sales" }) => {
   const { signOut, user } = useAuth();
   const location = useLocation();
-  const groups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : influencerGroups;
-  const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : "Creator";
+  const groups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
+  const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -201,11 +216,14 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   }, [location.pathname]);
 
   const isInfluencer = type === "influencer";
+  // Reps work from phones, so the sales panel gets the same collapsible
+  // sidebar the creator panel has rather than the desktop-only fixed one.
+  const mobileNav = isInfluencer || type === "sales";
 
   return (
     <div className="dashboard-shell flex min-h-screen">
       {/* Mobile backdrop (influencer only) */}
-      {isInfluencer && mobileOpen && (
+      {mobileNav && mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
@@ -214,7 +232,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 bg-white border-r border-[hsl(42_15%_90%)] ${
-          isInfluencer
+          mobileNav
             ? (mobileOpen ? "translate-x-0" : "-translate-x-full") + " md:translate-x-0"
             : ""
         }`}
@@ -366,7 +384,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                   <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
                 </DropdownMenuItem>
               )}
-              {type !== "admin" && (
+              {(type === "venue" || type === "influencer") && (
                 <DropdownMenuItem asChild>
                   <NavLink to={type === "venue" ? "/venue/settings" : "/influencer/settings"}>
                     <Settings className="w-4 h-4 mr-2" /> Settings
@@ -390,7 +408,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
       {/* Main */}
       <main
-        className={`flex-1 min-w-0 ${isInfluencer ? "md:ml-[220px]" : "ml-[220px]"}`}
+        className={`flex-1 min-w-0 ${mobileNav ? "md:ml-[220px]" : "ml-[220px]"}`}
         style={{ background: "#f7f5f0" }}
       >
         {maintenance && (
@@ -399,7 +417,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         )}
         <header className="sticky top-0 z-30 h-14 border-b border-[hsl(42_15%_90%)] bg-white/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
-          {isInfluencer ? (
+          {mobileNav ? (
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"

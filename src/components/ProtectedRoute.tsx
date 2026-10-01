@@ -5,7 +5,7 @@ import MfaGate from "@/components/MfaGate";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: ("admin" | "venue" | "influencer")[];
+  allowedRoles?: ("admin" | "venue" | "influencer" | "sales_manager" | "sales_rep")[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
