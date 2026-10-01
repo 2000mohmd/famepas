@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import heroBrand from "@/assets/hero-brand.jpg";
 
 /* ============================================================
    FamePass marketing homepage — recreated as real React code
@@ -25,9 +26,9 @@ import { supabase } from "@/integrations/supabase/client";
    every image in public/site/images/ is a low-resolution
    placeholder (125–535px wide) — fine for this recreation since
    it matches what's already live, but needs real photography
-   before this ships to real users. The hero photo also has a
-   duplicate nav bar baked into the image itself; cropped out via
-   CSS below, but the underlying photo should be replaced.
+   before this ships to real users. The hero uses the branded
+   FamePass banner (CDN asset hero-brand.jpg); the rest of the
+   placeholder photos remain to be replaced.
    ============================================================ */
 
 const IMG = "/site/images";
@@ -145,15 +146,14 @@ const MarketingHome = () => {
       <main>
         {/* Hero */}
         <section className="relative mx-auto max-h-[570px] min-h-[420px] max-w-[1500px] overflow-hidden bg-[#e9edeb] md:min-h-[570px]">
-          <div className="absolute inset-y-0 right-0 w-full overflow-hidden md:w-[65%]">
-            {/* Cropped to remove a duplicate nav bar baked into the source image — see file header note. */}
+          <div className="absolute inset-y-0 right-0 w-full overflow-hidden">
             <img
-              src={`${IMG}/hero.jpg`}
-              alt="A woman enjoying a glass of wine in an elegant restaurant"
-              className="h-[125%] w-full -translate-y-[10%] object-cover object-[50%_47%]"
+              src={heroBrand}
+              alt="A creator in a white dress at a crowded FamePass event, with the FamePass logo and the words Your Pass to Influence"
+              className="h-full w-full object-cover object-[50%_40%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg,#eef1ed 0% 27%,#eef1ede6 42%,#eef1ed35 61%,#00000005 100%)" }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg,#eef1ed 0% 30%,#eef1edd9 42%,#eef1ed00 58%)" }} />
           <div className="relative z-[2] max-w-[820px] px-7 py-14 md:py-16 md:pl-12">
             <Eyebrow>PEOPLE. PLACES. EXPERIENCES.</Eyebrow>
             <h1 className="mt-3 text-[42px] font-semibold uppercase leading-[0.95] tracking-tight md:text-[64px]" style={heading}>
