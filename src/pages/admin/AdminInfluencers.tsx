@@ -239,7 +239,10 @@ const AdminInfluencers = () => {
       Verified: i.is_verified ? "Yes" : "No",
       "Joined": new Date(i.created_at).toLocaleDateString(),
     }));
-    const sheet = XLSX.utils.json_to_sheet(rows);
+    // Neutralise spreadsheet formulas in user-supplied text (=, +, -, @, tab, CR).
+    const safe = (v: unknown) => (typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+    const safeRows = rows.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, safe(v)])));
+    const sheet = XLSX.utils.json_to_sheet(safeRows);
     sheet["!cols"] = Object.keys(rows[0] ?? {}).map(() => ({ wch: 20 }));
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, "Influencers");

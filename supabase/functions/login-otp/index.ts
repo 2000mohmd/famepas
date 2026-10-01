@@ -79,7 +79,7 @@ serve(async (req) => {
       }
       if (!RESEND_API_KEY) throw new Error("Email service not configured");
 
-      const newCode = String(Math.floor(100000 + Math.random() * 900000));
+      const newCode = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
       const codeHash = await sha256(newCode);
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
