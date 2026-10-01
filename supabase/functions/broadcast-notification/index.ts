@@ -24,13 +24,17 @@ serve(async (req) => {
 
     const body = await req.json();
     const audience: Audience = body.audience;
-    const targetId: string | undefined = body.target_id;
+    // target_ids is the current shape (admins pick several creators at once);
+    // target_id stays accepted so older callers keep working.
+    const targetIds: string[] = Array.isArray(body.target_ids)
+      ? body.target_ids.filter(Boolean)
+      : body.target_id ? [body.target_id] : [];
     const subject: string = (body.subject ?? "").trim();
     const message: string = (body.message ?? "").trim();
     if (!subject || !message) return json({ error: "Subject and message are required" }, 400);
     if (!audience) return json({ error: "audience is required" }, 400);
-    if ((audience === "venue" || audience === "influencer") && !targetId) {
-      return json({ error: "target_id is required for a single venue/influencer" }, 400);
+    if ((audience === "venue" || audience === "influencer") && !targetIds.length) {
+      return json({ error: "Pick at least one recipient" }, 400);
     }
 
     type Recipient = { email: string; name: string };
@@ -38,7 +42,7 @@ serve(async (req) => {
 
     if (audience === "all_venues" || audience === "approved_venues" || audience === "venue") {
       let q = admin.from("venues").select("email, owner_id, name, contact_person_name, approval_status");
-      if (audience === "venue") q = q.eq("id", targetId);
+      if (audience === "venue") q = q.in("id", targetIds);
       // A rejected venue was explicitly told no — it never belongs in a
       // broadcast, "all" or otherwise.
       else if (audience === "approved_venues") q = q.eq("approval_status", "approved");
@@ -55,7 +59,7 @@ serve(async (req) => {
     } else {
       let ids: string[];
       if (audience === "influencer") {
-        ids = [targetId!];
+        ids = targetIds;
       } else {
         const { data: roles } = await admin.from("user_roles").select("user_id, role");
         const infIds = (roles ?? []).filter((r: any) => r.role === "influencer").map((r: any) => r.user_id);

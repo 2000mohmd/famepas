@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Megaphone } from "lucide-react";
+import RecipientPicker from "@/components/admin/RecipientPicker";
 
 type Audience = "all_venues" | "approved_venues" | "all_influencers" | "approved_influencers" | "venue" | "influencer";
 
@@ -27,7 +28,8 @@ interface Influencer { user_id: string; full_name: string | null; approval_statu
 const AdminBroadcast = () => {
   const { toast } = useToast();
   const [audience, setAudience] = useState<Audience | "">("");
-  const [targetId, setTargetId] = useState("");
+  const [targetIds, setTargetIds] = useState<string[]>([]);
+  const [pickerSearch, setPickerSearch] = useState("");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [subject, setSubject] = useState("");
@@ -59,18 +61,18 @@ const AdminBroadcast = () => {
       case "approved_venues": return venues.filter((v) => v.approval_status === "approved").length;
       case "all_influencers": return influencers.filter((i) => !i.is_suspended).length;
       case "approved_influencers": return influencers.filter((i) => i.approval_status === "approved" && !i.is_suspended).length;
-      case "venue": case "influencer": return targetId ? 1 : 0;
+      case "venue": case "influencer": return targetIds.length;
       default: return 0;
     }
   })();
 
-  const canSend = !!audience && subject.trim() && message.trim() && (!needsTarget || targetId);
+  const canSend = !!audience && subject.trim() && message.trim() && (!needsTarget || targetIds.length > 0);
 
   const send = async () => {
     setConfirming(false);
     setSending(true);
     const { data, error } = await supabase.functions.invoke("broadcast-notification", {
-      body: { audience, target_id: needsTarget ? targetId : undefined, subject, message },
+      body: { audience, target_ids: needsTarget ? targetIds : undefined, subject, message },
     });
     setSending(false);
     if (error || data?.error) {
@@ -93,7 +95,7 @@ const AdminBroadcast = () => {
         <div className="gradient-card rounded-xl border border-border p-6 space-y-4">
           <div className="space-y-2">
             <Label className="text-muted-foreground">Send to</Label>
-            <Select value={audience} onValueChange={(v: Audience) => { setAudience(v); setTargetId(""); }}>
+            <Select value={audience} onValueChange={(v: Audience) => { setAudience(v); setTargetIds([]); setPickerSearch(""); }}>
               <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Choose an audience..." /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
@@ -103,24 +105,18 @@ const AdminBroadcast = () => {
             </Select>
           </div>
 
-          {audience === "venue" && (
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Venue</Label>
-              <Select value={targetId} onValueChange={setTargetId}>
-                <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select a venue..." /></SelectTrigger>
-                <SelectContent>{venues.map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {audience === "influencer" && (
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Influencer</Label>
-              <Select value={targetId} onValueChange={setTargetId}>
-                <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select a creator..." /></SelectTrigger>
-                <SelectContent>{influencers.map((i) => <SelectItem key={i.user_id} value={i.user_id}>{i.full_name || "Unnamed"}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+          {needsTarget && (
+            <RecipientPicker
+              label={audience === "venue" ? "Venues" : "Creators"}
+              options={audience === "venue"
+                ? venues.map((v) => ({ id: v.id, name: v.name }))
+                : influencers.map((i) => ({ id: i.user_id, name: i.full_name || "Unnamed" }))}
+              selected={targetIds}
+              onToggle={(id) => setTargetIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])}
+              onClear={() => setTargetIds([])}
+              search={pickerSearch}
+              onSearch={setPickerSearch}
+            />
           )}
 
           {audience && (
