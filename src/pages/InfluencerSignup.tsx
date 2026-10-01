@@ -159,8 +159,9 @@ const InfluencerSignup = () => {
   const [bio, setBio] = useState("");
   const [svcLocations, setSvcLocations] = useState<{ city: string; area: string | null; country: string | null }[]>([]);
   useEffect(() => {
-    supabase.from("service_locations").select("city, area, country").eq("is_active", true).order("area").order("city").then(({ data }) => {
-      if (data) setSvcLocations(data as { city: string; area: string | null; country: string | null }[]);
+    supabase.functions.invoke("public-signup-config").then(({ data }) => {
+      const locs = (data as { locations?: { city: string; area: string | null; country: string | null }[] } | null)?.locations;
+      if (locs) setSvcLocations(locs);
     });
   }, []);
 

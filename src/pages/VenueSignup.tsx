@@ -202,8 +202,9 @@ const VenueSignup = () => {
 
   // load the active city list — the same allow-list AdminVenues validates against
   useEffect(() => {
-    supabase.from("service_locations").select("city, area").eq("is_active", true).order("area").order("city").then(({ data }) => {
-      if (data && data.length) setCities(data as { city: string; area: string | null }[]);
+    supabase.functions.invoke("public-signup-config").then(({ data }) => {
+      const locs = (data as { locations?: { city: string; area: string | null }[] } | null)?.locations;
+      if (locs && locs.length) setCities(locs);
     });
   }, []);
 
