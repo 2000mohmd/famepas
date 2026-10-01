@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callOpenAI } from "../_shared/openai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,29 +13,11 @@ const json = (body: unknown, status = 200) =>
  *  prompt is both expensive and worse at answering than a focused slice. */
 const MAX_CONTEXT_LEADS = 300;
 
-const callModel = async (apiKey: string, messages: unknown[], jsonMode = false) => {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages,
-      ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
-    }),
-  });
-  if (res.status === 429) return { error: "Rate limit reached. Try again shortly.", status: 429 };
-  if (res.status === 402) return { error: "AI credits exhausted.", status: 402 };
-  if (!res.ok) return { error: `AI request failed (${res.status})`, status: 502 };
-  const data = await res.json();
-  return { content: data.choices?.[0]?.message?.content ?? "" };
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
+    if (!Deno.env.get("OPENAI_API_KEY")) return json({ error: "OPENAI_API_KEY not configured" }, 500);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Not signed in" }, 401);
@@ -59,7 +42,7 @@ Deno.serve(async (req) => {
     if (action === "extract_tasks") {
       if (!notes?.trim()) return json({ error: "No notes given" }, 400);
       const today = new Date().toISOString().slice(0, 10);
-      const result = await callModel(apiKey, [
+      const result = await callOpenAI([
         {
           role: "system",
           content:
@@ -89,7 +72,7 @@ Deno.serve(async (req) => {
         .select("venue_name, contact_name, category, area, city, stage, source, next_action, next_action_date, lost_reason, created_at, stage_changed_at")
         .limit(MAX_CONTEXT_LEADS);
 
-      const result = await callModel(apiKey, [
+      const result = await callOpenAI([
         {
           role: "system",
           content:
