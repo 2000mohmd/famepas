@@ -58,6 +58,11 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
   const [extracting, setExtracting] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
+  const [waTemplates, setWaTemplates] = useState<{ name: string; language: string; body: string; params: number }[]>([]);
+  const [waPick, setWaPick] = useState("");
+  const [waParams, setWaParams] = useState<string[]>([]);
+  const [waSending, setWaSending] = useState(false);
 
   useEffect(() => {
     supabase.from("subscription_tiers").select("id, name").eq("is_active", true).order("price")
@@ -212,6 +217,29 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     setNewActivity({ type: newActivity.type, outcome: "" });
     const { data } = await db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false });
     setActivities(data ?? []);
+  };
+
+  const loadTemplates = async () => {
+    setWaOpen(true);
+    if (waTemplates.length) return;
+    const { data, error } = await supabase.functions.invoke("whatsapp-send", { body: { action: "list_templates" } });
+    if (error || data?.error) { toast({ title: "Couldn't load WhatsApp templates", description: data?.error ?? error?.message, variant: "destructive" }); return; }
+    setWaTemplates(data.templates ?? []);
+  };
+
+  const sendTemplate = async () => {
+    const t = waTemplates.find((x) => `${x.name}|${x.language}` === waPick);
+    if (!lead || !t) return;
+    setWaSending(true);
+    const { data, error } = await supabase.functions.invoke("whatsapp-send", {
+      body: { action: "send", lead_id: lead.id, template_name: t.name, language: t.language, params: waParams.slice(0, t.params) },
+    });
+    setWaSending(false);
+    if (error || data?.error) { toast({ title: "WhatsApp not sent", description: data?.error ?? error?.message, variant: "destructive" }); return; }
+    toast({ title: "WhatsApp sent" });
+    setWaPick(""); setWaParams([]);
+    const { data: acts } = await db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false });
+    setActivities(acts ?? []);
   };
 
   const signupLink = lead ? `${window.location.origin}/signup/business?lead=${lead.id}` : "";
@@ -419,6 +447,36 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {lead && digits && (
+          <div className="border-t border-border pt-3 space-y-2">
+            {!waOpen ? (
+              <Button size="sm" variant="outline" onClick={() => void loadTemplates()}>
+                <MessageCircle className="w-3.5 h-3.5 mr-1.5" /> Send WhatsApp template
+              </Button>
+            ) : (() => {
+              const t = waTemplates.find((x) => `${x.name}|${x.language}` === waPick);
+              return (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">WhatsApp template</Label>
+                  <Select value={waPick} onValueChange={(v) => { setWaPick(v); setWaParams([]); }}>
+                    <SelectTrigger><SelectValue placeholder={waTemplates.length ? "Choose an approved template" : "Loading…"} /></SelectTrigger>
+                    <SelectContent>{waTemplates.map((x) => <SelectItem key={`${x.name}|${x.language}`} value={`${x.name}|${x.language}`}>{x.name} ({x.language})</SelectItem>)}</SelectContent>
+                  </Select>
+                  {t && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{t.body}</p>}
+                  {t && Array.from({ length: t.params }).map((_, i) => (
+                    <Input key={i} placeholder={`Value for {{${i + 1}}}`} value={waParams[i] ?? ""}
+                      onChange={(e) => setWaParams((p) => { const n = [...p]; n[i] = e.target.value; return n; })} />
+                  ))}
+                  <Button size="sm" onClick={() => void sendTemplate()}
+                    disabled={!t || waSending || Array.from({ length: t.params }).some((_, i) => !waParams[i]?.trim())}>
+                    {waSending ? "Sending…" : "Send"}
+                  </Button>
+                </div>
+              );
+            })()}
           </div>
         )}
 
