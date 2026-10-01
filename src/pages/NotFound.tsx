@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { roleHome } from "@/lib/roleHome";
 
 const NotFound = () => {
   const location = useLocation();
@@ -11,14 +12,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   // Signed-in users go back to their own dashboard, not out of the app.
-  const home =
-    user && role === "admin"
-      ? "/admin"
-      : user && role === "venue"
-        ? "/venue/campaigns"
-        : user && role === "influencer"
-          ? "/influencer"
-          : "/welcome";
+  const home = user ? roleHome(role) : "/welcome";
   const label = user ? "Back to my dashboard" : "Return to Home";
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { roleHome } from "@/lib/roleHome";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,10 +26,7 @@ const Login = () => {
   useEffect(() => {
     if (user && role) {
       sessionStorage.removeItem("postLoginRedirect");
-      if (next) navigate(next, { replace: true });
-      else if (role === "admin") navigate("/admin", { replace: true });
-      else if (role === "venue") navigate("/venue", { replace: true });
-      else navigate("/influencer/home", { replace: true });
+      navigate(next || roleHome(role), { replace: true });
     }
   }, [user, role, navigate, next]);
 
