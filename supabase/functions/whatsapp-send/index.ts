@@ -66,6 +66,17 @@ Deno.serve(async (req) => {
       }
       const values: string[] = Array.isArray(params) ? params.map((p) => String(p).slice(0, 500)) : [];
 
+      // Only allow approved templates from our own WhatsApp account, with the exact parameter count.
+      const tplRes = await fetch(`${GRAPH}/${wabaId}/message_templates?fields=name,language,status,components&limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!tplRes.ok) return json({ error: "Could not verify template", status: tplRes.status, details: await tplRes.text() }, tplRes.status);
+      const tpl = ((await tplRes.json()).data ?? []).find((t: any) => t.status === "APPROVED" && t.name === template_name && t.language === language);
+      if (!tpl) return json({ error: "Template is not an approved template" }, 400);
+      const tplBody = tpl.components?.find((c: any) => c.type === "BODY")?.text ?? "";
+      const expected = new Set((tplBody.match(/\{\{\d+\}\}/g) ?? []) as string[]).size;
+      if (values.length !== expected) return json({ error: `This template needs ${expected} value(s)` }, 400);
+
       // RLS: a rep only gets their own leads back; managers/admins get all.
       const { data: lead } = await caller.from("leads").select("id, phone, venue_name").eq("id", lead_id).maybeSingle();
       if (!lead) return json({ error: "Lead not found" }, 404);
