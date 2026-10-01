@@ -146,15 +146,14 @@ const MarketingHome = () => {
       <main>
         {/* Hero */}
         <section className="relative mx-auto max-h-[570px] min-h-[420px] max-w-[1500px] overflow-hidden bg-[#e9edeb] md:min-h-[570px]">
-          <div className="absolute inset-y-0 right-0 w-full overflow-hidden md:w-[65%]">
-            {/* Cropped to remove a duplicate nav bar baked into the source image — see file header note. */}
+          <div className="absolute inset-y-0 right-0 w-full overflow-hidden">
             <img
-              src={`${IMG}/hero.jpg`}
-              alt="A woman enjoying a glass of wine in an elegant restaurant"
-              className="h-[125%] w-full -translate-y-[10%] object-cover object-[50%_47%]"
+              src={heroBrand.url}
+              alt="A creator in a white dress at a crowded FamePass event, with the FamePass logo and the words Your Pass to Influence"
+              className="h-full w-full object-cover object-[50%_40%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg,#eef1ed 0% 27%,#eef1ede6 42%,#eef1ed35 61%,#00000005 100%)" }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg,#eef1ed 0% 30%,#eef1edd9 42%,#eef1ed00 58%)" }} />
           <div className="relative z-[2] max-w-[820px] px-7 py-14 md:py-16 md:pl-12">
             <Eyebrow>PEOPLE. PLACES. EXPERIENCES.</Eyebrow>
             <h1 className="mt-3 text-[42px] font-semibold uppercase leading-[0.95] tracking-tight md:text-[64px]" style={heading}>
