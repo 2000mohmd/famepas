@@ -26,9 +26,9 @@ import heroBrand from "@/assets/hero-brand.jpg.asset.json";
    every image in public/site/images/ is a low-resolution
    placeholder (125–535px wide) — fine for this recreation since
    it matches what's already live, but needs real photography
-   before this ships to real users. The hero photo also has a
-   duplicate nav bar baked into the image itself; cropped out via
-   CSS below, but the underlying photo should be replaced.
+   before this ships to real users. The hero uses the branded
+   FamePass banner (CDN asset hero-brand.jpg); the rest of the
+   placeholder photos remain to be replaced.
    ============================================================ */
 
 const IMG = "/site/images";
