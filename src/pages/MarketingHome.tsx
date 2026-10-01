@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import heroBrand from "@/assets/hero-brand.jpg.asset.json";
 
 /* ============================================================
    FamePass marketing homepage — recreated as real React code
