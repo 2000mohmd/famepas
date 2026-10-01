@@ -74,6 +74,20 @@ export type Database = {
             foreignKeyName: "booking_platform_integrations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "booking_platform_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "booking_platform_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -152,6 +166,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "offer_redemptions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
           },
           {
             foreignKeyName: "bookings_venue_id_fkey"
@@ -360,6 +388,20 @@ export type Database = {
           visible_before_start?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "campaigns_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "campaigns_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
           {
             foreignKeyName: "campaigns_venue_id_fkey"
             columns: ["venue_id"]
@@ -715,6 +757,20 @@ export type Database = {
             foreignKeyName: "events_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -850,6 +906,187 @@ export type Database = {
             foreignKeyName: "invitations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "invitations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "invitations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_activities: {
+        Row: {
+          created_at: string
+          happened_at: string
+          id: string
+          lead_id: string
+          outcome: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          happened_at?: string
+          id?: string
+          lead_id: string
+          outcome?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          happened_at?: string
+          id?: string
+          lead_id?: string
+          outcome?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["lead_id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          address: string | null
+          area: string | null
+          category: string | null
+          city: string | null
+          contact_name: string
+          contact_role: string | null
+          country: string | null
+          created_at: string
+          google_rating: number | null
+          google_review_count: number | null
+          id: string
+          instagram_followers: number | null
+          instagram_handle: string | null
+          lost_reason: string | null
+          maps_place_id: string | null
+          next_action: string | null
+          next_action_date: string | null
+          notes: string | null
+          owner_id: string
+          phone: string
+          plan_pitched_id: string | null
+          price_level: number | null
+          source: string
+          stage: string
+          stage_changed_at: string
+          updated_at: string
+          venue_id: string | null
+          venue_name: string
+        }
+        Insert: {
+          address?: string | null
+          area?: string | null
+          category?: string | null
+          city?: string | null
+          contact_name: string
+          contact_role?: string | null
+          country?: string | null
+          created_at?: string
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          instagram_followers?: number | null
+          instagram_handle?: string | null
+          lost_reason?: string | null
+          maps_place_id?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          owner_id: string
+          phone: string
+          plan_pitched_id?: string | null
+          price_level?: number | null
+          source?: string
+          stage?: string
+          stage_changed_at?: string
+          updated_at?: string
+          venue_id?: string | null
+          venue_name: string
+        }
+        Update: {
+          address?: string | null
+          area?: string | null
+          category?: string | null
+          city?: string | null
+          contact_name?: string
+          contact_role?: string | null
+          country?: string | null
+          created_at?: string
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          instagram_followers?: number | null
+          instagram_handle?: string | null
+          lost_reason?: string | null
+          maps_place_id?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          owner_id?: string
+          phone?: string
+          plan_pitched_id?: string | null
+          price_level?: number | null
+          source?: string
+          stage?: string
+          stage_changed_at?: string
+          updated_at?: string
+          venue_id?: string | null
+          venue_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_plan_pitched_id_fkey"
+            columns: ["plan_pitched_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "leads_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "leads_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -980,6 +1217,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "messages_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
           },
           {
             foreignKeyName: "messages_venue_id_fkey"
@@ -1209,6 +1460,20 @@ export type Database = {
             foreignKeyName: "offers_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "offers_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "offers_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1422,6 +1687,20 @@ export type Database = {
             foreignKeyName: "reviews_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "reviews_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "reviews_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1451,6 +1730,51 @@ export type Database = {
           tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sales_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      sales_territories: {
+        Row: {
+          area: string
+          country: string | null
+          rep_id: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          country?: string | null
+          rep_id: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          country?: string | null
+          rep_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1566,6 +1890,20 @@ export type Database = {
           venue_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "social_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "social_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
           {
             foreignKeyName: "social_integrations_venue_id_fkey"
             columns: ["venue_id"]
@@ -1713,6 +2051,20 @@ export type Database = {
             foreignKeyName: "venue_briefs_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_briefs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_briefs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1766,6 +2118,20 @@ export type Database = {
             foreignKeyName: "venue_locations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_locations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_locations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1801,6 +2167,20 @@ export type Database = {
             foreignKeyName: "venue_message_templates_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_message_templates_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_message_templates_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1829,6 +2209,20 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "venue_photos_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_photos_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
           {
             foreignKeyName: "venue_photos_venue_id_fkey"
             columns: ["venue_id"]
@@ -1871,6 +2265,20 @@ export type Database = {
             foreignKeyName: "venue_team_invites_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_team_invites_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_team_invites_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1884,6 +2292,7 @@ export type Database = {
           approval_status: string
           brand_id: string | null
           cancellation_policy: boolean
+          cancellation_reason: string | null
           categories: string[]
           category: string
           city: string | null
@@ -1904,10 +2313,13 @@ export type Database = {
           name: string
           opening_hours: Json | null
           owner_id: string
+          payment_status: string | null
           phone: string | null
           require_ad_disclosure: boolean
           require_venue_tag: boolean
           signup_completed: boolean
+          subscription_renews_at: string | null
+          subscription_started_at: string | null
           subscription_tier_id: string | null
           timezone: string | null
           updated_at: string
@@ -1923,6 +2335,7 @@ export type Database = {
           approval_status?: string
           brand_id?: string | null
           cancellation_policy?: boolean
+          cancellation_reason?: string | null
           categories?: string[]
           category?: string
           city?: string | null
@@ -1943,10 +2356,13 @@ export type Database = {
           name: string
           opening_hours?: Json | null
           owner_id: string
+          payment_status?: string | null
           phone?: string | null
           require_ad_disclosure?: boolean
           require_venue_tag?: boolean
           signup_completed?: boolean
+          subscription_renews_at?: string | null
+          subscription_started_at?: string | null
           subscription_tier_id?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1962,6 +2378,7 @@ export type Database = {
           approval_status?: string
           brand_id?: string | null
           cancellation_policy?: boolean
+          cancellation_reason?: string | null
           categories?: string[]
           category?: string
           city?: string | null
@@ -1982,10 +2399,13 @@ export type Database = {
           name?: string
           opening_hours?: Json | null
           owner_id?: string
+          payment_status?: string | null
           phone?: string | null
           require_ad_disclosure?: boolean
           require_venue_tag?: boolean
           signup_completed?: boolean
+          subscription_renews_at?: string | null
+          subscription_started_at?: string | null
           subscription_tier_id?: string | null
           timezone?: string | null
           updated_at?: string
@@ -2052,9 +2472,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sales_alerts: {
+        Row: {
+          detail: string | null
+          hours_waiting: number | null
+          kind: string | null
+          lead_id: string | null
+          rep_id: string | null
+          subject: string | null
+          venue_id: string | null
+        }
+        Relationships: []
+      }
+      sales_commissions: {
+        Row: {
+          amount: number | null
+          days_live: number | null
+          live_since: string | null
+          payment_status: string | null
+          qualified: boolean | null
+          rep_id: string | null
+          venue_id: string | null
+          venue_name: string | null
+        }
+        Relationships: []
+      }
+      venue_activation: {
+        Row: {
+          approval_status: string | null
+          created_at: string | null
+          first_content_published: boolean | null
+          first_creator_visit: boolean | null
+          first_offer_posted: boolean | null
+          lead_id: string | null
+          name: string | null
+          photos_uploaded: boolean | null
+          profile_complete: boolean | null
+          rep_id: string | null
+          venue_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      check_lead_duplicate: {
+        Args: {
+          _exclude?: string
+          _instagram: string
+          _maps_place_id?: string
+          _phone: string
+        }
+        Returns: {
+          kind: string
+          match_name: string
+          matched_on: string
+          owner_name: string
+        }[]
+      }
       get_discoverable_influencers: {
         Args: never
         Returns: {
@@ -2074,6 +2548,17 @@ export type Database = {
           tiktok_followers: number
           tiktok_handle: string
           user_id: string
+        }[]
+      }
+      get_lead_prefill: {
+        Args: { _lead_id: string }
+        Returns: {
+          area: string
+          category: string
+          city: string
+          contact_name: string
+          phone: string
+          venue_name: string
         }[]
       }
       get_leaderboard: {
@@ -2148,6 +2633,7 @@ export type Database = {
           approval_status: string
           brand_id: string | null
           cancellation_policy: boolean
+          cancellation_reason: string | null
           categories: string[]
           category: string
           city: string | null
@@ -2168,10 +2654,13 @@ export type Database = {
           name: string
           opening_hours: Json | null
           owner_id: string
+          payment_status: string | null
           phone: string | null
           require_ad_disclosure: boolean
           require_venue_tag: boolean
           signup_completed: boolean
+          subscription_renews_at: string | null
+          subscription_started_at: string | null
           subscription_tier_id: string | null
           timezone: string | null
           updated_at: string
@@ -2200,12 +2689,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_sales_manager: { Args: never; Returns: boolean }
+      is_sales_staff: { Args: never; Returns: boolean }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
       is_venue_owner: { Args: { _venue_id: string }; Returns: boolean }
       manage_users_unclaimed: { Args: never; Returns: boolean }
+      normalize_lb_phone: { Args: { _p: string }; Returns: string }
+      recycle_lost_leads: { Args: never; Returns: number }
     }
     Enums: {
-      app_role: "admin" | "venue" | "influencer"
+      app_role: "admin" | "venue" | "influencer" | "sales_rep" | "sales_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2333,7 +2826,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "venue", "influencer"],
+      app_role: ["admin", "venue", "influencer", "sales_rep", "sales_manager"],
     },
   },
 } as const
