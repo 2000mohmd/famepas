@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const [settingsRes, categoriesRes, locationsRes] = await Promise.all([
       supabase.rpc("get_public_platform_settings"),
       supabase.from("categories").select("name").eq("is_active", true).order("name"),
-      supabase.from("service_locations").select("country").eq("is_active", true),
+      supabase.from("service_locations").select("city, area, country").eq("is_active", true).order("area").order("city"),
     ]);
 
     const settings: Record<string, unknown> = {};
@@ -31,6 +31,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         settings,
         categories: ((categoriesRes.data ?? []) as { name: string }[]).map((c) => c.name),
+        locations: locationsRes.data ?? [],
         countries: Array.from(
           new Set(((locationsRes.data ?? []) as { country: string | null }[])
             .map((r) => r.country)
