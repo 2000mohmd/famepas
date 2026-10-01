@@ -45,7 +45,7 @@ import {
 
 
 
-type NavItem = { to: string; icon: any; label: string; badge?: string };
+type NavItem = { to: string; icon: any; label: string; badge?: string; managerOnly?: boolean };
 type NavGroup = { label?: string; items: NavItem[]; badge?: string };
 
 const adminGroups: NavGroup[] = [
@@ -123,7 +123,8 @@ const salesGroups: NavGroup[] = [
     items: [
       { to: "/sales", icon: CalendarDays, label: "My day" },
       { to: "/sales/leads", icon: Target, label: "Leads" },
-      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales dashboard" },
+      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales dashboard", managerOnly: true },
+      { to: "/sales/config", icon: Settings, label: "Scoring & targets", managerOnly: true },
     ],
   },
 ];
@@ -163,9 +164,14 @@ const influencerGroups: NavGroup[] = [
 ];
 
 const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" | "sales" }) => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
   const location = useLocation();
-  const groups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
+  const rawGroups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
+  // A rep shouldn't see links that ProtectedRoute would only bounce them off.
+  const isManager = role === "admin" || role === "sales_manager";
+  const groups = isManager
+    ? rawGroups
+    : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }));
   const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();

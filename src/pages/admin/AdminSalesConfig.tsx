@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_SCORE_CONFIG, type ScoreConfig } from "@/pages/sales/leadMeta";
 
 const db = supabase as any;
@@ -22,6 +23,7 @@ const WEIGHT_LABELS: { key: keyof ScoreConfig["weights"]; label: string }[] = [
 ];
 
 const AdminSalesConfig = () => {
+  const { role } = useAuth();
   const [cfg, setCfg] = useState<ScoreConfig>(DEFAULT_SCORE_CONFIG);
   const [categories, setCategories] = useState<string[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
@@ -33,6 +35,17 @@ const AdminSalesConfig = () => {
     qualifying_days: 60, mode: "flat", flat_amount: 50, percent_of_plan: 10, currency: "USD",
   });
   const [savingCommission, setSavingCommission] = useState(false);
+  const [targets, setTargets] = useState({ weekly_signings: 12, annual_live_venues: 500 });
+  const [savingTargets, setSavingTargets] = useState(false);
+
+  const saveTargets = async () => {
+    setSavingTargets(true);
+    const { error } = await supabase.from("platform_settings")
+      .update({ value: targets as any }).eq("key", "sales_targets");
+    setSavingTargets(false);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Targets updated" });
+  };
 
   const saveCommission = async () => {
     setSavingCommission(true);
@@ -53,6 +66,8 @@ const AdminSalesConfig = () => {
       .then(({ data }) => { if (data?.value) setCfg(data.value as unknown as ScoreConfig); });
     supabase.from("platform_settings").select("value").eq("key", "sales_commission").maybeSingle()
       .then(({ data }) => { if (data?.value) setCommission(data.value as any); });
+    supabase.from("platform_settings").select("value").eq("key", "sales_targets").maybeSingle()
+      .then(({ data }) => { if (data?.value) setTargets(data.value as any); });
     supabase.from("categories").select("name").eq("is_active", true).order("name")
       .then(({ data }) => setCategories((data ?? []).map((c: any) => c.name)));
     supabase.from("service_locations").select("area, city").eq("is_active", true)
@@ -103,7 +118,7 @@ const AdminSalesConfig = () => {
   const repName = (id: string) => reps.find((r) => r.user_id === id)?.full_name ?? "Unknown";
 
   return (
-    <DashboardLayout type="admin">
+    <DashboardLayout type={role === "admin" ? "admin" : "sales"}>
       <div className="animate-fade-in max-w-3xl">
         <h1 className="text-3xl font-display font-bold text-foreground mb-1">
           Sales <span className="text-gold">configuration</span>
@@ -111,6 +126,32 @@ const AdminSalesConfig = () => {
         <p className="text-muted-foreground text-sm mb-8">
           How leads are scored, and which rep owns which area.
         </p>
+
+        <div className="gradient-card rounded-xl border border-border p-6 mb-6">
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">Targets</h2>
+          <p className="text-xs text-muted-foreground mb-4">What the sales dashboard measures against.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div className="space-y-1.5">
+              <Label>Signings per week</Label>
+              <Input
+                type="number" min="0"
+                value={targets.weekly_signings}
+                onChange={(e) => setTargets({ ...targets, weekly_signings: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Live venues per year</Label>
+              <Input
+                type="number" min="0"
+                value={targets.annual_live_venues}
+                onChange={(e) => setTargets({ ...targets, annual_live_venues: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <Button onClick={() => void saveTargets()} disabled={savingTargets} className="gradient-gold text-accent-foreground font-semibold">
+            {savingTargets ? "Saving…" : "Save targets"}
+          </Button>
+        </div>
 
         <div className="gradient-card rounded-xl border border-border p-6 mb-6">
           <h2 className="font-display text-lg font-bold text-foreground mb-1">Lead scoring</h2>

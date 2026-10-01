@@ -135,6 +135,7 @@ const App = () => (
             <Route path="/sales" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesMyDay /></ProtectedRoute>} />
             <Route path="/sales/leads" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesLeads /></ProtectedRoute>} />
             <Route path="/sales/dashboard" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><SalesDashboard /></ProtectedRoute>} />
+            <Route path="/sales/config" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><AdminSalesConfig /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><Navigate to="/venue/campaigns" replace /></ProtectedRoute>} />

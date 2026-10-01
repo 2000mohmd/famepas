@@ -10,9 +10,6 @@ import {
 
 const db = supabase as any;
 
-const WEEKLY_SIGNING_TARGET = 12;
-const ANNUAL_LIVE_TARGET = 500;
-
 const sinceISO = (days: number) => new Date(Date.now() - days * 86400000).toISOString();
 
 const SalesDashboard = () => {
@@ -24,6 +21,12 @@ const SalesDashboard = () => {
   const [venues, setVenues] = useState<any[]>([]);
   const [tiers, setTiers] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
+  const [targets, setTargets] = useState({ weekly_signings: 12, annual_live_venues: 500 });
+
+  useEffect(() => {
+    supabase.from("platform_settings").select("value").eq("key", "sales_targets").maybeSingle()
+      .then(({ data }) => { if (data?.value) setTargets(data.value as any); });
+  }, []);
   const [days, setDays] = useState("7");
   const [loading, setLoading] = useState(true);
 
@@ -67,16 +70,24 @@ const SalesDashboard = () => {
   // Conversion is measured against how many leads reached this stage or any
   // later one — a lead sitting in "Live" did pass through "Contacted".
   const ORDER: string[] = STAGES.filter((s) => s.key !== "lost").map((s) => s.key);
+
+  // Scoped to leads created in the selected range, so these counts match what
+  // the same range shows on the lead list (spec acceptance criteria).
+  const leadsInRange = useMemo(
+    () => leads.filter((l) => l.created_at >= cutoff),
+    [leads, cutoff],
+  );
+
   const reachedAtLeast = (stageKey: string) => {
     const idx = ORDER.indexOf(stageKey);
-    return leads.filter((l) => {
+    return leadsInRange.filter((l) => {
       const li = ORDER.indexOf(l.stage);
       return li >= idx && li !== -1;
     }).length;
   };
 
   const funnel = STAGES.map((s) => {
-    const inStage = leads.filter((l) => l.stage === s.key);
+    const inStage = leadsInRange.filter((l) => l.stage === s.key);
     const nextKey = ORDER[ORDER.indexOf(s.key) + 1];
     const reached = reachedAtLeast(s.key);
     return {
@@ -197,8 +208,8 @@ const SalesDashboard = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Stat label="Signings in range" value={signedInRange.length} sub={`Weekly target ${WEEKLY_SIGNING_TARGET}`} />
-              <Stat label="Live venues" value={liveCount} sub={`of ${ANNUAL_LIVE_TARGET} annual target`} />
+              <Stat label="Signings in range" value={signedInRange.length} sub={`Weekly target ${targets.weekly_signings}`} />
+              <Stat label="Live venues" value={liveCount} sub={`of ${targets.annual_live_venues} annual target`} />
               <Stat label="Open leads" value={leads.filter((l) => !["live", "lost"].includes(l.stage)).length} />
               <Stat label="Overdue follow-ups" value={overdueLeads.length} sub={overdueLeads.length ? "Needs chasing" : "All current"} />
             </div>
@@ -223,7 +234,7 @@ const SalesDashboard = () => {
             <div className="gradient-card rounded-xl border border-border p-5 mb-6">
               <h2 className="font-display text-lg font-bold text-foreground mb-1">Funnel</h2>
               <p className="text-xs text-muted-foreground mb-4">
-                Bar is how many sit in the stage now. "→" is the share that went on to the next stage; "med." is the median days a lead has been sitting there.
+                Leads created in the selected range. Bar is how many sit in the stage now; "→" is the share that went on to the next stage; "med." is the median days a lead has been sitting there.
               </p>
               <div className="space-y-2.5">
                 {funnel.map((f) => (

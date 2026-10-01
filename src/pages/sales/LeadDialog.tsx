@@ -122,6 +122,8 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     if (!form.venue_name.trim()) return "Venue name is required.";
     if (!form.contact_name.trim()) return "Contact name is required.";
     if (!form.phone.trim()) return "Phone is required.";
+    if (!form.category) return "Pick a category — it drives lead scoring and the venue's listing later.";
+    if (!form.area) return "Pick an area — it decides which rep's territory this falls in.";
     if (isOpenStage(form.stage) && (!form.next_action.trim() || !form.next_action_date))
       return "An open lead needs a next action and a date — that's what keeps it from going quiet.";
     if (form.stage === "lost" && !form.lost_reason) return "Pick a reason this lead was lost.";
@@ -268,14 +270,14 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
             <Input value={form.instagram_handle} onChange={(e) => set("instagram_handle", e.target.value)} placeholder="@handle" />
           </div>
           <div className="space-y-1.5">
-            <Label>Category</Label>
+            <Label>Category *</Label>
             <Select value={form.category} onValueChange={(v) => set("category", v)}>
               <SelectTrigger><SelectValue placeholder="Pick one" /></SelectTrigger>
               <SelectContent>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Area</Label>
+            <Label>Area *</Label>
             <Select value={form.area} onValueChange={(v) => set("area", v)}>
               <SelectTrigger><SelectValue placeholder="Pick one" /></SelectTrigger>
               <SelectContent>{areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
