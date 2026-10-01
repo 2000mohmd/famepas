@@ -2529,6 +2529,13 @@ export type Database = {
           owner_name: string
         }[]
       }
+      find_leads_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          id: string
+          owner_id: string
+        }[]
+      }
       get_discoverable_influencers: {
         Args: never
         Returns: {
