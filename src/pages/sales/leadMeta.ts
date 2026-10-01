@@ -39,6 +39,13 @@ export const ACTIVITY_TYPES = [
   { key: "note", label: "Note" },
 ] as const;
 
+export const PRICE_LEVELS = [
+  { key: "1", label: "$" },
+  { key: "2", label: "$$" },
+  { key: "3", label: "$$$" },
+  { key: "4", label: "$$$$" },
+] as const;
+
 export interface Lead {
   id: string;
   venue_name: string;
@@ -46,10 +53,16 @@ export interface Lead {
   area: string | null;
   city: string | null;
   address: string | null;
+  maps_place_id: string | null;
   contact_name: string;
   contact_role: string | null;
   phone: string;
   instagram_handle: string | null;
+  instagram_followers: number | null;
+  google_rating: number | null;
+  google_review_count: number | null;
+  price_level: number | null;
+  plan_pitched_id: string | null;
   source: string;
   stage: Stage;
   owner_id: string;
@@ -86,3 +99,23 @@ export const isOverdue = (lead: Pick<Lead, "stage" | "next_action_date">) =>
 
 export const isDueToday = (lead: Pick<Lead, "stage" | "next_action_date">) =>
   isOpenStage(lead.stage) && lead.next_action_date === todayISO();
+
+/** Excel opens CSVs by locale, so quote anything that could be mis-split. */
+const csvCell = (value: unknown) => {
+  const s = value === null || value === undefined ? "" : String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+export const toCsv = (headers: string[], rows: unknown[][]) =>
+  [headers, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+
+export const median = (values: number[]) => {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+/** Days each lead has been sitting in the stage it's in now. */
+export const daysInStage = (lead: Pick<Lead, "stage_changed_at">, now = Date.now()) =>
+  Math.floor((now - new Date(lead.stage_changed_at).getTime()) / 86400000);

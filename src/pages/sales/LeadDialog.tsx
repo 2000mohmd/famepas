@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Link2, Phone, MessageCircle } from "lucide-react";
 import {
-  ACTIVITY_TYPES, LOST_REASONS, SOURCES, STAGES,
+  ACTIVITY_TYPES, LOST_REASONS, PRICE_LEVELS, SOURCES, STAGES,
   isOpenStage, stageLabel, todayISO,
   type Lead, type LeadActivity,
 } from "./leadMeta";
@@ -35,11 +35,16 @@ interface Props {
 }
 
 const emptyForm = (ownerId: string) => ({
-  venue_name: "", category: "", area: "", city: "", address: "",
+  venue_name: "", category: "", area: "", city: "", address: "", maps_place_id: "",
   contact_name: "", contact_role: "", phone: "", instagram_handle: "",
+  instagram_followers: "", google_rating: "", google_review_count: "", price_level: "",
+  plan_pitched_id: "",
   source: "walk_in", stage: "new", owner_id: ownerId,
   next_action: "", next_action_date: todayISO(), lost_reason: "", notes: "",
 });
+
+/** "" means "not captured" for these — 0 is a real rating, so don't coerce. */
+const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 
 const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, categories, areas }: Props) => {
   const { user } = useAuth();
@@ -49,6 +54,12 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [newActivity, setNewActivity] = useState({ type: "call", outcome: "" });
+  const [tiers, setTiers] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("subscription_tiers").select("id, name").eq("is_active", true).order("price")
+      .then(({ data }) => setTiers((data ?? []) as any));
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -57,9 +68,14 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     if (lead) {
       setForm({
         venue_name: lead.venue_name, category: lead.category ?? "", area: lead.area ?? "",
-        city: lead.city ?? "", address: lead.address ?? "",
+        city: lead.city ?? "", address: lead.address ?? "", maps_place_id: lead.maps_place_id ?? "",
         contact_name: lead.contact_name, contact_role: lead.contact_role ?? "",
         phone: lead.phone, instagram_handle: lead.instagram_handle ?? "",
+        instagram_followers: lead.instagram_followers?.toString() ?? "",
+        google_rating: lead.google_rating?.toString() ?? "",
+        google_review_count: lead.google_review_count?.toString() ?? "",
+        price_level: lead.price_level?.toString() ?? "",
+        plan_pitched_id: lead.plan_pitched_id ?? "",
         source: lead.source, stage: lead.stage, owner_id: lead.owner_id,
         next_action: lead.next_action ?? "", next_action_date: lead.next_action_date ?? todayISO(),
         lost_reason: lead.lost_reason ?? "", notes: lead.notes ?? "",
@@ -99,7 +115,13 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         ...form,
         category: form.category || null, area: form.area || null, city: form.city || null,
         address: form.address || null, contact_role: form.contact_role || null,
+        maps_place_id: form.maps_place_id || null,
         instagram_handle: form.instagram_handle || null, notes: form.notes || null,
+        instagram_followers: numOrNull(form.instagram_followers),
+        google_rating: numOrNull(form.google_rating),
+        google_review_count: numOrNull(form.google_review_count),
+        price_level: numOrNull(form.price_level),
+        plan_pitched_id: form.plan_pitched_id || null,
         next_action: isOpenStage(form.stage) ? form.next_action : null,
         next_action_date: isOpenStage(form.stage) ? form.next_action_date : null,
         lost_reason: form.stage === "lost" ? form.lost_reason : null,
@@ -246,6 +268,56 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
             <Label>Notes</Label>
             <Textarea rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
           </div>
+
+          {/* Collapsed by default so adding a lead on a phone stays quick —
+              everything below is optional and feeds Phase 2 lead scoring. */}
+          <details className="sm:col-span-2 rounded-lg border border-border p-3">
+            <summary className="text-sm text-muted-foreground cursor-pointer select-none">
+              More details (optional)
+            </summary>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Address</Label>
+                <Input value={form.address} onChange={(e) => set("address", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>City</Label>
+                <Input value={form.city} onChange={(e) => set("city", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Google Maps place ID</Label>
+                <Input value={form.maps_place_id} onChange={(e) => set("maps_place_id", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Instagram followers</Label>
+                <Input type="number" inputMode="numeric" value={form.instagram_followers} onChange={(e) => set("instagram_followers", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Price level</Label>
+                <Select value={form.price_level} onValueChange={(v) => set("price_level", v)}>
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>{PRICE_LEVELS.map((p) => <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Google rating</Label>
+                <Input type="number" step="0.1" min="0" max="5" value={form.google_rating} onChange={(e) => set("google_rating", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Google reviews</Label>
+                <Input type="number" inputMode="numeric" value={form.google_review_count} onChange={(e) => set("google_review_count", e.target.value)} />
+              </div>
+              {tiers.length > 0 && (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Plan pitched</Label>
+                  <Select value={form.plan_pitched_id} onValueChange={(v) => set("plan_pitched_id", v)}>
+                    <SelectTrigger><SelectValue placeholder="None yet" /></SelectTrigger>
+                    <SelectContent>{tiers.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </details>
         </div>
 
         {lead && (

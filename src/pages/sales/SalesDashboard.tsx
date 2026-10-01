@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STAGES, isOverdue, stageLabel, type Lead, type LeadActivity } from "./leadMeta";
+import { STAGES, daysInStage, isOverdue, median, stageLabel, type Lead, type LeadActivity } from "./leadMeta";
 
 const db = supabase as any;
 
@@ -46,7 +46,31 @@ const SalesDashboard = () => {
     [inRange],
   );
 
-  const funnel = STAGES.map((s) => ({ ...s, count: leads.filter((l) => l.stage === s.key).length }));
+  // Conversion is measured against how many leads reached this stage or any
+  // later one — a lead sitting in "Live" did pass through "Contacted".
+  const ORDER: string[] = STAGES.filter((s) => s.key !== "lost").map((s) => s.key);
+  const reachedAtLeast = (stageKey: string) => {
+    const idx = ORDER.indexOf(stageKey);
+    return leads.filter((l) => {
+      const li = ORDER.indexOf(l.stage);
+      return li >= idx && li !== -1;
+    }).length;
+  };
+
+  const funnel = STAGES.map((s) => {
+    const inStage = leads.filter((l) => l.stage === s.key);
+    const nextKey = ORDER[ORDER.indexOf(s.key) + 1];
+    const reached = reachedAtLeast(s.key);
+    return {
+      ...s,
+      count: inStage.length,
+      reached,
+      toNext: s.key === "lost" || !nextKey || !reached
+        ? null
+        : Math.round((reachedAtLeast(nextKey) / reached) * 100),
+      medianDays: median(inStage.map((l) => daysInStage(l))),
+    };
+  });
   const maxCount = Math.max(1, ...funnel.map((f) => f.count));
   const liveCount = leads.filter((l) => l.stage === "live").length;
   const overdueLeads = leads.filter(isOverdue);
@@ -107,7 +131,10 @@ const SalesDashboard = () => {
             </div>
 
             <div className="gradient-card rounded-xl border border-border p-5 mb-6">
-              <h2 className="font-display text-lg font-bold text-foreground mb-4">Funnel</h2>
+              <h2 className="font-display text-lg font-bold text-foreground mb-1">Funnel</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Bar is how many sit in the stage now. "→" is the share that went on to the next stage; "med." is the median days a lead has been sitting there.
+              </p>
               <div className="space-y-2.5">
                 {funnel.map((f) => (
                   <div key={f.key} className="flex items-center gap-3">
@@ -115,7 +142,13 @@ const SalesDashboard = () => {
                     <div className="flex-1 h-5 rounded bg-secondary overflow-hidden">
                       <div className="h-full rounded" style={{ width: `${(f.count / maxCount) * 100}%`, background: "#e6c878" }} />
                     </div>
-                    <span className="text-sm font-medium text-foreground w-10 text-right">{f.count}</span>
+                    <span className="text-sm font-medium text-foreground w-8 text-right">{f.count}</span>
+                    <span className="text-xs text-muted-foreground w-14 text-right">
+                      {f.toNext === null ? "" : `→ ${f.toNext}%`}
+                    </span>
+                    <span className="text-xs text-muted-foreground w-16 text-right">
+                      {f.medianDays === null ? "" : `med. ${f.medianDays}d`}
+                    </span>
                   </div>
                 ))}
               </div>

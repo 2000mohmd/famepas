@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { isOpenStage, isOverdue, isDueToday, todayISO, stageLabel, sourceLabel, STAGES } from "@/pages/sales/leadMeta";
+import {
+  isOpenStage, isOverdue, isDueToday, todayISO, stageLabel, sourceLabel, STAGES,
+  toCsv, median, daysInStage,
+} from "@/pages/sales/leadMeta";
 
 const dayOffset = (n: number) => {
   const d = new Date();
@@ -58,5 +61,52 @@ describe("follow-up dates", () => {
   it("separates due-today from overdue", () => {
     expect(isDueToday({ stage: "contacted", next_action_date: todayISO() })).toBe(true);
     expect(isDueToday({ stage: "contacted", next_action_date: dayOffset(-1) })).toBe(false);
+  });
+
+  it("counts whole days a lead has sat in its stage", () => {
+    const now = Date.parse("2026-10-10T12:00:00Z");
+    expect(daysInStage({ stage_changed_at: "2026-10-10T09:00:00Z" }, now)).toBe(0);
+    expect(daysInStage({ stage_changed_at: "2026-10-07T12:00:00Z" }, now)).toBe(3);
+  });
+});
+
+describe("CSV export", () => {
+  it("quotes cells containing commas, quotes or newlines", () => {
+    const csv = toCsv(
+      ["Venue", "Note"],
+      [["Cafe Younes, Hamra", 'He said "call back"'], ["Em Sherif", "line one\nline two"]],
+    );
+    expect(csv).toBe(
+      'Venue,Note\r\n"Cafe Younes, Hamra","He said ""call back"""\r\n' +
+      'Em Sherif,"line one\nline two"',
+    );
+  });
+
+  it("renders missing values as empty rather than 'null'", () => {
+    expect(toCsv(["A", "B", "C"], [[null, undefined, ""]])).toBe("A,B,C\r\n,,");
+  });
+
+  it("keeps a zero rather than blanking it", () => {
+    expect(toCsv(["Reviews"], [[0]])).toBe("Reviews\r\n0");
+  });
+});
+
+describe("median", () => {
+  it("averages the middle pair on an even count", () => {
+    expect(median([1, 2, 3, 4])).toBe(2.5);
+  });
+
+  it("takes the middle value on an odd count", () => {
+    expect(median([5, 1, 3])).toBe(3);
+  });
+
+  it("is null for no data rather than 0, which would read as 'same day'", () => {
+    expect(median([])).toBeNull();
+  });
+
+  it("does not mutate the caller's array", () => {
+    const input = [3, 1, 2];
+    median(input);
+    expect(input).toEqual([3, 1, 2]);
   });
 });
