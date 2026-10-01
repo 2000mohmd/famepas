@@ -35,7 +35,7 @@ interface Props {
 }
 
 const emptyForm = (ownerId: string) => ({
-  venue_name: "", category: "", area: "", city: "", address: "", maps_place_id: "",
+  venue_name: "", category: "", area: "", city: "", country: "", address: "", maps_place_id: "",
   contact_name: "", contact_role: "", phone: "", instagram_handle: "",
   instagram_followers: "", google_rating: "", google_review_count: "", price_level: "",
   plan_pitched_id: "",
@@ -93,7 +93,8 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     if (lead) {
       setForm({
         venue_name: lead.venue_name, category: lead.category ?? "", area: lead.area ?? "",
-        city: lead.city ?? "", address: lead.address ?? "", maps_place_id: lead.maps_place_id ?? "",
+        city: lead.city ?? "", country: lead.country ?? "",
+        address: lead.address ?? "", maps_place_id: lead.maps_place_id ?? "",
         contact_name: lead.contact_name, contact_role: lead.contact_role ?? "",
         phone: lead.phone, instagram_handle: lead.instagram_handle ?? "",
         instagram_followers: lead.instagram_followers?.toString() ?? "",
@@ -140,7 +141,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         ...form,
         category: form.category || null, area: form.area || null, city: form.city || null,
         address: form.address || null, contact_role: form.contact_role || null,
-        maps_place_id: form.maps_place_id || null,
+        country: form.country || null, maps_place_id: form.maps_place_id || null,
         instagram_handle: form.instagram_handle || null, notes: form.notes || null,
         instagram_followers: numOrNull(form.instagram_followers),
         google_rating: numOrNull(form.google_rating),
@@ -306,6 +307,10 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
               <div className="space-y-1.5">
                 <Label>City</Label>
                 <Input value={form.city} onChange={(e) => set("city", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Country</Label>
+                <Input value={form.country} onChange={(e) => set("country", e.target.value)} placeholder="Lebanon" />
               </div>
               <div className="space-y-1.5">
                 <Label>Google Maps place ID</Label>

@@ -23,23 +23,28 @@ const SalesDashboard = () => {
   const [activation, setActivation] = useState<any[]>([]);
   const [venues, setVenues] = useState<any[]>([]);
   const [tiers, setTiers] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
   const [days, setDays] = useState("7");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: leadRows }, { data: actRows }, { data: activationRows }, { data: venueRows }, { data: tierRows }] =
-        await Promise.all([
-          db.from("leads").select("*"),
-          db.from("lead_activities").select("*").gte("happened_at", sinceISO(90)),
-          db.from("venue_activation").select("*"),
-          supabase.from("venues").select("id, approval_status, created_at, subscription_tier_id, subscription_renews_at, payment_status"),
-          supabase.from("subscription_tiers").select("id, name, price"),
-        ]);
+      const [
+        { data: leadRows }, { data: actRows }, { data: activationRows },
+        { data: commissionRows }, { data: venueRows }, { data: tierRows },
+      ] = await Promise.all([
+        db.from("leads").select("*"),
+        db.from("lead_activities").select("*").gte("happened_at", sinceISO(90)),
+        db.from("venue_activation").select("*"),
+        db.from("sales_commissions").select("*"),
+        supabase.from("venues").select("id, approval_status, created_at, subscription_tier_id, subscription_renews_at, payment_status"),
+        supabase.from("subscription_tiers").select("id, name, price"),
+      ]);
       setLeads(leadRows ?? []);
       setActivities(actRows ?? []);
       setActivation(activationRows ?? []);
+      setCommissions(commissionRows ?? []);
       setVenues(venueRows ?? []);
       setTiers(tierRows ?? []);
       const ids = [...new Set((leadRows ?? []).map((l: any) => l.owner_id))];
@@ -133,6 +138,21 @@ const SalesDashboard = () => {
     }
     return Object.entries(rows).sort((a, b) => b[1] - a[1]);
   }, [leads]);
+
+  const commissionByRep = useMemo(() => {
+    const rows: Record<string, { earned: number; pending: number; venues: number }> = {};
+    for (const c of commissions) {
+      const row = (rows[c.rep_id] ??= { earned: 0, pending: 0, venues: 0 });
+      row.venues++;
+      // Only a venue that has stayed live past the qualifying period pays out;
+      // the rest is shown as maturing so a rep can see what's coming.
+      if (c.qualified) row.earned += Number(c.amount ?? 0);
+      else row.pending += Number(c.amount ?? 0);
+    }
+    return Object.entries(rows)
+      .map(([repId, r]) => ({ repId, ...r }))
+      .sort((a, b) => b.earned - a.earned);
+  }, [commissions]);
 
   const tierPrice = (id: string | null) => Number(tiers.find((t) => t.id === id)?.price ?? 0);
   const mrr = venues
@@ -290,6 +310,29 @@ const SalesDashboard = () => {
                   </div>
                 );
               })()}
+            </div>
+
+            <div className="gradient-card rounded-xl border border-border p-5 mb-6">
+              <h2 className="font-display text-lg font-bold text-foreground mb-1">Commission</h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Earned on venues that are still live after the qualifying period — not on signups. Rates in Admin → Sales Scoring.
+              </p>
+              {commissions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nothing qualifying yet — no venue has posted a first offer.</p>
+              ) : (
+                <div className="space-y-2">
+                  {commissionByRep.map(({ repId, earned, pending, venues: venueCount }) => (
+                    <div key={repId} className="flex items-center justify-between text-sm border-b border-border/50 pb-1.5 last:border-0">
+                      <span className="text-foreground">{owners[repId] ?? "Unnamed"}</span>
+                      <span className="text-muted-foreground">
+                        {venueCount} venue{venueCount === 1 ? "" : "s"} ·{" "}
+                        <strong className="text-success">${earned.toLocaleString()} earned</strong>
+                        {pending > 0 && <> · ${pending.toLocaleString()} still maturing</>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="gradient-card rounded-xl border border-border p-5">

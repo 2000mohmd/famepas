@@ -52,6 +52,7 @@ export interface Lead {
   category: string | null;
   area: string | null;
   city: string | null;
+  country: string | null;
   address: string | null;
   maps_place_id: string | null;
   contact_name: string;

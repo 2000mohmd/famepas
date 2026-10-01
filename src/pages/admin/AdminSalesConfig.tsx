@@ -29,6 +29,19 @@ const AdminSalesConfig = () => {
   const [territories, setTerritories] = useState<{ area: string; rep_id: string }[]>([]);
   const [newTerritory, setNewTerritory] = useState({ area: "", rep_id: "" });
   const [saving, setSaving] = useState(false);
+  const [commission, setCommission] = useState({
+    qualifying_days: 60, mode: "flat", flat_amount: 50, percent_of_plan: 10, currency: "USD",
+  });
+  const [savingCommission, setSavingCommission] = useState(false);
+
+  const saveCommission = async () => {
+    setSavingCommission(true);
+    const { error } = await supabase.from("platform_settings")
+      .update({ value: commission as any }).eq("key", "sales_commission");
+    setSavingCommission(false);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Commission rules updated" });
+  };
 
   const loadTerritories = async () => {
     const { data } = await db.from("sales_territories").select("area, rep_id").order("area");
@@ -38,6 +51,8 @@ const AdminSalesConfig = () => {
   useEffect(() => {
     supabase.from("platform_settings").select("value").eq("key", "lead_score_weights").maybeSingle()
       .then(({ data }) => { if (data?.value) setCfg(data.value as unknown as ScoreConfig); });
+    supabase.from("platform_settings").select("value").eq("key", "sales_commission").maybeSingle()
+      .then(({ data }) => { if (data?.value) setCommission(data.value as any); });
     supabase.from("categories").select("name").eq("is_active", true).order("name")
       .then(({ data }) => setCategories((data ?? []).map((c: any) => c.name)));
     supabase.from("service_locations").select("area, city").eq("is_active", true)
@@ -167,6 +182,55 @@ const AdminSalesConfig = () => {
 
           <Button onClick={() => void saveWeights()} disabled={saving} className="gradient-gold text-accent-foreground font-semibold">
             {saving ? "Saving…" : "Save scoring"}
+          </Button>
+        </div>
+
+        <div className="gradient-card rounded-xl border border-border p-6 mb-6">
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">Commission</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Paid on venues that are still live after the qualifying period, so a signup that goes quiet doesn't earn.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div className="space-y-1.5">
+              <Label>Days live before it qualifies</Label>
+              <Input
+                type="number" min="0"
+                value={commission.qualifying_days}
+                onChange={(e) => setCommission({ ...commission, qualifying_days: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>How it's calculated</Label>
+              <Select value={commission.mode} onValueChange={(v) => setCommission({ ...commission, mode: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flat">Flat amount per venue</SelectItem>
+                  <SelectItem value="percent">Percentage of their plan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {commission.mode === "flat" ? (
+              <div className="space-y-1.5">
+                <Label>Amount per venue</Label>
+                <Input
+                  type="number" min="0"
+                  value={commission.flat_amount}
+                  onChange={(e) => setCommission({ ...commission, flat_amount: Number(e.target.value) })}
+                />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Percent of plan price</Label>
+                <Input
+                  type="number" min="0" max="100"
+                  value={commission.percent_of_plan}
+                  onChange={(e) => setCommission({ ...commission, percent_of_plan: Number(e.target.value) })}
+                />
+              </div>
+            )}
+          </div>
+          <Button onClick={() => void saveCommission()} disabled={savingCommission} className="gradient-gold text-accent-foreground font-semibold">
+            {savingCommission ? "Saving…" : "Save commission"}
           </Button>
         </div>
 

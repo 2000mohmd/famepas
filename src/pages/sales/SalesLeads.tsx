@@ -39,6 +39,14 @@ const SalesLeads = () => {
   const [scoreConfig, setScoreConfig] = useState<ScoreConfig>(DEFAULT_SCORE_CONFIG);
   const [sortBy, setSortBy] = useState<"follow_up" | "score" | "newest">("follow_up");
   const [importOpen, setImportOpen] = useState(false);
+  const [countryFilter, setCountryFilter] = useState("all");
+
+  // Only worth showing once a second market exists; a Lebanon-only pipeline
+  // doesn't need a country dropdown cluttering the toolbar.
+  const countries = useMemo(
+    () => [...new Set(leads.map((l) => l.country).filter(Boolean) as string[])].sort(),
+    [leads],
+  );
 
   const load = async () => {
     setLoading(true);
@@ -83,6 +91,7 @@ const SalesLeads = () => {
     const rows = leads.filter((l) =>
       (stageFilter === "all" || l.stage === stageFilter) &&
       (ownerFilter === "all" || l.owner_id === ownerFilter) &&
+      (countryFilter === "all" || l.country === countryFilter) &&
       (!q || l.venue_name.toLowerCase().includes(q) || l.contact_name.toLowerCase().includes(q) || l.phone.includes(q))
     );
     if (sortBy === "newest") {
@@ -95,7 +104,7 @@ const SalesLeads = () => {
     }
     return [...rows].sort((a, b) =>
       (a.next_action_date ?? "9999-12-31").localeCompare(b.next_action_date ?? "9999-12-31"));
-  }, [leads, search, stageFilter, ownerFilter, sortBy, scoreConfig]);
+  }, [leads, search, stageFilter, ownerFilter, countryFilter, sortBy, scoreConfig]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openLead = (lead: Lead) => { setEditing(lead); setDialogOpen(true); };
@@ -289,6 +298,15 @@ const SalesLeads = () => {
               <SelectContent>
                 <SelectItem value="all">All reps</SelectItem>
                 {owners.map((o) => <SelectItem key={o.user_id} value={o.user_id}>{o.full_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          {countries.length > 1 && (
+            <Select value={countryFilter} onValueChange={setCountryFilter}>
+              <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All markets</SelectItem>
+                {countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
           )}
