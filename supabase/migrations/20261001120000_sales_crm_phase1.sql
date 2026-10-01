@@ -86,7 +86,7 @@ BEGIN
   IF NEW.stage IS DISTINCT FROM OLD.stage THEN
     NEW.stage_changed_at := now();
     INSERT INTO public.lead_activities (lead_id, user_id, type, outcome)
-    VALUES (NEW.id, auth.uid(), 'stage_change', OLD.stage || ' → ' || NEW.stage);
+    VALUES (NEW.id, auth.uid(), 'stage_change', OLD.stage || ' -> ' || NEW.stage);
   END IF;
   RETURN NEW;
 END;
@@ -125,25 +125,40 @@ DROP POLICY IF EXISTS "Activities insert on own lead" ON public.lead_activities;
 CREATE POLICY "Activities insert on own lead" ON public.lead_activities FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.leads l WHERE l.id = lead_id AND (l.owner_id = auth.uid() OR public.is_sales_manager())));
 
+-- Phone numbers are stored every which way in this database (+9613797435,
+-- 03 797 435, 76566388, 0096176566388). Comparing the last N digits does not
+-- work: dropping the leading 0 internationally makes an 03-prefixed number
+-- seven digits, so the 961 country code bleeds into the window and the same
+-- venue fails to match itself. Strip the country code and leading zeros and
+-- compare the subscriber number instead.
+CREATE OR REPLACE FUNCTION public.normalize_lb_phone(_p text)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path = public AS $$
+  SELECT NULLIF(
+    regexp_replace(
+      regexp_replace(
+        regexp_replace(COALESCE(_p, ''), '\D', '', 'g'),
+      '^(00)?961', ''),
+    '^0+', ''),
+  '')
+$$;
+
 -- Duplicate warning. SECURITY DEFINER because a rep can't read other reps'
 -- leads — it returns only enough to warn ("already worked by X"), not the row.
--- Phones are compared on their last 8 digits: the same venue is stored as
--- 76566388, +96176566388 and 03566388 across existing records.
 CREATE OR REPLACE FUNCTION public.check_lead_duplicate(_phone text, _instagram text, _exclude uuid DEFAULT NULL)
 RETURNS TABLE (kind text, match_name text, matched_on text, owner_name text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  WITH p AS (SELECT NULLIF(right(regexp_replace(COALESCE(_phone,''), '\D', '', 'g'), 8), '') AS digits),
+  WITH p AS (SELECT public.normalize_lb_phone(_phone) AS digits),
        h AS (SELECT lower(NULLIF(ltrim(COALESCE(_instagram,''), '@'), '')) AS handle)
   SELECT 'lead'::text,
          l.venue_name,
          CASE WHEN (SELECT digits FROM p) IS NOT NULL
-               AND right(regexp_replace(l.phone, '\D', '', 'g'), 8) = (SELECT digits FROM p)
+               AND public.normalize_lb_phone(l.phone) = (SELECT digits FROM p)
               THEN 'phone' ELSE 'instagram' END,
          COALESCE(pr.full_name, 'another rep')
     FROM public.leads l
     LEFT JOIN public.profiles pr ON pr.user_id = l.owner_id
    WHERE (_exclude IS NULL OR l.id <> _exclude)
-     AND ( ((SELECT digits FROM p) IS NOT NULL AND right(regexp_replace(l.phone, '\D', '', 'g'), 8) = (SELECT digits FROM p))
+     AND ( ((SELECT digits FROM p) IS NOT NULL AND public.normalize_lb_phone(l.phone) = (SELECT digits FROM p))
         OR ((SELECT handle FROM h) IS NOT NULL AND lower(ltrim(COALESCE(l.instagram_handle,''), '@')) = (SELECT handle FROM h)) )
   UNION ALL
   SELECT 'venue'::text,
@@ -153,9 +168,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
     FROM public.venues v
    WHERE (SELECT digits FROM p) IS NOT NULL
      AND (SELECT digits FROM p) IN (
-       right(regexp_replace(COALESCE(v.phone,''), '\D', '', 'g'), 8),
-       right(regexp_replace(COALESCE(v.contact_phone,''), '\D', '', 'g'), 8),
-       right(regexp_replace(COALESCE(v.whatsapp_phone,''), '\D', '', 'g'), 8)
+       public.normalize_lb_phone(v.phone),
+       public.normalize_lb_phone(v.contact_phone),
+       public.normalize_lb_phone(v.whatsapp_phone)
      )
 $$;
 
@@ -169,7 +184,7 @@ REVOKE ALL ON FUNCTION public.check_lead_duplicate(text, text, uuid) FROM anon;
 CREATE OR REPLACE FUNCTION public.leads_link_new_venue()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
-  v_digits text := NULLIF(right(regexp_replace(COALESCE(NULLIF(NEW.contact_phone,''), NEW.phone, ''), '\D', '', 'g'), 8), '');
+  v_digits text := public.normalize_lb_phone(COALESCE(NULLIF(NEW.contact_phone,''), NEW.phone));
 BEGIN
   IF v_digits IS NULL THEN RETURN NEW; END IF;
   UPDATE public.leads
@@ -181,7 +196,7 @@ BEGIN
      SELECT id FROM public.leads
       WHERE venue_id IS NULL
         AND stage <> 'lost'
-        AND right(regexp_replace(phone, '\D', '', 'g'), 8) = v_digits
+        AND public.normalize_lb_phone(phone) = v_digits
       ORDER BY created_at
       LIMIT 1
    );
