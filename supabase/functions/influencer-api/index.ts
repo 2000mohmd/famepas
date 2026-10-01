@@ -32,6 +32,19 @@ async function getAuthUser(req: Request, supabase: any) {
   return user;
 }
 
+
+const pick = (src: any, keys: string[]) => {
+  const out: Record<string, unknown> = {};
+  if (src && typeof src === "object") for (const k of keys) if (k in src) out[k] = src[k];
+  return out;
+};
+const PROFILE_FIELDS = ["full_name", "avatar_url", "phone", "bio", "city", "country", "cover_image_url", "niche"];
+const BOOKING_FIELDS = ["venue_id", "offer_id", "scheduled_date", "preferred_date", "notes"];
+const DELIVERABLE_FIELDS = ["booking_id", "content_type", "content_url", "post_url", "platform", "caption", "media_url", "thumbnail_url", "posted_at"];
+const MESSAGE_FIELDS = ["receiver_id", "venue_id", "booking_id", "content", "media_url"];
+const REVIEW_FIELDS = ["reviewed_id", "venue_id", "booking_id", "rating", "review_text", "is_public"];
+const MEDIA_KIT_FIELDS = ["title", "tagline", "portfolio_urls", "audience_demographics", "engagement_rate", "avg_views", "avg_likes", "brands_worked_with", "pdf_url"];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -132,7 +145,7 @@ serve(async (req) => {
 
     if (path === "/profile" && method === "PUT") {
       const body = await req.json();
-      const { data, error } = await supabase.from("profiles").update(body).eq("user_id", userId).select().single();
+      const { data, error } = await supabase.from("profiles").update(pick(body, PROFILE_FIELDS)).eq("user_id", userId).select().single();
       if (error) return errorResponse(error.message);
       return jsonResponse({ profile: data });
     }
@@ -420,7 +433,8 @@ serve(async (req) => {
     if (path === "/bookings" && method === "POST") {
       const body = await req.json();
       const { data, error } = await supabase.from("bookings").insert({
-        ...body,
+        ...pick(body, BOOKING_FIELDS),
+        status: "upcoming",
         influencer_id: userId,
       }).select().single();
       if (error) return errorResponse(error.message);
@@ -451,7 +465,7 @@ serve(async (req) => {
     if (path === "/deliverables" && method === "POST") {
       const body = await req.json();
       const { data, error } = await supabase.from("deliverables").insert({
-        ...body,
+        ...pick(body, DELIVERABLE_FIELDS),
         influencer_id: userId,
         submitted_at: new Date().toISOString(),
         status: "submitted",
@@ -526,7 +540,8 @@ serve(async (req) => {
     if (path === "/messages" && method === "POST") {
       const body = await req.json();
       const { data, error } = await supabase.from("messages").insert({
-        ...body,
+        ...pick(body, MESSAGE_FIELDS),
+        message_type: "text",
         sender_id: userId,
       }).select().single();
       if (error) return errorResponse(error.message);
@@ -621,7 +636,7 @@ serve(async (req) => {
     if (path === "/reviews" && method === "POST") {
       const body = await req.json();
       const { data, error } = await supabase.from("reviews").insert({
-        ...body,
+        ...pick(body, REVIEW_FIELDS),
         reviewer_id: userId,
         review_type: "influencer_to_venue",
       }).select().single();
@@ -664,9 +679,9 @@ serve(async (req) => {
       
       let result;
       if (existing) {
-        result = await supabase.from("media_kits").update(body).eq("influencer_id", userId).select().single();
+        result = await supabase.from("media_kits").update(pick(body, MEDIA_KIT_FIELDS)).eq("influencer_id", userId).select().single();
       } else {
-        result = await supabase.from("media_kits").insert({ ...body, influencer_id: userId }).select().single();
+        result = await supabase.from("media_kits").insert({ ...pick(body, MEDIA_KIT_FIELDS), influencer_id: userId }).select().single();
       }
       if (result.error) return errorResponse(result.error.message);
       return jsonResponse({ media_kit: result.data });

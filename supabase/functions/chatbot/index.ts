@@ -35,7 +35,17 @@ Deno.serve(async (req) => {
 
     const systemPrompt = BASE_PROMPT + (knowledgeBlock ? `\n\n${knowledgeBlock}` : "");
 
-    const result = await callOpenAI([{ role: "system", content: systemPrompt }, ...(Array.isArray(messages) ? messages : [])]);
+    // Only accept plain user/assistant turns from the caller; the system prompt is server-owned.
+    const history = (Array.isArray(messages) ? messages : [])
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .slice(-12)
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 2000) }));
+    if (!history.length || history[history.length - 1].role !== "user") {
+      return new Response(JSON.stringify({ error: "A user message is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const result = await callOpenAI([{ role: "system", content: systemPrompt }, ...history]);
     if (result.error) {
       return new Response(JSON.stringify({ error: result.error }), {
         status: result.status, headers: { ...corsHeaders, "Content-Type": "application/json" },

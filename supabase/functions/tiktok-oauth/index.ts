@@ -42,6 +42,12 @@ async function safeJson(res: Response) {
   try { return JSON.parse(txt); } catch { return { _raw: txt }; }
 }
 
+async function hmac(data: string) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(CLIENT_SECRET + SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function buildAuthUrl(state: string, redirectUri: string) {
   const authUrl = new URL("https://www.tiktok.com/v2/auth/authorize/");
   authUrl.searchParams.set("client_key", CLIENT_KEY);
@@ -129,8 +135,10 @@ Deno.serve(async (req) => {
     // --- Venue legacy callback (GET with ?code) ---
     if (req.method === "GET" && url.searchParams.get("code")) {
       const state = url.searchParams.get("state") ?? "";
-      const venueId = state.split(":")[0];
-      if (!venueId) return new Response("missing venue", { status: 400, headers: corsHeaders });
+      const [venueId, nonce, sig] = state.split(":");
+      if (!venueId || !nonce || !sig || sig !== await hmac(`${venueId}:${nonce}`)) {
+        return new Response("invalid state", { status: 400, headers: corsHeaders });
+      }
       if (!CLIENT_KEY || !CLIENT_SECRET) {
         return Response.redirect(`${SITE_URL}/venue/settings?tiktok=missing_keys`, 302);
       }
@@ -165,13 +173,7 @@ Deno.serve(async (req) => {
       }, 503);
     }
 
-    // --- Venue initiate (venue_id supplied, no session needed) ---
-    if (body.action === "initiate" && body.venue_id) {
-      const state = `${body.venue_id}:${crypto.randomUUID()}`;
-      return json({ url: buildAuthUrl(state, VENUE_REDIRECT_URI) });
-    }
-
-    // --- Creator actions: require a Supabase session ---
+    // --- All actions require a Supabase session ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "Missing Authorization header", code: "UNAUTHORIZED" }, 401);
 
@@ -181,6 +183,14 @@ Deno.serve(async (req) => {
     });
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) return json({ error: "Invalid or expired session", code: "UNAUTHORIZED" }, 401);
+
+    // --- Venue initiate: caller must own the venue; state is signed so the callback can trust it ---
+    if (body.action === "initiate" && body.venue_id) {
+      const { data: venue } = await admin.from("venues").select("id").eq("id", String(body.venue_id)).eq("owner_id", user.id).maybeSingle();
+      if (!venue) return json({ error: "You don't own this venue", code: "FORBIDDEN" }, 403);
+      const base = `${venue.id}:${crypto.randomUUID()}`;
+      return json({ url: buildAuthUrl(`${base}:${await hmac(base)}`, VENUE_REDIRECT_URI) });
+    }
 
     if (body.action === "initiate") {
       const state = `${user.id}:${crypto.randomUUID()}`;
