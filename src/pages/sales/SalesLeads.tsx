@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, LayoutGrid, List as ListIcon, AlertCircle, Download, Upload, Users as UsersIcon } from "lucide-react";
+import { Plus, Search, LayoutGrid, List as ListIcon, AlertCircle, Download, Upload, Users as UsersIcon, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import LeadDialog from "./LeadDialog";
 import LeadImportDialog from "./LeadImportDialog";
@@ -40,6 +40,26 @@ const SalesLeads = () => {
   const [sortBy, setSortBy] = useState<"follow_up" | "score" | "newest">("follow_up");
   const [importOpen, setImportOpen] = useState(false);
   const [countryFilter, setCountryFilter] = useState("all");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [asking, setAsking] = useState(false);
+
+  // The function answers from rows fetched with the caller's own token, so a
+  // rep can only ever ask about their own pipeline.
+  const askData = async () => {
+    if (!question.trim()) return;
+    setAsking(true);
+    setAnswer("");
+    const { data, error } = await supabase.functions.invoke("sales-ai", {
+      body: { action: "ask", question },
+    });
+    setAsking(false);
+    if (error || (data as any)?.error) {
+      toast({ title: "Couldn't answer that", description: (data as any)?.error || error?.message, variant: "destructive" });
+      return;
+    }
+    setAnswer((data as any).answer ?? "");
+  };
 
   // Only worth showing once a second market exists; a Lebanon-only pipeline
   // doesn't need a country dropdown cluttering the toolbar.
@@ -260,6 +280,25 @@ const SalesLeads = () => {
               <Plus className="w-4 h-4 mr-1.5" /> Add lead
             </Button>
           </div>
+        </div>
+
+        <div className="mb-5 rounded-xl border border-border bg-card p-3">
+          <div className="flex gap-2">
+            <Input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void askData(); }}
+              placeholder="Ask about your pipeline — e.g. which Hamra cafes have been waiting over 5 days?"
+              className="bg-secondary border-border"
+            />
+            <Button variant="outline" onClick={() => void askData()} disabled={asking || !question.trim()}>
+              <Sparkles className="w-4 h-4 mr-1.5" />
+              {asking ? "Thinking…" : "Ask"}
+            </Button>
+          </div>
+          {answer && (
+            <p className="text-sm text-foreground mt-3 whitespace-pre-wrap border-t border-border pt-3">{answer}</p>
+          )}
         </div>
 
         {isManager && selected.size > 0 && (

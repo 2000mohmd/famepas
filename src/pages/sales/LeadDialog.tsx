@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { AlertTriangle, Link2, Phone, MessageCircle } from "lucide-react";
+import { AlertTriangle, Link2, Phone, MessageCircle, Sparkles } from "lucide-react";
 import {
   ACTIVITY_TYPES, LOST_REASONS, PRICE_LEVELS, SOURCES, STAGES,
   isOpenStage, stageLabel, todayISO,
@@ -56,6 +56,8 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [newActivity, setNewActivity] = useState({ type: "call", outcome: "" });
   const [tiers, setTiers] = useState<{ id: string; name: string }[]>([]);
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
+  const [meetingNotes, setMeetingNotes] = useState("");
+  const [extracting, setExtracting] = useState(false);
 
   useEffect(() => {
     supabase.from("subscription_tiers").select("id, name").eq("is_active", true).order("price")
@@ -164,6 +166,41 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     } finally {
       setSaving(false);
     }
+  };
+
+  /** Phase 3 feature 2: paste what happened, get a next step back. The result
+   *  only fills the form — the rep still reviews and saves it. */
+  const extractFromNotes = async () => {
+    if (!meetingNotes.trim()) return;
+    setExtracting(true);
+    const { data, error } = await supabase.functions.invoke("sales-ai", {
+      body: { action: "extract_tasks", notes: meetingNotes },
+    });
+    setExtracting(false);
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Couldn't read those notes",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    const out = data as any;
+    setForm((f) => ({
+      ...f,
+      next_action: out.next_action || f.next_action,
+      next_action_date: out.next_action_date || f.next_action_date,
+      stage: out.suggested_stage && out.suggested_stage !== f.stage ? out.suggested_stage : f.stage,
+    }));
+    if (out.summary && lead) {
+      await db.from("lead_activities").insert({
+        lead_id: lead.id, user_id: user?.id, type: "meeting", outcome: out.summary,
+      });
+      const { data: acts } = await db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false });
+      setActivities(acts ?? []);
+    }
+    setMeetingNotes("");
+    toast({ title: "Next step filled in", description: "Check it, then save." });
   };
 
   const logActivity = async () => {
@@ -382,6 +419,22 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {lead && (
+          <div className="border-t border-border pt-3 space-y-2">
+            <Label className="text-muted-foreground">Meeting notes</Label>
+            <Textarea
+              rows={3}
+              value={meetingNotes}
+              onChange={(e) => setMeetingNotes(e.target.value)}
+              placeholder="Type or paste what happened — the next step and follow-up date get filled in for you."
+            />
+            <Button size="sm" variant="outline" onClick={() => void extractFromNotes()} disabled={extracting || !meetingNotes.trim()}>
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              {extracting ? "Reading…" : "Turn into a next step"}
+            </Button>
           </div>
         )}
 
