@@ -87,7 +87,10 @@ serve(async (req) => {
       email,
       email_confirm: true,
       ...(igPending ? {} : { password }),
-      user_metadata: { full_name: full_name || (venue_name ? `${venue_name} Owner` : email) },
+      // handle_new_user() defaults to 'influencer' when this is absent — every
+      // venue signup was silently getting a spurious influencer role plus a
+      // reward_points/influencer_settings row alongside its real venue role.
+      user_metadata: { full_name: full_name || (venue_name ? `${venue_name} Owner` : email), role },
     });
     if (createError) {
       const msg = createError.message || "";
