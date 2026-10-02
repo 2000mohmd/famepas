@@ -71,6 +71,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Operations",
     items: [
+      { to: "/admin/creator-ops", icon: Sparkles, label: "Creator Ops" },
       { to: "/admin/redemptions", icon: ClipboardCheck, label: "Offer Attendance" },
       { to: "/admin/event-attendees", icon: Users, label: "Event Attendees" },
       { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
