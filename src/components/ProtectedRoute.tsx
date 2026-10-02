@@ -1,15 +1,19 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import MfaGate from "@/components/MfaGate";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: ("admin" | "venue" | "influencer" | "sales_manager" | "sales_rep")[];
+  allowedRoles?: ("admin" | "venue" | "influencer" | "sales_manager" | "sales_rep" | "venue_staff")[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
+  const location = useLocation();
+  // Keeps deep links alive through sign-in — a door staffer who scans a
+  // creator's QR while logged out lands back on that exact check-in.
+  const loginUrl = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 
   if (loading) {
     return (
@@ -19,10 +23,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginUrl} replace />;
 
   if (allowedRoles) {
-    if (role === null) return <Navigate to="/login" replace />;
+    if (role === null) return <Navigate to={loginUrl} replace />;
     if (!allowedRoles.includes(role)) return <Navigate to="/" replace />;
   }
 

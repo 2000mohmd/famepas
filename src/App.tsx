@@ -45,6 +45,7 @@ const AdminCulturalEvents = lazy(() => import("./pages/admin/AdminCulturalEvents
 const AdminSalesTeam = lazy(() => import("./pages/admin/AdminSalesTeam"));
 const AdminSalesConfig = lazy(() => import("./pages/admin/AdminSalesConfig"));
 const SalesMyDay = lazy(() => import("./pages/sales/SalesMyDay"));
+const ScanCheckIn = lazy(() => import("./pages/ScanCheckIn"));
 const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
 const SalesDashboard = lazy(() => import("./pages/sales/SalesDashboard"));
 const VenueSettings = lazy(() => import("./pages/venue/VenueSettings"));
@@ -136,6 +137,9 @@ const App = () => (
             <Route path="/sales/leads" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesLeads /></ProtectedRoute>} />
             <Route path="/sales/dashboard" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><SalesDashboard /></ProtectedRoute>} />
             <Route path="/sales/config" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><AdminSalesConfig /></ProtectedRoute>} />
+
+            {/* Door check-in. The QR links here, so any phone camera works. */}
+            <Route path="/scan" element={<ProtectedRoute allowedRoles={["venue", "venue_staff", "admin"]}><ScanCheckIn /></ProtectedRoute>} />
 
             {/* Venue Routes */}
             <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><Navigate to="/venue/campaigns" replace /></ProtectedRoute>} />

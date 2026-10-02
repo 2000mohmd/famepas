@@ -5,9 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
-import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star, Eye, Users, TrendingUp, MapPin } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star, Eye, Users, TrendingUp, MapPin, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { DELIVERY_LABEL, DELIVERY_TONE } from "@/lib/delivery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -132,20 +133,16 @@ const VenueBookings = () => {
     const code = otp.trim().toUpperCase();
     if (!code) return;
     setRedeeming(true);
-    // Compare with stored qr_code on this redemption
-    if ((redeemOpen.qr_code ?? "").toUpperCase() !== code) {
-      setRedeeming(false);
-      toast({ title: "Invalid code", description: "That OTP doesn't match this booking.", variant: "destructive" });
+    // Checked on the server. This used to compare against a code the venue
+    // had already downloaded with the booking, so a venue could mark a
+    // creator as visited without them ever showing up.
+    const { data, error } = await (supabase as any).rpc("check_in_booking", { _code: code });
+    setRedeeming(false);
+    if (error || !data?.ok) {
+      toast({ title: "Not checked in", description: data?.reason || error?.message, variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("offer_redemptions").update({
-      status: "redeemed",
-      redeemed_at: new Date().toISOString(),
-      qr_used_at: new Date().toISOString(),
-    }).eq("id", redeemOpen.id);
-    setRedeeming(false);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Booking completed", description: "Influencer checked in successfully." });
+    toast({ title: `${data.creator_name || "Creator"} checked in`, description: data.offer_title });
     setRedeemOpen(null); setOtp("");
     load();
   };
@@ -167,6 +164,12 @@ const VenueBookings = () => {
   ];
 
   const statusBadge = (r: Row) => {
+    // Once the creator has visited, what the venue cares about is whether the
+    // post landed — so the delivery stage replaces a flat "Completed".
+    const stage = (r as any).delivery_stage as string | null;
+    if (stage && stage !== "booked") {
+      return <Badge variant="outline" className={DELIVERY_TONE[stage]}>{DELIVERY_LABEL[stage] ?? stage}</Badge>;
+    }
     if (isCompleted(r)) return <Badge style={{ background: "#dcfce7", color: "#166534" }}>Completed</Badge>;
     const map: Record<string, [string, string, string]> = {
       pending: ["#fef3c7", "#92400e", "Pending"],
@@ -207,10 +210,10 @@ const VenueBookings = () => {
       case "approved":
         return <>
           <Button size="sm" variant="outline" onClick={() => updateStatus(r, "in_progress")}>Start Visit</Button>
-          <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Verify OTP</Button>
+          <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Check in</Button>
         </>;
       case "in_progress":
-        return <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Verify OTP</Button>;
+        return <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Check in</Button>;
     }
   };
 
@@ -264,9 +267,14 @@ const VenueBookings = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] font-bold text-foreground">Bookings</h1>
-          <button onClick={load} className="p-2 rounded-lg hover:bg-white">
-            <RefreshCw className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" style={{ background: PINK }} className="text-white hover:opacity-90">
+              <Link to="/scan"><QrCode className="w-4 h-4 mr-1.5" />Scan creator</Link>
+            </Button>
+            <button onClick={load} className="p-2 rounded-lg hover:bg-white" aria-label="Refresh">
+              <RefreshCw className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mb-6 border-b border-border">
@@ -366,7 +374,7 @@ const VenueBookings = () => {
 
       <Dialog open={!!redeemOpen} onOpenChange={(o) => { if (!o) { setRedeemOpen(null); setOtp(""); } }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Verify OTP / QR Code</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Check in — type the 6-character code under their QR</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Ask the influencer to show their booking code, then enter it below to complete the booking.</p>
           <Input value={otp} onChange={e => setOtp(e.target.value.toUpperCase())} placeholder="e.g. AB12CD34EF56" className="font-mono tracking-wider text-center" maxLength={20} />
           <Button onClick={verifyOtp} disabled={redeeming || !otp.trim()} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">

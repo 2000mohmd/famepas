@@ -10,6 +10,7 @@ export const roleHome = (role: string | null | undefined) => {
     case "sales_manager":
     case "sales_rep": return "/sales";
     case "venue": return "/venue";
+    case "venue_staff": return "/scan";
     case "influencer": return "/influencer/home";
     default: return "/welcome";
   }

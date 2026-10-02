@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import VenueStaffCard from "@/components/venue/VenueStaffCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -418,6 +419,7 @@ const VenueSettings = () => {
             </div>
           </div>
         )}
+        {tab === "team" && venue && <VenueStaffCard venueId={venue.id} />}
 
         {tab === "profile" && venue && (
           <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-5">

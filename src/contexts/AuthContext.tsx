@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { User, Session } from "@supabase/supabase-js";
 
-type UserRole = "admin" | "venue" | "influencer" | "sales_manager" | "sales_rep" | null;
+type UserRole = "admin" | "venue" | "influencer" | "sales_manager" | "sales_rep" | "venue_staff" | null;
 
 
 interface AuthContextType {
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { role: null, error: error.message };
     }
     const roles = (data?.map((row) => row.role) ?? []) as UserRole[];
-    const precedence: Exclude<UserRole, null>[] = ["admin", "sales_manager", "sales_rep", "venue", "influencer"];
+    const precedence: Exclude<UserRole, null>[] = ["admin", "sales_manager", "sales_rep", "venue", "venue_staff", "influencer"];
     const nextRole = precedence.find((r) => roles.includes(r)) ?? null;
     setRole(nextRole);
     return { role: nextRole };
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const roles = (roleRows?.map((row) => row.role) ?? []) as UserRole[];
     // Staff accounts are created by an admin, so there's no queue to clear —
     // and they own no venue or creator profile to check an approval against.
-    if (roles.some((r) => r === "admin" || r === "sales_manager" || r === "sales_rep")) return { ok: true };
+    if (roles.some((r) => r === "admin" || r === "sales_manager" || r === "sales_rep" || r === "venue_staff")) return { ok: true };
     if (roles.includes("venue")) {
       const { data: venues, error: venueErr } = await supabase.from("venues").select("approval_status").eq("owner_id", userId);
       if (venueErr) {

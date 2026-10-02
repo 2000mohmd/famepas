@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, KeyRound, Upload, Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import { CalendarDays, Upload, Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import CheckInCode from "@/components/influencer/CheckInCode";
+import { DELIVERY_LABEL } from "@/lib/delivery";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -35,12 +37,28 @@ const InfluencerBookings = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("bookings")
-        .select("*, preferred_date, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(qr_code, qr_expires_at)")
+        .select("*, preferred_date, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(delivery_stage, post_due_at, failure_reason)")
         .eq("influencer_id", user!.id)
         .order("scheduled_date", { ascending: false });
       return data ?? [];
     },
     enabled: !!user,
+  });
+
+  // Check-in codes, cached so they still show with no signal at the venue.
+  const { data: codes } = useQuery({
+    queryKey: ["my-checkin-codes", user?.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("booking_checkin_codes").select("redemption_id, code");
+      if (error) throw error;
+      const map = Object.fromEntries((data ?? []).map((c: any) => [c.redemption_id, c.code]));
+      try { localStorage.setItem("fp_checkin_codes", JSON.stringify(map)); } catch { /* ignore */ }
+      return map as Record<string, string>;
+    },
+    enabled: !!user,
+    placeholderData: () => {
+      try { return JSON.parse(localStorage.getItem("fp_checkin_codes") || "{}"); } catch { return {}; }
+    },
   });
 
   const { data: connections } = useQuery({
@@ -104,6 +122,16 @@ const InfluencerBookings = () => {
       }).select("id").single();
       if (error) throw error;
       if (inserted?.id) notifyEmail({ event: "content_submitted", deliverable_id: inserted.id });
+
+      // The same link is the delivery proof the platform verifies; this is
+      // what stops the post deadline from turning the booking into a Missed.
+      if (url && uploadFor.redemption_id) {
+        const { data: res } = await (supabase as any).rpc("submit_booking_post", {
+          _redemption_id: uploadFor.redemption_id, _url: url,
+        });
+        if (res && !res.ok) toast({ title: "Post saved, but not logged for delivery", description: res.reason });
+        else if (res?.late) toast({ title: "Submitted after the deadline", description: "It still counts, marked as late." });
+      }
 
       // Auto-fetch real metrics from Instagram/TikTok via RapidAPI
       if (inserted?.id && url && (url.includes("instagram.com") || url.includes("tiktok.com"))) {
@@ -171,12 +199,24 @@ const InfluencerBookings = () => {
             {booking.deliverable_deadline && (
               <p className="text-xs text-muted-foreground">Deliverable deadline: {format(new Date(booking.deliverable_deadline), "PPP")}</p>
             )}
-            {booking.status === "upcoming" && booking.offer_redemptions?.qr_code && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-gold/30 bg-gold/5 px-2.5 py-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-gold" />
-                <span className="text-[11px] text-muted-foreground">Show this code at the venue:</span>
-                <span className="font-mono font-bold tracking-wider text-foreground text-xs">{booking.offer_redemptions.qr_code}</span>
-              </div>
+            {(() => {
+              const d = booking.offer_redemptions;
+              if (!d?.delivery_stage) return null;
+              const due = d.post_due_at ? new Date(d.post_due_at) : null;
+              return (
+                <div className="mt-1 space-y-1">
+                  <Badge variant="outline" className="text-xs">Delivery: {DELIVERY_LABEL[d.delivery_stage] ?? d.delivery_stage}</Badge>
+                  {d.delivery_stage === "visited" && due && (
+                    <p className={`text-xs ${due < new Date() ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                      Post due by {format(due, "PPP p")}
+                    </p>
+                  )}
+                  {d.failure_reason && <p className="text-xs text-destructive">{d.failure_reason}</p>}
+                </div>
+              );
+            })()}
+            {booking.offer_redemptions?.delivery_stage === "booked" && codes?.[booking.redemption_id] && (
+              <CheckInCode code={codes[booking.redemption_id]} />
             )}
           </div>
           <div className="flex flex-col gap-2 shrink-0">
