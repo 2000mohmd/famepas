@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -63,12 +63,11 @@ describe("ProtectedRoute", () => {
     expect(screen.getByText("home page")).toBeInTheDocument();
   });
 
-  it("renders the protected page for an allowed role", async () => {
-    // Admin routes pass through MfaGate, which checks 2FA status asynchronously.
+  it("renders the protected page for an allowed role", () => {
     authState.user = { id: "u1" };
     authState.role = "admin";
     renderAt("/admin", ["admin"]);
-    await waitFor(() => expect(screen.getByText("admin page")).toBeInTheDocument());
+    expect(screen.getByText("admin page")).toBeInTheDocument();
   });
 
   it("renders for any signed-in user when no roles are required", () => {

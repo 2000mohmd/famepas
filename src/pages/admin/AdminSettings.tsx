@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import MfaSettings from "@/components/admin/MfaSettings";
 
 interface ToggleDef {
   key: string;
@@ -103,7 +102,6 @@ const AdminSettings = () => {
               />
             </div>
           ))}
-          <MfaSettings />
         </div>
       </div>
     </DashboardLayout>
