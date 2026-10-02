@@ -96,6 +96,34 @@ export interface LeadActivity {
   happened_at: string;
 }
 
+/**
+ * Stage pill colors (Adnan, "CRM DESIGN"): grey/New, blue/Contacted or
+ * Meeting, gold/Signed up, purple/Approved, green/Live, red/Lost — so reps
+ * can scan the pipeline without reading it.
+ */
+export const STAGE_TONE: Record<string, string> = {
+  new: "bg-secondary text-muted-foreground border-border",
+  contacted: "bg-stage-blue/15 text-stage-blue border-stage-blue/30",
+  meeting_booked: "bg-stage-blue/15 text-stage-blue border-stage-blue/30",
+  meeting_done: "bg-stage-blue/15 text-stage-blue border-stage-blue/30",
+  signed_up: "bg-gold/15 text-gold-dark border-gold/30",
+  approved: "bg-royal-purple/15 text-royal-purple border-royal-purple/30",
+  live: "bg-success/15 text-success border-success/30",
+  lost: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+/** Same stage colors, muted for a board column's background rather than a pill. */
+export const STAGE_COLUMN_TONE: Record<string, string> = {
+  new: "bg-secondary/60 text-muted-foreground border-border",
+  contacted: "bg-stage-blue/5 text-stage-blue border-stage-blue/20",
+  meeting_booked: "bg-stage-blue/5 text-stage-blue border-stage-blue/20",
+  meeting_done: "bg-stage-blue/5 text-stage-blue border-stage-blue/20",
+  signed_up: "bg-gold/5 text-gold-dark border-gold/20",
+  approved: "bg-royal-purple/5 text-royal-purple border-royal-purple/20",
+  live: "bg-success/5 text-success border-success/20",
+  lost: "bg-destructive/5 text-destructive border-destructive/20",
+};
+
 export const stageLabel = (key: string) => STAGES.find((s) => s.key === key)?.label ?? key;
 export const sourceLabel = (key: string) => SOURCES.find((s) => s.key === key)?.label ?? key;
 export const lostReasonLabel = (key: string) => LOST_REASONS.find((s) => s.key === key)?.label ?? key;

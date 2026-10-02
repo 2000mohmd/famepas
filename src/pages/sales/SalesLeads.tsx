@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import LeadDialog from "./LeadDialog";
 import LeadImportDialog from "./LeadImportDialog";
 import {
-  STAGES, DEFAULT_SCORE_CONFIG, isOpenStage, isOverdue, leadScore, lostReasonLabel,
+  STAGES, STAGE_TONE, STAGE_COLUMN_TONE, DEFAULT_SCORE_CONFIG, isOpenStage, isOverdue, leadScore, lostReasonLabel,
   sourceLabel, stageLabel, toCsv, type Lead, type ScoreConfig,
 } from "./leadMeta";
 
@@ -233,6 +233,7 @@ const SalesLeads = () => {
         </p>
       )}
       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <Badge variant="outline" className={`text-[10px] ${STAGE_TONE[lead.stage]}`}>{stageLabel(lead.stage)}</Badge>
         <Badge variant="secondary" className="text-[10px]">{sourceLabel(lead.source)}</Badge>
         {isManager && <Badge variant="secondary" className="text-[10px]">{ownerName(lead.owner_id)}</Badge>}
         {(() => {
@@ -276,7 +277,7 @@ const SalesLeads = () => {
                 </Button>
               </>
             )}
-            <Button onClick={openNew} className="gradient-gold text-accent-foreground font-semibold">
+            <Button onClick={openNew} className="btn-sales-primary font-semibold">
               <Plus className="w-4 h-4 mr-1.5" /> Add lead
             </Button>
           </div>
@@ -384,7 +385,7 @@ const SalesLeads = () => {
                 <div key={lead.id} className="space-y-1.5">
                   <LeadCard lead={lead} />
                   <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
-                    <SelectTrigger className="h-8 text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className={`h-8 text-xs font-medium ${STAGE_TONE[lead.stage]}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                     </SelectContent>
@@ -437,7 +438,7 @@ const SalesLeads = () => {
                         <td className="p-3 text-muted-foreground">{lead.category ?? "—"}</td>
                         <td className="p-3" onClick={(e) => e.stopPropagation()}>
                           <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
-                            <SelectTrigger className="h-8 w-[140px] text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className={`h-8 w-[140px] text-xs font-medium ${STAGE_TONE[lead.stage]}`}><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                             </SelectContent>
@@ -469,11 +470,11 @@ const SalesLeads = () => {
                     setDragging(null);
                     if (lead) void moveStage(lead, s.key);
                   }}
-                  className="w-[260px] shrink-0 rounded-xl bg-secondary/40 border border-border p-2.5"
+                  className={`w-[260px] shrink-0 rounded-xl border p-2.5 ${STAGE_COLUMN_TONE[s.key]}`}
                 >
                   <div className="flex items-center justify-between mb-2 px-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
-                    <span className="text-xs text-muted-foreground">{col.length}</span>
+                    <p className="text-xs font-bold uppercase tracking-wide">{s.label}</p>
+                    <span className="text-xs font-semibold">{col.length}</span>
                   </div>
                   <div className="space-y-2">
                     {col.map((lead) => <LeadCard key={lead.id} lead={lead} draggable />)}

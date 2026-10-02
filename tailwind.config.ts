@@ -58,6 +58,9 @@ export default {
         "purple-glow": "hsl(var(--purple-glow))",
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
+        "royal-purple": "hsl(var(--royal-purple))",
+        "royal-purple-light": "hsl(var(--royal-purple-light))",
+        "stage-blue": "hsl(var(--stage-blue))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

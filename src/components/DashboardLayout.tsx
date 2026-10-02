@@ -333,10 +333,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                       end={isRoot}
                       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                         exactActive || isActive
-                          ? "text-[hsl(38_60%_28%)]"
+                          ? type === "sales" ? "text-[hsl(262_42%_28%)]" : "text-[hsl(38_60%_28%)]"
                           : "text-neutral-700 hover:text-neutral-900 hover:bg-[hsl(42_35%_95%)]"
                       }`}
-                      style={exactActive ? { background: "hsl(42 65% 50% / 0.14)" } : undefined}
+                      style={exactActive ? { background: type === "sales" ? "hsl(262 42% 32% / 0.12)" : "hsl(42 65% 50% / 0.14)" } : undefined}
                     >
                       <Icon className="w-[15px] h-[15px]" />
                       <span className="flex-1">{label}</span>

@@ -248,7 +248,7 @@ const LeadImportDialog = ({ open, onOpenChange, onImported, owners, fallbackOwne
           <Button
             onClick={() => void runImport()}
             disabled={importing || !importable.length || !defaultOwner}
-            className="gradient-gold text-accent-foreground font-semibold"
+            className="btn-sales-primary font-semibold"
           >
             <Upload className="w-4 h-4 mr-1.5" />
             {importing ? "Importing…" : `Import ${importable.length || ""}`.trim()}

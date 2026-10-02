@@ -57,7 +57,28 @@
        for backwards compatibility with dashboards; no --purple* CSS vars are used. */
     --success: 142 55% 42%;
     --warning: 38 92% 50%;
+
+    /* Royal Night purple, requested for the sales CRM specifically (Adnan,
+       "CRM DESIGN"). Placeholder until the real brand identity value arrives —
+       swap this one line when it does. Scoped to Sales components only;
+       .gradient-purple/.glow-purple above stay untouched. */
+    --royal-purple: 262 42% 32%;
+    --royal-purple-light: 262 45% 55%;
+    /* Stage pill colors (Adnan): grey/New, blue/Contacted+Meeting, gold/Signed
+       up, purple/Approved, green/Live, red/Lost. Blue is the one hue this
+       palette didn't already have a token for. */
+    --stage-blue: 212 60% 50%;
   }
+}
+
+/* Sales CRM's primary button — purple, distinct from every other panel's
+   gold .gradient-gold, per Adnan's "CRM DESIGN" request. */
+.btn-sales-primary {
+  background: linear-gradient(135deg, hsl(var(--royal-purple-light)), hsl(var(--royal-purple)));
+  color: hsl(0 0% 100%);
+}
+.btn-sales-primary:hover {
+  opacity: 0.92;
 }
 
 @layer base {
@@ -210,6 +231,9 @@
   --gold-dark: 38 60% 38%;
   --success: 142 55% 42%;
   --warning: 38 92% 50%;
+  --royal-purple: 262 42% 32%;
+  --royal-purple-light: 262 45% 55%;
+  --stage-blue: 212 60% 50%;
 
   background-color: hsl(42 30% 98%);
   color: hsl(240 10% 8%);

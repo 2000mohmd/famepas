@@ -85,7 +85,7 @@ const AdminSalesTeam = () => {
               Staff logins for the people working leads. Reps see only their own leads; managers see the whole pipeline.
             </p>
           </div>
-          <Button onClick={() => setOpen(true)} className="gradient-gold text-accent-foreground font-semibold">
+          <Button onClick={() => setOpen(true)} className="btn-sales-primary font-semibold">
             <Plus className="w-4 h-4 mr-1.5" /> Add team member
           </Button>
         </div>
@@ -151,7 +151,7 @@ const AdminSalesTeam = () => {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => void create()} disabled={saving} className="gradient-gold text-accent-foreground font-semibold">
+            <Button onClick={() => void create()} disabled={saving} className="btn-sales-primary font-semibold">
               {saving ? "Creating…" : "Create account"}
             </Button>
           </div>

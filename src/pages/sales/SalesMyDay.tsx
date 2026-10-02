@@ -5,14 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "react-router-dom";
-import { Phone, MessageCircle, CalendarDays, AlertTriangle } from "lucide-react";
+import { Phone, MessageCircle, CalendarDays, AlertTriangle, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import LeadDialog from "./LeadDialog";
-import { isOpenStage, sourceLabel, stageLabel, todayISO, type Lead } from "./leadMeta";
+import { isOpenStage, sourceLabel, STAGE_TONE, stageLabel, todayISO, type Lead } from "./leadMeta";
 
 const db = supabase as any;
 
 const SalesMyDay = () => {
   const { user, role } = useAuth();
+  const { toast } = useToast();
+  const [completing, setCompleting] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Lead | null>(null);
@@ -38,6 +41,32 @@ const SalesMyDay = () => {
   };
 
   useEffect(() => { void load(); }, [user]);
+
+  /**
+   * "Done" on today's task, not on the pipeline stage — it logs the follow-up
+   * as handled and rolls the date to tomorrow, keeping the same next_action
+   * text, rather than clearing it outright. The database requires a next
+   * action and date on every open-stage lead (Adnan's own earlier review
+   * confirmed that rule matches spec), so a lead can't go "doneless"; this
+   * reads it as "I did this today, remind me again if nothing else changes"
+   * rather than a stage advance, which is a one-tap away in the full dialog.
+   */
+  const markDone = async (lead: Lead) => {
+    if (!user) return;
+    setCompleting(lead.id);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const nextDate = tomorrow.toISOString().slice(0, 10);
+    const { error } = await db.from("leads").update({ next_action_date: nextDate }).eq("id", lead.id);
+    if (!error) {
+      await db.from("lead_activities").insert({
+        lead_id: lead.id, user_id: user.id, type: "note", outcome: `Done: ${lead.next_action}`,
+      });
+    }
+    setCompleting(null);
+    if (error) { toast({ title: "Couldn't mark that done", description: error.message, variant: "destructive" }); return; }
+    void load();
+  };
 
   useEffect(() => {
     supabase.from("categories").select("name").eq("is_active", true).order("name")
@@ -65,22 +94,33 @@ const SalesMyDay = () => {
             {lead.next_action} — {lead.next_action_date}
           </p>
           <div className="flex gap-1.5 mt-1.5 flex-wrap">
-            <Badge variant="secondary" className="text-[10px]">{stageLabel(lead.stage)}</Badge>
+            <Badge variant="outline" className={`text-[10px] ${STAGE_TONE[lead.stage]}`}>{stageLabel(lead.stage)}</Badge>
             <Badge variant="secondary" className="text-[10px]">{sourceLabel(lead.source)}</Badge>
           </div>
         </button>
-        {digits && (
-          <div className="flex gap-1 shrink-0">
-            <Button size="sm" variant="ghost" asChild className="h-8 w-8 p-0">
-              <a href={`tel:${digits}`} aria-label={`Call ${lead.venue_name}`}><Phone className="w-4 h-4" /></a>
-            </Button>
-            <Button size="sm" variant="ghost" asChild className="h-8 w-8 p-0">
-              <a href={`https://wa.me/${digits}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${lead.venue_name}`}>
-                <MessageCircle className="w-4 h-4" />
-              </a>
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-1 shrink-0">
+          {digits && (
+            <>
+              <Button size="sm" variant="ghost" asChild className="h-8 w-8 p-0">
+                <a href={`tel:${digits}`} aria-label={`Call ${lead.venue_name}`}><Phone className="w-4 h-4" /></a>
+              </Button>
+              <Button size="sm" variant="ghost" asChild className="h-8 w-8 p-0">
+                <a href={`https://wa.me/${digits}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${lead.venue_name}`}>
+                  <MessageCircle className="w-4 h-4" />
+                </a>
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm" variant="ghost" className="h-8 w-8 p-0 text-success hover:text-success"
+            disabled={completing === lead.id}
+            onClick={() => void markDone(lead)}
+            aria-label={`Mark done: ${lead.next_action}`}
+            title="Done — follows up again tomorrow"
+          >
+            <Check className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     );
   };

@@ -248,12 +248,18 @@ const SalesDashboard = () => {
               <div className="space-y-2.5">
                 {funnel.map((f) => (
                   <div key={f.key} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-28 shrink-0">{f.label}</span>
+                    <span className="text-sm font-medium text-foreground w-28 shrink-0">{f.label}</span>
                     <div className="flex-1 h-5 rounded bg-secondary overflow-hidden">
-                      <div className="h-full rounded" style={{ width: `${(f.count / maxCount) * 100}%`, background: "#e6c878" }} />
+                      <div
+                        className="h-full rounded"
+                        style={{
+                          width: `${Math.max((f.count / maxCount) * 100, f.count > 0 ? 3 : 0)}%`,
+                          background: "linear-gradient(90deg, hsl(var(--royal-purple-light)), hsl(var(--royal-purple)))",
+                        }}
+                      />
                     </div>
-                    <span className="text-sm font-medium text-foreground w-8 text-right">{f.count}</span>
-                    <span className="text-xs text-muted-foreground w-14 text-right">
+                    <span className="text-sm font-bold text-foreground w-8 text-right">{f.count}</span>
+                    <span className="text-xs font-medium text-muted-foreground w-14 text-right">
                       {f.toNext === null ? "" : `→ ${f.toNext}%`}
                     </span>
                     <span className="text-xs text-muted-foreground w-16 text-right">

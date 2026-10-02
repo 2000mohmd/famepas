@@ -148,7 +148,7 @@ const AdminSalesConfig = () => {
               />
             </div>
           </div>
-          <Button onClick={() => void saveTargets()} disabled={savingTargets} className="gradient-gold text-accent-foreground font-semibold">
+          <Button onClick={() => void saveTargets()} disabled={savingTargets} className="btn-sales-primary font-semibold">
             {savingTargets ? "Saving…" : "Save targets"}
           </Button>
         </div>
@@ -221,7 +221,7 @@ const AdminSalesConfig = () => {
             </div>
           </div>
 
-          <Button onClick={() => void saveWeights()} disabled={saving} className="gradient-gold text-accent-foreground font-semibold">
+          <Button onClick={() => void saveWeights()} disabled={saving} className="btn-sales-primary font-semibold">
             {saving ? "Saving…" : "Save scoring"}
           </Button>
         </div>
@@ -270,7 +270,7 @@ const AdminSalesConfig = () => {
               </div>
             )}
           </div>
-          <Button onClick={() => void saveCommission()} disabled={savingCommission} className="gradient-gold text-accent-foreground font-semibold">
+          <Button onClick={() => void saveCommission()} disabled={savingCommission} className="btn-sales-primary font-semibold">
             {savingCommission ? "Saving…" : "Save commission"}
           </Button>
         </div>

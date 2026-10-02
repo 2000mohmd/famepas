@@ -566,7 +566,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => void save()} disabled={saving} className="gradient-gold text-accent-foreground font-semibold">
+          <Button onClick={() => void save()} disabled={saving} className="btn-sales-primary font-semibold">
             {saving ? "Saving…" : overrideDuplicate ? "Save anyway" : lead ? "Save changes" : "Add lead"}
           </Button>
         </div>
