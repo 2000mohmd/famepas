@@ -7,7 +7,7 @@ import { ShieldCheck } from "lucide-react";
 
 type Factor = { id: string; status: string; friendly_name?: string };
 
-const MfaSettings = ({ onEnrolled }: { onEnrolled?: () => void } = {}) => {
+const MfaSettings = () => {
   const { toast } = useToast();
   const [factors, setFactors] = useState<Factor[]>([]);
   const [enroll, setEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null);
@@ -42,7 +42,6 @@ const MfaSettings = ({ onEnrolled }: { onEnrolled?: () => void } = {}) => {
     if (error) return toast({ title: "Invalid code", description: error.message, variant: "destructive" });
     toast({ title: "Two-factor authentication enabled" });
     setEnroll(null); setCode(""); load();
-    onEnrolled?.();
   };
 
   const disable = async (id: string) => {

@@ -30,9 +30,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     if (!allowedRoles.includes(role)) return <Navigate to="/" replace />;
   }
 
-  // Adnan, "Signing In": 2FA required for admins and sales reps at minimum.
-  const MFA_REQUIRED_ROLES = ["admin", "sales_manager", "sales_rep"];
-  if (MFA_REQUIRED_ROLES.includes(role ?? "")) return <MfaGate required>{children}</MfaGate>;
+  if (role === "admin") return <MfaGate>{children}</MfaGate>;
   return <>{children}</>;
 };
 

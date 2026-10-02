@@ -3,44 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MfaSettings from "@/components/admin/MfaSettings";
-import { ShieldAlert } from "lucide-react";
 
-/**
- * Enforces 2FA where it's required (admin, sales_manager, sales_rep —
- * Adnan, "Signing In": "Require two-step verification for admins and sales
- * reps at minimum"), instead of merely prompting when the user already
- * happens to have it enrolled. A required role with no verified factor is
- * walked through setup before the app renders at all, rather than let
- * through silently the way the old check-only version did.
- */
-const MfaGate = ({ children, required = false }: { children: ReactNode; required?: boolean }) => {
+/** Asks for a TOTP code when the signed-in user has 2FA enrolled but hasn't verified it this session. */
+const MfaGate = ({ children }: { children: ReactNode }) => {
   const { user, signOut } = useAuth();
-  const [state, setState] = useState<"checking" | "ok" | "needed" | "setup">("checking");
+  const [state, setState] = useState<"checking" | "ok" | "needed">("checking");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const check = async () => {
-    try {
-      const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) { setState("ok"); return; } // API error: fail open, never block on our own outage.
-      const hasVerified = (data?.totp ?? []).some((f) => f.status === "verified");
-      if (!hasVerified) {
-        // A clean answer of "nothing enrolled" is the only thing that should
-        // force setup — distinct from an error, which must never lock
-        // someone out over a transient API problem.
-        setState(required ? "setup" : "ok");
-        return;
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        setState(data && data.nextLevel === "aal2" && data.currentLevel !== "aal2" ? "needed" : "ok");
+      } catch {
+        // 2FA is optional — a failed check must never leave an admin stuck on a blank screen.
+        setState("ok");
       }
-      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      setState(aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2" ? "needed" : "ok");
-    } catch {
-      setState("ok");
-    }
-  };
-
-  useEffect(() => { void check(); }, [user?.id]);
+    })();
+  }, [user?.id]);
 
   const verify = async () => {
     setBusy(true); setError("");
@@ -55,26 +37,6 @@ const MfaGate = ({ children, required = false }: { children: ReactNode; required
 
   if (state === "checking") return null;
   if (state === "ok") return <>{children}</>;
-
-  if (state === "setup") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <div className="w-full max-w-sm space-y-4">
-          <div className="flex items-start gap-2 text-foreground">
-            <ShieldAlert className="w-5 h-5 text-gold mt-0.5 shrink-0" />
-            <div>
-              <h1 className="font-display text-2xl">Two-factor authentication required</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your role requires it before you can continue. It takes under a minute.
-              </p>
-            </div>
-          </div>
-          <MfaSettings onEnrolled={() => void check()} />
-          <Button variant="ghost" className="w-full" onClick={() => signOut()}>Sign out</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
