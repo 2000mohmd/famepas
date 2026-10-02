@@ -23,6 +23,7 @@ const SalesMyDay = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [decidingVenue, setDecidingVenue] = useState<string | null>(null);
 
   const load = async () => {
     if (!user) return;
@@ -41,6 +42,20 @@ const SalesMyDay = () => {
   };
 
   useEffect(() => { void load(); }, [user]);
+
+  const decideVenue = async (venueId: string, status: "approved" | "rejected") => {
+    setDecidingVenue(venueId);
+    const { error } = await supabase.from("venues")
+      .update({ approval_status: status, is_active: status === "approved" } as any)
+      .eq("id", venueId);
+    if (!error) {
+      void (supabase as any).rpc("log_staff_action", { _action: status === "approved" ? "approve" : "reject", _table: "venues", _target: venueId });
+    }
+    setDecidingVenue(null);
+    if (error) { toast({ title: "Couldn't decide that", description: error.message, variant: "destructive" }); return; }
+    toast({ title: status === "approved" ? "Venue approved" : "Venue rejected" });
+    void load();
+  };
 
   /**
    * "Done" on today's task, not on the pipeline stage — it logs the follow-up
@@ -151,12 +166,30 @@ const SalesMyDay = () => {
         {alerts.length > 0 && (
           <div className="mb-6 rounded-xl border border-gold/40 bg-gold/10 p-4">
             <h2 className="font-display text-lg font-bold text-foreground mb-2">Needs chasing</h2>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {alerts.map((a, i) => (
-                <p key={i} className="text-sm text-foreground">
-                  <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5 text-gold" />
-                  <strong>{a.subject}</strong> — {a.detail}
-                </p>
+                <div key={i} className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-sm text-foreground">
+                    <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5 text-gold" />
+                    <strong>{a.subject}</strong> — {a.detail}
+                  </p>
+                  {/* One-click approve/reject (Adnan: "Approval alert... with
+                      one-click approve/reject"). Decide-only — venue
+                      approval stays with Founder/COO/Sales Mgr per the
+                      permissions matrix. */}
+                  {a.kind === "approval_sla" && (role === "admin" || role === "sales_manager") && (
+                    <div className="flex gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button size="sm" disabled={decidingVenue === a.venue_id}
+                        onClick={() => void decideVenue(a.venue_id, "approved")}>
+                        Approve
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={decidingVenue === a.venue_id}
+                        onClick={() => void decideVenue(a.venue_id, "rejected")}>
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
