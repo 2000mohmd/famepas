@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isOpenStage, isOverdue, isDueToday, todayISO, stageLabel, sourceLabel, STAGES,
-  toCsv, median, daysInStage, leadScore, DEFAULT_SCORE_CONFIG,
+  toCsv, median, daysInStage, leadScore, DEFAULT_SCORE_CONFIG, funnelToNext,
 } from "@/pages/sales/leadMeta";
 
 const dayOffset = (n: number) => {
@@ -135,6 +135,23 @@ describe("lead score", () => {
     };
     // Rating is switched off entirely, so only price level counts.
     expect(leadScore({ ...bare, google_rating: 0, price_level: 4 }, cfg)).toBe(100);
+  });
+});
+
+describe("funnel conversion", () => {
+  it("shows no conversion for a stage nobody is currently in, even if math would give 100%", () => {
+    // Adnan's review: a stage with 0 leads showed "→ 100%" because everyone
+    // who passed through it also passed the next stage — mathematically
+    // true, but nonsensical paired with "0 leads".
+    expect(funnelToNext(0, 3, 3)).toBeNull();
+  });
+
+  it("shows no conversion when nobody has reached this stage at all", () => {
+    expect(funnelToNext(0, 0, 0)).toBeNull();
+  });
+
+  it("computes a real percentage when the stage is actually occupied", () => {
+    expect(funnelToNext(5, 10, 5)).toBe(50);
   });
 });
 

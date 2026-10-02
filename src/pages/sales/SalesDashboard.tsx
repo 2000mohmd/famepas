@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  STAGES, daysInStage, isOverdue, lostReasonLabel, median, sourceLabel, stageLabel,
+  STAGES, daysInStage, funnelToNext, isOverdue, lostReasonLabel, median, sourceLabel, stageLabel,
   type Lead, type LeadActivity,
 } from "./leadMeta";
 
@@ -98,9 +98,7 @@ const SalesDashboard = () => {
       ...s,
       count: inStage.length,
       reached,
-      toNext: s.key === "lost" || !nextKey || !reached
-        ? null
-        : Math.round((reachedAtLeast(nextKey) / reached) * 100),
+      toNext: s.key === "lost" || !nextKey ? null : funnelToNext(inStage.length, reached, reachedAtLeast(nextKey)),
       medianDays: median(inStage.map((l) => daysInStage(l))),
     };
   });
@@ -131,7 +129,9 @@ const SalesDashboard = () => {
   const medianPendingHours = median(pendingAges);
   const breachingSla = pendingAges.filter((h) => h > 48).length;
 
-  const signedVenues = activation.filter((a) => a.lead_id);
+  // Rejected/lost venues (e.g. Smart Deals) were never really "signed" in any
+  // ongoing sense — excluded here and from the stalled-venue list below.
+  const signedVenues = activation.filter((a) => a.lead_id && a.lead_stage !== "lost");
   const activated = signedVenues.filter((a) => a.first_offer_posted).length;
   const activationRate = signedVenues.length ? Math.round((activated / signedVenues.length) * 100) : null;
 
@@ -219,7 +219,7 @@ const SalesDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <Stat label="Signings in range" value={signedInRange.length} sub={`Weekly target ${targets.weekly_signings}`} />
               <Stat label="Live venues" value={liveCount} sub={`of ${targets.annual_live_venues} annual target`} />
-              <Stat label="Open leads" value={leads.filter((l) => !["live", "lost"].includes(l.stage)).length} />
+              <Stat label="Open leads" value={leads.filter((l) => ["new", "contacted", "meeting_booked", "meeting_done"].includes(l.stage)).length} sub="Not yet signed" />
               <Stat label="Overdue follow-ups" value={overdueLeads.length} sub={overdueLeads.length ? "Needs chasing" : "All current"} />
             </div>
 
@@ -306,7 +306,7 @@ const SalesDashboard = () => {
                 Venues that signed up but haven't finished activating. A venue only counts as Live once it posts an offer.
               </p>
               {(() => {
-                const stalled = activation.filter((a) => a.lead_id && !a.first_offer_posted);
+                const stalled = signedVenues.filter((a) => !a.first_offer_posted);
                 if (!stalled.length) return <p className="text-sm text-muted-foreground">Every signed venue has posted an offer.</p>;
                 const step = (done: boolean, label: string) => (
                   <span className={done ? "text-success" : "text-muted-foreground"}>

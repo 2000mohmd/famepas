@@ -414,9 +414,13 @@ const SalesLeads = () => {
                     const overdue = isOverdue(lead);
                     const score = leadScore(lead, scoreConfig);
                     return (
-                      <tr key={lead.id} className="border-b border-border/50 hover:bg-secondary/30">
+                      <tr
+                        key={lead.id}
+                        onClick={() => openLead(lead)}
+                        className="border-b border-border/50 hover:bg-secondary/30 cursor-pointer"
+                      >
                         {isManager && (
-                          <td className="p-3">
+                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selected.has(lead.id)}
                               onCheckedChange={() => toggleSelected(lead.id)}
@@ -424,18 +428,14 @@ const SalesLeads = () => {
                             />
                           </td>
                         )}
-                        <td className="p-3">
-                          <button onClick={() => openLead(lead)} className="font-medium text-foreground hover:text-gold text-left">
-                            {lead.venue_name}
-                          </button>
-                        </td>
+                        <td className="p-3 font-medium text-foreground">{lead.venue_name}</td>
                         <td className="p-3 text-muted-foreground">
                           {lead.contact_name}
                           {lead.phone && <div className="text-xs">{lead.phone}</div>}
                         </td>
                         <td className="p-3 text-muted-foreground">{lead.area ?? "—"}</td>
                         <td className="p-3 text-muted-foreground">{lead.category ?? "—"}</td>
-                        <td className="p-3">
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
                           <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
                             <SelectTrigger className="h-8 w-[140px] text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
                             <SelectContent>

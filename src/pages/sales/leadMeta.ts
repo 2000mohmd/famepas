@@ -128,6 +128,16 @@ export const median = (values: number[]) => {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
+/**
+ * Conversion percentage from one funnel stage to the next. Gated on `count`
+ * (who is currently sitting in the stage), not `reached` (who got this far or
+ * further) — a stage nobody currently occupies can still compute a
+ * mathematically valid 100% pass-through from leads who already moved on,
+ * which reads as nonsensical paired with "0 leads".
+ */
+export const funnelToNext = (count: number, reached: number, nextReached: number): number | null =>
+  count === 0 || reached === 0 ? null : Math.round((nextReached / reached) * 100);
+
 /** Days each lead has been sitting in the stage it's in now. */
 export const daysInStage = (lead: Pick<Lead, "stage_changed_at">, now = Date.now()) =>
   Math.floor((now - new Date(lead.stage_changed_at).getTime()) / 86400000);
