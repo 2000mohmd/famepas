@@ -5,6 +5,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import heroBrand from "@/assets/hero-brand.jpg";
 
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -89,17 +90,29 @@ const Login = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
-      <header className="px-8 py-6">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="font-display text-2xl font-bold text-slate-900">
-            Fame<span className="text-[#b8923a]">Pass</span>
+    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 lg:grid lg:grid-cols-2">
+      <div
+        className="hidden lg:flex relative flex-col justify-between p-12 bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroBrand})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(262_42%_22%)]/90 via-[hsl(262_42%_28%)]/70 to-black/50" />
+        <Link to="/" className="relative z-10 flex items-center gap-2">
+          <span className="font-display text-3xl font-bold text-white">
+            Fame<span className="text-[#d9b05c]">Pass</span>
           </span>
         </Link>
-      </header>
+        <p className="relative z-10 font-display text-3xl text-white max-w-sm leading-snug">
+          Where creators and venues make fame happen.
+        </p>
+      </div>
 
-      <main className="flex justify-center px-4 pb-16">
+      <main className="flex justify-center items-center px-4 py-12 lg:py-16">
         <div className="w-full max-w-xl">
+          <Link to="/" className="flex lg:hidden items-center gap-2 mb-8 justify-center">
+            <span className="font-display text-3xl font-bold text-slate-900">
+              Fame<span className="text-[#b8923a]">Pass</span>
+            </span>
+          </Link>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-6">Welcome back to FamePass</h1>
