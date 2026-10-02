@@ -5,7 +5,6 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { UserCheck } from "lucide-react";
 
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -91,15 +90,12 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
-      <header className="px-8 py-6 flex items-center justify-between">
+      <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
           <span className="font-display text-2xl font-bold text-slate-900">
             Fame<span className="text-[#b8923a]">Pass</span>
           </span>
         </Link>
-        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
-          <UserCheck className="w-5 h-5" />
-        </div>
       </header>
 
       <main className="flex justify-center px-4 pb-16">
@@ -205,7 +201,7 @@ const Login = () => {
 
           <p className="mt-6 text-center text-sm text-slate-600">
             Don't have an account?{" "}
-            <Link to="/signup/business" className="font-semibold text-[#b8923a] hover:underline">
+            <Link to="/signup" className="font-semibold text-[#b8923a] hover:underline">
               Create an account
             </Link>
           </p>
