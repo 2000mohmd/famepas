@@ -45,6 +45,7 @@ const AdminCulturalEvents = lazy(() => import("./pages/admin/AdminCulturalEvents
 const AdminSalesTeam = lazy(() => import("./pages/admin/AdminSalesTeam"));
 const AdminSalesConfig = lazy(() => import("./pages/admin/AdminSalesConfig"));
 const AdminCreatorOps = lazy(() => import("./pages/admin/AdminCreatorOps"));
+const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const SalesMyDay = lazy(() => import("./pages/sales/SalesMyDay"));
 const ScanCheckIn = lazy(() => import("./pages/ScanCheckIn"));
 const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/admin/sales-team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesTeam /></ProtectedRoute>} />
             <Route path="/admin/sales-config" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesConfig /></ProtectedRoute>} />
             <Route path="/admin/creator-ops" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCreatorOps /></ProtectedRoute>} />
+            <Route path="/admin/audit-log" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAuditLog /></ProtectedRoute>} />
             <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/broadcast" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBroadcast /></ProtectedRoute>} />

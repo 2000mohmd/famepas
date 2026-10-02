@@ -121,6 +121,8 @@ const AdminVenues = () => {
 
   const setApprovalStatus = async (id: string, status: string) => {
     await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
+    // CRM review, rule 2: every approval is logged with who and when.
+    void (supabase as any).rpc("log_staff_action", { _action: status === "approved" ? "approve" : "reject", _table: "venues", _target: id });
     if (status === "approved") {
       toast({ title: "Venue approved", description: "The venue is now active and visible to influencers." });
       const sent = await notifyEmail({ event: "venue_approved", venue_id: id });
@@ -144,6 +146,7 @@ const AdminVenues = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      void (supabase as any).rpc("log_staff_action", { _action: "delete", _table: "venues", _target: id, _detail: { name } });
       toast({ title: `${name} deleted` });
       fetchVenues();
     }

@@ -61,17 +61,15 @@ const AdminSalesTeam = () => {
   };
 
   const revoke = async (m: Member) => {
-    if (m.leads > 0) {
-      toast({
-        title: "Reassign their leads first",
-        description: `${m.full_name} still owns ${m.leads} lead${m.leads === 1 ? "" : "s"}. Move those to another rep, then remove the access.`,
-        variant: "destructive",
-      });
+    if (!window.confirm(`Remove ${m.full_name}'s access? Their leads return to the default owner for reassignment.`)) return;
+    // Cuts access and reassigns their leads in one step, logged to the audit
+    // log — the CRM review's rule that disabling a login never leaves orphaned records.
+    const { data, error } = await (supabase as any).rpc("disable_staff_login", { _user_id: m.user_id });
+    if (error || data?.ok === false) {
+      toast({ title: "Couldn't remove access", description: data?.reason || error?.message, variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", m.user_id).eq("role", m.role as any);
-    if (error) { toast({ title: "Couldn't remove access", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Sales access removed" });
+    toast({ title: "Sales access removed", description: data.leads_reassigned ? `${data.leads_reassigned} lead${data.leads_reassigned === 1 ? "" : "s"} reassigned.` : undefined });
     void load();
   };
 
