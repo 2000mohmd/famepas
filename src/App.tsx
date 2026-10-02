@@ -48,6 +48,7 @@ const AdminCreatorOps = lazy(() => import("./pages/admin/AdminCreatorOps"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const SalesMyDay = lazy(() => import("./pages/sales/SalesMyDay"));
 const ScanCheckIn = lazy(() => import("./pages/ScanCheckIn"));
+const OAuthBrokerRedirect = lazy(() => import("./pages/OAuthBrokerRedirect"));
 const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
 const SalesDashboard = lazy(() => import("./pages/sales/SalesDashboard"));
 const VenueSettings = lazy(() => import("./pages/venue/VenueSettings"));
@@ -98,6 +99,9 @@ const App = () => (
             <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+            {/* The custom domain doesn't proxy this to Lovable's OAuth broker
+                the way *.lovable.app does — see OAuthBrokerRedirect for why. */}
+            <Route path="/~oauth/initiate" element={<OAuthBrokerRedirect />} />
             <Route path="/instagram/callback" element={<InstagramCallback />} />
             <Route path="/tiktok/callback" element={<TikTokCallback />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
