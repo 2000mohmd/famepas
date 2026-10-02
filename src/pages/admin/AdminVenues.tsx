@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { notifyEmail } from "@/lib/notify";
 import { isValidEmail, isValidName } from "@/lib/validation";
 import { formatLabel } from "./_format";
+import { stageLabel } from "@/pages/sales/leadMeta";
 
 interface Category { id: string; name: string; }
 interface Location { id: string; city: string; }
@@ -58,10 +59,28 @@ const AdminVenues = () => {
   const [confirmAction, setConfirmAction] = useState<{ type: "convert" | "delete"; venue: Venue } | null>(null);
   const { toast } = useToast();
 
+  // Sales pipeline per venue: stage, owner, and how far through activation it
+  // is. Read from venue_activation, which already joins each venue to its lead.
+  const [pipeline, setPipeline] = useState<Record<string, { stage: string | null; rep: string | null; done: number }>>({});
+
   const fetchVenues = async () => {
     setLoading(true);
-    const { data } = await supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false });
+    const [{ data }, { data: act }] = await Promise.all([
+      supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false }),
+      (supabase as any).from("venue_activation").select("venue_id, lead_stage, rep_id, profile_complete, photos_uploaded, first_offer_posted, first_creator_visit, first_content_published"),
+    ]);
     setVenues((data as any) ?? []);
+
+    const repIds = [...new Set((act ?? []).map((a: any) => a.rep_id).filter(Boolean))] as string[];
+    const { data: reps } = repIds.length
+      ? await supabase.from("profiles").select("user_id, full_name").in("user_id", repIds)
+      : { data: [] as any[] };
+    const repName = Object.fromEntries((reps ?? []).map((r: any) => [r.user_id, r.full_name || "Unnamed"]));
+    setPipeline(Object.fromEntries((act ?? []).map((a: any) => [a.venue_id, {
+      stage: a.lead_stage,
+      rep: a.rep_id ? repName[a.rep_id] ?? "Unnamed" : null,
+      done: [a.profile_complete, a.photos_uploaded, a.first_offer_posted, a.first_creator_visit, a.first_content_published].filter(Boolean).length,
+    }])));
     setLoading(false);
   };
 
@@ -309,15 +328,18 @@ const AdminVenues = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Category</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">City</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Approval</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Stage</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Owner</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Activation</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
               ) : (
                 paged.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -344,6 +366,17 @@ const AdminVenues = () => {
                       } variant="outline">
                         {formatLabel(venue.approval_status || "approved")}
                       </Badge>
+                    </td>
+                    <td className="p-4 text-muted-foreground text-sm">
+                      {pipeline[venue.id]?.stage ? stageLabel(pipeline[venue.id].stage!) : "—"}
+                    </td>
+                    <td className="p-4 text-muted-foreground text-sm">{pipeline[venue.id]?.rep ?? "—"}</td>
+                    <td className="p-4 text-sm" title="Profile, photos, first offer, first visit, first content">
+                      {pipeline[venue.id] ? (
+                        <span className={pipeline[venue.id].done === 5 ? "text-success" : "text-muted-foreground"}>
+                          {pipeline[venue.id].done}/5
+                        </span>
+                      ) : "—"}
                     </td>
                     <td className="p-4">
                       <Badge className={venue.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>

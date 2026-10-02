@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Link2, Phone, MessageCircle, Sparkles } from "lucide-react";
 import {
-  ACTIVITY_TYPES, LOST_REASONS, PRICE_LEVELS, SOURCES, STAGES,
+  ACTIVITY_OUTCOMES, ACTIVITY_TYPES, LOST_REASONS, PRICE_LEVELS, SOURCES, STAGES,
   isOpenStage, stageLabel, todayISO,
   type Lead, type LeadActivity,
 } from "./leadMeta";
@@ -53,7 +53,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [duplicates, setDuplicates] = useState<Duplicate[]>([]);
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
-  const [newActivity, setNewActivity] = useState({ type: "call", outcome: "" });
+  const [newActivity, setNewActivity] = useState({ type: "call", outcome: "", note: "", date: todayISO() });
   const [tiers, setTiers] = useState<{ id: string; name: string }[]>([]);
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
@@ -210,13 +210,19 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     toast({ title: "Next step filled in", description: "Check it, then save." });
   };
 
+  // Spec: every logged contact carries a date and an outcome. The outcome is a
+  // fixed choice so it can be counted; the note stays free text.
   const logActivity = async () => {
-    if (!lead || !newActivity.outcome.trim()) return;
+    if (!lead || !newActivity.outcome) return;
+    const happenedAt = newActivity.date === todayISO()
+      ? new Date().toISOString()
+      : new Date(`${newActivity.date}T12:00:00`).toISOString();
     const { error } = await db.from("lead_activities").insert({
-      lead_id: lead.id, user_id: user?.id, type: newActivity.type, outcome: newActivity.outcome,
+      lead_id: lead.id, user_id: user?.id, type: newActivity.type,
+      outcome: newActivity.outcome, note: newActivity.note.trim() || null, happened_at: happenedAt,
     });
     if (error) { toast({ title: "Couldn't log that", description: error.message, variant: "destructive" }); return; }
-    setNewActivity({ type: newActivity.type, outcome: "" });
+    setNewActivity({ type: newActivity.type, outcome: "", note: "", date: todayISO() });
     const { data } = await db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false });
     setActivities(data ?? []);
   };
@@ -301,14 +307,27 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
             <Label>Category *</Label>
             <Select value={form.category} onValueChange={(v) => set("category", v)}>
               <SelectTrigger><SelectValue placeholder="Pick one" /></SelectTrigger>
-              <SelectContent>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {/* A stored value that's no longer in the list (renamed, or from an
+                    import) would otherwise render blank and block the required-
+                    field check until the rep re-picked it. */}
+                {form.category && !categories.includes(form.category) && (
+                  <SelectItem value={form.category}>{form.category} (not in current list)</SelectItem>
+                )}
+                {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Area *</Label>
             <Select value={form.area} onValueChange={(v) => set("area", v)}>
               <SelectTrigger><SelectValue placeholder="Pick one" /></SelectTrigger>
-              <SelectContent>{areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {form.area && !areas.includes(form.area) && (
+                  <SelectItem value={form.area}>{form.area} (not in current list)</SelectItem>
+                )}
+                {areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
@@ -501,18 +520,31 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         {lead && (
           <div className="border-t border-border pt-3 space-y-3">
             <Label className="text-muted-foreground">Activity</Label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Select value={newActivity.type} onValueChange={(v) => setNewActivity((a) => ({ ...a, type: v }))}>
-                <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{ACTIVITY_TYPES.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}</SelectContent>
               </Select>
               <Input
-                value={newActivity.outcome}
-                onChange={(e) => setNewActivity((a) => ({ ...a, outcome: e.target.value }))}
-                placeholder="What happened?"
+                type="date"
+                value={newActivity.date}
+                max={todayISO()}
+                onChange={(e) => setNewActivity((a) => ({ ...a, date: e.target.value || todayISO() }))}
+                aria-label="Date"
+              />
+              <Select value={newActivity.outcome} onValueChange={(v) => setNewActivity((a) => ({ ...a, outcome: v }))}>
+                <SelectTrigger className="col-span-2"><SelectValue placeholder="Outcome" /></SelectTrigger>
+                <SelectContent>{ACTIVITY_OUTCOMES.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={newActivity.note}
+                onChange={(e) => setNewActivity((a) => ({ ...a, note: e.target.value }))}
+                placeholder="Notes (optional)"
                 onKeyDown={(e) => { if (e.key === "Enter") void logActivity(); }}
               />
-              <Button size="sm" onClick={() => void logActivity()} disabled={!newActivity.outcome.trim()}>Log</Button>
+              <Button size="sm" onClick={() => void logActivity()} disabled={!newActivity.outcome}>Log</Button>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {activities.length === 0 && <p className="text-xs text-muted-foreground">Nothing logged yet.</p>}
@@ -522,7 +554,10 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
                   <Badge variant="secondary" className="shrink-0 text-[10px]">
                     {a.type === "stage_change" ? "stage" : a.type}
                   </Badge>
-                  <span className="text-foreground">{a.outcome}</span>
+                  <span className="text-foreground">
+                    {a.outcome}
+                    {a.note && <span className="text-muted-foreground"> — {a.note}</span>}
+                  </span>
                 </div>
               ))}
             </div>

@@ -81,6 +81,7 @@ const LeadImportDialog = ({ open, onOpenChange, onImported, owners, fallbackOwne
   const [defaultOwner, setDefaultOwner] = useState(fallbackOwner);
   const [source, setSource] = useState("google_maps");
   const [territories, setTerritories] = useState<Record<string, string>>({});
+  const [categoryMap, setCategoryMap] = useState<Map<string, string>>(new Map());
 
   const reset = () => setRows([]);
 
@@ -90,6 +91,12 @@ const LeadImportDialog = ({ open, onOpenChange, onImported, owners, fallbackOwne
       const book = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const sheet = book.Sheets[book.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+
+      // Imported spellings ("cafes", "Restaurant") are snapped to the one
+      // canonical category list so the lead form can display them.
+      const { data: cats } = await supabase.from("categories").select("name");
+      const canonical = new Map((cats ?? []).map((c: any) => [String(c.name).toLowerCase(), c.name]));
+      setCategoryMap(canonical);
 
       const { data: terr } = await db.from("sales_territories").select("area, rep_id");
       const territoryMap: Record<string, string> = Object.fromEntries(
@@ -138,7 +145,9 @@ const LeadImportDialog = ({ open, onOpenChange, onImported, owners, fallbackOwne
         phone: String(data.phone),
         instagram_handle: data.instagram_handle ? String(data.instagram_handle) : null,
         instagram_followers: toNum(data.instagram_followers),
-        category: data.category ? String(data.category) : null,
+        category: data.category
+          ? categoryMap.get(String(data.category).trim().toLowerCase()) ?? String(data.category).trim()
+          : null,
         area,
         city: data.city ? String(data.city) : null,
         address: data.address ? String(data.address) : null,

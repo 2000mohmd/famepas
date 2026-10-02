@@ -377,19 +377,85 @@ const SalesLeads = () => {
             <Button onClick={openNew} variant="outline"><Plus className="w-4 h-4 mr-1.5" /> Add the first one</Button>
           </div>
         ) : view === "list" ? (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((lead) => (
-              <div key={lead.id} className="space-y-1.5">
-                <LeadCard lead={lead} />
-                <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
-                  <SelectTrigger className="h-8 text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
+          <>
+            {/* Phones keep cards — a wide table is unusable at a venue door. */}
+            <div className="grid gap-2 md:hidden">
+              {filtered.map((lead) => (
+                <div key={lead.id} className="space-y-1.5">
+                  <LeadCard lead={lead} />
+                  <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
+                    <SelectTrigger className="h-8 text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block rounded-xl border border-border bg-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    {isManager && <th className="p-3 w-8" />}
+                    <th className="p-3 font-medium">Venue</th>
+                    <th className="p-3 font-medium">Contact</th>
+                    <th className="p-3 font-medium">Area</th>
+                    <th className="p-3 font-medium">Category</th>
+                    <th className="p-3 font-medium">Stage</th>
+                    {isManager && <th className="p-3 font-medium">Owner</th>}
+                    <th className="p-3 font-medium">Next action</th>
+                    <th className="p-3 font-medium">Follow up</th>
+                    <th className="p-3 font-medium text-right">Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((lead) => {
+                    const overdue = isOverdue(lead);
+                    const score = leadScore(lead, scoreConfig);
+                    return (
+                      <tr key={lead.id} className="border-b border-border/50 hover:bg-secondary/30">
+                        {isManager && (
+                          <td className="p-3">
+                            <Checkbox
+                              checked={selected.has(lead.id)}
+                              onCheckedChange={() => toggleSelected(lead.id)}
+                              aria-label={`Select ${lead.venue_name}`}
+                            />
+                          </td>
+                        )}
+                        <td className="p-3">
+                          <button onClick={() => openLead(lead)} className="font-medium text-foreground hover:text-gold text-left">
+                            {lead.venue_name}
+                          </button>
+                        </td>
+                        <td className="p-3 text-muted-foreground">
+                          {lead.contact_name}
+                          {lead.phone && <div className="text-xs">{lead.phone}</div>}
+                        </td>
+                        <td className="p-3 text-muted-foreground">{lead.area ?? "—"}</td>
+                        <td className="p-3 text-muted-foreground">{lead.category ?? "—"}</td>
+                        <td className="p-3">
+                          <Select value={lead.stage} onValueChange={(v) => void moveStage(lead, v)}>
+                            <SelectTrigger className="h-8 w-[140px] text-xs bg-secondary border-border"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        {isManager && <td className="p-3 text-muted-foreground">{ownerName(lead.owner_id)}</td>}
+                        <td className="p-3 text-muted-foreground">{lead.next_action ?? "—"}</td>
+                        <td className={`p-3 whitespace-nowrap ${overdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                          {lead.next_action_date ?? "—"}
+                        </td>
+                        <td className="p-3 text-right text-foreground">{score ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-4">
             {STAGES.map((s) => {

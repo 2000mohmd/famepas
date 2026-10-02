@@ -14,6 +14,27 @@ interface ActivityItem {
 }
 
 const AdminDashboard = () => {
+  const [sales, setSales] = useState({ live: 0, signedThisWeek: 0, liveTarget: 500, weeklyTarget: 12 });
+
+  useEffect(() => {
+    const db = supabase as any;
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    (async () => {
+      const [{ count: live }, { data: signings }, { data: targets }] = await Promise.all([
+        db.from("leads").select("id", { count: "exact", head: true }).eq("stage", "live"),
+        db.from("lead_activities").select("outcome").eq("type", "stage_change").gte("happened_at", weekAgo),
+        supabase.from("platform_settings").select("value").eq("key", "sales_targets").maybeSingle(),
+      ]);
+      const t = (targets?.value ?? {}) as any;
+      setSales({
+        live: live ?? 0,
+        signedThisWeek: (signings ?? []).filter((s: any) => String(s.outcome ?? "").endsWith("signed_up")).length,
+        liveTarget: t.annual_live_venues ?? 500,
+        weeklyTarget: t.weekly_signings ?? 12,
+      });
+    })();
+  }, []);
+
   const [stats, setStats] = useState({
     venues: 0,
     influencers: 0,
@@ -125,8 +146,23 @@ const AdminDashboard = () => {
         <p className="text-muted-foreground mb-8">Platform overview & KPIs</p>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <StatCard title="Total Venues" value={stats.venues} icon={<Building2 className="w-6 h-6" />} trend={`+${stats.newVenuesThisWeek} this week`} trendUp={stats.newVenuesThisWeek > 0} />
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+          {/* Spec: sales numbers lead, because a signup count hides whether
+              venues ever go live. Total venues survives as context. */}
+          <StatCard
+            title="Live Venues"
+            value={sales.live}
+            icon={<Building2 className="w-6 h-6" />}
+            trend={`of ${sales.liveTarget} target · ${stats.venues} signed up`}
+            trendUp={sales.live > 0}
+          />
+          <StatCard
+            title="Signings This Week"
+            value={sales.signedThisWeek}
+            icon={<TrendingUp className="w-6 h-6" />}
+            trend={`target ${sales.weeklyTarget}`}
+            trendUp={sales.signedThisWeek >= sales.weeklyTarget}
+          />
           <StatCard title="Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={`+${stats.newInfluencersThisWeek} this week`} trendUp={stats.newInfluencersThisWeek > 0} />
           <StatCard title="Active Offers" value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={`${stats.offers} total offers`} trendUp={stats.offers > 0} />
           <StatCard title="Total Creator Visits" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed visit${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp={stats.completedRedemptions > 0} />

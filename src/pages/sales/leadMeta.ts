@@ -46,6 +46,16 @@ export const PRICE_LEVELS = [
   { key: "4", label: "$$$$" },
 ] as const;
 
+export const ACTIVITY_OUTCOMES = [
+  "Reached",
+  "No answer",
+  "Interested",
+  "Not interested",
+  "Meeting booked",
+  "Asked to call back",
+  "Signed up",
+] as const;
+
 export interface Lead {
   id: string;
   venue_name: string;
@@ -82,6 +92,7 @@ export interface LeadActivity {
   user_id: string | null;
   type: string;
   outcome: string | null;
+  note?: string | null;
   happened_at: string;
 }
 

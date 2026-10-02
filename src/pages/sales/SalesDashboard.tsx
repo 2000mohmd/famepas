@@ -21,6 +21,7 @@ const SalesDashboard = () => {
   const [venues, setVenues] = useState<any[]>([]);
   const [tiers, setTiers] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [targets, setTargets] = useState({ weekly_signings: 12, annual_live_venues: 500 });
 
   useEffect(() => {
@@ -33,22 +34,25 @@ const SalesDashboard = () => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [
-        { data: leadRows }, { data: actRows }, { data: activationRows },
-        { data: commissionRows }, { data: venueRows }, { data: tierRows },
-      ] = await Promise.all([
+      const results = await Promise.all([
         db.from("leads").select("*"),
         db.from("lead_activities").select("*").gte("happened_at", sinceISO(90)),
+        // Venue-level numbers come from venue_activation, not venues: the
+        // subscription columns are blocked for ordinary users at column level,
+        // and querying them on venues fails the whole request — which read as
+        // "0 waiting for approval" while venues were waiting.
         db.from("venue_activation").select("*"),
         db.from("sales_commissions").select("*"),
-        supabase.from("venues").select("id, approval_status, created_at, subscription_tier_id, subscription_renews_at, payment_status"),
         supabase.from("subscription_tiers").select("id, name, price"),
       ]);
+      const failed = results.find((r: any) => r.error);
+      setLoadError(failed ? (failed as any).error.message : null);
+      const [{ data: leadRows }, { data: actRows }, { data: activationRows }, { data: commissionRows }, { data: tierRows }] = results as any[];
       setLeads(leadRows ?? []);
       setActivities(actRows ?? []);
       setActivation(activationRows ?? []);
       setCommissions(commissionRows ?? []);
-      setVenues(venueRows ?? []);
+      setVenues(activationRows ?? []);
       setTiers(tierRows ?? []);
       const ids = [...new Set((leadRows ?? []).map((l: any) => l.owner_id))];
       if (ids.length) {
@@ -207,6 +211,11 @@ const SalesDashboard = () => {
           <p className="text-muted-foreground">Loading…</p>
         ) : (
           <>
+            {loadError && (
+              <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                Some numbers couldn't load, so they may read as zero: {loadError}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <Stat label="Signings in range" value={signedInRange.length} sub={`Weekly target ${targets.weekly_signings}`} />
               <Stat label="Live venues" value={liveCount} sub={`of ${targets.annual_live_venues} annual target`} />

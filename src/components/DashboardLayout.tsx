@@ -54,6 +54,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+      { to: "/sales", icon: CalendarDays, label: "My day" },
       { to: "/sales/dashboard", icon: TrendingUp, label: "Sales" },
     ],
   },
@@ -320,13 +321,14 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               )}
               <div className="space-y-0.5">
                 {group.items.map(({ to, icon: Icon, label, badge }) => {
-                  const isActive = location.pathname === to || (to !== "/venue" && to !== "/admin" && to !== "/influencer" && location.pathname.startsWith(to));
+                  const isRoot = to === "/venue" || to === "/admin" || to === "/influencer" || to === "/sales";
+                  const isActive = location.pathname === to || (!isRoot && location.pathname.startsWith(to));
                   const exactActive = location.pathname === to;
                   return (
                     <NavLink
                       key={to}
                       to={to}
-                      end={to === "/admin" || to === "/venue" || to === "/influencer"}
+                      end={isRoot}
                       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                         exactActive || isActive
                           ? "text-[hsl(38_60%_28%)]"
