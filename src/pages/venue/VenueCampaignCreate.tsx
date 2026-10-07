@@ -54,6 +54,7 @@ const VenueCampaignCreate = () => {
 
   const [ageLimit, setAgeLimit] = useState<string>("");
   const [inviteOnly, setInviteOnly] = useState(false);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(false);
 
   const [igOffers, setIgOffers] = useState<OfferRow[]>([{ min_followers: "1500", max_followers: "", max_guests: "1", offer: "" }]);
   const [tkEnabled, setTkEnabled] = useState(false);
@@ -116,6 +117,7 @@ const VenueCampaignCreate = () => {
 
           setAgeLimit((c as any).age_limit?.toString() ?? "");
           setInviteOnly((c as any).invite_only ?? false);
+          setDeliveryEnabled((c as any).fulfilment_type === "delivery");
           const igo = (c as any).instagram_offers; if (Array.isArray(igo) && igo.length) setIgOffers(igo);
           const tko = (c as any).tiktok_offers; if (Array.isArray(tko) && tko.length) { setTkOffers(tko); setTkEnabled(true); }
           setHandles((c as any).handles ?? []);
@@ -192,6 +194,7 @@ const VenueCampaignCreate = () => {
       age_limit: ageLimit ? parseInt(ageLimit) : null,
 
       invite_only: inviteOnly,
+      fulfilment_type: deliveryEnabled ? "delivery" : "visit",
       instagram_offers: igOffers,
       tiktok_offers: tkEnabled ? tkOffers : [],
       handles,
@@ -273,6 +276,7 @@ const VenueCampaignCreate = () => {
         requirements: firstIg?.offer || null,
         reel_min_duration_seconds: reels > 0 && reelMinDuration ? parseInt(reelMinDuration) : null,
         post_min_photo_count: posts > 0 && postMinPhotos ? parseInt(postMinPhotos) : null,
+        fulfilment_type: deliveryEnabled ? "delivery" : "visit",
       };
       const { data: existingOffer } = await sb.from("offers").select("id").eq("campaign_id", campaignId).maybeSingle();
       if (existingOffer?.id) {
@@ -421,6 +425,13 @@ const VenueCampaignCreate = () => {
                 <p className="text-xs text-muted-foreground">Campaigns are visible to all eligible creators by default. Turn this on to hide it and share privately.</p>
               </div>
               <Switch checked={inviteOnly} onCheckedChange={setInviteOnly} />
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
+              <div>
+                <p className="text-sm font-semibold">Create From Home / Delivery</p>
+                <p className="text-xs text-muted-foreground">Creator doesn't visit — you ship the product to them and they create from home. Off by default.</p>
+              </div>
+              <Switch checked={deliveryEnabled} onCheckedChange={setDeliveryEnabled} />
             </div>
           </div>
         </SectionCard>

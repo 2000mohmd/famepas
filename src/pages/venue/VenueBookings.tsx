@@ -71,7 +71,7 @@ const VenueBookings = () => {
     const { data: ownerVenues } = await supabase.from("venues").select("id").eq("owner_id", user.id);
     const venueIds = (ownerVenues ?? []).map((v: any) => v.id);
     if (!venueIds.length) { setRows([]); return; }
-    const { data: offers } = await supabase.from("offers").select("id, title, venue_id, image_url").in("venue_id", venueIds);
+    const { data: offers } = await supabase.from("offers").select("id, title, venue_id, image_url, fulfilment_type").in("venue_id", venueIds);
     const offerIds = (offers ?? []).map((o: any) => o.id);
     if (!offerIds.length) { setRows([]); return; }
     const { data } = await supabase.from("offer_redemptions").select("*").in("offer_id", offerIds).order("created_at", { ascending: false });
@@ -125,6 +125,16 @@ const VenueBookings = () => {
         redemption_id: r.id,
       });
     }
+    load();
+  };
+
+  const markShipped = async (r: Row) => {
+    const { data, error } = await (supabase as any).rpc("mark_redemption_shipped", { _redemption_id: r.id });
+    if (error || !data?.ok) {
+      toast({ title: "Couldn't mark as shipped", description: data?.reason || error?.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Marked as shipped", description: "The creator can now submit their post." });
     load();
   };
 
@@ -208,11 +218,25 @@ const VenueBookings = () => {
           <Button size="sm" variant="ghost" onClick={() => updateStatus(r, "rejected")}><XCircle className="w-3 h-3 mr-1" />Decline</Button>
         </>;
       case "approved":
+        if (r.offer?.fulfilment_type === "delivery") {
+          return (r as any).shipping_address ? (
+            <Button size="sm" onClick={() => markShipped(r)} style={{ background: PINK }} className="text-white hover:opacity-90">Mark as shipped</Button>
+          ) : (
+            <Badge variant="outline">Waiting for creator's address</Badge>
+          );
+        }
         return <>
           <Button size="sm" variant="outline" onClick={() => updateStatus(r, "in_progress")}>Start Visit</Button>
           <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Check in</Button>
         </>;
       case "in_progress":
+        if (r.offer?.fulfilment_type === "delivery") {
+          return (r as any).shipping_address ? (
+            <Button size="sm" onClick={() => markShipped(r)} style={{ background: PINK }} className="text-white hover:opacity-90">Mark as shipped</Button>
+          ) : (
+            <Badge variant="outline">Waiting for creator's address</Badge>
+          );
+        }
         return <Button size="sm" onClick={() => { setRedeemOpen(r); setOtp(""); }} style={{ background: PINK }} className="text-white hover:opacity-90"><KeyRound className="w-3 h-3 mr-1" />Check in</Button>;
     }
   };

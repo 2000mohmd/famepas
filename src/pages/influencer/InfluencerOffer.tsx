@@ -289,7 +289,9 @@ const InfluencerOffer = () => {
           <ApplicationPanel
             application={myApplication}
             offerTitle={offer.title}
+            fulfilmentType={(offer as any).fulfilment_type ?? "visit"}
             onPostUrlSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
+            onShippingSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
           />
         )}
 
@@ -336,11 +338,15 @@ const InfluencerOffer = () => {
 const ApplicationPanel = ({
   application,
   offerTitle,
+  fulfilmentType,
   onPostUrlSaved,
+  onShippingSaved,
 }: {
   application: any;
   offerTitle: string;
+  fulfilmentType: string;
   onPostUrlSaved: () => void;
+  onShippingSaved: () => void;
 }) => {
   const booking = application.bookings?.[0];
   const deliverable = booking?.deliverables?.[0];
@@ -348,10 +354,11 @@ const ApplicationPanel = ({
   const checkedIn = !!booking?.checked_in_at || status === "redeemed";
   const code = application.qr_code as string | null;
 
+  const isDelivery = fulfilmentType === "delivery";
   const steps = [
     { key: "applied", label: "Applied", done: true },
     { key: "approved", label: "Approved", done: status === "approved" || status === "redeemed" || checkedIn },
-    { key: "checked_in", label: "Checked in", done: checkedIn },
+    { key: "checked_in", label: isDelivery ? "Shipped" : "Checked in", done: checkedIn },
     { key: "submitted", label: "Content submitted", done: !!deliverable },
     { key: "approved_content", label: "Content approved", done: deliverable?.status === "approved" },
   ];
@@ -389,8 +396,13 @@ const ApplicationPanel = ({
           <p className="text-sm text-red-500">Sorry, the venue declined this application.</p>
         )}
 
-        {/* Approved → show check-in code */}
-        {status === "approved" && !checkedIn && code && (
+        {/* Approved, delivery offer → shipping address */}
+        {status === "approved" && !checkedIn && isDelivery && (
+          <ShippingAddressBlock application={application} onSaved={onShippingSaved} />
+        )}
+
+        {/* Approved, visit offer → show check-in code */}
+        {status === "approved" && !checkedIn && !isDelivery && code && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
             <p className="text-xs text-muted-foreground mb-1">Your check-in code</p>
             <p className="text-2xl font-mono tracking-widest font-bold text-foreground">{code}</p>
@@ -412,6 +424,58 @@ const ApplicationPanel = ({
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const ShippingAddressBlock = ({ application, onSaved }: { application: any; onSaved: () => void }) => {
+  const [name, setName] = React.useState(application.shipping_name || "");
+  const [phone, setPhone] = React.useState(application.shipping_phone || "");
+  const [address, setAddress] = React.useState(application.shipping_address || "");
+  const [city, setCity] = React.useState(application.shipping_city || "");
+  const [saving, setSaving] = React.useState(false);
+
+  if (application.shipping_address) {
+    return (
+      <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
+        <p className="text-sm font-medium text-foreground">Delivery address sent</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {application.shipping_name} • {application.shipping_phone}<br />
+          {application.shipping_address}, {application.shipping_city}
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Waiting for the venue to ship your product. You'll be able to submit your post once it's on its way.
+        </p>
+      </div>
+    );
+  }
+
+  const save = async () => {
+    if (!name.trim() || !phone.trim() || !address.trim() || !city.trim()) {
+      toast({ title: "Fill in all fields", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const { data, error } = await (supabase as any).rpc("submit_shipping_address", {
+      _redemption_id: application.id, _name: name, _phone: phone, _address: address, _city: city,
+    });
+    setSaving(false);
+    if (error || !data?.ok) {
+      toast({ title: "Error", description: data?.reason || error?.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Delivery address sent to the venue" });
+    onSaved();
+  };
+
+  return (
+    <div className="rounded-lg border border-gold/30 bg-gold/5 p-4 space-y-3">
+      <p className="text-sm font-medium text-foreground">This is a Create From Home campaign — tell the venue where to ship the product.</p>
+      <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
+      <Input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <Input placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
+      <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
+      <Button onClick={save} disabled={saving} size="sm">{saving ? "Saving..." : "Send delivery address"}</Button>
+    </div>
   );
 };
 
