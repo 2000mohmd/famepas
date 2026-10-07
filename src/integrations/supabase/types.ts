@@ -38,6 +38,32 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_checkin_codes: {
+        Row: {
+          code: string
+          created_at: string
+          redemption_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          redemption_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          redemption_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_checkin_codes_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: true
+            referencedRelation: "offer_redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_platform_integrations: {
         Row: {
           config: Json | null
@@ -288,6 +314,7 @@ export type Database = {
           dietary_options: string[] | null
           end_date: string | null
           event_datetime: string | null
+          fulfilment_type: string
           handles: string[] | null
           id: string
           instagram_offers: Json | null
@@ -328,6 +355,7 @@ export type Database = {
           dietary_options?: string[] | null
           end_date?: string | null
           event_datetime?: string | null
+          fulfilment_type?: string
           handles?: string[] | null
           id?: string
           instagram_offers?: Json | null
@@ -368,6 +396,7 @@ export type Database = {
           dietary_options?: string[] | null
           end_date?: string | null
           event_datetime?: string | null
+          fulfilment_type?: string
           handles?: string[] | null
           id?: string
           instagram_offers?: Json | null
@@ -482,6 +511,166 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      checkin_attempts: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          manual: boolean
+          ok: boolean
+          reason: string | null
+          redemption_id: string | null
+          scanned_by: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          manual?: boolean
+          ok: boolean
+          reason?: string | null
+          redemption_id?: string | null
+          scanned_by?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          manual?: boolean
+          ok?: boolean
+          reason?: string | null
+          redemption_id?: string | null
+          scanned_by?: string | null
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_attempts_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "offer_redemptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_attempts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "checkin_attempts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "checkin_attempts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_prospects: {
+        Row: {
+          area: string | null
+          created_at: string
+          followers: number | null
+          full_name: string
+          id: string
+          instagram_handle: string | null
+          lost_reason: string | null
+          next_action: string | null
+          next_action_date: string | null
+          niche: string | null
+          notes: string | null
+          owner_id: string
+          source: string
+          stage: string
+          stage_changed_at: string
+          tiktok_handle: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          followers?: number | null
+          full_name: string
+          id?: string
+          instagram_handle?: string | null
+          lost_reason?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          niche?: string | null
+          notes?: string | null
+          owner_id: string
+          source?: string
+          stage?: string
+          stage_changed_at?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          followers?: number | null
+          full_name?: string
+          id?: string
+          instagram_handle?: string | null
+          lost_reason?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          niche?: string | null
+          notes?: string | null
+          owner_id?: string
+          source?: string
+          stage?: string
+          stage_changed_at?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      creator_strikes: {
+        Row: {
+          created_at: string
+          id: string
+          influencer_id: string
+          reason: string
+          redemption_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          influencer_id: string
+          reason: string
+          redemption_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          influencer_id?: string
+          reason?: string
+          redemption_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_strikes_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: true
+            referencedRelation: "offer_redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cultural_events: {
         Row: {
@@ -931,6 +1120,7 @@ export type Database = {
           happened_at: string
           id: string
           lead_id: string
+          note: string | null
           outcome: string | null
           type: string
           user_id: string | null
@@ -940,6 +1130,7 @@ export type Database = {
           happened_at?: string
           id?: string
           lead_id: string
+          note?: string | null
           outcome?: string | null
           type: string
           user_id?: string | null
@@ -949,6 +1140,7 @@ export type Database = {
           happened_at?: string
           id?: string
           lead_id?: string
+          note?: string | null
           outcome?: string | null
           type?: string
           user_id?: string | null
@@ -1264,43 +1456,103 @@ export type Database = {
       }
       offer_redemptions: {
         Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          checkin_lat: number | null
+          checkin_lng: number | null
           created_at: string
+          delivery_stage: string | null
+          failure_reason: string | null
           id: string
           influencer_id: string
+          manual_checkin_reason: string | null
           offer_id: string
+          post_check_due_at: string | null
+          post_due_at: string | null
+          post_url: string | null
+          posted_at: string | null
+          posted_late: boolean
           preferred_date: string | null
           qr_code: string | null
           qr_expires_at: string | null
           qr_token: string | null
           qr_used_at: string | null
+          received_at: string | null
           redeemed_at: string | null
+          shipped_at: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_name: string | null
+          shipping_phone: string | null
           status: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checkin_lat?: number | null
+          checkin_lng?: number | null
           created_at?: string
+          delivery_stage?: string | null
+          failure_reason?: string | null
           id?: string
           influencer_id: string
+          manual_checkin_reason?: string | null
           offer_id: string
+          post_check_due_at?: string | null
+          post_due_at?: string | null
+          post_url?: string | null
+          posted_at?: string | null
+          posted_late?: boolean
           preferred_date?: string | null
           qr_code?: string | null
           qr_expires_at?: string | null
           qr_token?: string | null
           qr_used_at?: string | null
+          received_at?: string | null
           redeemed_at?: string | null
+          shipped_at?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
           status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checkin_lat?: number | null
+          checkin_lng?: number | null
           created_at?: string
+          delivery_stage?: string | null
+          failure_reason?: string | null
           id?: string
           influencer_id?: string
+          manual_checkin_reason?: string | null
           offer_id?: string
+          post_check_due_at?: string | null
+          post_due_at?: string | null
+          post_url?: string | null
+          posted_at?: string | null
+          posted_late?: boolean
           preferred_date?: string | null
           qr_code?: string | null
           qr_expires_at?: string | null
           qr_token?: string | null
           qr_used_at?: string | null
+          received_at?: string | null
           redeemed_at?: string | null
+          shipped_at?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
           status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -1355,6 +1607,7 @@ export type Database = {
           ends_at: string | null
           event_date: string | null
           event_time: string | null
+          fulfilment_type: string
           gallery_urls: string[] | null
           id: string
           image_url: string | null
@@ -1388,6 +1641,7 @@ export type Database = {
           ends_at?: string | null
           event_date?: string | null
           event_time?: string | null
+          fulfilment_type?: string
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
@@ -1421,6 +1675,7 @@ export type Database = {
           ends_at?: string | null
           event_date?: string | null
           event_time?: string | null
+          fulfilment_type?: string
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
@@ -1512,6 +1767,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_instagram_signups: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          ig_account_type: string | null
+          ig_user_id: string
+          ig_username: string | null
+          scope: string | null
+          token_expires_at: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ig_account_type?: string | null
+          ig_user_id: string
+          ig_username?: string | null
+          scope?: string | null
+          token_expires_at?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ig_account_type?: string | null
+          ig_user_id?: string
+          ig_username?: string | null
+          scope?: string | null
+          token_expires_at?: string | null
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           description: string | null
@@ -1540,6 +1831,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           approval_status: string
+          approved_at: string | null
           audience_demographics: Json | null
           avatar_url: string | null
           badge: string | null
@@ -1561,6 +1853,7 @@ export type Database = {
           niche: string[] | null
           phone: string | null
           social_links: Json | null
+          suspended_until: string | null
           tiktok_followers: number | null
           tiktok_handle: string | null
           two_factor_enabled: boolean
@@ -1570,6 +1863,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
           audience_demographics?: Json | null
           avatar_url?: string | null
           badge?: string | null
@@ -1591,6 +1885,7 @@ export type Database = {
           niche?: string[] | null
           phone?: string | null
           social_links?: Json | null
+          suspended_until?: string | null
           tiktok_followers?: number | null
           tiktok_handle?: string | null
           two_factor_enabled?: boolean
@@ -1600,6 +1895,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           approval_status?: string
+          approved_at?: string | null
           audience_demographics?: Json | null
           avatar_url?: string | null
           badge?: string | null
@@ -1621,6 +1917,7 @@ export type Database = {
           niche?: string[] | null
           phone?: string | null
           social_links?: Json | null
+          suspended_until?: string | null
           tiktok_followers?: number | null
           tiktok_handle?: string | null
           two_factor_enabled?: boolean
@@ -1912,6 +2209,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json
+          id: string
+          target_id: string | null
+          target_table: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      staff_permissions: {
+        Row: {
+          area: string
+          level: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          area: string
+          level: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          area?: string
+          level?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
       }
       subscription_tiers: {
         Row: {
@@ -2232,6 +2577,52 @@ export type Database = {
           },
         ]
       }
+      venue_staff: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          role: string
+          user_id: string
+          venue_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          role?: string
+          user_id: string
+          venue_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          role?: string
+          user_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_staff_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_staff_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_staff_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_team_invites: {
         Row: {
           created_at: string
@@ -2472,6 +2863,36 @@ export type Database = {
       }
     }
     Views: {
+      creator_pipeline: {
+        Row: {
+          applied_at: string | null
+          approved_at: string | null
+          area: string | null
+          created_at: string | null
+          delivered_posts: number | null
+          followers: number | null
+          full_name: string | null
+          id: string | null
+          instagram_handle: string | null
+          is_suspended: boolean | null
+          kind: string | null
+          last_post_at: string | null
+          last_visit_at: string | null
+          next_action: string | null
+          next_action_date: string | null
+          no_shows: number | null
+          on_time_posts: number | null
+          owner_id: string | null
+          source: string | null
+          stage: string | null
+          strikes: number | null
+          suspended_until: string | null
+          user_id: string | null
+          verified_posts: number | null
+          visits: number | null
+        }
+        Relationships: []
+      }
       sales_alerts: {
         Row: {
           detail: string | null
@@ -2504,17 +2925,53 @@ export type Database = {
           first_content_published: boolean | null
           first_creator_visit: boolean | null
           first_offer_posted: boolean | null
+          is_active: boolean | null
           lead_id: string | null
+          lead_stage: string | null
           name: string | null
+          payment_status: string | null
           photos_uploaded: boolean | null
           profile_complete: boolean | null
           rep_id: string | null
+          subscription_renews_at: string | null
+          subscription_tier_id: string | null
           venue_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "venues_subscription_tier_id_fkey"
+            columns: ["subscription_tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
+      add_creator_strike: {
+        Args: { _influencer: string; _reason: string; _redemption: string }
+        Returns: undefined
+      }
+      booking_window: {
+        Args: { _day: string; _hours: Json; _open_before_hours?: number }
+        Returns: Record<string, unknown>
+      }
+      can_approve_records: { Args: never; Returns: boolean }
+      can_bulk_import: { Args: never; Returns: boolean }
+      can_bulk_reassign: { Args: never; Returns: boolean }
+      can_delete_any_record: { Args: never; Returns: boolean }
+      can_export_data: { Args: never; Returns: boolean }
+      can_manage_creators: { Args: never; Returns: boolean }
+      can_manage_delivery: { Args: never; Returns: boolean }
+      can_manage_login: {
+        Args: { _target_role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
+      check_in_booking: {
+        Args: { _code: string; _lat?: number; _lng?: number }
+        Returns: Json
+      }
       check_lead_duplicate: {
         Args: {
           _exclude?: string
@@ -2529,6 +2986,20 @@ export type Database = {
           owner_name: string
         }[]
       }
+      confirm_booking_received: {
+        Args: { _redemption_id: string }
+        Returns: Json
+      }
+      confirm_post_live: {
+        Args: { _redemption_id: string; _still_live: boolean }
+        Returns: Json
+      }
+      delivery_send_reminders: { Args: never; Returns: number }
+      delivery_sweep: { Args: never; Returns: Json }
+      disable_staff_login: {
+        Args: { _reason?: string; _user_id: string }
+        Returns: Json
+      }
       find_leads_by_phone: {
         Args: { _phone: string }
         Returns: {
@@ -2536,6 +3007,7 @@ export type Database = {
           owner_id: string
         }[]
       }
+      gen_checkin_code: { Args: never; Returns: string }
       get_discoverable_influencers: {
         Args: never
         Returns: {
@@ -2699,13 +3171,59 @@ export type Database = {
       is_sales_manager: { Args: never; Returns: boolean }
       is_sales_staff: { Args: never; Returns: boolean }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
+      is_venue_member: { Args: { _venue_id: string }; Returns: boolean }
       is_venue_owner: { Args: { _venue_id: string }; Returns: boolean }
+      log_staff_action: {
+        Args: {
+          _action: string
+          _detail?: Json
+          _table: string
+          _target: string
+        }
+        Returns: undefined
+      }
       manage_users_unclaimed: { Args: never; Returns: boolean }
+      manual_check_in: {
+        Args: { _reason: string; _redemption_id: string }
+        Returns: Json
+      }
+      mark_booking_shipped: { Args: { _redemption_id: string }; Returns: Json }
+      my_staff_access: { Args: never; Returns: Json }
       normalize_lb_phone: { Args: { _p: string }; Returns: string }
       recycle_lost_leads: { Args: never; Returns: number }
+      review_booking_post: {
+        Args: { _approve: boolean; _note?: string; _redemption_id: string }
+        Returns: Json
+      }
+      set_shipping_details: {
+        Args: {
+          _address: string
+          _city: string
+          _name: string
+          _phone: string
+          _redemption_id: string
+        }
+        Returns: Json
+      }
+      staff_level: { Args: { _area: string }; Returns: string }
+      submit_booking_post: {
+        Args: { _redemption_id: string; _url: string }
+        Returns: Json
+      }
     }
     Enums: {
-      app_role: "admin" | "venue" | "influencer" | "sales_rep" | "sales_manager"
+      app_role:
+        | "admin"
+        | "venue"
+        | "influencer"
+        | "sales_rep"
+        | "sales_manager"
+        | "venue_staff"
+        | "account_manager"
+        | "creator_manager"
+        | "marketing"
+        | "support"
+        | "finance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2833,7 +3351,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "venue", "influencer", "sales_rep", "sales_manager"],
+      app_role: [
+        "admin",
+        "venue",
+        "influencer",
+        "sales_rep",
+        "sales_manager",
+        "venue_staff",
+        "account_manager",
+        "creator_manager",
+        "marketing",
+        "support",
+        "finance",
+      ],
     },
   },
 } as const
