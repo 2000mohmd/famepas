@@ -14,6 +14,13 @@ interface Person {
   avatar_url: string | null;
 }
 
+interface VenueThread {
+  venue_id: string;
+  owner_id: string;
+  name: string;
+  logo_url: string | null;
+}
+
 interface Message {
   id: string;
   sender_id: string;
@@ -24,16 +31,39 @@ interface Message {
 
 const AdminMessages = () => {
   const { user } = useAuth();
+  const [mode, setMode] = useState<"creators" | "venues">("creators");
   const [influencers, setInfluencers] = useState<Person[]>([]);
+  const [venueThreads, setVenueThreads] = useState<VenueThread[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Person | null>(null);
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [thread, setThread] = useState<Message[]>([]);
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
+  const [unreadVenueIds, setUnreadVenueIds] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Venues that have messaged admin at least once (Adnan, Venue Portal item 1).
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: rows } = await supabase.from("messages").select("venue_id").not("venue_id", "is", null);
+      const venueIds = [...new Set((rows ?? []).map((r: any) => r.venue_id as string))];
+      if (!venueIds.length) { setVenueThreads([]); return; }
+      const { data: venues } = await supabase.from("venues").select("id, owner_id, name, logo_url").in("id", venueIds);
+      setVenueThreads((venues ?? []).map((v: any) => ({ venue_id: v.id, owner_id: v.owner_id, name: v.name, logo_url: v.logo_url })));
+    })();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("messages").select("venue_id").eq("is_read", false).not("venue_id", "is", null).then(({ data }) => {
+      setUnreadVenueIds(new Set((data ?? []).map((m: any) => m.venue_id as string)));
+    });
+  }, [user]);
 
   // Waits for `user` so the request carries the restored session's JWT. Without
   // it the query can run as anon, RLS returns nothing, and an empty creator
@@ -62,20 +92,23 @@ const AdminMessages = () => {
     });
   }, [user]);
 
-  const loadThread = async (person: Person) => {
+  const loadThread = async (person: Person, venueId: string | null = null) => {
     if (!user) return;
     setSelected(person);
+    setSelectedVenueId(venueId);
     // Any admin may have been on the other end of this conversation — it's a
-    // shared team inbox per creator, not a thread scoped to "me" specifically.
-    const { data } = await supabase
-      .from("messages")
-      .select("id, sender_id, receiver_id, content, created_at")
-      .or(`sender_id.eq.${person.user_id},receiver_id.eq.${person.user_id}`)
-      .is("venue_id", null)
-      .order("created_at", { ascending: true });
+    // shared team inbox per creator/venue, not a thread scoped to "me" specifically.
+    let q = supabase.from("messages").select("id, sender_id, receiver_id, content, created_at");
+    q = venueId ? q.eq("venue_id", venueId) : q.or(`sender_id.eq.${person.user_id},receiver_id.eq.${person.user_id}`).is("venue_id", null);
+    const { data } = await q.order("created_at", { ascending: true });
     setThread((data as Message[]) ?? []);
-    await supabase.from("messages").update({ is_read: true } as any).eq("sender_id", person.user_id).eq("is_read", false);
-    setUnreadIds((prev) => { const next = new Set(prev); next.delete(person.user_id); return next; });
+    if (venueId) {
+      await supabase.from("messages").update({ is_read: true } as any).eq("venue_id", venueId).eq("is_read", false);
+      setUnreadVenueIds((prev) => { const next = new Set(prev); next.delete(venueId); return next; });
+    } else {
+      await supabase.from("messages").update({ is_read: true } as any).eq("sender_id", person.user_id).eq("is_read", false);
+      setUnreadIds((prev) => { const next = new Set(prev); next.delete(person.user_id); return next; });
+    }
   };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [thread]);
@@ -83,21 +116,22 @@ const AdminMessages = () => {
   // Live updates for the open thread
   useEffect(() => {
     if (!user || !selected) return;
+    const filter = selectedVenueId ? `venue_id=eq.${selectedVenueId}` : `sender_id=eq.${selected.user_id}`;
     const channel = supabase
-      .channel(`admin-msg-${selected.user_id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${selected.user_id}` }, (payload) => {
+      .channel(`admin-msg-${selectedVenueId ?? selected.user_id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter }, (payload) => {
         setThread((prev) => [...prev, payload.new as Message]);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, selected]);
+  }, [user, selected, selectedVenueId]);
 
   const sendMessage = async () => {
     if (!user || !selected || !draft.trim()) return;
     setSending(true);
     const { data, error } = await supabase
       .from("messages")
-      .insert({ sender_id: user.id, receiver_id: selected.user_id, content: draft.trim() } as any)
+      .insert({ sender_id: user.id, receiver_id: selected.user_id, content: draft.trim(), venue_id: selectedVenueId } as any)
       .select()
       .single();
     setSending(false);
@@ -114,6 +148,7 @@ const AdminMessages = () => {
   };
 
   const filtered = influencers.filter((i) => (i.full_name || "").toLowerCase().includes(search.toLowerCase()));
+  const filteredVenues = venueThreads.filter((v) => (v.name || "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <DashboardLayout type="admin">
@@ -121,29 +156,61 @@ const AdminMessages = () => {
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
           <span className="text-gold">Messages</span>
         </h1>
-        <p className="text-muted-foreground mb-6">Message creators directly.</p>
+        <p className="text-muted-foreground mb-6">Message creators and venues directly.</p>
+
+        <div className="flex gap-2 mb-4 bg-secondary/50 rounded-lg p-1 w-fit">
+          {(["creators", "venues"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setSelected(null); setSelectedVenueId(null); setThread([]); setSearch(""); }}
+              className={`px-3 py-1.5 text-sm rounded-md font-medium capitalize ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 gradient-card rounded-xl border border-border overflow-hidden" style={{ height: "70vh" }}>
           <div className="border-r border-border flex flex-col">
             <div className="p-3 border-b border-border">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search creators..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 bg-secondary border-border h-9" />
+                <Input placeholder={mode === "creators" ? "Search creators..." : "Search venues..."} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 bg-secondary border-border h-9" />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {loadError ? (
+              {mode === "venues" ? (
+                filteredVenues.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">
+                    {venueThreads.length === 0 ? "No venues have messaged yet." : "No venues match that search."}
+                  </p>
+                ) : filteredVenues.map((v) => (
+                  <button
+                    key={v.venue_id}
+                    onClick={() => loadThread({ user_id: v.owner_id, full_name: v.name, avatar_url: v.logo_url }, v.venue_id)}
+                    className={`w-full flex items-center gap-2 p-3 text-left hover:bg-secondary/50 transition-colors ${selectedVenueId === v.venue_id ? "bg-secondary" : ""}`}
+                  >
+                    {v.logo_url ? (
+                      <img src={v.logo_url} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs shrink-0">{(v.name || "?")[0]}</div>
+                    )}
+                    <span className="text-sm text-foreground truncate flex-1">{v.name}</span>
+                    {unreadVenueIds.has(v.venue_id) && <Badge className="bg-gold text-background text-[10px] px-1.5">New</Badge>}
+                  </button>
+                ))
+              ) : loadError ? (
                 <p className="p-3 text-sm text-destructive">Couldn't load creators: {loadError}</p>
               ) : filtered.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">
                   {influencers.length === 0 ? "No creators yet." : "No creators match that search."}
                 </p>
               ) : null}
-              {filtered.map((p) => (
+              {mode === "creators" && filtered.map((p) => (
                 <button
                   key={p.user_id}
                   onClick={() => loadThread(p)}
-                  className={`w-full flex items-center gap-2 p-3 text-left hover:bg-secondary/50 transition-colors ${selected?.user_id === p.user_id ? "bg-secondary" : ""}`}
+                  className={`w-full flex items-center gap-2 p-3 text-left hover:bg-secondary/50 transition-colors ${!selectedVenueId && selected?.user_id === p.user_id ? "bg-secondary" : ""}`}
                 >
                   {p.avatar_url ? (
                     <img src={p.avatar_url} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" />
@@ -159,7 +226,9 @@ const AdminMessages = () => {
 
           <div className="md:col-span-2 flex flex-col">
             {!selected ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">Select a creator to start messaging</div>
+              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                Select a {mode === "creators" ? "creator" : "venue"} to start messaging
+              </div>
             ) : (
               <>
                 <div className="p-3 border-b border-border font-medium text-foreground">{selected.full_name || "Unnamed"}</div>

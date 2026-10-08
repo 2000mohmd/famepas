@@ -11,6 +11,7 @@ import {
   CalendarDays,
   BarChart3,
   LogOut,
+  Bell,
   Settings,
   Send,
   FolderTree,
@@ -121,6 +122,7 @@ const venueGroups: NavGroup[] = [
   {
     items: [
       { to: "/venue/locations", icon: MapPin, label: "Locations" },
+      { to: "/venue/messages", icon: MessageCircle, label: "Messages" },
       { to: "/venue/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -202,6 +204,47 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const [venueLogo, setVenueLogo] = useState<string | null>(null);
   // Adnan, Venue Portal item 13: hide Ad Studio until there's at least one live offer.
   const [hasLiveOffer, setHasLiveOffer] = useState(false);
+
+  // Adnan, Venue Portal item 2: a notifications bell — new applications and
+  // content awaiting review. Computed live from existing data rather than a
+  // new notifications table with its own read/unread tracking.
+  const [notifItems, setNotifItems] = useState<{ id: string; label: string; to: string; at: string }[]>([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  useEffect(() => {
+    if (type !== "venue" || !user) return;
+    (async () => {
+      const { data: venues } = await supabase.from("venues").select("id").eq("owner_id", user.id);
+      const venueIds = (venues ?? []).map((v: any) => v.id);
+      if (!venueIds.length) return;
+      const { data: offerRows } = await supabase.from("offers").select("id, title").in("venue_id", venueIds);
+      const offerMap = new Map((offerRows ?? []).map((o: any) => [o.id, o.title]));
+      const offerIds = [...offerMap.keys()];
+      if (!offerIds.length) { setNotifItems([]); return; }
+
+      const [apps, bookingRows] = await Promise.all([
+        supabase.from("offer_redemptions").select("id, offer_id, created_at").in("offer_id", offerIds).eq("status", "pending")
+          .order("created_at", { ascending: false }).limit(5),
+        supabase.from("bookings").select("id").in("venue_id", venueIds),
+      ]);
+      const bookingIds = (bookingRows.data ?? []).map((b: any) => b.id);
+      const { data: content } = bookingIds.length
+        ? await supabase.from("deliverables").select("id, booking_id, submitted_at").in("booking_id", bookingIds).eq("status", "submitted")
+            .order("submitted_at", { ascending: false }).limit(5)
+        : { data: [] as any[] };
+
+      const items = [
+        ...(apps.data ?? []).map((a: any) => ({
+          id: `app-${a.id}`, label: `New application: ${offerMap.get(a.offer_id) ?? "an offer"}`,
+          to: "/venue/bookings", at: a.created_at,
+        })),
+        ...(content ?? []).map((c: any) => ({
+          id: `content-${c.id}`, label: "New content submitted for review",
+          to: "/venue/content", at: c.submitted_at,
+        })),
+      ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+      setNotifItems(items);
+    })();
+  }, [type, user, location.pathname]);
 
   useEffect(() => {
     if (type !== "venue" || !user) return;
@@ -436,10 +479,38 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             </button>
           ) : null}
           <div className="hidden md:block" />
+          {type === "venue" && (
+            <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label="Notifications"
+                  className="relative ml-auto mr-2 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[hsl(42_15%_90%)] bg-white text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
+                >
+                  <Bell className="w-4 h-4" />
+                  {notifItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#b8923a] text-white text-[10px] flex items-center justify-center">
+                      {notifItems.length > 9 ? "9+" : notifItems.length}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifItems.length === 0 ? (
+                  <p className="px-2 py-4 text-sm text-muted-foreground text-center">Nothing new</p>
+                ) : notifItems.map((n) => (
+                  <DropdownMenuItem key={n.id} asChild>
+                    <NavLink to={n.to} onClick={() => setNotifOpen(false)}>{n.label}</NavLink>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <button
             onClick={signOut}
             data-allow-without-link
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-[hsl(42_15%_90%)] bg-white px-3 py-1.5 text-sm font-medium text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
+            className={`inline-flex items-center gap-2 rounded-lg border border-[hsl(42_15%_90%)] bg-white px-3 py-1.5 text-sm font-medium text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all ${type === "venue" ? "" : "ml-auto"}`}
           >
             <LogOut className="w-4 h-4" />
             Logout
