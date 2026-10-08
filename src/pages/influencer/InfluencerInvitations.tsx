@@ -33,7 +33,7 @@ const InfluencerInvitations = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("invitations")
-        .select("*, venues(name, city, logo_url, address, cover_image_url), offers(title, offer_type, description)")
+        .select("*, venues(name, city, logo_url, address, cover_image_url, owner_id), offers(title, offer_type, description)")
         .eq("influencer_id", user!.id)
         .order("created_at", { ascending: false });
       return data ?? [];
@@ -59,6 +59,17 @@ const InfluencerInvitations = () => {
         }
       }
       if (status === "cancelled") {
+        // Adnan, "IT Tasks" item 5: this used to delete the booking with zero
+        // notification — a venue expecting a creator would just never find
+        // out why. Tell them before the booking disappears.
+        const inv = invitations?.find((i: any) => i.id === id);
+        if (inv?.venues?.owner_id) {
+          await supabase.from("messages").insert({
+            sender_id: user!.id, receiver_id: inv.venues.owner_id, venue_id: inv.venue_id,
+            content: `A creator cancelled their booking for "${inv.offers?.title ?? "an offer"}".`,
+            message_type: "system",
+          } as any);
+        }
         // Remove any booking tied to this invitation
         await supabase.from("bookings").delete().eq("invitation_id", id);
       }
