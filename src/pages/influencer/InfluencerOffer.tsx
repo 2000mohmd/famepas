@@ -18,9 +18,12 @@ import {
   CheckCircle,
   Clock,
   Heart,
+  Share2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { notifyEmail } from "@/lib/notify";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import BookingRulesNotice from "@/components/influencer/BookingRulesNotice";
 
 const InfluencerOffer = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +37,7 @@ const InfluencerOffer = () => {
       const { data, error } = await supabase
         .from("offers")
         .select(
-          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, description, latitude, longitude), categories(name, icon, image_url, color)"
+          "*, venues(id, name, city, country, address, category, logo_url, cover_image_url, description, latitude, longitude), categories(name, icon, image_url, color), campaigns(instagram_offers)"
         )
         .eq("id", id!)
         .maybeSingle();
@@ -95,6 +98,9 @@ const InfluencerOffer = () => {
     enabled: !!id && !!user,
   });
 
+  const [applyOpen, setApplyOpen] = React.useState(false);
+  const [rulesAccepted, setRulesAccepted] = React.useState(false);
+
   const apply = useMutation({
     mutationFn: async () => {
       const { data: inserted, error } = await supabase.from("offer_redemptions").insert({
@@ -107,6 +113,7 @@ const InfluencerOffer = () => {
     },
     onSuccess: () => {
       toast({ title: "Application submitted!", description: "The venue will review your application." });
+      setApplyOpen(false); setRulesAccepted(false);
       qc.invalidateQueries({ queryKey: ["my-application", id] });
       qc.invalidateQueries({ queryKey: ["offer-detail", id] });
     },
@@ -123,6 +130,18 @@ const InfluencerOffer = () => {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-offer", id] }),
   });
+
+  // The OS share sheet (Instagram Stories, WhatsApp, etc.) on mobile; a
+  // wa.me link is the fallback where navigator.share isn't available (desktop).
+  const shareOffer = async () => {
+    const url = window.location.href;
+    const text = `${offer?.title ?? "Check out this offer"} on FamePass`;
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch { /* user cancelled */ }
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(`${text} — ${url}`)}`, "_blank");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -165,14 +184,18 @@ const InfluencerOffer = () => {
               <Tag className="w-16 h-16 text-muted-foreground" />
             </div>
           )}
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute top-4 right-4"
-            onClick={() => toggleSave.mutate()}
-          >
-            <Heart className={`w-5 h-5 ${isSaved ? "fill-gold text-gold" : ""}`} />
-          </Button>
+          <div className="absolute top-4 right-4 flex gap-2">
+            <Button size="icon" variant="secondary" onClick={shareOffer}>
+              <Share2 className="w-5 h-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => toggleSave.mutate()}
+            >
+              <Heart className={`w-5 h-5 ${isSaved ? "fill-gold text-gold" : ""}`} />
+            </Button>
+          </div>
         </div>
 
         {/* Title + venue header */}
@@ -311,22 +334,38 @@ const InfluencerOffer = () => {
                   <p className="text-sm text-muted-foreground">Ready to collaborate with {v?.name}?</p>
                 )}
               </div>
-              <Button
-                size="lg"
-                variant={myApplication ? "outline" : "default"}
-                disabled={!myApplication && (apply.isPending || !hasInstagram || (slotsLeft != null && slotsLeft <= 0))}
-                onClick={() => (myApplication ? navigate("/influencer/bookings") : apply.mutate())}
-              >
-                {myApplication
-                  ? "Go to my bookings"
-                  : !hasInstagram
-                  ? "Connect Instagram to apply"
-                  : slotsLeft != null && slotsLeft <= 0
-                  ? "No slots left"
-                  : apply.isPending
-                  ? "Submitting..."
-                  : "Apply for this offer"}
-              </Button>
+              {myApplication ? (
+                <Button size="lg" variant="outline" onClick={() => navigate("/influencer/bookings")}>
+                  Go to my bookings
+                </Button>
+              ) : !hasInstagram || (slotsLeft != null && slotsLeft <= 0) ? (
+                <Button size="lg" disabled>
+                  {!hasInstagram ? "Connect Instagram to apply" : "No slots left"}
+                </Button>
+              ) : (
+                <Dialog open={applyOpen} onOpenChange={(o) => { setApplyOpen(o); if (!o) setRulesAccepted(false); }}>
+                  <DialogTrigger asChild>
+                    <Button size="lg">Apply for this offer</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Apply to: {offer.title}</DialogTitle>
+                      <DialogDescription>Review the booking rules and confirm your application.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <BookingRulesNotice
+                        maxGuests={(offer as any).campaigns?.instagram_offers?.[0]?.max_guests ? parseInt((offer as any).campaigns.instagram_offers[0].max_guests) : null}
+                        requirements={(offer as any).requirements}
+                        accepted={rulesAccepted}
+                        onAcceptedChange={setRulesAccepted}
+                      />
+                      <Button className="w-full" onClick={() => apply.mutate()} disabled={apply.isPending || !rulesAccepted}>
+                        {apply.isPending ? "Submitting..." : "Confirm Application"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </CardContent>
           </Card>
         </div>

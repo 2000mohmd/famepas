@@ -1,11 +1,13 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Crown, Award } from "lucide-react";
+import { Trophy, Crown, Award, Gift, Share2 } from "lucide-react";
 import { prettyLabel } from "@/lib/format";
+import { useToast } from "@/hooks/use-toast";
 
 const tierConfig: Record<string, { icon: any; color: string; next: string; pointsNeeded: number }> = {
   bronze: { icon: Award, color: "text-orange-400", next: "Silver", pointsNeeded: 500 },
@@ -26,6 +28,7 @@ const TIER_BENEFITS = [
 
 const InfluencerRewards = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: rewardPoints } = useQuery({
     queryKey: ["my-rewards", user?.id],
@@ -49,6 +52,17 @@ const InfluencerRewards = () => {
   const config = tierConfig[tier] || tierConfig.bronze;
   const TierIcon = config.icon;
   const progress = config.pointsNeeded > 0 ? Math.min((points / config.pointsNeeded) * 100, 100) : 100;
+
+  const referralLink = user ? `${window.location.origin}/signup/influencer?ref=${user.id}` : "";
+  const shareReferral = async () => {
+    const text = "Join me on FamePass and start collaborating with venues!";
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url: referralLink }); } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(referralLink);
+      toast({ title: "Referral link copied" });
+    }
+  };
 
   return (
     <DashboardLayout type="influencer">
@@ -79,6 +93,22 @@ const InfluencerRewards = () => {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Refer a creator */}
+        <Card className="border-gold/20">
+          <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Gift className="w-6 h-6 text-gold" />
+              <div>
+                <p className="font-semibold">Refer a creator, earn 100 points</p>
+                <p className="text-sm text-muted-foreground">Once your friend's account is approved, you get the points.</p>
+              </div>
+            </div>
+            <Button size="sm" onClick={shareReferral} className="gap-1.5">
+              <Share2 className="w-3.5 h-3.5" /> Share invite link
+            </Button>
           </CardContent>
         </Card>
 

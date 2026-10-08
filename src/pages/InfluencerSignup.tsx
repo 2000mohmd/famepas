@@ -123,6 +123,9 @@ const InfluencerSignup = () => {
   // token through to signup-user at the end.
   const igLinkToken = searchParams.get("ig_link_token");
   const igUsername = searchParams.get("ig_username");
+  // Refer-a-creator (Adnan, "Influencer Portal" item 58): the referrer's own
+  // user id, passed as ?ref= on a link they share.
+  const referredBy = searchParams.get("ref");
 
   const [step, setStep] = useState<Step>(igLinkToken ? "profile" : "account");
   const [submitting, setSubmitting] = useState(false);
@@ -219,6 +222,7 @@ const InfluencerSignup = () => {
           country: country || null,
           niche: selectedNiches,
           social_links,
+          referred_by: referredBy,
         },
       });
       if (error) {

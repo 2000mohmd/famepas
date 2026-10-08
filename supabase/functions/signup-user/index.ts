@@ -46,6 +46,7 @@ serve(async (req) => {
       venue_type, address_line1, address_line2, zip_code, timezone,
       contact_person_name, contact_phone, whatsapp_phone,
       latitude, longitude, signup_completed,
+      referred_by,
     } = body;
 
 
@@ -126,7 +127,11 @@ serve(async (req) => {
         // Influencers go through the same admin approval gate as venues,
         // regardless of signup method — Instagram sign-in doesn't bypass review.
         approval_status: "pending",
-
+        // Refer-a-creator (Adnan, "Influencer Portal" item 58): a plain
+        // malformed/self-referral ?ref= just doesn't earn anyone points,
+        // rather than failing the whole signup over it.
+        referred_by: (typeof referred_by === "string" && /^[0-9a-f-]{36}$/i.test(referred_by) && referred_by !== userId)
+          ? referred_by : null,
       };
       const { data: updated } = await supabaseAdmin.from("profiles").update(profileData).eq("user_id", userId).select();
       if (!updated || updated.length === 0) await supabaseAdmin.from("profiles").insert(profileData);

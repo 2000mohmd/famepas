@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List, Navigation } from "lucide-react";
+import { Search, MapPin, Users, Building2, Clock, CheckCircle, Map, List, Navigation, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -18,6 +18,7 @@ import { useSearchParams } from "react-router-dom";
 import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
 import { notifyEmail } from "@/lib/notify";
 import { prettyLabel } from "@/lib/format";
+import BookingRulesNotice from "@/components/influencer/BookingRulesNotice";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
 const defaultCenter = { lat: 25.2048, lng: 55.2708 };
@@ -36,6 +37,7 @@ const InfluencerExplore = () => {
   const [selectedVenueMarker, setSelectedVenueMarker] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyOnly, setNearbyOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
 
   // Auto-detect user location on mount
   useEffect(() => {
@@ -78,7 +80,7 @@ const InfluencerExplore = () => {
       const nowIso = new Date().toISOString();
       let query = supabase
         .from("offers")
-        .select("*, categories(name), venues!inner(name, city, country, category, categories, logo_url, description, latitude, longitude, address)")
+        .select("*, categories(name), venues!inner(name, city, country, category, categories, logo_url, description, latitude, longitude, address), campaigns(instagram_offers)")
         .eq("is_active", true)
         // Hide offers whose run has already ended.
         .or(`ends_at.is.null,ends_at.gte.${nowIso}`);
@@ -146,6 +148,23 @@ const InfluencerExplore = () => {
     },
   });
 
+  const { data: savedOfferIds } = useQuery({
+    queryKey: ["saved-offer-ids", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("saved_offers").select("offer_id").eq("influencer_id", user!.id);
+      return new Set((data ?? []).map((d: any) => d.offer_id as string));
+    },
+    enabled: !!user,
+  });
+
+  const toggleSaveMutation = useMutation({
+    mutationFn: async ({ offerId, isSaved }: { offerId: string; isSaved: boolean }) => {
+      if (isSaved) await supabase.from("saved_offers").delete().eq("offer_id", offerId).eq("influencer_id", user!.id);
+      else await supabase.from("saved_offers").insert({ offer_id: offerId, influencer_id: user!.id });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-offer-ids", user?.id] }),
+  });
+
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -203,6 +222,9 @@ const InfluencerExplore = () => {
     hiddenNoGeoCount = unknown.length;
     displayedOffers = [...near, ...unknown];
   }
+  if (savedOnly) {
+    displayedOffers = displayedOffers.filter((o: any) => savedOfferIds?.has(o.id));
+  }
 
   const mapVenues = venues?.filter((v) => v.latitude && v.longitude) ?? [];
   const offersForVenue = (venueId: string) => displayedOffers?.filter((o: any) => o.venue_id === venueId) ?? [];
@@ -223,6 +245,12 @@ const InfluencerExplore = () => {
               <Map className="w-4 h-4" /> Map
             </Button>
           </div>
+        </div>
+
+        <div className="flex">
+          <Button size="sm" variant={savedOnly ? "default" : "outline"} onClick={() => setSavedOnly((v) => !v)} className="gap-1.5">
+            <Heart className={`w-3.5 h-3.5 ${savedOnly ? "fill-current" : ""}`} /> Saved
+          </Button>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -311,6 +339,8 @@ const InfluencerExplore = () => {
                 setSelectedOffer={setSelectedOffer}
                 onApply={() => applyMutation.mutate(offer.id)}
                 isPending={applyMutation.isPending}
+                isSaved={!!savedOfferIds?.has(offer.id)}
+                onToggleSave={() => toggleSaveMutation.mutate({ offerId: offer.id, isSaved: !!savedOfferIds?.has(offer.id) })}
               />
             ))}
             {displayedOffers?.length === 0 && (
@@ -401,11 +431,23 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
   );
 };
 
-const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onApply, isPending }: any) => {
+const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onApply, isPending, isSaved, onToggleSave }: any) => {
   const hasApplied = !!application;
+  const [accepted, setAccepted] = useState(false);
+  const maxGuests = offer.campaigns?.instagram_offers?.[0]?.max_guests
+    ? parseInt(offer.campaigns.instagram_offers[0].max_guests)
+    : null;
 
   return (
-    <Card className="hover:border-gold/30 transition-colors overflow-hidden">
+    <Card className="hover:border-gold/30 transition-colors overflow-hidden relative">
+      <Button
+        size="icon"
+        variant="secondary"
+        className="absolute top-2 right-2 z-10 w-8 h-8"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave?.(); }}
+      >
+        <Heart className={`w-4 h-4 ${isSaved ? "fill-gold text-gold" : ""}`} />
+      </Button>
       <Link to={`/influencer/offers/${offer.id}`} className="block">
         {(offer.cover_image_url || offer.image_url) && <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
         <CardHeader className="pb-2">
@@ -464,7 +506,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
               {application.status === "pending" ? "Applied" : application.status === "approved" ? "Approved" : "Rejected"}
             </Button>
           ) : (
-            <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => !o && setSelectedOffer(null)}>
+            <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => { if (!o) { setSelectedOffer(null); setAccepted(false); } }}>
               <DialogTrigger asChild>
                 <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
               </DialogTrigger>
@@ -487,7 +529,13 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
                     {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
                   </p>
                   {offer.discount_value && <p className="text-sm"><strong>Value:</strong> ${offer.discount_value}</p>}
-                  <Button className="w-full" onClick={onApply} disabled={isPending}>
+                  <BookingRulesNotice
+                    maxGuests={maxGuests}
+                    requirements={offer.requirements}
+                    accepted={accepted}
+                    onAcceptedChange={setAccepted}
+                  />
+                  <Button className="w-full" onClick={onApply} disabled={isPending || !accepted}>
                     {isPending ? "Submitting..." : "Confirm Application"}
                   </Button>
                 </div>

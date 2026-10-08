@@ -57,6 +57,24 @@ const InfluencerDashboard = () => {
     },
   });
 
+  // Adnan, "Influencer Portal" item 57: prompt to rate a venue automatically
+  // after a completed visit, rather than relying on the creator to find the
+  // Reviews page on their own.
+  const { data: unreviewedCount } = useQuery({
+    queryKey: ["unreviewed-bookings-count", user?.id],
+    queryFn: async () => {
+      const { data: bks } = await supabase
+        .from("bookings").select("id").eq("influencer_id", user!.id).eq("status", "completed");
+      const bookingIds = (bks ?? []).map((b: any) => b.id);
+      if (!bookingIds.length) return 0;
+      const { data: existing } = await supabase
+        .from("reviews").select("booking_id").eq("reviewer_id", user!.id).in("booking_id", bookingIds);
+      const reviewed = new Set((existing ?? []).map((r: any) => r.booking_id));
+      return bookingIds.filter((id: string) => !reviewed.has(id)).length;
+    },
+    enabled: !!user,
+  });
+
   const { data: rewardPoints } = useQuery({
     queryKey: ["reward-points", user?.id],
     queryFn: async () => {
@@ -98,6 +116,23 @@ const InfluencerDashboard = () => {
           </h1>
           <p className="text-muted-foreground mt-1">Here's your activity summary</p>
         </div>
+
+        {/* Rate your visit prompt */}
+        {!!unreviewedCount && unreviewedCount > 0 && (
+          <Card className="border-gold/30 bg-gold/5">
+            <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Star className="w-5 h-5 text-gold" />
+                <p className="text-sm text-foreground">
+                  You have {unreviewedCount} completed visit{unreviewedCount > 1 ? "s" : ""} to rate.
+                </p>
+              </div>
+              <Button size="sm" onClick={() => navigate("/influencer/reviews")} className="gradient-gold text-accent-foreground">
+                Rate now
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Warnings */}
         {warnings && warnings.length > 0 && (
