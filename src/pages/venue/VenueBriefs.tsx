@@ -208,7 +208,7 @@ const VenueBriefs = () => {
   return (
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
             <h1 className="text-[28px] font-bold text-foreground">Briefs</h1>
             <a href="#" className="text-sm font-medium" style={{ color: PINK }}>How does it work?</a>
@@ -217,6 +217,14 @@ const VenueBriefs = () => {
             <Plus className="w-4 h-4 mr-1.5" /> New Brief
           </Button>
         </div>
+        {/* Adnan, Venue Portal item 8: Campaigns, Offers and Briefs looked
+            like three names for one thing. They're not — Campaigns is what
+            you post for creators to find and apply to; a Brief is a specific
+            request FamePass matches and invites creators to for you. */}
+        <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
+          Different from Campaigns: a Campaign is what you post for creators to discover and apply to themselves.
+          A Brief is a specific ask — we match and invite creators to it for you.
+        </p>
 
         <div className="grid grid-cols-5 gap-2 mb-8">
           {stages.map(s => {

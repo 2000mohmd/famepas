@@ -78,7 +78,12 @@ const VenueReports = () => {
     const redeemed = redemptions.filter(r => r.status === "redeemed" || r.redeemed_at).length;
     const completed = bookings.filter(b => b.status === "completed").length;
     const noShow = bookings.filter(b => b.status === "no_show").length;
-    return { views, likes, comments, shares, engagement, posts, byType, redeemed, completed, noShow, totalBookings: bookings.length, totalRedemptions: redemptions.length };
+    // Adnan, Venue Portal item 10: a headline "what's this worth" number.
+    // No agreed methodology yet, so this uses a disclosed, adjustable
+    // per-engagement rate rather than presenting an unexplained dollar figure.
+    const EMV_RATE_PER_ENGAGEMENT = 0.05;
+    const estimatedMediaValue = (likes + comments + shares) * EMV_RATE_PER_ENGAGEMENT;
+    return { views, likes, comments, shares, engagement, posts, byType, redeemed, completed, noShow, totalBookings: bookings.length, totalRedemptions: redemptions.length, estimatedMediaValue };
   }, [deliverables, redemptions, bookings]);
 
   // Time-series: bookings per day
@@ -159,13 +164,28 @@ const VenueReports = () => {
           <div className="bg-white border border-border rounded-2xl py-24 text-center text-muted-foreground">Loading…</div>
         ) : (
           <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-white border border-border rounded-2xl p-6">
+                <div className="text-3xl font-bold text-foreground">{m.completed.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground mt-1">Creator visits</div>
+              </div>
+              <div className="bg-white border border-border rounded-2xl p-6">
+                <div className="text-3xl font-bold text-foreground">{m.views.toLocaleString()}</div>
+                <div className="text-sm text-muted-foreground mt-1">Total reach</div>
+              </div>
+              <div className="bg-white border border-border rounded-2xl p-6">
+                <div className="text-3xl font-bold text-foreground">${m.estimatedMediaValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                <div className="text-sm text-muted-foreground mt-1">Estimated media value</div>
+              </div>
+            </div>
+
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Reach & Engagement</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <Stat icon={Eye} label="Total views" value={m.views.toLocaleString()} />
               <Stat icon={Heart} label="Total likes" value={m.likes.toLocaleString()} />
               <Stat icon={MessageCircle} label="Comments" value={m.comments.toLocaleString()} />
               <Stat icon={Share2} label="Shares" value={m.shares.toLocaleString()} />
-              <Stat icon={TrendingUp} label="Engagement rate" value={`${m.engagement.toFixed(2)}%`} sub="(likes+comments+shares)/views" />
+              <Stat icon={TrendingUp} label="Engagement rate" value={`${m.engagement.toFixed(2)}%`} />
               <Stat icon={Film} label="Posts published" value={m.posts} />
               <Stat icon={Film} label="Reels / Videos" value={(m.byType.reel||0) + (m.byType.video||0)} />
               <Stat icon={Film} label="Stories" value={m.byType.story || 0} />
