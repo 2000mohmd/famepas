@@ -220,12 +220,23 @@ const InfluencerOffer = () => {
               ) : null}
             </div>
             <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">{offer.title}</h1>
-            <button
-              onClick={() => navigate(`/influencer/explore?venue=${encodeURIComponent(v?.name || "")}`)}
-              className="text-muted-foreground hover:text-gold text-sm flex items-center gap-1 mt-1"
-            >
-              <MapPin className="w-3 h-3" /> {v?.name} • {v?.city}{v?.country ? `, ${v.country}` : ""}
-            </button>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+              <button
+                onClick={() => navigate(`/influencer/explore?venue=${encodeURIComponent(v?.name || "")}`)}
+                className="text-muted-foreground hover:text-gold text-sm flex items-center gap-1"
+              >
+                <MapPin className="w-3 h-3" /> {v?.name} • {v?.address || v?.city}{v?.country ? `, ${v.country}` : ""}
+              </button>
+              {v?.latitude && v?.longitude && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}`}
+                  target="_blank" rel="noreferrer"
+                  className="text-xs text-gold hover:underline"
+                >
+                  View on map
+                </a>
+              )}
+            </div>
           </div>
         </div>
 

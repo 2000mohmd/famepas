@@ -125,6 +125,14 @@ const VenueSettings = () => {
   const [pName, setPName] = useState("");
   const [pDesc, setPDesc] = useState("");
   const [pCancel, setPCancel] = useState(true);
+  const [pNoShow, setPNoShow] = useState(true);
+  const [pPhone, setPPhone] = useState("");
+  const [pWhatsapp, setPWhatsapp] = useState("");
+  const [pPriceRange, setPPriceRange] = useState("");
+  const [pBestVisitTimes, setPBestVisitTimes] = useState("");
+  const [pHours, setPHours] = useState<Record<string, { closed: boolean; open: string; close: string }>>({});
+  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [pLogo, setPLogo] = useState<string | null>(null);
   const [pCats, setPCats] = useState<string[]>([]);
   const [allCats, setAllCats] = useState<any[]>([]);
@@ -166,6 +174,14 @@ const VenueSettings = () => {
       : (v.category ? String(v.category).split(",").map((x: string) => x.trim()).filter(Boolean) : []);
     setPCats(catsArr);
     setPCancel((v as any).cancellation_policy ?? true);
+    setPNoShow((v as any).no_show_policy ?? true);
+    setPPhone((v as any).phone ?? "");
+    setPWhatsapp((v as any).whatsapp_phone ?? "");
+    setPPriceRange((v as any).price_range ?? "");
+    setPBestVisitTimes((v as any).best_visit_times ?? "");
+    setPHours((v as any).opening_hours ?? {});
+    const { data: photoRows } = await supabase.from("venue_photos").select("id, url").eq("venue_id", v.id).order("position");
+    setPhotos((photoRows as any) ?? []);
     setPAddress((v as any).address || "");
     setPCity((v as any).city ?? null);
     setPCountry((v as any).country ?? null);
@@ -231,6 +247,34 @@ const VenueSettings = () => {
     toast({ title: "Logo updated" });
   };
 
+  const uploadGalleryPhoto = async (file: File) => {
+    if (!venue) return;
+    setUploadingPhoto(true);
+    const ext = file.name.split(".").pop();
+    const path = `${venue.id}/gallery-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("venue-photos").upload(path, file);
+    if (upErr) {
+      toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+      setUploadingPhoto(false);
+      return;
+    }
+    const { data: pub } = supabase.storage.from("venue-photos").getPublicUrl(path);
+    const { data: inserted, error } = await supabase.from("venue_photos")
+      .insert({ venue_id: venue.id, url: pub.publicUrl, position: photos.length }).select("id, url").single();
+    setUploadingPhoto(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setPhotos((p) => [...p, inserted as any]);
+  };
+
+  const removeGalleryPhoto = async (id: string) => {
+    await supabase.from("venue_photos").delete().eq("id", id);
+    setPhotos((p) => p.filter((ph) => ph.id !== id));
+  };
+
+  const setHourDay = (day: string, patch: Partial<{ closed: boolean; open: string; close: string }>) => {
+    setPHours((h) => ({ ...h, [day]: { closed: false, open: "09:00", close: "22:00", ...h[day], ...patch } }));
+  };
+
   const onAddressPick = (p: PickedPlace) => {
     setPAddress(p.address);
     setPCity(p.city ?? null);
@@ -249,6 +293,12 @@ const VenueSettings = () => {
       category: pCats[0] || "dining",
       categories: pCats,
       cancellation_policy: pCancel,
+      no_show_policy: pNoShow,
+      phone: pPhone || null,
+      whatsapp_phone: pWhatsapp || null,
+      price_range: pPriceRange || null,
+      best_visit_times: pBestVisitTimes || null,
+      opening_hours: pHours,
       address: pAddress || null,
       city: pCity,
       country: pCountry,
@@ -498,11 +548,105 @@ const VenueSettings = () => {
             </div>
 
             <div>
+              <Label>Photos</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                At least 3 photos — creators see these before they apply. {photos.length}/3 minimum
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {photos.map((ph) => (
+                  <div key={ph.id} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border group">
+                    <img src={ph.url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeGalleryPhoto(ph.id)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                <label className="w-24 h-24 rounded-xl border border-dashed border-border flex items-center justify-center cursor-pointer hover:border-foreground text-muted-foreground">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && uploadGalleryPhoto(e.target.files[0])} />
+                  {uploadingPhoto ? "…" : <Upload className="w-5 h-5" />}
+                </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Price Range</Label>
+                <Select value={pPriceRange || undefined} onValueChange={setPPriceRange}>
+                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="$">$ — Budget</SelectItem>
+                    <SelectItem value="$$">$$ — Moderate</SelectItem>
+                    <SelectItem value="$$$">$$$ — Upscale</SelectItem>
+                    <SelectItem value="$$$$">$$$$ — Luxury</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Best Visit Times</Label>
+                <Input value={pBestVisitTimes} onChange={e => setPBestVisitTimes(e.target.value)} placeholder="e.g. Fri–Sat evenings" />
+              </div>
+            </div>
+
+            <div>
+              <Label>Opening Hours</Label>
+              <div className="space-y-1.5 mt-2">
+                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
+                  const d = pHours[day] ?? { closed: false, open: "09:00", close: "22:00" };
+                  return (
+                    <div key={day} className="flex items-center gap-3">
+                      <span className="w-24 text-sm text-foreground">{day}</span>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Checkbox checked={!!d.closed} onCheckedChange={(v) => setHourDay(day, { closed: !!v })} /> Closed
+                      </label>
+                      {!d.closed && (
+                        <>
+                          <Input type="time" value={d.open} onChange={e => setHourDay(day, { open: e.target.value })} className="w-32 h-8" />
+                          <span className="text-xs text-muted-foreground">to</span>
+                          <Input type="time" value={d.close} onChange={e => setHourDay(day, { close: e.target.value })} className="w-32 h-8" />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Phone</Label>
+                <p className="text-xs text-muted-foreground mb-2">Visible to FamePass admins only, never to creators</p>
+                <Input value={pPhone} onChange={e => setPPhone(e.target.value)} placeholder="+961 ..." />
+              </div>
+              <div>
+                <Label>WhatsApp</Label>
+                <p className="text-xs text-muted-foreground mb-2">Visible to FamePass admins only, never to creators</p>
+                <Input value={pWhatsapp} onChange={e => setPWhatsapp(e.target.value)} placeholder="+961 ..." />
+              </div>
+            </div>
+
+            <div>
               <Label>Cancellation Policy</Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Require influencers to contact the venue for any changes within 24hrs of their visit
               </p>
               <Select value={pCancel ? "yes" : "no"} onValueChange={v => setPCancel(v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>No-Show Policy</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                A creator who doesn't check in during their booking window counts it as a no-show strike
+              </p>
+              <Select value={pNoShow ? "yes" : "no"} onValueChange={v => setPNoShow(v === "yes")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="yes">Yes</SelectItem>

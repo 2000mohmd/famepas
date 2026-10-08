@@ -217,7 +217,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       ]);
       setHasLiveOffer((liveOffers.count ?? 0) > 0);
       const steps = [
-        { label: "Connect Instagram", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
+        // Adnan, Venue Portal item 6: "Connect Instagram" implied a real OAuth
+        // flow that doesn't exist — the Settings page itself already labels
+        // this "Instagram (Manual)". Relabeled to match; it's otherwise the
+        // same step (saving a handle there does satisfy it).
+        { label: "Add your Instagram handle", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
         { label: "Create your first offer", done: (camp.count ?? 0) > 0, to: "/venue/campaigns/new" },
       ];
       const done = steps.filter(s => s.done).length;
