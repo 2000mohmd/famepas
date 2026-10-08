@@ -12,6 +12,7 @@ import DeliveredVideosInsights from "@/components/venue/DeliveredVideosInsights"
 
 type Campaign = { id: string; title: string; status: string; start_date: string | null; end_date: string | null; description?: string | null; cover_image_url?: string | null; cover_video_url?: string | null; cover_images?: string[] | null; deliverables?: any };
 type CulturalEvent = { id: string; title: string; start_date: string; end_date: string; has_notification: boolean; color: string | null };
+type BookingVisit = { id: string; scheduled_date: string | null; influencer_name: string; offer_title: string };
 
 const VenueCampaigns = () => {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ const VenueCampaigns = () => {
   const [venueId, setVenueId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [culturalEvents, setCulturalEvents] = useState<CulturalEvent[]>([]);
+  const [bookingVisits, setBookingVisits] = useState<BookingVisit[]>([]);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [activeOpen, setActiveOpen] = useState(true);
   const [scheduledOpen, setScheduledOpen] = useState(true);
@@ -39,6 +41,24 @@ const VenueCampaigns = () => {
     const eRes = await sb.from("cultural_events").select("*").order("start_date");
     setCampaigns((cRes.data as any) ?? []);
     setCulturalEvents((eRes.data as any) ?? []);
+
+    // Adnan, Venue Portal item 25: show creator bookings/visits on the
+    // calendar too, not just campaigns.
+    const { data: offerRows } = await sb.from("offers").select("id, title").eq("venue_id", venue.id);
+    const offerTitleById = new Map((offerRows ?? []).map((o: any) => [o.id, o.title]));
+    const { data: bkRows } = await sb.from("bookings").select("id, scheduled_date, influencer_id, offer_id")
+      .eq("venue_id", venue.id).not("scheduled_date", "is", null);
+    const infIds = [...new Set((bkRows ?? []).map((b: any) => b.influencer_id))];
+    let nameById = new Map<string, string>();
+    if (infIds.length) {
+      const { data: profs } = await sb.rpc("get_public_profiles_basic", { _user_ids: infIds });
+      nameById = new Map((profs ?? []).map((p: any) => [p.user_id, p.full_name]));
+    }
+    setBookingVisits((bkRows ?? []).map((b: any) => ({
+      id: b.id, scheduled_date: b.scheduled_date,
+      influencer_name: nameById.get(b.influencer_id) ?? "Creator",
+      offer_title: offerTitleById.get(b.offer_id) ?? "Visit",
+    })));
   };
 
   useEffect(() => { load(); }, [user]);
@@ -98,6 +118,7 @@ const VenueCampaigns = () => {
   const totalDays = lastDay.getDate();
   const today = new Date();
   const isToday = (d: number) => today.getFullYear() === currentMonth.getFullYear() && today.getMonth() === currentMonth.getMonth() && today.getDate() === d;
+  const isPastCell = (date: string) => date < todayStr;
 
   const cells: ({ day: number; date: string } | null)[] = [];
   for (let i = 0; i < startOffset; i++) cells.push(null);
@@ -237,6 +258,7 @@ const VenueCampaigns = () => {
                 {cells.map((cell, i) => {
                   if (!cell) return <div key={i} className="aspect-square border-r border-b border-border/40 bg-muted/20" />;
                   const todayCell = isToday(cell.day);
+                  const pastCell = isPastCell(cell.date);
                   const dayCampaigns = campaigns.filter(c => {
                     if (!c.start_date) return false;
                     // Compare as plain YYYY-MM-DD strings to avoid timezone-driven off-by-one
@@ -245,20 +267,34 @@ const VenueCampaigns = () => {
                     const endStr = (c.end_date || c.start_date).slice(0, 10);
                     return cell.date >= startStr && cell.date <= endStr;
                   });
+                  const dayVisits = bookingVisits.filter(b => b.scheduled_date?.slice(0, 10) === cell.date);
+                  const dayEvents = culturalEvents.filter(e => cell.date >= e.start_date.slice(0, 10) && cell.date <= e.end_date.slice(0, 10));
+                  const isEmpty = dayCampaigns.length === 0 && dayVisits.length === 0 && dayEvents.length === 0;
                   return (
-                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-[hsl(42_65%_50%_/_0.10)]" : ""}`}>
+                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-[hsl(42_65%_50%_/_0.10)]" : pastCell ? "bg-muted/30" : ""}`}>
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : "text-foreground"}`} style={todayCell ? { background: "#b8923a" } : undefined}>
+                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : pastCell ? "text-muted-foreground" : "text-foreground"}`} style={todayCell ? { background: "#b8923a" } : undefined}>
                           {cell.day}
                         </span>
-                        {todayCell && (
-                          <button onClick={() => openNew(cell.date)} className="w-5 h-5 rounded text-white text-xs flex items-center justify-center" style={{ background: "#b8923a" }}>
+                        {!pastCell && (
+                          <button
+                            onClick={() => openNew(cell.date)}
+                            title={dayEvents.length ? `Create offer for ${dayEvents[0].title}` : "New campaign"}
+                            className="w-5 h-5 rounded text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ background: "#b8923a" }}
+                          >
                             <Plus className="w-3 h-3" />
                           </button>
                         )}
                       </div>
                       <div className="mt-1 space-y-0.5 overflow-hidden">
-                        {dayCampaigns.slice(0, 2).map(c => (
+                        {dayEvents.slice(0, 1).map(e => (
+                          <div key={e.id} className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded truncate flex items-center gap-1" style={{ background: "#f3e8ff", color: "#6b21a8" }}>
+                            {e.has_notification && <Bell className="w-2.5 h-2.5 shrink-0" />}
+                            <span className="truncate">{e.title}</span>
+                          </div>
+                        ))}
+                        {dayCampaigns.slice(0, dayEvents.length ? 1 : 2).map(c => (
                           <button
                             key={c.id}
                             onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}
@@ -272,31 +308,21 @@ const VenueCampaigns = () => {
                             {c.title}
                           </button>
                         ))}
-                        {dayCampaigns.length > 2 && (
-                          <span className="text-[9px] text-muted-foreground">+{dayCampaigns.length - 2} more</span>
+                        {dayVisits.slice(0, 1).map(v => (
+                          <div key={v.id} title={`${v.influencer_name} — ${v.offer_title}`} className="w-full text-left text-[10px] font-medium px-1.5 py-0.5 rounded truncate" style={{ background: "#fef3c7", color: "#92400e" }}>
+                            {v.influencer_name}
+                          </div>
+                        ))}
+                        {(dayCampaigns.length + dayVisits.length + dayEvents.length) > 3 && (
+                          <span className="text-[9px] text-muted-foreground">+{dayCampaigns.length + dayVisits.length + dayEvents.length - 3} more</span>
+                        )}
+                        {isEmpty && !pastCell && (
+                          <p className="text-[9px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">Nothing scheduled</p>
                         )}
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Cultural events */}
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Cultural Calendar</h3>
-              <div className="flex flex-wrap gap-2">
-                {culturalEvents
-                  .filter(e => {
-                    const s = new Date(e.start_date), end = new Date(e.end_date);
-                    return s.getMonth() === currentMonth.getMonth() || end.getMonth() === currentMonth.getMonth();
-                  })
-                  .map(e => (
-                    <span key={e.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(0,0,0,0.05)", color: "#333" }}>
-                      {e.title}
-                      {e.has_notification && <Bell className="w-3 h-3" style={{ color: "#b8923a" }} />}
-                    </span>
-                  ))}
               </div>
             </div>
           </div>
