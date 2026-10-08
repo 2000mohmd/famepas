@@ -98,6 +98,11 @@ const adminGroups: NavGroup[] = [
 
 const venueGroups: NavGroup[] = [
   {
+    items: [
+      { to: "/venue", icon: Home, label: "Home" },
+    ],
+  },
+  {
     label: "Influencer Marketing",
     items: [
       { to: "/venue/reports", icon: BarChart3, label: "Reports" },
@@ -172,9 +177,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const rawGroups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
   // A rep shouldn't see links that ProtectedRoute would only bounce them off.
   const isManager = role === "admin" || role === "sales_manager";
-  const groups = isManager
+  const groups = (isManager
     ? rawGroups
-    : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }));
+    : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }))
+  ).filter((g) => g.label !== "Ad Studio" || hasLiveOffer);
   const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
   const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
@@ -190,9 +196,12 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   // Onboarding progress (venue only): instagram connected? has a campaign?
-  const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string } | null>(null);
+  const [onboarding, setOnboarding] = useState<{ done: number; total: number; next: string; steps: { label: string; done: boolean; to: string }[] } | null>(null);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [venueName, setVenueName] = useState<string>("");
   const [venueLogo, setVenueLogo] = useState<string | null>(null);
+  // Adnan, Venue Portal item 13: hide Ad Studio until there's at least one live offer.
+  const [hasLiveOffer, setHasLiveOffer] = useState(false);
 
   useEffect(() => {
     if (type !== "venue" || !user) return;
@@ -201,17 +210,19 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       if (!venue) return;
       setVenueName(venue.name);
       setVenueLogo((venue as any).logo_url ?? null);
-      const [ig, camp] = await Promise.all([
+      const [ig, camp, liveOffers] = await Promise.all([
         supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected"),
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id),
+        supabase.from("offers").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("is_active", true),
       ]);
+      setHasLiveOffer((liveOffers.count ?? 0) > 0);
       const steps = [
-        { label: "Connect Instagram", done: (ig.count ?? 0) > 0 },
-        { label: "Create your first campaign", done: (camp.count ?? 0) > 0 },
+        { label: "Connect Instagram", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
+        { label: "Create your first offer", done: (camp.count ?? 0) > 0, to: "/venue/campaigns/new" },
       ];
       const done = steps.filter(s => s.done).length;
       const next = steps.find(s => !s.done)?.label ?? "All set";
-      setOnboarding({ done, total: steps.length, next });
+      setOnboarding({ done, total: steps.length, next, steps });
     })();
   }, [type, user, location.pathname]);
 
@@ -353,23 +364,6 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           ))}
         </nav>
 
-        {/* Onboarding progress card (venue) */}
-        {type === "venue" && onboarding && onboarding.done < onboarding.total && (
-          <div className="mx-3 mb-3 rounded-xl p-3 border border-[hsl(42_15%_88%)]" style={{ background: "hsl(42 35% 95%)" }}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] text-neutral-600">{onboarding.total - onboarding.done} steps to go</p>
-              <p className="text-[11px] text-neutral-400">{onboarding.done}/{onboarding.total}</p>
-            </div>
-            <div className="h-1 rounded-full bg-white mb-3 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#b8923a" }} />
-            </div>
-            <p className="text-[12px] text-neutral-800 mb-2.5 leading-tight">Next: {onboarding.next}</p>
-            <NavLink to="/venue/settings" className="block text-center text-[12px] font-semibold py-1.5 rounded-lg text-neutral-900" style={{ background: "#e6c878" }}>
-              View Steps
-            </NavLink>
-          </div>
-        )}
-
         {/* User profile */}
         <div className="p-3 border-t border-[hsl(42_15%_90%)]">
           <DropdownMenu>
@@ -447,6 +441,46 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             Logout
           </button>
         </header>
+
+        {/* Onboarding banner (venue): Adnan, Venue Portal item 24 — full-width,
+            at the top of every page, until setup is complete. */}
+        {type === "venue" && onboarding && onboarding.done < onboarding.total && (
+          <div className="px-4 md:px-8 pt-4 md:pt-6">
+            <div className="rounded-2xl p-5 md:p-6" style={{ background: "linear-gradient(135deg, #2a1a08, #4a2f0f)" }}>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <p className="text-white font-display text-lg">
+                  You're {onboarding.total - onboarding.done} step{onboarding.total - onboarding.done > 1 ? "s" : ""} away from receiving creators
+                </p>
+                <p className="text-sm text-white/70">{onboarding.done}/{onboarding.total} done</p>
+              </div>
+              <div className="h-2 rounded-full bg-white/20 mb-4 overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#e6c878" }} />
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {onboarding.steps.map((s) => (
+                  <div key={s.label} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${s.done ? "bg-white/10" : "bg-white/15"}`}>
+                    <span className={`text-sm ${s.done ? "text-white/60 line-through" : "text-white"}`}>{s.label}</span>
+                    {!s.done && (
+                      <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-neutral-900" style={{ background: "#e6c878" }}>
+                        {s.label}
+                      </NavLink>
+                    )}
+                    {s.done && <ChevronRight className="w-3.5 h-3.5 text-white/40 rotate-45" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {type === "venue" && onboarding && onboarding.done === onboarding.total && !onboardingDismissed && (
+          <div className="px-4 md:px-8 pt-4 md:pt-6">
+            <div className="rounded-2xl p-4 flex items-center justify-between gap-3 border" style={{ background: "hsl(140 40% 96%)", borderColor: "hsl(140 40% 85%)" }}>
+              <p className="text-sm font-medium" style={{ color: "hsl(140 50% 25%)" }}>🎉 You're live — ready to receive creators.</p>
+              <button onClick={() => setOnboardingDismissed(true)} className="text-xs text-neutral-500 hover:text-neutral-800">Dismiss</button>
+            </div>
+          </div>
+        )}
+
         <div className="p-4 md:p-8">{children}</div>
         {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
       </main>

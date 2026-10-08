@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import VenueStaffCard from "@/components/venue/VenueStaffCard";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,9 @@ const TikTokConnectRow = ({ venue, social, onChange, logo }: any) => {
 const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tab, setTab] = useState<Tab>("integrations");
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as Tab | null;
+  const [tab, setTab] = useState<Tab>(tabParam && tabs.some(t => t.key === tabParam) ? tabParam : "profile");
   const [venue, setVenue] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [socials, setSocials] = useState<any[]>([]);
@@ -137,7 +140,7 @@ const VenueSettings = () => {
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const [savingTier, setSavingTier] = useState<string | null>(null);
   const [requireAdDisclosure, setRequireAdDisclosure] = useState(false);
-  const [requireVenueTag, setRequireVenueTag] = useState(false);
+  const [requireVenueTag] = useState(true);
 
   // template form
   const [tplOpen, setTplOpen] = useState(false);
@@ -171,7 +174,9 @@ const VenueSettings = () => {
     setPLng((v as any).longitude ?? null);
     setSelectedTierId((v as any).subscription_tier_id ?? null);
     setRequireAdDisclosure((v as any).require_ad_disclosure ?? false);
-    setRequireVenueTag((v as any).require_venue_tag ?? false);
+    // Require venue tag is always on (Adnan, Venue Portal item 21) -- no
+    // longer loaded from the venue row, which still carries the column
+    // (now defaulted true) only so nothing else that reads it breaks.
 
     const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
     setProfile(prof);
@@ -265,10 +270,9 @@ const VenueSettings = () => {
     toast({ title: "Plan selected" });
   };
 
-  const updateCompliance = async (field: "require_ad_disclosure" | "require_venue_tag", value: boolean) => {
+  const updateCompliance = async (field: "require_ad_disclosure", value: boolean) => {
     if (!venue) return;
-    if (field === "require_ad_disclosure") setRequireAdDisclosure(value);
-    else setRequireVenueTag(value);
+    setRequireAdDisclosure(value);
     const { error } = await supabase.from("venues").update({ [field]: value } as any).eq("id", venue.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
   };
@@ -608,9 +612,9 @@ const VenueSettings = () => {
             <div className="flex items-center justify-between border border-border rounded-xl p-4">
               <div>
                 <p className="font-medium">Require venue tag</p>
-                <p className="text-xs text-muted-foreground">Influencers must tag your venue's social handle in every post.</p>
+                <p className="text-xs text-muted-foreground">Influencers must tag your venue's social handle in every post. Always on — not optional.</p>
               </div>
-              <Switch checked={requireVenueTag} onCheckedChange={(v) => updateCompliance("require_venue_tag", v)} />
+              <Switch checked={requireVenueTag} disabled />
             </div>
           </div>
         )}

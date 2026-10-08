@@ -36,6 +36,7 @@ const EventAttendeesPage = lazy(() => import("./pages/EventAttendeesPage"));
 const VenueBriefs = lazy(() => import("./pages/venue/VenueBriefs"));
 const VenueBriefCreate = lazy(() => import("./pages/venue/VenueBriefCreate"));
 const VenueBookings = lazy(() => import("./pages/venue/VenueBookings"));
+const VenueHome = lazy(() => import("./pages/venue/VenueHome"));
 const VenueReports = lazy(() => import("./pages/venue/VenueReports"));
 const VenueContent = lazy(() => import("./pages/venue/VenueContent"));
 const VenueCampaigns = lazy(() => import("./pages/venue/VenueCampaigns"));
@@ -152,7 +153,7 @@ const App = () => (
             <Route path="/scan" element={<ProtectedRoute allowedRoles={["venue", "venue_staff", "admin"]}><ScanCheckIn /></ProtectedRoute>} />
 
             {/* Venue Routes */}
-            <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><Navigate to="/venue/campaigns" replace /></ProtectedRoute>} />
+            <Route path="/venue" element={<ProtectedRoute allowedRoles={["venue"]}><VenueHome /></ProtectedRoute>} />
             <Route path="/venue/reports" element={<ProtectedRoute allowedRoles={["venue"]}><VenueReports /></ProtectedRoute>} />
             <Route path="/venue/content" element={<ProtectedRoute allowedRoles={["venue"]}><VenueContent /></ProtectedRoute>} />
             <Route path="/venue/campaigns" element={<ProtectedRoute allowedRoles={["venue"]}><VenueCampaigns /></ProtectedRoute>} />

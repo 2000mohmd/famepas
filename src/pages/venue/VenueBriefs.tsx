@@ -102,8 +102,16 @@ const VenueBriefs = () => {
       .filter(b => b.pipeline_stage === "matching" && (matchCounts[b.id] ?? 0) === 0 && !autoTriggered.has(b.id))
       .forEach(b => {
         setAutoTriggered(prev => new Set(prev).add(b.id));
+        // Was a full load() (two more round-trips, re-triggering this same
+        // effect) on every auto-match -- the page visibly waited on it.
+        // match-brief itself writes brief_matches, so a light refetch of the
+        // counts for just this brief is enough.
         supabase.functions.invoke("match-brief", { body: { brief_id: b.id } })
-          .then(() => load())
+          .then(async () => {
+            const { data: m } = await supabase.from("brief_matches").select("invited").eq("brief_id", b.id);
+            setMatchCounts(prev => ({ ...prev, [b.id]: (m ?? []).length }));
+            setInvitedCounts(prev => ({ ...prev, [b.id]: (m ?? []).filter((r: any) => r.invited).length }));
+          })
           .catch(err => console.warn("auto match-brief failed", err));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

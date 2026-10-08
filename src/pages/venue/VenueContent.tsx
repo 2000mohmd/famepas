@@ -99,7 +99,10 @@ const VenueContent = () => {
   };
 
   const load = async () => {
-    if (!user) return;
+    // Guards against the exact "stuck on Loading…" bug: if this runs before
+    // auth resolves, bailing out here must still clear the spinner —
+    // otherwise an empty page is stuck loading forever.
+    if (!user) { setLoading(false); return; }
     setLoading(true);
     const { data: venues } = await supabase.from("venues").select("id").eq("owner_id", user.id);
     const venueIds = (venues ?? []).map((v: any) => v.id);

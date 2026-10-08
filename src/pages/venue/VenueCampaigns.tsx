@@ -118,8 +118,8 @@ const VenueCampaigns = () => {
       </button>
       {open && (
         items.length === 0 ? (
-          <div className="border-2 border-dashed rounded-xl p-6 text-center" style={{ borderColor: "#fbbf78" }}>
-            <p className="text-sm font-medium" style={{ color: "#c2410c" }}>No {title.toLowerCase()} campaigns</p>
+          <div className="border border-border rounded-xl p-6 text-center bg-muted/30">
+            <p className="text-sm text-muted-foreground">No {title.toLowerCase()} campaigns</p>
           </div>
         ) : (
           <div className="grid gap-3">
