@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { notifyEmail } from "@/lib/notify";
+import { DEFAULT_TEMPLATES, TEMPLATE_TYPE_LABEL } from "@/lib/messageTemplates";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
@@ -52,6 +53,74 @@ const VenueBookings = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [applicantOpen, setApplicantOpen] = useState<Row | null>(null);
   const [contentQuality, setContentQuality] = useState<{ avg: number; count: number } | null>(null);
+
+  // Adnan, Venue Portal item 26: a template picker on accept/decline, "Save
+  // as template," and a default message when a venue declines without
+  // picking one.
+  const [venueId, setVenueId] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<{ id: string; title: string; body: string; type: string | null }[]>([]);
+  const [respondOpen, setRespondOpen] = useState<{ row: Row; action: "approved" | "rejected" } | null>(null);
+  const [respondBody, setRespondBody] = useState("");
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [sendingResponse, setSendingResponse] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: v } = await supabase.from("venues").select("id").eq("owner_id", user.id)
+        .order("created_at", { ascending: true }).limit(1).maybeSingle();
+      if (!v) return;
+      setVenueId(v.id);
+      const { data: t } = await (supabase as any).from("venue_message_templates").select("id, title, body, type").eq("venue_id", v.id);
+      setTemplates(t ?? []);
+    })();
+  }, [user]);
+
+  const templateTypeFor = (action: "approved" | "rejected") => (action === "approved" ? "acceptance" : "rejection");
+
+  const openRespond = (row: Row, action: "approved" | "rejected") => {
+    const type = templateTypeFor(action);
+    const existing = templates.find((t) => t.type === type);
+    setRespondBody(existing?.body ?? DEFAULT_TEMPLATES[type].en);
+    setSaveAsTemplate(false);
+    setRespondOpen({ row, action });
+  };
+
+  const sendResponse = async () => {
+    if (!respondOpen || !user) return;
+    setSendingResponse(true);
+    const { row, action } = respondOpen;
+    await updateStatus(row, action);
+    // Approval already gets an automatic in-app message from the DB trigger;
+    // this is the venue's own (possibly customized) note on top of it.
+    if (respondBody.trim()) {
+      await supabase.from("messages").insert({
+        sender_id: user.id, receiver_id: row.influencer_id, content: respondBody.trim(), message_type: "system",
+      } as any);
+    }
+    if (saveAsTemplate && venueId && respondBody.trim()) {
+      await (supabase as any).from("venue_message_templates").insert({
+        venue_id: venueId, title: TEMPLATE_TYPE_LABEL[templateTypeFor(action)], body: respondBody.trim(), type: templateTypeFor(action),
+      });
+      const { data: t } = await (supabase as any).from("venue_message_templates").select("id, title, body, type").eq("venue_id", venueId);
+      setTemplates(t ?? []);
+    }
+    setSendingResponse(false);
+    setRespondOpen(null);
+  };
+
+  // Decline straight from the list/row action: no dialog, so it must still
+  // send something rather than leave the creator with silence — the venue's
+  // saved rejection template if they have one, else the built-in default.
+  const quickDecline = async (row: Row) => {
+    await updateStatus(row, "rejected");
+    if (!user) return;
+    const saved = templates.find((t) => t.type === "rejection");
+    const body = saved?.body ?? DEFAULT_TEMPLATES.rejection.en;
+    await supabase.from("messages").insert({
+      sender_id: user.id, receiver_id: row.influencer_id, content: body, message_type: "system",
+    } as any);
+  };
 
   useEffect(() => {
     if (!applicantOpen) { setContentQuality(null); return; }
@@ -215,7 +284,7 @@ const VenueBookings = () => {
         return <>
           <Button size="sm" variant="outline" onClick={() => setApplicantOpen(r)}><Eye className="w-3 h-3 mr-1" />Review</Button>
           <Button size="sm" onClick={() => updateStatus(r, "approved")} style={{ background: PINK }} className="text-white hover:opacity-90"><CheckCircle2 className="w-3 h-3 mr-1" />Accept</Button>
-          <Button size="sm" variant="ghost" onClick={() => updateStatus(r, "rejected")}><XCircle className="w-3 h-3 mr-1" />Decline</Button>
+          <Button size="sm" variant="ghost" onClick={() => quickDecline(r)}><XCircle className="w-3 h-3 mr-1" />Decline</Button>
         </>;
       case "approved":
         if (r.offer?.fulfilment_type === "delivery") {
@@ -396,6 +465,37 @@ const VenueBookings = () => {
         )}
       </div>
 
+      <Dialog open={!!respondOpen} onOpenChange={(o) => { if (!o) setRespondOpen(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{respondOpen?.action === "approved" ? "Approve" : "Decline"} {respondOpen?.row.profile?.full_name || "creator"}</DialogTitle>
+          </DialogHeader>
+          {templates.filter((t) => t.type === templateTypeFor(respondOpen?.action ?? "rejected")).length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Use a saved template</label>
+              <select
+                className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm"
+                onChange={(e) => { const t = templates.find((t) => t.id === e.target.value); if (t) setRespondBody(t.body); }}
+                defaultValue=""
+              >
+                <option value="">Default message</option>
+                {templates.filter((t) => t.type === templateTypeFor(respondOpen?.action ?? "rejected")).map((t) => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <Textarea value={respondBody} onChange={(e) => setRespondBody(e.target.value)} rows={5} />
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={saveAsTemplate} onChange={(e) => setSaveAsTemplate(e.target.checked)} />
+            Save as template for next time
+          </label>
+          <Button onClick={sendResponse} disabled={sendingResponse} style={{ background: PINK }} className="text-white hover:opacity-90 w-full">
+            {sendingResponse ? "Sending…" : respondOpen?.action === "approved" ? "Approve & send" : "Decline & send"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!redeemOpen} onOpenChange={(o) => { if (!o) { setRedeemOpen(null); setOtp(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Check in — type the 6-character code under their QR</DialogTitle></DialogHeader>
@@ -486,10 +586,10 @@ const VenueBookings = () => {
                 )}
                 {applicantOpen.status === "pending" && (
                   <div className="flex gap-2 pt-2">
-                    <Button className="flex-1" variant="ghost" onClick={() => { updateStatus(applicantOpen, "rejected"); setApplicantOpen(null); }}>
+                    <Button className="flex-1" variant="ghost" onClick={() => { openRespond(applicantOpen, "rejected"); setApplicantOpen(null); }}>
                       <XCircle className="w-4 h-4 mr-1" />Decline
                     </Button>
-                    <Button className="flex-1 text-white hover:opacity-90" style={{ background: PINK }} onClick={() => { updateStatus(applicantOpen, "approved"); setApplicantOpen(null); }}>
+                    <Button className="flex-1 text-white hover:opacity-90" style={{ background: PINK }} onClick={() => { openRespond(applicantOpen, "approved"); setApplicantOpen(null); }}>
                       <CheckCircle2 className="w-4 h-4 mr-1" />Approve
                     </Button>
                   </div>

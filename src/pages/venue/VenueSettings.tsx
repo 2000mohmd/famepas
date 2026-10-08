@@ -17,6 +17,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import LocationAutocomplete, { PickedPlace } from "@/components/venue/LocationAutocomplete";
+import { TEMPLATE_TYPE_LABEL, TemplateType } from "@/lib/messageTemplates";
 
 type Tab = "integrations" | "team" | "profile" | "messaging" | "billing" | "compliance";
 
@@ -154,6 +155,7 @@ const VenueSettings = () => {
   const [tplOpen, setTplOpen] = useState(false);
   const [tplTitle, setTplTitle] = useState("");
   const [tplBody, setTplBody] = useState("");
+  const [tplType, setTplType] = useState<string>("");
   const [editId, setEditId] = useState<string | null>(null);
 
   // team
@@ -329,15 +331,16 @@ const VenueSettings = () => {
 
   const saveTemplate = async () => {
     if (!venue || !tplTitle || !tplBody) return;
+    const payload = { title: tplTitle, body: tplBody, type: tplType || null };
     if (editId) {
-      await supabase.from("venue_message_templates").update({ title: tplTitle, body: tplBody }).eq("id", editId);
+      await (supabase as any).from("venue_message_templates").update(payload).eq("id", editId);
     } else {
-      await supabase.from("venue_message_templates").insert({ venue_id: venue.id, title: tplTitle, body: tplBody });
+      await (supabase as any).from("venue_message_templates").insert({ venue_id: venue.id, ...payload });
     }
-    setTplOpen(false); setTplTitle(""); setTplBody(""); setEditId(null);
+    setTplOpen(false); setTplTitle(""); setTplBody(""); setTplType(""); setEditId(null);
     load();
   };
-  const editTemplate = (t: any) => { setEditId(t.id); setTplTitle(t.title); setTplBody(t.body); setTplOpen(true); };
+  const editTemplate = (t: any) => { setEditId(t.id); setTplTitle(t.title); setTplBody(t.body); setTplType(t.type ?? ""); setTplOpen(true); };
   const deleteTemplate = async (id: string) => {
     await supabase.from("venue_message_templates").delete().eq("id", id);
     load();
@@ -670,7 +673,10 @@ const VenueSettings = () => {
               {templates.map(t => (
                 <div key={t.id} className="border border-border rounded-xl p-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">{t.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-foreground">{t.title}</p>
+                      {t.type && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{TEMPLATE_TYPE_LABEL[t.type as TemplateType] ?? t.type}</span>}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">{t.body}</p>
                   </div>
                   <div className="flex gap-1">
@@ -687,9 +693,18 @@ const VenueSettings = () => {
               {tplOpen ? (
                 <div className="border border-border rounded-xl p-4 space-y-3">
                   <Input placeholder="Template title" value={tplTitle} onChange={e => setTplTitle(e.target.value)} />
+                  <Select value={tplType || "custom"} onValueChange={(v) => setTplType(v === "custom" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Custom (not tied to a specific action)</SelectItem>
+                      {(Object.keys(TEMPLATE_TYPE_LABEL) as TemplateType[]).map((k) => (
+                        <SelectItem key={k} value={k}>{TEMPLATE_TYPE_LABEL[k]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Textarea placeholder="Template message" value={tplBody} onChange={e => setTplBody(e.target.value)} />
                   <div className="flex gap-2 justify-end">
-                    <Button variant="ghost" onClick={() => { setTplOpen(false); setEditId(null); setTplTitle(""); setTplBody(""); }}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => { setTplOpen(false); setEditId(null); setTplTitle(""); setTplBody(""); setTplType(""); }}>Cancel</Button>
                     <Button onClick={saveTemplate} style={{ background: PINK }} className="text-white">
                       {editId ? "Save" : "Add Template"}
                     </Button>
