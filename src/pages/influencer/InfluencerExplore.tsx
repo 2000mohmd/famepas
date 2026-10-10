@@ -237,11 +237,16 @@ const InfluencerExplore = () => {
             <h1 className="text-3xl font-display font-bold text-foreground">Explore Opportunities</h1>
             <p className="text-muted-foreground">Find campaigns and collaborations from top venues</p>
           </div>
+          {/* Adnan, "Creator Page fixes" #6: --primary and --accent are both
+              Champagne Gold in the brand, so the ghost button's hover state
+              (bg-accent) looked identical to the selected button's permanent
+              bg-primary. Override the unselected button's hover so only the
+              actually-selected one ever shows gold. */}
           <div className="flex gap-2 bg-card border border-border rounded-lg p-1">
-            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")} className="gap-1">
+            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")} className={`gap-1 ${viewMode !== "list" ? "hover:bg-muted hover:text-foreground" : ""}`}>
               <List className="w-4 h-4" /> List
             </Button>
-            <Button size="sm" variant={viewMode === "map" ? "default" : "ghost"} onClick={() => setViewMode("map")} className="gap-1">
+            <Button size="sm" variant={viewMode === "map" ? "default" : "ghost"} onClick={() => setViewMode("map")} className={`gap-1 ${viewMode !== "map" ? "hover:bg-muted hover:text-foreground" : ""}`}>
               <Map className="w-4 h-4" /> Map
             </Button>
           </div>

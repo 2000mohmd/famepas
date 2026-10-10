@@ -37,7 +37,7 @@ const InfluencerBookings = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("bookings")
-        .select("*, preferred_date, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(delivery_stage, post_due_at, failure_reason)")
+        .select("*, preferred_date, venues(name, city, logo_url), offers(title, offer_type), deliverables(id, status, views, likes, comments, shares, post_url), offer_redemptions:redemption_id(id, delivery_stage, post_due_at, failure_reason, shipped_at, received_at)")
         .eq("influencer_id", user!.id)
         .order("scheduled_date", { ascending: false });
       return data ?? [];
@@ -75,6 +75,21 @@ const InfluencerBookings = () => {
   const connectedPlatforms = (connections ?? [])
     .filter((c: any) => c.status === "connected")
     .map((c: any) => c.platform);
+
+  // Adnan, "RE: Re: IT Tasks" Delivery item: the post deadline starts when the
+  // creator confirms they received the item, not when the venue marks it shipped.
+  const [confirmingReceipt, setConfirmingReceipt] = useState<string | null>(null);
+  const confirmReceived = async (redemptionId: string) => {
+    setConfirmingReceipt(redemptionId);
+    const { data, error } = await (supabase as any).rpc("confirm_delivery_received", { _redemption_id: redemptionId });
+    setConfirmingReceipt(null);
+    if (error || !data?.ok) {
+      toast({ title: "Couldn't confirm receipt", description: data?.reason || error?.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Receipt confirmed", description: "Your post deadline starts now." });
+    queryClient.invalidateQueries({ queryKey: ["my-bookings", user?.id] });
+  };
 
   const resetUpload = () => {
     setUploadFor(null); setPlatform("instagram"); setContentType("post"); setContentUrl(""); setCaption(""); setFile(null);
@@ -213,7 +228,12 @@ const InfluencerBookings = () => {
               const due = d.post_due_at ? new Date(d.post_due_at) : null;
               return (
                 <div className="mt-1 space-y-1">
-                  {d.delivery_stage === "visited" && due && (
+                  {d.delivery_stage === "visited" && d.shipped_at && !d.received_at && (
+                    <Button size="sm" variant="outline" disabled={confirmingReceipt === d.id} onClick={() => confirmReceived(d.id)}>
+                      {confirmingReceipt === d.id ? "Confirming..." : "I received it"}
+                    </Button>
+                  )}
+                  {d.received_at && due && (
                     <p className={`text-xs ${due < new Date() ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                       Post due by {format(due, "PPP p")}
                     </p>

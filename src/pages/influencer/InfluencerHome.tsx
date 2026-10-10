@@ -18,7 +18,7 @@ const InfluencerHome = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url")
+        .select("full_name, avatar_url, social_links")
         .eq("user_id", user!.id)
         .single();
       return data;
@@ -80,7 +80,9 @@ const InfluencerHome = () => {
     );
   };
 
-  const firstName = profile?.full_name?.split(" ")[0] || "there";
+  // Adnan, "Creator Page fixes" #7: full name everywhere, with the handle underneath.
+  const fullName = profile?.full_name || "there";
+  const handle = (profile?.social_links as any)?.username as string | undefined;
 
   // Adnan, "Creator Page fixes" #2: a venue with no live offer shouldn't show as Featured.
   const venueIdsWithLiveOffers = new Set((offers ?? []).map((o: any) => o.venue_id));
@@ -92,8 +94,9 @@ const InfluencerHome = () => {
         {/* Hero */}
         <div className="rounded-2xl bg-gradient-to-r from-primary/30 to-accent/20 border border-border p-8">
           <h1 className="text-3xl font-display font-bold text-foreground">
-            Welcome back, <span className="text-gold">{firstName}</span> 👋
+            Welcome back, <span className="text-gold">{fullName}</span> 👋
           </h1>
+          {handle && <p className="text-sm text-muted-foreground">@{handle}</p>}
           <p className="text-muted-foreground mt-2">Discover venues and exclusive offers curated for you</p>
           <div className="flex gap-3 mt-4">
             <Button onClick={() => navigate("/influencer/explore")} className="gap-2">

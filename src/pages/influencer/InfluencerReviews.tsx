@@ -136,14 +136,13 @@ const InfluencerReviews = () => {
             <h1 className="text-3xl font-display font-bold text-foreground">Reviews & Ratings</h1>
             <p className="text-muted-foreground">Your reputation on the platform</p>
           </div>
-          <Button
-            onClick={() => setWriteOpen(true)}
-            disabled={!reviewableBookings || reviewableBookings.length === 0}
-            className="gradient-gold text-accent-foreground"
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Write a review {reviewableBookings && reviewableBookings.length > 0 ? `(${reviewableBookings.length})` : ""}
-          </Button>
+          {/* Adnan, "Creator Page fixes" #10: hidden, not just disabled, until a completed visit exists. */}
+          {reviewableBookings && reviewableBookings.length > 0 && (
+            <Button onClick={() => setWriteOpen(true)} className="gradient-gold text-accent-foreground">
+              <Pencil className="w-4 h-4 mr-2" />
+              Write a review ({reviewableBookings.length})
+            </Button>
+          )}
         </div>
 
         <Card className="border-gold/20">

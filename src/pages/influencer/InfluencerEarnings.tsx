@@ -78,12 +78,12 @@ const InfluencerEarnings = () => {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button><ArrowDownToLine className="w-4 h-4 mr-2" /> Withdraw</Button>
+              <Button disabled={!balance || Number(balance) <= 0}><ArrowDownToLine className="w-4 h-4 mr-2" /> Withdraw</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Request Withdrawal</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Available balance: $ {Number(balance).toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Available balance: ${Number(balance).toFixed(2)}</p>
                 <Input type="number" placeholder="Amount (USD)" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
                 {withdrawAmount && parseFloat(withdrawAmount) > Number(balance ?? 0) && (
                   <p className="text-sm text-destructive">Amount exceeds your available balance</p>
@@ -102,7 +102,7 @@ const InfluencerEarnings = () => {
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-primary/10"><DollarSign className="w-5 h-5 text-gold" /></div>
               <div>
-                <p className="text-2xl font-bold">$ {Number(balance).toFixed(2)}</p>
+                <p className="text-2xl font-bold">${Number(balance).toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground">Available Balance</p>
               </div>
             </CardContent>
@@ -111,7 +111,7 @@ const InfluencerEarnings = () => {
             <CardContent className="pt-6 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-yellow-500/10"><Clock className="w-5 h-5 text-yellow-500" /></div>
               <div>
-                <p className="text-2xl font-bold">$ {pendingAmount.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${pendingAmount.toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground">Pending</p>
               </div>
             </CardContent>
@@ -138,8 +138,8 @@ const InfluencerEarnings = () => {
                   <p className="text-xs text-muted-foreground">{format(new Date(e.created_at), "PPP")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold">$ {Number(e.amount).toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">Commission: $ {Number(e.commission).toFixed(2)}</p>
+                  <p className="text-sm font-semibold">${Number(e.amount).toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Commission: ${Number(e.commission).toFixed(2)}</p>
                   <Badge variant="outline" className="text-xs capitalize">{e.status}</Badge>
                 </div>
               </div>
@@ -156,7 +156,7 @@ const InfluencerEarnings = () => {
               {withdrawals?.map((w: any) => (
                 <div key={w.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-medium">$ {Number(w.amount).toFixed(2)}</p>
+                    <p className="text-sm font-medium">${Number(w.amount).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">{format(new Date(w.created_at), "PPP")}</p>
                   </div>
                   <Badge variant="outline" className="capitalize">{w.status}</Badge>

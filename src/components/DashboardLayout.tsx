@@ -185,13 +185,17 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   ).filter((g) => g.label !== "Ad Studio" || hasLiveOffer);
   const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
-  const initials = (user?.email ?? "U").split("@")[0].slice(0, 2).toUpperCase();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // Adnan, "Creator Page fixes" #7: the sidebar showed the email's local part
+  // as if it were a username. Show the real full name, with the handle
+  // underneath, everywhere a name is shown — same query as avatar_url.
+  const [fullName, setFullName] = useState<string | null>(null);
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => setAvatarUrl((data as any)?.avatar_url ?? null));
+    supabase.from("profiles").select("avatar_url, full_name").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => { setAvatarUrl((data as any)?.avatar_url ?? null); setFullName((data as any)?.full_name ?? null); });
   }, [user]);
+  const initials = (fullName || user?.email || "U").trim().slice(0, 2).toUpperCase();
 
   // Mobile sidebar (influencer only)
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -299,39 +303,39 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       )}
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 bg-white border-r border-[hsl(42_15%_90%)] ${
+        className={`fixed left-0 top-0 z-40 h-screen w-[220px] flex flex-col overflow-hidden transition-transform duration-300 bg-card border-r border-border ${
           mobileNav
             ? (mobileOpen ? "translate-x-0" : "-translate-x-full") + " md:translate-x-0"
             : ""
         }`}
       >
         <div className="flex items-center gap-2 px-4 py-5">
-          <span className="font-display text-xl font-semibold tracking-tight text-neutral-900">
-            Fame<span className="italic text-[hsl(38_60%_38%)]">Pass</span>
+          <span className="font-display text-xl font-semibold tracking-tight text-card-foreground">
+            Fame<span className="italic text-primary">Pass</span>
           </span>
-          <span className="ml-auto text-[10px] uppercase tracking-[0.15em] text-neutral-500">{panelLabel}</span>
+          <span className="ml-auto text-[10px] uppercase tracking-[0.15em] text-card-foreground/50">{panelLabel}</span>
         </div>
 
         {/* Workspace switcher */}
         <div className="px-3 pb-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-[hsl(42_35%_95%)] transition-colors">
+              <button className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-secondary transition-colors">
                 {venueLogo ? (
-                  <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-[hsl(42_35%_88%)]" />
+                  <img src={venueLogo} alt={`${venueName || "Venue"} logo`} className="w-7 h-7 rounded-md object-cover bg-white border border-border" />
                 ) : (
-                  <span className="w-7 h-7 rounded-md bg-[hsl(42_35%_92%)] text-[hsl(38_60%_38%)] text-xs font-semibold flex items-center justify-center">
+                  <span className="w-7 h-7 rounded-md bg-secondary text-primary text-xs font-semibold flex items-center justify-center">
                     {(venueName || initials).slice(0, 2).toUpperCase()}
                   </span>
                 )}
-                <span className="flex-1 text-left text-sm font-medium text-neutral-800 truncate">
-                  {venueName || user?.email?.split("@")[0] || "workspace"}
+                <span className="flex-1 text-left text-sm font-medium text-card-foreground truncate">
+                  {venueName || fullName || user?.email?.split("@")[0] || "workspace"}
                 </span>
-                <ChevronDown className="w-4 h-4 text-neutral-400" />
+                <ChevronDown className="w-4 h-4 text-card-foreground/40" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[196px] bg-white">
-              <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-neutral-500">
+            <DropdownMenuContent align="start" className="w-[196px] bg-card">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-wide text-card-foreground/50">
                 {panelLabel} workspace
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -369,11 +373,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             <div key={group.label ?? `g${gi}`}>
               {group.label && (
                 <div className="px-2.5 mb-1.5 flex items-center gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-card-foreground/50">
                     {group.label}
                   </p>
                   {group.badge && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-neutral-900" style={{ background: "#e6c878" }}>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
                       {group.badge}
                     </span>
                   )}
@@ -391,15 +395,15 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                       end={isRoot}
                       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                         exactActive || isActive
-                          ? type === "sales" ? "text-[hsl(262_42%_28%)]" : "text-[hsl(38_60%_28%)]"
-                          : "text-neutral-700 hover:text-neutral-900 hover:bg-[hsl(42_35%_95%)]"
+                          ? "text-primary"
+                          : "text-card-foreground/70 hover:text-card-foreground hover:bg-secondary"
                       }`}
-                      style={exactActive ? { background: type === "sales" ? "hsl(262 42% 32% / 0.12)" : "hsl(42 65% 50% / 0.14)" } : undefined}
+                      style={exactActive ? { background: "hsl(var(--primary) / 0.14)" } : undefined}
                     >
                       <Icon className="w-[15px] h-[15px]" />
                       <span className="flex-1">{label}</span>
                       {badge && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-neutral-900" style={{ background: "#e6c878" }}>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
                           {badge}
                         </span>
                       )}
@@ -412,25 +416,25 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         </nav>
 
         {/* User profile */}
-        <div className="p-3 border-t border-[hsl(42_15%_90%)]">
+        <div className="p-3 border-t border-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(42_35%_95%)] transition-colors text-left">
+              <button className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary transition-colors text-left">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" onError={() => setAvatarUrl(null)} />
                 ) : (
-                  <span className="w-8 h-8 rounded-full text-neutral-900 text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, #e6c878, #b8923a)" }}>
+                  <span className="w-8 h-8 rounded-full text-primary-foreground text-xs font-semibold flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--gold-dark)))" }}>
                     {initials}
                   </span>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-neutral-800 truncate">{user?.email?.split("@")[0]}</p>
-                  <p className="text-[10px] text-neutral-500 truncate">{user?.email}</p>
+                  <p className="text-[12px] font-medium text-card-foreground truncate">{fullName || user?.email}</p>
+                  <p className="text-[10px] text-card-foreground/50 truncate">{user?.email}</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                <ChevronRight className="w-3.5 h-3.5 text-card-foreground/40" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="top" className="w-[196px] bg-white">
+            <DropdownMenuContent align="start" side="top" className="w-[196px] bg-card">
               {type === "influencer" && (
                 <DropdownMenuItem asChild>
                   <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
@@ -460,20 +464,19 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
       {/* Main */}
       <main
-        className={`flex-1 min-w-0 ${mobileNav ? "md:ml-[220px]" : "ml-[220px]"}`}
-        style={{ background: "#f7f5f0" }}
+        className={`flex-1 min-w-0 bg-background ${mobileNav ? "md:ml-[220px]" : "ml-[220px]"}`}
       >
         {maintenance && (
           <div className="bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-sm px-4 py-2 text-center">
             🛠 FamePass is currently undergoing maintenance. Some features may be temporarily unavailable.
           </div>
         )}
-        <header className="sticky top-0 z-30 h-14 border-b border-[hsl(42_15%_90%)] bg-white/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
+        <header className="sticky top-0 z-30 h-14 border-b border-border bg-card/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
           {mobileNav ? (
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
-              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[hsl(42_15%_90%)] bg-white text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
+              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-card-foreground hover:border-primary hover:text-primary transition-all"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -484,11 +487,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label="Notifications"
-                  className="relative ml-auto mr-2 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[hsl(42_15%_90%)] bg-white text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all"
+                  className="relative ml-auto mr-2 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-card-foreground hover:border-primary hover:text-primary transition-all"
                 >
                   <Bell className="w-4 h-4" />
                   {notifItems.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#b8923a] text-white text-[10px] flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
                       {notifItems.length > 9 ? "9+" : notifItems.length}
                     </span>
                   )}
@@ -507,21 +510,25 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <button
-            onClick={signOut}
-            data-allow-without-link
-            className={`inline-flex items-center gap-2 rounded-lg border border-[hsl(42_15%_90%)] bg-white px-3 py-1.5 text-sm font-medium text-neutral-800 hover:border-[hsl(42_65%_50%)] hover:text-[hsl(38_60%_38%)] transition-all ${type === "venue" ? "" : "ml-auto"}`}
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
+          {/* Adnan, "Creator Page fixes" #12: this duplicated the "Log out"
+              item already in the sidebar's user-profile dropdown for creators. */}
+          {type !== "influencer" && (
+            <button
+              onClick={signOut}
+              data-allow-without-link
+              className={`inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground hover:border-primary hover:text-primary transition-all ${type === "venue" ? "" : "ml-auto"}`}
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          )}
         </header>
 
         {/* Onboarding banner (venue): Adnan, Venue Portal item 24 — full-width,
             at the top of every page, until setup is complete. */}
         {type === "venue" && onboarding && onboarding.done < onboarding.total && (
           <div className="px-4 md:px-8 pt-4 md:pt-6">
-            <div className="rounded-2xl p-5 md:p-6" style={{ background: "linear-gradient(135deg, #2a1a08, #4a2f0f)" }}>
+            <div className="rounded-2xl p-5 md:p-6" style={{ background: "linear-gradient(135deg, hsl(0 100% 10%), hsl(0 100% 18%))" }}>
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <p className="text-white font-display text-lg">
                   You're {onboarding.total - onboarding.done} step{onboarding.total - onboarding.done > 1 ? "s" : ""} away from receiving creators
@@ -529,14 +536,14 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                 <p className="text-sm text-white/70">{onboarding.done}/{onboarding.total} done</p>
               </div>
               <div className="h-2 rounded-full bg-white/20 mb-4 overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "#e6c878" }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "hsl(var(--gold))" }} />
               </div>
               <div className="flex flex-wrap gap-3">
                 {onboarding.steps.map((s) => (
                   <div key={s.label} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${s.done ? "bg-white/10" : "bg-white/15"}`}>
                     <span className={`text-sm ${s.done ? "text-white/60 line-through" : "text-white"}`}>{s.label}</span>
                     {!s.done && (
-                      <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-neutral-900" style={{ background: "#e6c878" }}>
+                      <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-primary-foreground" style={{ background: "hsl(var(--gold))" }}>
                         {s.label}
                       </NavLink>
                     )}
