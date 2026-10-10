@@ -30,7 +30,7 @@ const tabs: { key: Tab; label: string }[] = [
   { key: "compliance", label: "Compliance" },
 ];
 
-const PINK = "#b8923a";
+const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
 
 // Brand logos
 const IGLogo = () => (
@@ -147,7 +147,6 @@ const VenueSettings = () => {
 
   // billing + compliance
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
-  const [savingTier, setSavingTier] = useState<string | null>(null);
   const [requireAdDisclosure, setRequireAdDisclosure] = useState(false);
   const [requireVenueTag] = useState(true);
 
@@ -312,15 +311,9 @@ const VenueSettings = () => {
     else toast({ title: "Profile saved" });
   };
 
-  const selectTier = async (tierId: string) => {
-    if (!venue) return;
-    setSavingTier(tierId);
-    const { error } = await supabase.from("venues").update({ subscription_tier_id: tierId } as any).eq("id", venue.id);
-    setSavingTier(null);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    setSelectedTierId(tierId);
-    toast({ title: "Plan selected" });
-  };
+  // Adnan, "RE: Re: IT Tasks" #16: self-serve plan changes are blocked until
+  // we have payment collection — this tab is now read-only, "Contact us to
+  // upgrade" instead of writing subscription_tier_id directly.
 
   const updateCompliance = async (field: "require_ad_disclosure", value: boolean) => {
     if (!venue) return;
@@ -740,11 +733,18 @@ const VenueSettings = () => {
                       <Button
                         className="w-full"
                         variant={isSelected ? "default" : "outline"}
-                        onClick={() => selectTier(t.id)}
-                        disabled={savingTier === t.id || isSelected}
+                        onClick={() =>
+                          isSelected
+                            ? undefined
+                            : toast({
+                                title: "Contact us to upgrade",
+                                description: "Plan changes aren't self-serve yet — reach out to the FamePass team and we'll get you switched over.",
+                              })
+                        }
+                        disabled={isSelected}
                         style={isSelected ? { background: PINK } : undefined}
                       >
-                        {isSelected ? "Selected" : savingTier === t.id ? "Saving…" : "Select"}
+                        {isSelected ? "Current Plan" : "Contact us to upgrade"}
                       </Button>
                     </div>
                   );

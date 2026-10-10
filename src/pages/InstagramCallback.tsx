@@ -150,15 +150,15 @@ const InstagramCallback = () => {
   const mode: Mode = (params.get("state") || "").startsWith("login:") ? "login" : "connect";
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
-        <span className="font-display text-2xl font-bold text-slate-900 block mb-6">
-          Fame<span className="text-[#b8923a]">Pass</span>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8 text-center">
+        <span className="font-display text-2xl font-bold block mb-6">
+          Fame<span className="text-primary">Pass</span>
         </span>
 
         {(status === "waiting-for-session" || status === "exchanging") && (
           <>
-            <Loader2 className="w-10 h-10 mx-auto text-[#b8923a] animate-spin mb-4" />
+            <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin mb-4" />
             <h1 className="text-lg font-semibold">{mode === "login" ? "Signing you in with Instagram…" : "Connecting your Instagram…"}</h1>
             <p className="text-sm text-slate-500 mt-2">
               {mode === "login" ? "Hang on while we get your account ready." : "Hang on while we finish linking your account."}
@@ -190,7 +190,7 @@ const InstagramCallback = () => {
             <XCircle className="w-12 h-12 mx-auto text-slate-400 mb-4" />
             <h1 className="text-lg font-semibold">{mode === "login" ? "Sign-in cancelled" : "Connection cancelled"}</h1>
             <p className="text-sm text-slate-500 mt-2">{message}</p>
-            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-[#b8923a] hover:underline">
+            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
               {mode === "login" ? "Back to login" : "Back to Settings"}
             </Link>
           </>
@@ -201,7 +201,7 @@ const InstagramCallback = () => {
             <XCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
             <h1 className="text-lg font-semibold">{mode === "login" ? "Couldn't sign in with Instagram" : "Couldn't connect Instagram"}</h1>
             <p className="text-sm text-slate-500 mt-2">{message}</p>
-            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-[#b8923a] hover:underline">
+            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
               {mode === "login" ? "Back to login to try again" : "Back to Settings to try again"}
             </Link>
           </>

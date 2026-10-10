@@ -23,12 +23,6 @@ const normalizeHandle = (v: string) => {
 
 type Step = "account" | "profile" | "photo" | "niche" | "done";
 
-const NICHES = [
-  "Food & Dining", "Travel", "Fashion", "Beauty", "Fitness",
-  "Lifestyle", "Tech", "Gaming", "Music", "Photography",
-  "Family", "Business", "Sports", "Art", "Other",
-];
-
 const getPasswordChecks = (v: string) => ({
   length: v.length >= 8,
   letter: /[a-zA-Z]/.test(v),
@@ -39,14 +33,14 @@ const isPasswordAllowed = (v: string) => v.length >= 6;
 
 /* ---------- light-mode primitives ---------- */
 const Page = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
+  <div className="min-h-screen bg-background text-foreground">
     <header className="px-6 sm:px-8 py-5 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <span className="font-display text-xl sm:text-2xl font-bold text-slate-900">
-          Fame<span className="text-[#b8923a]">Pass</span>
+        <span className="font-display text-xl sm:text-2xl font-bold text-foreground">
+          Fame<span className="text-primary">Pass</span>
         </span>
       </Link>
-      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
         <UserCheck className="w-5 h-5" />
       </div>
     </header>
@@ -55,7 +49,7 @@ const Page = ({ children }: { children: React.ReactNode }) => (
 );
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`w-full max-w-xl bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8 ${className}`}>
+  <div className={`w-full max-w-xl bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 sm:p-8 ${className}`}>
     {children}
   </div>
 );
@@ -78,14 +72,14 @@ const Field = ({ label, children, hint }: { label: string; children: React.React
 const TextInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
-    className={`w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 ${props.className ?? ""}`}
+    className={`w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${props.className ?? ""}`}
   />
 );
 
 const TextArea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
     {...props}
-    className={`w-full min-h-[90px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 ${props.className ?? ""}`}
+    className={`w-full min-h-[90px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${props.className ?? ""}`}
   />
 );
 
@@ -93,7 +87,7 @@ const PrimaryButton = ({ children, disabled, ...rest }: React.ButtonHTMLAttribut
   <button
     {...rest}
     disabled={disabled}
-    className={`w-full h-12 rounded-xl bg-[#b8923a] text-white font-semibold hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition`}
+    className={`w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition`}
   >
     {children}
   </button>
@@ -101,11 +95,11 @@ const PrimaryButton = ({ children, disabled, ...rest }: React.ButtonHTMLAttribut
 
 const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; total: number }) => (
   <div className="flex items-center gap-3 mb-4">
-    <button onClick={onBack} className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#b8923a]">
+    <button onClick={onBack} className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-primary">
       <ArrowLeft className="w-4 h-4" />
     </button>
     <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-      <div className="h-full bg-[#b8923a] transition-all" style={{ width: `${(step / total) * 100}%` }} />
+      <div className="h-full bg-primary transition-all" style={{ width: `${(step / total) * 100}%` }} />
     </div>
     <span className="text-xs text-slate-500">{step}/{total}</span>
   </div>
@@ -174,8 +168,15 @@ const InfluencerSignup = () => {
 
 
 
-  // niches
+  // niches — Adnan, "Creator Page fixes" #4: pull from the same `niches`
+  // table Settings' niche picker uses, instead of a separate hardcoded list.
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [niches, setNiches] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    supabase.from("niches" as any).select("id, name").eq("is_active", true).order("name").then(({ data }) => {
+      setNiches((data as any[]) ?? []);
+    });
+  }, []);
 
   const pwdChecks = useMemo(() => getPasswordChecks(password), [password]);
   const pwdReady = useMemo(() => isStrongPassword(password), [password]);
@@ -346,7 +347,7 @@ const InfluencerSignup = () => {
                 <button
                   type="button"
                   onClick={() => setShowPwd((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary"
                 >
                   {showPwd ? "Hide" : "Show"}
                 </button>
@@ -377,7 +378,7 @@ const InfluencerSignup = () => {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPwd((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary"
                 >
                   {showConfirmPwd ? "Hide" : "Show"}
                 </button>
@@ -391,7 +392,7 @@ const InfluencerSignup = () => {
             </PrimaryButton>
             <p className="mt-4 text-center text-sm text-slate-500">
               Already have an account?{" "}
-              <button onClick={() => navigate("/login")} className="text-[#b8923a] font-semibold hover:underline">Sign in</button>
+              <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">Sign in</button>
             </p>
           </Card>
         </div>
@@ -433,7 +434,7 @@ const InfluencerSignup = () => {
                   setCity(e.target.value);
                   setCountry(loc?.country || "Lebanon");
                 }}
-                className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
+                className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">Select your city…</option>
                 {Array.from(
@@ -501,7 +502,7 @@ const InfluencerSignup = () => {
                   <span className="text-slate-400 text-sm">No photo</span>
                 )}
               </div>
-              <label className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-slate-200 cursor-pointer hover:border-[#b8923a] text-sm font-medium text-slate-700">
+              <label className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-slate-200 cursor-pointer hover:border-primary text-sm font-medium text-slate-700">
                 {avatarFile ? "Change photo" : "Upload photo"}
                 <input
                   type="file"
@@ -511,7 +512,7 @@ const InfluencerSignup = () => {
                 />
               </label>
               {avatarFile && (
-                <button onClick={() => onFile(null)} className="text-xs text-slate-500 hover:text-[#b8923a]">
+                <button onClick={() => onFile(null)} className="text-xs text-slate-500 hover:text-primary">
                   Remove
                 </button>
               )}
@@ -535,20 +536,20 @@ const InfluencerSignup = () => {
           <Card>
             <Heading title="Pick your content niches" sub="Choose all that apply — we'll match you with relevant offers." />
             <div className="flex flex-wrap gap-2 mb-6">
-              {NICHES.map((n) => {
-                const active = selectedNiches.includes(n);
+              {niches.map((n) => {
+                const active = selectedNiches.includes(n.name);
                 return (
                   <button
-                    key={n}
+                    key={n.id}
                     type="button"
-                    onClick={() => toggleNiche(n)}
+                    onClick={() => toggleNiche(n.name)}
                     className={`px-3 h-9 rounded-full border text-sm transition ${
                       active
-                        ? "bg-[#b8923a] text-white border-[#b8923a]"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-[#b8923a]"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-white text-slate-700 border-slate-200 hover:border-primary"
                     }`}
                   >
-                    {n}
+                    {n.name}
                   </button>
                 );
               })}
@@ -567,8 +568,8 @@ const InfluencerSignup = () => {
     <Page>
       <div className="w-full max-w-xl">
         <Card className="text-center">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#fbf6e8] flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-[#b8923a]" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Sparkles className="w-8 h-8 text-primary" />
           </div>
           <Heading
             title="Your application is under review"

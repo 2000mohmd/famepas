@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Upload, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import CheckInCode from "@/components/influencer/CheckInCode";
-import { DELIVERY_LABEL } from "@/lib/delivery";
+import { DELIVERY_LABEL, DELIVERY_TONE } from "@/lib/delivery";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -173,10 +173,18 @@ const InfluencerBookings = () => {
           <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold">{booking.offers?.title || "Visit"}</h3>
-              <Badge className={statusColor(booking.status)}>{booking.status.replace("_", " ")}</Badge>
-              {hasDeliverable && (
-                <Badge variant="outline" className="text-xs">
-                  Content: {deliverable.status}
+              {/* Adnan, "Creator Page fixes" #5: one clear stage badge, not three
+                  disagreeing ones — delivery_stage already carries this label. */}
+              {booking.offer_redemptions?.delivery_stage ? (
+                <Badge variant="outline" className={`text-xs ${DELIVERY_TONE[booking.offer_redemptions.delivery_stage] ?? ""}`}>
+                  {DELIVERY_LABEL[booking.offer_redemptions.delivery_stage] ?? booking.offer_redemptions.delivery_stage}
+                </Badge>
+              ) : (
+                <Badge className={statusColor(booking.status)}>{booking.status.replace("_", " ")}</Badge>
+              )}
+              {deliverable?.status === "rejected" && (
+                <Badge variant="outline" className="text-xs bg-destructive/15 text-destructive border-destructive/30">
+                  Content rejected
                 </Badge>
               )}
             </div>
@@ -205,7 +213,6 @@ const InfluencerBookings = () => {
               const due = d.post_due_at ? new Date(d.post_due_at) : null;
               return (
                 <div className="mt-1 space-y-1">
-                  <Badge variant="outline" className="text-xs">Delivery: {DELIVERY_LABEL[d.delivery_stage] ?? d.delivery_stage}</Badge>
                   {d.delivery_stage === "visited" && due && (
                     <p className={`text-xs ${due < new Date() ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                       Post due by {format(due, "PPP p")}

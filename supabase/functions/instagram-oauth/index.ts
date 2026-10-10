@@ -74,7 +74,7 @@ function buildAuthUrl(state: string) {
 }
 
 type ExchangeResult =
-  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null; pictureUrl: string | null }
+  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null; pictureUrl: string | null; followersCount: number | null }
   | { ok: false; error: string };
 
 /** Shared by "exchange" (logged-in connect) and "identify" (logged-out login/signup): code -> long-lived token + basic profile. */
@@ -136,14 +136,16 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
   let username: string | null = null;
   let accountType: string | null = null;
   let pictureUrl: string | null = null;
+  let followersCount: number | null = null;
   try {
     const profRes = await fetch(
-      `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url&access_token=${encodeURIComponent(accessToken)}`,
+      `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
     username = prof?.username ?? null;
     accountType = prof?.account_type ?? null;
     pictureUrl = prof?.profile_picture_url ?? null;
+    followersCount = typeof prof?.followers_count === "number" ? prof.followers_count : null;
   } catch (_e) { /* non-fatal — we still have the token */ }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
@@ -157,6 +159,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     username,
     accountType,
     pictureUrl,
+    followersCount,
   };
 }
 
@@ -308,11 +311,14 @@ Deno.serve(async (req) => {
       }
 
       // Keep profiles.instagram_verified in sync — it's the single source of
-      // truth the dashboard nudge and offer-apply gate check.
+      // truth the dashboard nudge and offer-apply gate check. Adnan, "Creator
+      // Page fixes" #3: pull the follower count from Instagram itself rather
+      // than trusting whatever the creator typed before connecting.
       await admin.from("profiles").update({
         instagram_handle: result.username,
         instagram_verified: true,
         instagram_verified_at: new Date().toISOString(),
+        ...(result.followersCount != null ? { followers_count: result.followersCount } : {}),
       }).eq("user_id", user.id);
 
       await applyProfileAvatar(admin, user.id, await mirrorAvatar(admin, user.id, "instagram", result.pictureUrl));

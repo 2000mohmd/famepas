@@ -30,6 +30,21 @@ const InfluencerProfile = () => {
     enabled: !!user,
   });
 
+  // Adnan, "Creator Page fixes" #3: once a platform is connected, its handle
+  // and follower count come from the platform itself, not a typed-in field.
+  // profiles.instagram_verified is already the source of truth for Instagram;
+  // TikTok has no such flag, so check social_integrations directly.
+  const { data: tiktokConnected } = useQuery({
+    queryKey: ["tiktok-connected", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("social_integrations").select("id")
+        .eq("influencer_id", user!.id).eq("platform", "tiktok").eq("status", "connected").maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
+  const instagramConnected = !!profile?.instagram_verified;
+
   const [form, setForm] = useState({
     full_name: "",
     bio: "",
@@ -243,20 +258,44 @@ const InfluencerProfile = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Instagram Handle</Label>
-                <Input value={form.instagram_handle} onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })} placeholder="@handle" />
+                <Label>Instagram Handle{instagramConnected && <span className="text-xs text-muted-foreground font-normal"> · connected</span>}</Label>
+                <Input
+                  value={form.instagram_handle}
+                  onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })}
+                  placeholder="@handle"
+                  readOnly={instagramConnected}
+                  disabled={instagramConnected}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Instagram Followers</Label>
-                <Input type="number" value={form.followers_count} onChange={(e) => setForm({ ...form, followers_count: parseInt(e.target.value) || 0 })} />
+                <Label>Instagram Followers{instagramConnected && <span className="text-xs text-muted-foreground font-normal"> · from Instagram</span>}</Label>
+                <Input
+                  type="number"
+                  value={form.followers_count}
+                  onChange={(e) => setForm({ ...form, followers_count: parseInt(e.target.value) || 0 })}
+                  readOnly={instagramConnected}
+                  disabled={instagramConnected}
+                />
               </div>
               <div className="space-y-2">
-                <Label>TikTok Handle</Label>
-                <Input value={form.tiktok_handle} onChange={(e) => setForm({ ...form, tiktok_handle: e.target.value })} placeholder="@handle" />
+                <Label>TikTok Handle{tiktokConnected && <span className="text-xs text-muted-foreground font-normal"> · connected</span>}</Label>
+                <Input
+                  value={form.tiktok_handle}
+                  onChange={(e) => setForm({ ...form, tiktok_handle: e.target.value })}
+                  placeholder="@handle"
+                  readOnly={!!tiktokConnected}
+                  disabled={!!tiktokConnected}
+                />
               </div>
               <div className="space-y-2">
-                <Label>TikTok Followers</Label>
-                <Input type="number" value={form.tiktok_followers} onChange={(e) => setForm({ ...form, tiktok_followers: parseInt(e.target.value) || 0 })} />
+                <Label>TikTok Followers{tiktokConnected && <span className="text-xs text-muted-foreground font-normal"> · from TikTok</span>}</Label>
+                <Input
+                  type="number"
+                  value={form.tiktok_followers}
+                  onChange={(e) => setForm({ ...form, tiktok_followers: parseInt(e.target.value) || 0 })}
+                  readOnly={!!tiktokConnected}
+                  disabled={!!tiktokConnected}
+                />
               </div>
             </div>
           </CardContent>

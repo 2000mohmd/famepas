@@ -62,22 +62,22 @@ const OAuthConsent = () => {
   const clientName = details?.client?.name ?? "an app";
 
   return (
-    <main className="min-h-screen bg-[#f7f5f0] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-        <span className="font-display text-2xl font-bold text-slate-900">
-          Fame<span className="text-[#b8923a]">Pass</span>
+    <main className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
+        <span className="font-display text-2xl font-bold">
+          Fame<span className="text-primary">Pass</span>
         </span>
 
         {error ? (
           <>
-            <h1 className="mt-6 text-xl font-bold text-slate-900">Authorization failed</h1>
+            <h1 className="mt-6 text-xl font-bold">Authorization failed</h1>
             <p className="mt-2 text-sm text-slate-600">{error}</p>
           </>
         ) : !details ? (
           <p className="mt-6 text-sm text-slate-600">Loading…</p>
         ) : (
           <>
-            <h1 className="mt-6 text-xl font-bold text-slate-900">Connect {clientName} to your account</h1>
+            <h1 className="mt-6 text-xl font-bold">Connect {clientName} to your account</h1>
             <p className="mt-2 text-sm text-slate-600">
               This lets {clientName} read and act on FamePass data as you. You can revoke access at any time.
             </p>
@@ -85,7 +85,7 @@ const OAuthConsent = () => {
               <button
                 disabled={busy}
                 onClick={() => decide(true)}
-                className="flex-1 h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold transition"
+                className="flex-1 h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold transition"
               >
                 {busy ? "Working…" : "Approve"}
               </button>

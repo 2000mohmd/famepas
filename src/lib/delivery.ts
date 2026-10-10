@@ -1,10 +1,17 @@
-/** Delivery stages of a booking, in the words Adnan's spec uses. */
+/**
+ * Delivery stages of a booking. Adnan, "Creator Page fixes" #5: creators and
+ * venues don't message each other, so these labels ARE the booking's status
+ * — "Invited" is the invitation stage before this row exists; once accepted
+ * it starts here at "Confirmed" and the same delivery_stage value drives the
+ * label everywhere (creator, venue, admin), so there's one stage, not three
+ * disagreeing badges.
+ */
 export const DELIVERY_LABEL: Record<string, string> = {
-  booked: "Booked",
+  booked: "Confirmed",
   visited: "Visited — post due",
-  posted: "Posted",
-  late: "Posted late",
-  verified: "Verified",
+  posted: "Content submitted",
+  late: "Content submitted (late)",
+  verified: "Approved",
   no_show: "No-show",
   missed: "Missed",
   cancelled: "Cancelled",

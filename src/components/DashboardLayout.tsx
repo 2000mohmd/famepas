@@ -556,8 +556,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         )}
 
-        <div className="p-4 md:p-8">{children}</div>
-        {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
+        <div className="p-4 md:p-8">
+          {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
+          {children}
+        </div>
       </main>
     </div>
   );

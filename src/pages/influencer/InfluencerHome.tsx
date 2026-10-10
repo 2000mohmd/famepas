@@ -82,6 +82,10 @@ const InfluencerHome = () => {
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
+  // Adnan, "Creator Page fixes" #2: a venue with no live offer shouldn't show as Featured.
+  const venueIdsWithLiveOffers = new Set((offers ?? []).map((o: any) => o.venue_id));
+  const featuredVenues = (venues ?? []).filter((v) => venueIdsWithLiveOffers.has(v.id));
+
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-8">
@@ -162,10 +166,11 @@ const InfluencerHome = () => {
         })}
 
         {/* Featured Venues */}
+        {featuredVenues.length > 0 && (
         <div>
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">Featured Venues</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {venues?.slice(0, 6).map((venue) => (
+            {featuredVenues.slice(0, 6).map((venue) => (
               <Card
                 key={venue.id}
                 className="cursor-pointer hover:border-gold/30 transition-all overflow-hidden"
@@ -201,6 +206,7 @@ const InfluencerHome = () => {
             </Button>
           </div>
         </div>
+        )}
       </div>
     </DashboardLayout>
   );

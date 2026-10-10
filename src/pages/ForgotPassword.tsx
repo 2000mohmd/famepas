@@ -30,21 +30,21 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-display text-2xl font-bold">Fame<span className="text-[#b8923a]">Pass</span></span>
+          <span className="font-display text-2xl font-bold">Fame<span className="text-primary">Pass</span></span>
         </Link>
       </header>
       <main className="flex-1 flex justify-center px-4 pb-16">
         <div className="w-full max-w-xl">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+          <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
             <h1 className="text-2xl font-bold mb-2">Reset your password</h1>
             <p className="text-sm text-slate-600 mb-6">Enter your email and we'll send you a link to set a new password.</p>
             {sent ? (
               <div className="text-sm text-slate-700">
                 <p className="mb-4">✅ If an account exists for <strong>{email}</strong>, a reset link is on its way. Check your inbox (and spam).</p>
-                <Link to="/login" className="text-[#b8923a] font-semibold hover:underline">Back to sign in</Link>
+                <Link to="/login" className="text-primary font-semibold hover:underline">Back to sign in</Link>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-5">
@@ -53,14 +53,14 @@ const ForgotPassword = () => {
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setTouched(true)}
                     placeholder="you@email.com"
-                    className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#b8923a]/20 ${emailError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#b8923a]"}`} />
+                    className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20 ${emailError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-primary"}`} />
                   {emailError && <p className="text-sm text-red-600 mt-1.5">{emailError}</p>}
                 </div>
-                <button disabled={loading || !isValidEmail(email)} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
+                <button disabled={loading || !isValidEmail(email)} className="w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold">
                   {loading ? "Sending..." : "Send reset link"}
                 </button>
                 <p className="text-center text-sm text-slate-600">
-                  <Link to="/login" className="text-[#b8923a] font-semibold hover:underline">Back to sign in</Link>
+                  <Link to="/login" className="text-primary font-semibold hover:underline">Back to sign in</Link>
                 </p>
               </form>
             )}

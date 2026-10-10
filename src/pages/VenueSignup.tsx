@@ -63,14 +63,14 @@ const createDefaultHours = (): OpeningHours =>
 /* ---------- shared light-mode UI primitives ---------- */
 
 const Page = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-[#f7f5f0] text-slate-900">
+  <div className="min-h-screen bg-background text-foreground">
     <header className="px-8 py-6 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <span className="font-display text-2xl font-bold text-slate-900">
-          Fame<span className="text-[#b8923a]">Pass</span>
+        <span className="font-display text-2xl font-bold text-foreground">
+          Fame<span className="text-primary">Pass</span>
         </span>
       </Link>
-      <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
         <UserCheck className="w-5 h-5" />
       </div>
     </header>
@@ -79,7 +79,7 @@ const Page = ({ children }: { children: React.ReactNode }) => (
 );
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`w-full max-w-xl bg-white rounded-2xl shadow-sm border border-slate-100 p-8 ${className}`}>
+  <div className={`w-full max-w-xl bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8 ${className}`}>
     {children}
   </div>
 );
@@ -102,14 +102,14 @@ const Field = ({ label, hint, children }: { label: string; hint?: string; childr
 const TextInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
-    className={`w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20 transition ${props.className ?? ""}`}
+    className={`w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition ${props.className ?? ""}`}
   />
 );
 
 const PrimaryButton = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     {...props}
-    className={`w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition ${props.className ?? ""}`}
+    className={`w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold transition ${props.className ?? ""}`}
   >
     {children}
   </button>
@@ -122,12 +122,12 @@ const ChoicePill = ({
     type="button"
     onClick={onClick}
     className={`flex items-center justify-between w-full h-12 px-4 rounded-lg border text-left text-sm font-medium transition
-      ${selected ? "border-[#b8923a] bg-[#fbf6e8] text-[#b8923a]" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}
+      ${selected ? "border-primary bg-primary/10 text-primary" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}
   >
     <span>{children}</span>
     <span className={`w-5 h-5 rounded-full border flex items-center justify-center
-      ${selected ? "border-[#b8923a] bg-[#b8923a]" : "border-slate-300"}`}>
-      {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+      ${selected ? "border-primary bg-primary" : "border-slate-300"}`}>
+      {selected && <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />}
     </span>
   </button>
 );
@@ -139,7 +139,7 @@ const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; to
     </button>
     <div className="flex gap-1">
       {Array.from({ length: total }).map((_, i) => (
-        <span key={i} className={`w-2 h-2 rounded-full ${i < step ? "bg-[#b8923a]" : "bg-slate-200"}`} />
+        <span key={i} className={`w-2 h-2 rounded-full ${i < step ? "bg-primary" : "bg-slate-200"}`} />
       ))}
     </div>
   </div>
@@ -398,7 +398,7 @@ const VenueSignup = () => {
             <Field label="Password">
               <div className="relative">
                 <TextInput type={showPwd ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" className="pr-16" />
-                <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
                   {showPwd ? "Hide" : "Show"}
                 </button>
               </div>
@@ -410,7 +410,7 @@ const VenueSignup = () => {
                 ["number", "A number"],
               ].map(([key, label]) => (
                 <div key={key} className="flex items-center gap-2">
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-[#b8923a]" : "bg-slate-200"}`}>
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-primary" : "bg-slate-200"}`}>
                     {passwordChecks[key as keyof typeof passwordChecks] && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                   </span>
                   {label}
@@ -423,7 +423,7 @@ const VenueSignup = () => {
             <Field label="Confirm password">
               <div className="relative">
                 <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pr-16" />
-                <button type="button" onClick={() => setShowConfirmPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                <button type="button" onClick={() => setShowConfirmPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
                   {showConfirmPwd ? "Hide" : "Show"}
                 </button>
               </div>
@@ -438,12 +438,12 @@ const VenueSignup = () => {
               Create Account
             </PrimaryButton>
             <p className="mt-4 text-center text-xs text-slate-500">
-              By continuing you agree to FamePass's <Link to="/privacy-policy" className="text-[#b8923a] hover:underline">Privacy Policy</Link> and Terms of Service.
+              By continuing you agree to FamePass's <Link to="/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link> and Terms of Service.
             </p>
           </Card>
           <p className="mt-5 text-center text-sm text-slate-500">
             Already have an account?{" "}
-            <button onClick={() => navigate("/login")} className="text-[#b8923a] font-semibold hover:underline">Log in</button>
+            <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">Log in</button>
           </p>
         </div>
       </Page>
@@ -456,8 +456,8 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("account")} step={1} total={7} />
           <Card className="text-center">
-            <div className="w-16 h-16 rounded-full bg-[#fbf6e8] mx-auto flex items-center justify-center mb-4">
-              <Mail className="w-7 h-7 text-[#b8923a]" />
+            <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+              <Mail className="w-7 h-7 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Let's finish your setup</h1>
             <p className="text-slate-500 mt-2 text-sm">
@@ -496,7 +496,7 @@ const VenueSignup = () => {
             <Field label="Email">
               <div className="relative">
                 <TextInput value={email} readOnly className="pr-10 bg-slate-50" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#b8923a] flex items-center justify-center">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                   <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
                 </div>
               </div>
@@ -580,7 +580,7 @@ const VenueSignup = () => {
               <select
                 value={venueCity}
                 onChange={e => setVenueCity(e.target.value)}
-                className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
+                className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">Select a city…</option>
                 {(() => {
@@ -632,9 +632,9 @@ const VenueSignup = () => {
                       setSuggestions([]);
                       setStep("location-details");
                     }}
-                    className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-[#fbf6e8] flex items-center gap-2 border-b border-slate-100 last:border-0"
+                    className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-primary/10 flex items-center gap-2 border-b border-slate-100 last:border-0"
                   >
-                    <MapPin className="w-4 h-4 text-[#b8923a] shrink-0" />
+                    <MapPin className="w-4 h-4 text-primary shrink-0" />
                     <span><span className="block font-medium text-slate-800">{s.mainText}</span>{s.secondaryText && <span className="block text-xs text-slate-500">{s.secondaryText}</span>}</span>
                   </button>
                 ))}
@@ -646,7 +646,7 @@ const VenueSignup = () => {
             )}
             <button
               onClick={() => { setLocationAddress(addressQuery); setSelectedPlaceId(null); setStep("location-details"); }}
-              className="mt-4 text-sm text-[#b8923a] font-medium"
+              className="mt-4 text-sm text-primary font-medium"
             >
               Skip — enter manually
             </button>
@@ -671,7 +671,7 @@ const VenueSignup = () => {
                 value={locationAddress}
                 onChange={e => setLocationAddress(e.target.value)}
                 rows={2}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </Field>
             <Field label="Email" hint="This email will receive notifications when a booking is confirmed at this location.">
@@ -684,7 +684,7 @@ const VenueSignup = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm font-semibold text-slate-800">Opening Hours</div>
-                <button onClick={() => setEditHours(v => !v)} className="text-sm text-[#b8923a] font-medium inline-flex items-center gap-1">
+                <button onClick={() => setEditHours(v => !v)} className="text-sm text-primary font-medium inline-flex items-center gap-1">
                   <Pencil className="w-3.5 h-3.5" /> {editHours ? "Done" : "Edit"}
                 </button>
               </div>
@@ -699,7 +699,7 @@ const VenueSignup = () => {
                             type="checkbox"
                             checked={hours[d].closed}
                             onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], closed: e.target.checked } }))}
-                            className="w-4 h-4 accent-[#b8923a]"
+                            className="w-4 h-4 accent-primary"
                           />
                           Closed
                         </label>
@@ -738,8 +738,8 @@ const VenueSignup = () => {
     <Page>
       <div className="w-full max-w-xl">
         <Card className="text-center">
-          <div className="w-16 h-16 rounded-full bg-[#fbf6e8] mx-auto flex items-center justify-center mb-4">
-            <Check className="w-8 h-8 text-[#b8923a]" strokeWidth={3} />
+          <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
+            <Check className="w-8 h-8 text-primary" strokeWidth={3} />
           </div>
           <Heading title="Application received" sub="Thanks! An admin will review your venue and email you as soon as it's approved. You can sign in once your account is active." />
           <PrimaryButton onClick={() => navigate("/login")}>Go to Sign In</PrimaryButton>

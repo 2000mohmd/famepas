@@ -76,15 +76,15 @@ const TikTokCallback = () => {
   }, [authLoading, user, params, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
-        <span className="font-display text-2xl font-bold text-slate-900 block mb-6">
-          Fame<span className="text-[#b8923a]">Pass</span>
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8 text-center">
+        <span className="font-display text-2xl font-bold block mb-6">
+          Fame<span className="text-primary">Pass</span>
         </span>
 
         {(status === "waiting-for-session" || status === "exchanging") && (
           <>
-            <Loader2 className="w-10 h-10 mx-auto text-[#b8923a] animate-spin mb-4" />
+            <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin mb-4" />
             <h1 className="text-lg font-semibold">Connecting your TikTok…</h1>
             <p className="text-sm text-slate-500 mt-2">Hang on while we finish linking your account.</p>
           </>
@@ -108,7 +108,7 @@ const TikTokCallback = () => {
               {status === "error" ? "Couldn't connect TikTok" : "Connection cancelled"}
             </h1>
             <p className="text-sm text-slate-500 mt-2">{message}</p>
-            <Link to="/influencer/settings" className="inline-block mt-5 text-sm font-semibold text-[#b8923a] hover:underline">
+            <Link to="/influencer/settings" className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
               Back to Settings to try again
             </Link>
           </>

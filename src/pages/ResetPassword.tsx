@@ -58,21 +58,21 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-display text-2xl font-bold">Fame<span className="text-[#b8923a]">Pass</span></span>
+          <span className="font-display text-2xl font-bold">Fame<span className="text-primary">Pass</span></span>
         </Link>
       </header>
       <main className="flex-1 flex justify-center px-4 pb-16">
         <div className="w-full max-w-xl">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+          <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
             <h1 className="text-2xl font-bold mb-2">Set a new password</h1>
             <p className="text-sm text-slate-600 mb-6">Choose a password with at least 8 characters, including a letter and a number.</p>
             {linkError && !ready ? (
               <div className="space-y-4">
                 <p className="text-sm text-red-600">{linkError}</p>
-                <Link to="/forgot-password" className="inline-flex items-center justify-center w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] text-white font-semibold">
+                <Link to="/forgot-password" className="inline-flex items-center justify-center w-full h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
                   Request a new reset link
                 </Link>
                 <Link to="/login" className="block text-center text-sm text-slate-600 hover:underline">Back to sign in</Link>
@@ -86,9 +86,9 @@ const ResetPassword = () => {
                   <label className="block text-sm font-semibold mb-2">New password</label>
                   <div className="relative">
                     <input type={showPwd ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                     <button type="button" onClick={() => setShowPwd((s) => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
                       {showPwd ? "Hide" : "Show"}
                     </button>
                   </div>
@@ -97,14 +97,14 @@ const ResetPassword = () => {
                   <label className="block text-sm font-semibold mb-2">Confirm new password</label>
                   <div className="relative">
                     <input type={showConfirm ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-[#b8923a] focus:ring-2 focus:ring-[#b8923a]/20" />
+                      className="w-full h-12 pl-4 pr-16 rounded-lg border border-slate-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                     <button type="button" onClick={() => setShowConfirm((s) => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#b8923a]">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
                       {showConfirm ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
-                <button disabled={loading} className="w-full h-12 rounded-lg bg-[#b8923a] hover:bg-[#9a7a30] disabled:opacity-50 text-white font-semibold">
+                <button disabled={loading} className="w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold">
                   {loading ? "Updating..." : "Update password"}
                 </button>
               </form>
