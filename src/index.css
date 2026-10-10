@@ -183,6 +183,17 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Adnan, "Creator Page fixes" #8: this class was already used on several
+     horizontal carousels (category rail, offer rail) but was never defined,
+     so the grey scrollbar it was meant to hide was still showing. */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ============================================================
