@@ -14,6 +14,20 @@ export type Stage = (typeof STAGES)[number]["key"];
 /** Stages that require a next action + date, mirroring the DB check constraint. */
 export const isOpenStage = (stage: string) => stage !== "live" && stage !== "lost";
 
+/**
+ * Adnan, "More Fixes" #19: moving a lead's stage left its next_action text
+ * describing the stage it just left (e.g. an "approved" lead still said
+ * "Get the venue approved"). Re-filled automatically on every stage move.
+ */
+export const DEFAULT_NEXT_ACTION: Partial<Record<Stage, string>> = {
+  new: "Make first contact",
+  contacted: "Book a meeting",
+  meeting_booked: "Hold the meeting",
+  meeting_done: "Follow up and get them signed up",
+  signed_up: "Get the venue approved",
+  approved: "Get the venue live",
+};
+
 export const SOURCES = [
   { key: "walk_in", label: "Walk-in" },
   { key: "referral", label: "Referral" },
@@ -131,6 +145,17 @@ export const lostReasonLabel = (key: string) => LOST_REASONS.find((s) => s.key =
 /** Local-midnight ISO date (YYYY-MM-DD); toISOString() would shift Beirut dates back a day. */
 export const todayISO = () => {
   const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/**
+ * `days` from now, local-midnight-safe. Adnan, "More Fixes" D.5: a new lead's
+ * follow-up date defaulted to today, so it aged into "overdue" the very next
+ * day even when nothing was actually missed — give it real runway instead.
+ */
+export const daysFromNowISO = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 

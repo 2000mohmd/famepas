@@ -349,8 +349,14 @@ const InfluencerExplore = () => {
               />
             ))}
             {displayedOffers?.length === 0 && (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                No offers found matching your criteria.
+              <div className="col-span-full text-center py-12 text-muted-foreground space-y-4">
+                <p>No offers found matching your criteria.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => { setSearch(""); setCategoryFilter("all"); setTypeFilter("all"); setCountryFilter("all"); setNearbyOnly(false); setSavedOnly(false); }}
+                >
+                  Clear filters
+                </Button>
               </div>
             )}
           </div>

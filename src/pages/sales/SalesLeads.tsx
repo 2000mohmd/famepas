@@ -12,8 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import LeadDialog from "./LeadDialog";
 import LeadImportDialog from "./LeadImportDialog";
 import {
-  STAGES, STAGE_TONE, STAGE_COLUMN_TONE, DEFAULT_SCORE_CONFIG, isOpenStage, isOverdue, leadScore, lostReasonLabel,
-  sourceLabel, stageLabel, toCsv, type Lead, type ScoreConfig,
+  STAGES, STAGE_TONE, STAGE_COLUMN_TONE, DEFAULT_SCORE_CONFIG, DEFAULT_NEXT_ACTION, daysFromNowISO, isOpenStage, isOverdue, leadScore, lostReasonLabel,
+  sourceLabel, stageLabel, toCsv, type Lead, type Stage, type ScoreConfig,
 } from "./leadMeta";
 
 const db = supabase as any;
@@ -106,6 +106,8 @@ const SalesLeads = () => {
 
   const ownerName = (id: string) => owners.find((o) => o.user_id === id)?.full_name ?? (id === user?.id ? "You" : "—");
 
+  const anyLeadScored = useMemo(() => leads.some((l) => leadScore(l, scoreConfig) !== null), [leads, scoreConfig]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     const rows = leads.filter((l) =>
@@ -188,15 +190,22 @@ const SalesLeads = () => {
    *  "open leads need a next step" rule; otherwise the form opens to collect it. */
   const moveStage = async (lead: Lead, stage: string) => {
     if (stage === lead.stage) return;
-    const needsNextAction = isOpenStage(stage) && (!lead.next_action || !lead.next_action_date);
     const needsReason = stage === "lost" && !lead.lost_reason;
-    if (needsNextAction || needsReason) {
+    if (needsReason) {
       setEditing({ ...lead, stage: stage as Lead["stage"] });
       setDialogOpen(true);
       return;
     }
     const patch: Record<string, unknown> = { stage };
-    if (!isOpenStage(stage)) { patch.next_action = null; patch.next_action_date = null; }
+    if (!isOpenStage(stage)) {
+      patch.next_action = null;
+      patch.next_action_date = null;
+    } else {
+      // Adnan, "More Fixes" #19: the next action always describes the stage
+      // just entered, not whatever stage the lead used to be in.
+      patch.next_action = DEFAULT_NEXT_ACTION[stage as Stage] ?? lead.next_action ?? "Follow up";
+      patch.next_action_date = daysFromNowISO(3);
+    }
     const { error } = await db.from("leads").update(patch).eq("id", lead.id);
     if (error) { toast({ title: "Couldn't move that", description: error.message, variant: "destructive" }); return; }
     setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, ...patch, stage } as Lead : l)));
@@ -407,7 +416,10 @@ const SalesLeads = () => {
                     {isManager && <th className="p-3 font-medium">Owner</th>}
                     <th className="p-3 font-medium">Next action</th>
                     <th className="p-3 font-medium">Follow up</th>
-                    <th className="p-3 font-medium text-right">Score</th>
+                    {/* Adnan, "More Fixes" D.6: hidden until scoring has real
+                        inputs (google_rating/reviews/followers/price_level) —
+                        reappears on its own once a lead actually has one. */}
+                    {anyLeadScored && <th className="p-3 font-medium text-right">Score</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -449,7 +461,7 @@ const SalesLeads = () => {
                         <td className={`p-3 whitespace-nowrap ${overdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                           {lead.next_action_date ?? "—"}
                         </td>
-                        <td className="p-3 text-right text-foreground">{score ?? "—"}</td>
+                        {anyLeadScored && <td className="p-3 text-right text-foreground">{score ?? "—"}</td>}
                       </tr>
                     );
                   })}

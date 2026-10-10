@@ -342,7 +342,8 @@ const InfluencerBookings = () => {
             {upcoming.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No upcoming bookings</p>
+                <p className="mb-4">No upcoming bookings</p>
+                <Button asChild><Link to="/influencer/explore">Browse offers</Link></Button>
               </div>
             )}
           </TabsContent>

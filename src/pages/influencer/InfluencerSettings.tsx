@@ -237,6 +237,16 @@ const InfluencerSettings = () => {
     }
   }, [settings]);
 
+  // Adnan, "Creator Page fixes" #13: toggles save themselves, no "Save
+  // Settings" click needed — same idea as toggle2FA above, generalized.
+  const saveField = async (patch: Partial<typeof form>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    const { error } = await supabase.from("influencer_settings").upsert({ ...next, influencer_id: user!.id }, { onConflict: "influencer_id" });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setForm(form); return; }
+    queryClient.invalidateQueries({ queryKey: ["influencer-settings"] });
+  };
+
   const updateSettings = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -278,7 +288,7 @@ const InfluencerSettings = () => {
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between">
                 <Label>{label}</Label>
-                <Switch checked={form[key]} onCheckedChange={(v) => setForm({ ...form, [key]: v })} />
+                <Switch checked={form[key]} onCheckedChange={(v) => saveField({ [key]: v })} />
               </div>
             ))}
           </CardContent>
@@ -289,11 +299,11 @@ const InfluencerSettings = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Show profile publicly</Label>
-              <Switch checked={form.privacy_show_profile} onCheckedChange={(v) => setForm({ ...form, privacy_show_profile: v })} />
+              <Switch checked={form.privacy_show_profile} onCheckedChange={(v) => saveField({ privacy_show_profile: v })} />
             </div>
             <div className="flex items-center justify-between">
               <Label>Show earnings publicly</Label>
-              <Switch checked={form.privacy_show_earnings} onCheckedChange={(v) => setForm({ ...form, privacy_show_earnings: v })} />
+              <Switch checked={form.privacy_show_earnings} onCheckedChange={(v) => saveField({ privacy_show_earnings: v })} />
             </div>
           </CardContent>
         </Card>

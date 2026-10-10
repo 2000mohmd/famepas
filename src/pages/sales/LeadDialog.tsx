@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Link2, Phone, MessageCircle, Sparkles } from "lucide-react";
 import {
   ACTIVITY_OUTCOMES, ACTIVITY_TYPES, LOST_REASONS, PRICE_LEVELS, SOURCES, STAGES,
-  isOpenStage, stageLabel, todayISO,
+  isOpenStage, stageLabel, todayISO, daysFromNowISO,
   type Lead, type LeadActivity,
 } from "./leadMeta";
 
@@ -40,7 +40,7 @@ const emptyForm = (ownerId: string) => ({
   instagram_followers: "", google_rating: "", google_review_count: "", price_level: "",
   plan_pitched_id: "",
   source: "walk_in", stage: "new", owner_id: ownerId,
-  next_action: "", next_action_date: todayISO(), lost_reason: "", notes: "",
+  next_action: "", next_action_date: daysFromNowISO(3), lost_reason: "", notes: "",
 });
 
 /** "" means "not captured" for these — 0 is a real rating, so don't coerce. */
@@ -110,7 +110,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         price_level: lead.price_level?.toString() ?? "",
         plan_pitched_id: lead.plan_pitched_id ?? "",
         source: lead.source, stage: lead.stage, owner_id: lead.owner_id,
-        next_action: lead.next_action ?? "", next_action_date: lead.next_action_date ?? todayISO(),
+        next_action: lead.next_action ?? "", next_action_date: lead.next_action_date ?? daysFromNowISO(3),
         lost_reason: lead.lost_reason ?? "", notes: lead.notes ?? "",
       });
       db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false })

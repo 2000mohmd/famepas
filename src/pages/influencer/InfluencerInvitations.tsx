@@ -21,9 +21,11 @@ import { Send, Check, X, QrCode, MapPin, Calendar, Building2 } from "lucide-reac
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const InfluencerInvitations = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<any>(null);
   const [confirmCancel, setConfirmCancel] = useState<any>(null);
@@ -135,7 +137,8 @@ const InfluencerInvitations = () => {
           {invitations?.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <Send className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No invitations yet. Complete your profile to attract venues!</p>
+              <p className="mb-4">No invitations yet. Complete your profile to attract venues!</p>
+              <Button onClick={() => navigate("/influencer/profile")}>Complete profile</Button>
             </div>
           )}
         </div>
