@@ -355,7 +355,10 @@ const AdminCreatorOps = () => {
             </div>
 
             <div className="max-w-xl">
-              <Card title="Targets" note="Adnan's push-back: judge creator recruitment on active creators and post rate, not sign-ups.">
+              {/* Adnan, "More Fixes" #22: this card judges creator recruitment
+                  on active creators and post rate, not raw sign-ups — that
+                  rationale was leaking into the visible note below. */}
+              <Card title="Targets" note="Weekly goals for new approvals and active creators.">
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="space-y-1.5">
                     <Label>New approved per week</Label>

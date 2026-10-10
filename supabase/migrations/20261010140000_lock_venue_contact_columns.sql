@@ -1,0 +1,12 @@
+-- Adnan, "RE: Re: IT Tasks" #23: lock venue phone/WhatsApp at the database
+-- level so creators can't read it in any way — not just hidden in the UI.
+--
+-- RLS on venues is row-level only: "Authenticated can read active approved
+-- venues" grants every authenticated user (creators included) read access to
+-- the whole row, phone columns included, regardless of what the app's own
+-- queries happen to select. Column-level REVOKE closes that off structurally.
+--
+-- The venue owner's own read path already goes through get_venue_full(),
+-- a SECURITY DEFINER function that bypasses the caller's column grants, so
+-- owners and admins keep seeing their own phone/WhatsApp unaffected.
+revoke select (phone, contact_phone, whatsapp_phone) on public.venues from authenticated, anon;

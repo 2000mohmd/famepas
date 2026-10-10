@@ -23,7 +23,7 @@ const VenueHome = () => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data: v } = await supabase.from("venues").select("*").eq("owner_id", user.id)
+      const { data: v } = await supabase.from("venues").select("id, name, approval_status").eq("owner_id", user.id)
         .order("created_at", { ascending: true }).limit(1).maybeSingle();
       setVenue(v);
       if (!v || v.approval_status !== "approved") { setLoading(false); return; }

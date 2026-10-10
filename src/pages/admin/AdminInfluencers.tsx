@@ -78,6 +78,9 @@ const AdminInfluencers = () => {
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [rejectNote, setRejectNote] = useState("");
+  // Adnan, "More Fixes" #26: bulk approve/reject for the 190+ pending applications.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchInfluencers = async () => {
@@ -157,11 +160,46 @@ const AdminInfluencers = () => {
     setRejectNote("");
   };
 
+  const openBulkReject = () => {
+    setRejectReason(REJECTION_REASONS[0]);
+    setRejectNote("");
+    setBulkRejectOpen(true);
+  };
+
   const submitReject = async () => {
-    if (!rejectTarget) return;
     const reason = rejectReason === "Other" ? (rejectNote.trim() || "Other") : rejectReason;
+    if (bulkRejectOpen) {
+      await bulkSetApprovalStatus([...selectedIds], "rejected", reason);
+      setBulkRejectOpen(false);
+      return;
+    }
+    if (!rejectTarget) return;
     await setApprovalStatus(rejectTarget, "rejected", reason);
     setRejectTarget(null);
+  };
+
+  const bulkSetApprovalStatus = async (ids: string[], status: "approved" | "rejected", reason?: string) => {
+    if (!ids.length) return;
+    const { error } = await supabase.from("profiles").update({ approval_status: status } as any).in("user_id", ids);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    await Promise.all(ids.map((id) =>
+      notifyEmail(
+        status === "approved"
+          ? { event: "influencer_approved", user_id: id }
+          : { event: "influencer_rejected", user_id: id, reason }
+      )
+    ));
+    toast({ title: `${ids.length} influencer${ids.length === 1 ? "" : "s"} ${status}` });
+    setSelectedIds(new Set());
+    fetchInfluencers();
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
 
@@ -294,29 +332,71 @@ const AdminInfluencers = () => {
           </Button>
         </div>
 
+        {(() => {
+          const pendingIds = filtered.filter((i) => i.approval_status === "pending").map((i) => i.user_id);
+          return pendingIds.length > 0 && selectedIds.size === 0 ? (
+            <div className="mb-4">
+              <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set(pendingIds))}>
+                Select all {pendingIds.length} pending
+              </Button>
+            </div>
+          ) : null;
+        })()}
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-3 mb-4 p-3 rounded-xl border border-gold/30 bg-gold/10">
+            <span className="text-sm font-medium text-foreground">{selectedIds.size} selected</span>
+            <Button size="sm" onClick={() => bulkSetApprovalStatus([...selectedIds], "approved")} className="bg-success/20 text-success hover:bg-success/30">
+              Approve all
+            </Button>
+            <Button size="sm" variant="outline" onClick={openBulkReject} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              Reject all
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} className="ml-auto text-muted-foreground">
+              Clear
+            </Button>
+          </div>
+        )}
 
         <div className="gradient-card rounded-xl border border-border overflow-hidden">
           <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[1040px]">
             <thead>
               <tr className="border-b border-border">
+                <th className="p-4 w-10">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on this page"
+                    checked={paged.length > 0 && paged.every((i) => selectedIds.has(i.user_id))}
+                    onChange={(e) => {
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        paged.forEach((i) => { if (e.target.checked) next.add(i.user_id); else next.delete(i.user_id); });
+                        return next;
+                      });
+                    }}
+                  />
+                </th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Instagram</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">TikTok</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Followers</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[110px]">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Joined</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground sticky right-0 bg-card">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Loading influencers…</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Loading influencers…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No influencers found</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No influencers found</td></tr>
               ) : (
                 paged.map((inf) => (
                   <tr key={inf.user_id} className={`border-b border-border/50 hover:bg-secondary/30 transition-colors ${inf.is_suspended ? "opacity-60" : ""}`}>
+                    <td className="p-4">
+                      <input type="checkbox" aria-label={`Select ${inf.full_name}`} checked={selectedIds.has(inf.user_id)} onChange={() => toggleSelected(inf.user_id)} />
+                    </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         {inf.avatar_url ? (
@@ -462,11 +542,13 @@ const AdminInfluencers = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Reject Dialog */}
-        <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
+        {/* Reject Dialog — also used for bulk reject */}
+        <Dialog open={!!rejectTarget || bulkRejectOpen} onOpenChange={(o) => { if (!o) { setRejectTarget(null); setBulkRejectOpen(false); } }}>
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-display text-foreground">Reject application</DialogTitle>
+              <DialogTitle className="font-display text-foreground">
+                {bulkRejectOpen ? `Reject ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}` : "Reject application"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-2">
               <div>
@@ -484,9 +566,13 @@ const AdminInfluencers = () => {
                   <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Reason for rejection..." className="bg-secondary border-border mt-1" rows={3} />
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">This reason is included in the automatic email sent to the applicant.</p>
+              <p className="text-xs text-muted-foreground">
+                {bulkRejectOpen
+                  ? "This reason is included in the automatic email sent to each applicant."
+                  : "This reason is included in the automatic email sent to the applicant."}
+              </p>
               <Button onClick={submitReject} className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold">
-                Reject &amp; Notify
+                {bulkRejectOpen ? `Reject ${selectedIds.size} & Notify` : "Reject & Notify"}
               </Button>
             </div>
           </DialogContent>

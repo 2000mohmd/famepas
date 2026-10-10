@@ -172,12 +172,14 @@ const AdminAnalyticsDeep = () => {
     const venueOfferCount: Record<string, number> = {};
     offers.forEach(o => { venueOfferCount[o.venue_id] = (venueOfferCount[o.venue_id] ?? 0) + 1; });
     const repeatVenues = Object.values(venueOfferCount).filter(c => c > 1).length;
+    // Adnan, "More Fixes" #20: a venue that never posted isn't "churned" —
+    // keep the two cases separate so the wording doesn't imply past activity
+    // that never happened.
     const churnCutoff = now - 30 * 86400000;
-    const churnedVenues = venues.filter(v => {
-      const last = offers.filter(o => o.venue_id === v.id)
-        .map(o => +new Date(o.created_at)).sort((a, b) => b - a)[0];
-      return !last || last < churnCutoff;
-    });
+    const lastOfferAt = (venueId: string) =>
+      offers.filter(o => o.venue_id === venueId).map(o => +new Date(o.created_at)).sort((a, b) => b - a)[0];
+    const churnedVenues = venues.filter(v => { const last = lastOfferAt(v.id); return !!last && last < churnCutoff; });
+    const neverPostedVenues = venues.filter(v => !lastOfferAt(v.id));
 
     const byCity: Record<string, { venues: number; offers: number }> = {};
     venues.forEach(v => {
@@ -299,7 +301,7 @@ const AdminAnalyticsDeep = () => {
       openOffers: openOffers.length, liveOffers: liveOffers.length, totalOffers: offers.length,
       claimedOffers: claimedOfferIds.size, avgFill, offersPerVenue, offersOverTime,
       venuesWithOffers: venuesWithOffers.size, totalVenues: venues.length, repeatVenues,
-      churnedVenues: churnedVenues.length, cityRows, categoryRows,
+      churnedVenues: churnedVenues.length, neverPostedVenues: neverPostedVenues.length, cityRows, categoryRows,
       approvedCount: approvedReds.length, flaked: flaked.length, avgInfRating,
       totalInfluencers: (d.influencers as any[]).length, repeatInf,
       totalValue, valueRows, contentTypeCounts, totalViews, totalLikes, totalComments, costPerView,
@@ -381,7 +383,8 @@ const AdminAnalyticsDeep = () => {
             <TabsContent value="venue" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Metric label="Repeat usage rate" value={pct(m.repeatVenues, m.venuesWithOffers)} hint={`${m.repeatVenues} venues posted more than one offer`} />
-                <Metric label="Venues at churn risk" value={m.churnedVenues} hint="No offer posted in the last 30 days" />
+                <Metric label="Venues at churn risk" value={m.churnedVenues} hint="No new offer in 30 days" />
+                <Metric label="Venues with no offer yet" value={m.neverPostedVenues} hint="Signed up, never posted" />
                 <Metric label="Offers posted in range" value={m.offersInRange} />
                 <Metric label="Value of redeemed offers" value={`$${m.totalValue.toLocaleString()}`} hint="Based on the offer value field" />
               </div>

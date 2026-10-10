@@ -33,6 +33,14 @@ export function normalizePhone(raw: string, defaultCc = "961"): string | null {
   else if (d.startsWith("00")) d = d.slice(2);
   else if (d.startsWith(defaultCc) && d.length > defaultCc.length + 6) { /* has cc */ }
   else d = defaultCc + d.replace(/^0+/, "");
+  // Adnan, "More Fixes" #27: the generic 8-15 digit range let through numbers
+  // like +961703477490 (12 digits — Lebanese numbers are at most 11). A
+  // Lebanese local number (after the 961) is 7 digits (old format) or 8
+  // (mobile); anything else with a 961 country code is too long or short.
+  if (d.startsWith("961")) {
+    const local = d.length - 3;
+    return local === 7 || local === 8 ? `+${d}` : null;
+  }
   return d.length >= 8 && d.length <= 15 ? `+${d}` : null;
 }
 
