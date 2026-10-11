@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const AdminCulturalEvents = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_events">
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] font-bold text-foreground">Cultural Events</h1>
@@ -102,6 +104,7 @@ const AdminCulturalEvents = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ const AdminBroadcast = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_influencers">
       <div className="animate-fade-in max-w-2xl">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-2">
           <Megaphone className="w-7 h-7 text-gold" /> Send <span className="text-gold">Broadcast</span>
@@ -154,6 +156,7 @@ const AdminBroadcast = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

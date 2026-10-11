@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -313,6 +314,7 @@ const AdminAnalyticsDeep = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_analytics">
       <div className="animate-fade-in">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
@@ -600,6 +602,7 @@ const AdminAnalyticsDeep = () => {
           </Tabs>
         )}
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

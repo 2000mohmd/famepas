@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,7 @@ const AdminAuditLog = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_users">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Audit <span className="text-gold">log</span></h1>
         <p className="text-muted-foreground mb-6">
@@ -84,6 +86,7 @@ const AdminAuditLog = () => {
           </div>
         </div>
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

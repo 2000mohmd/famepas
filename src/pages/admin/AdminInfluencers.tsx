@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -291,6 +292,7 @@ const AdminInfluencers = () => {
   return (
 
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_influencers">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Manage <span className="text-gold">Influencers</span></h1>
         <p className="text-muted-foreground mb-8">
@@ -612,6 +614,7 @@ const AdminInfluencers = () => {
           onReject={(id) => setApprovalStatus(id, "rejected")}
         />
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,7 @@ const AdminModeration = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_moderation">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
           Content <span className="text-gold">Moderation</span>
@@ -371,6 +373,7 @@ const AdminModeration = () => {
           </DialogContent>
         </Dialog>
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

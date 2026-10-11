@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -206,6 +207,7 @@ const AdminVenues = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_venues">
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -472,6 +474,7 @@ const AdminVenues = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

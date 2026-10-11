@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -190,6 +191,7 @@ const AdminRedemptions = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_offers">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Offer <span className="text-gold">Attendance</span></h1>
         <p className="text-muted-foreground mb-6">Every booking from check-in to a verified post. Updates live as venues scan.</p>
@@ -332,6 +334,7 @@ const AdminRedemptions = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminPermissions, hasAdminPermission } from "@/hooks/useAdminPermissions";
 import {
   LayoutDashboard,
   Building2,
@@ -46,7 +47,7 @@ import {
 
 
 
-type NavItem = { to: string; icon: any; label: string; badge?: string; managerOnly?: boolean };
+type NavItem = { to: string; icon: any; label: string; badge?: string; managerOnly?: boolean; permission?: string };
 type NavGroup = { label?: string; items: NavItem[]; badge?: string };
 
 const adminGroups: NavGroup[] = [
@@ -54,7 +55,7 @@ const adminGroups: NavGroup[] = [
     label: "Overview",
     items: [
       { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-      { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+      { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "manage_analytics" },
       { to: "/sales", icon: CalendarDays, label: "My day" },
       { to: "/sales/dashboard", icon: TrendingUp, label: "Sales" },
     ],
@@ -63,32 +64,32 @@ const adminGroups: NavGroup[] = [
     label: "Marketplace",
     items: [
       { to: "/sales/leads", icon: Target, label: "Leads" },
-      { to: "/admin/venues", icon: Building2, label: "Venues" },
-      { to: "/admin/influencers", icon: Users, label: "Influencers" },
-      { to: "/admin/offers", icon: Tag, label: "Offers" },
-      { to: "/admin/events", icon: CalendarDays, label: "Events" },
+      { to: "/admin/venues", icon: Building2, label: "Venues", permission: "manage_venues" },
+      { to: "/admin/influencers", icon: Users, label: "Influencers", permission: "manage_influencers" },
+      { to: "/admin/offers", icon: Tag, label: "Offers", permission: "manage_offers" },
+      { to: "/admin/events", icon: CalendarDays, label: "Events", permission: "manage_events" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { to: "/admin/creator-ops", icon: Sparkles, label: "Creator Ops" },
-      { to: "/admin/redemptions", icon: ClipboardCheck, label: "Offer Attendance" },
-      { to: "/admin/event-attendees", icon: Users, label: "Event Attendees" },
-      { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation" },
-      { to: "/admin/billing", icon: CreditCard, label: "Billing" },
-      { to: "/admin/broadcast", icon: Megaphone, label: "Broadcast" },
+      { to: "/admin/creator-ops", icon: Sparkles, label: "Creator Ops", permission: "manage_influencers" },
+      { to: "/admin/redemptions", icon: ClipboardCheck, label: "Offer Attendance", permission: "manage_offers" },
+      { to: "/admin/event-attendees", icon: Users, label: "Event Attendees", permission: "manage_events" },
+      { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation", permission: "manage_moderation" },
+      { to: "/admin/billing", icon: CreditCard, label: "Billing", permission: "manage_billing" },
+      { to: "/admin/broadcast", icon: Megaphone, label: "Broadcast", permission: "manage_influencers" },
       { to: "/admin/messages", icon: MessageCircle, label: "Messages" },
     ],
   },
   {
     label: "Configuration",
     items: [
-      { to: "/admin/categories", icon: FolderTree, label: "Categories" },
-      { to: "/admin/locations", icon: MapPin, label: "Locations" },
-      { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events" },
-      { to: "/admin/users", icon: Users, label: "Admin Users" },
-      { to: "/admin/audit-log", icon: ShieldAlert, label: "Audit Log" },
+      { to: "/admin/categories", icon: FolderTree, label: "Categories", permission: "manage_categories" },
+      { to: "/admin/locations", icon: MapPin, label: "Locations", permission: "manage_locations" },
+      { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events", permission: "manage_events" },
+      { to: "/admin/users", icon: Users, label: "Admin Users", permission: "manage_users" },
+      { to: "/admin/audit-log", icon: ShieldAlert, label: "Audit Log", permission: "manage_users" },
       { to: "/admin/sales-team", icon: Target, label: "Sales Team" },
       { to: "/admin/sales-config", icon: TrendingUp, label: "Sales Scoring" },
       { to: "/admin/chatbot", icon: Bot, label: "Train Chatbot" },
@@ -179,10 +180,15 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const rawGroups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
   // A rep shouldn't see links that ProtectedRoute would only bounce them off.
   const isManager = role === "admin" || role === "sales_manager";
+  // Adnan, recap A19: each admin sees only the tabs their admin_user_permissions cover.
+  const adminPermissions = useAdminPermissions();
   const groups = (isManager
     ? rawGroups
     : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }))
-  ).filter((g) => g.label !== "Ad Studio" || hasLiveOffer);
+  )
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || hasAdminPermission(adminPermissions, i.permission)) }))
+    .filter((g) => g.items.length > 0)
+    .filter((g) => g.label !== "Ad Studio" || hasLiveOffer);
   const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

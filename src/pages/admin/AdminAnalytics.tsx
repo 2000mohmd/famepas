@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import StatCard from "@/components/StatCard";
 import { TrendingUp, Users, Tag, Eye, Filter, CalendarIcon, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -207,6 +208,7 @@ const AdminAnalytics = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_analytics">
       <div className="animate-fade-in">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
@@ -349,6 +351,7 @@ const AdminAnalytics = () => {
           </div>
         </div>
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

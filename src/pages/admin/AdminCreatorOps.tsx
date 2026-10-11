@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -187,6 +188,7 @@ const AdminCreatorOps = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_influencers">
       <div className="animate-fade-in">
         <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
           <div>
@@ -427,6 +429,7 @@ const AdminCreatorOps = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

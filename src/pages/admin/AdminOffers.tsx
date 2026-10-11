@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,7 @@ const AdminOffers = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_offers">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">All <span className="text-gold">Offers</span></h1>
         <p className="text-muted-foreground mb-6">{offers.length} total offers · {activeOffers} active · {inactiveOffers} inactive</p>
@@ -231,6 +233,7 @@ const AdminOffers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };

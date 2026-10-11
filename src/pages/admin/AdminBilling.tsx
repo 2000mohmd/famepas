@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,7 @@ const AdminBilling = () => {
 
   return (
     <DashboardLayout type="admin">
+      <AdminPermissionGate permission="manage_billing">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
           Billing & <span className="text-gold">Subscriptions</span>
@@ -257,6 +259,7 @@ const AdminBilling = () => {
           </Dialog>
         )}
       </div>
+      </AdminPermissionGate>
     </DashboardLayout>
   );
 };
