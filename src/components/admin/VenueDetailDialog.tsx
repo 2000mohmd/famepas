@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,30 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  // Adnan, recap B10: venue health after go-live — offers posted, creator
+  // visits, content delivered, all in one place instead of cross-referencing
+  // three separate admin pages.
+  const [health, setHealth] = useState<{ offers: number; visits: number; delivered: number } | null>(null);
+  // Adnan, recap B5: a quick in-app message to the venue, logged with date
+  // and sender via the messages table's own created_at/sender_id — same
+  // table and pattern VenueMessages.tsx already uses.
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  const sendMessage = async () => {
+    if (!venueId || !venue?.owner_id || !messageText.trim() || !user) return;
+    setSendingMessage(true);
+    const { error } = await supabase.from("messages").insert({
+      sender_id: user.id, receiver_id: venue.owner_id, venue_id: venueId,
+      content: messageText.trim(), message_type: "text",
+    } as any);
+    setSendingMessage(false);
+    if (error) { toast({ title: "Couldn't send", description: error.message, variant: "destructive" }); return; }
+    setMessageText("");
+    toast({ title: "Message sent" });
+  };
 
   const saveNotes = async () => {
     if (!venueId) return;
@@ -81,6 +105,16 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
         const { data: p } = await supabase.from("profiles").select("full_name, avatar_url, phone").eq("user_id", v.owner_id).maybeSingle();
         setOwner(p);
       }
+      const [{ count: offerCount }, { data: redemptions }] = await Promise.all([
+        supabase.from("offers").select("id", { count: "exact", head: true }).eq("venue_id", venueId),
+        (supabase as any).from("offer_redemptions").select("delivery_stage, offers!inner(venue_id)").eq("offers.venue_id", venueId),
+      ]);
+      const stages = (redemptions ?? []).map((r: any) => r.delivery_stage);
+      setHealth({
+        offers: offerCount ?? 0,
+        visits: stages.filter((s: string) => ["visited", "posted", "late", "verified", "missed"].includes(s)).length,
+        delivered: stages.filter((s: string) => ["posted", "late", "verified"].includes(s)).length,
+      });
       setLoading(false);
     })();
   }, [venueId, open]);
@@ -125,6 +159,23 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                 </div>
               </div>
             </div>
+
+            {health && (
+              <div className="grid grid-cols-3 gap-3 rounded-lg border border-border p-3">
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-foreground">{health.offers}</p>
+                  <p className="text-xs text-muted-foreground">Offers posted</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-foreground">{health.visits}</p>
+                  <p className="text-xs text-muted-foreground">Creator visits</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-foreground">{health.delivered}</p>
+                  <p className="text-xs text-muted-foreground">Content delivered</p>
+                </div>
+              </div>
+            )}
 
             {/* Admin: keep venues aligned with the managed Categories and Locations lists */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -234,6 +285,16 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
                     {owner.phone && <p className="text-xs text-muted-foreground">{owner.phone}</p>}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {venue.owner_id && (
+              <div className="border-t border-border pt-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Message venue</p>
+                <Textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Send an in-app message to the venue owner..." rows={2} className="bg-secondary border-border" />
+                <Button size="sm" variant="outline" onClick={sendMessage} disabled={sendingMessage || !messageText.trim()} className="mt-2">
+                  {sendingMessage ? "Sending..." : "Send"}
+                </Button>
               </div>
             )}
 
