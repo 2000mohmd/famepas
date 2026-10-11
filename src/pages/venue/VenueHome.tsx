@@ -18,6 +18,10 @@ const VenueHome = () => {
   const [liveCampaigns, setLiveCampaigns] = useState<any[]>([]);
   const [upcomingVisits, setUpcomingVisits] = useState<any[]>([]);
   const [recentContent, setRecentContent] = useState<any[]>([]);
+  // Adnan, recap E1: social proof (top creator avatars + follower counts) on
+  // the venue landing page, the one piece missing from the existing checklist/
+  // progress screen (VP3).
+  const [topCreators, setTopCreators] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +52,8 @@ const VenueHome = () => {
       }
       setUpcomingVisits(bks.map((b: any) => ({ ...b, profile: profiles[b.influencer_id] })));
       setRecentContent((deliverables.data ?? []).map((d: any) => ({ ...d, profile: profiles[(d as any).bookings?.influencer_id] })));
+      const { data: top } = await (supabase as any).rpc("get_top_creators", { _limit: 6 });
+      setTopCreators(top ?? []);
       setLoading(false);
     })();
   }, [user]);
@@ -163,6 +169,29 @@ const VenueHome = () => {
             </CardContent>
           </Card>
         </div>
+
+        {topCreators.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="font-semibold text-foreground mb-4">Creators on FamePass</h2>
+              <div className="flex flex-wrap gap-4">
+                {topCreators.map((c) => (
+                  <div key={c.user_id} className="flex flex-col items-center w-20 text-center">
+                    {c.avatar_url ? (
+                      <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-border" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-muted" />
+                    )}
+                    <span className="text-xs font-medium text-foreground mt-1 truncate w-full">{c.full_name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0).toLocaleString()} followers
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

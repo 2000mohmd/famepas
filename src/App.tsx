@@ -37,6 +37,7 @@ const VenueBriefs = lazy(() => import("./pages/venue/VenueBriefs"));
 const VenueBriefCreate = lazy(() => import("./pages/venue/VenueBriefCreate"));
 const VenueBookings = lazy(() => import("./pages/venue/VenueBookings"));
 const VenueHome = lazy(() => import("./pages/venue/VenueHome"));
+const VenueDiscover = lazy(() => import("./pages/venue/VenueDiscover"));
 const VenueMessages = lazy(() => import("./pages/venue/VenueMessages"));
 const VenueReports = lazy(() => import("./pages/venue/VenueReports"));
 const VenueContent = lazy(() => import("./pages/venue/VenueContent"));
@@ -171,7 +172,7 @@ const App = () => (
             {/* Legacy venue paths → redirect to Reports */}
             <Route path="/venue/dashboard" element={<Navigate to="/venue" replace />} />
             <Route path="/venue/offers" element={<Navigate to="/venue/campaigns" replace />} />
-            <Route path="/venue/discover" element={<Navigate to="/venue" replace />} />
+            <Route path="/venue/discover" element={<ProtectedRoute allowedRoles={["venue"]}><VenueDiscover /></ProtectedRoute>} />
             <Route path="/venue/invitations" element={<Navigate to="/venue/bookings" replace />} />
             <Route path="/venue/redemptions" element={<Navigate to="/venue/bookings" replace />} />
             <Route path="/venue/events" element={<Navigate to="/venue" replace />} />
