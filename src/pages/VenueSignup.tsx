@@ -597,7 +597,50 @@ const VenueSignup = () => {
                 })()}
               </select>
             </Field>
-            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("location-search")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("media")}>Next</PrimaryButton>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
+
+  if (step === "media") {
+    const ready = isVenueMediaComplete({ hasLogo: !!logoData, photoCount: photosData.length, instagram });
+    return (
+      <Page>
+        <div className="w-full max-w-xl">
+          <BackBar onBack={() => setStep("brand")} step={6} total={8} />
+          <Card>
+            <Heading title="Show creators your venue" sub="Your logo, at least 3 photos and your Instagram handle are required." />
+            <Field label="Logo">
+              <div className="flex items-center gap-3">
+                {logoData && <img src={logoData} alt="Logo preview" className="w-16 h-16 rounded-lg object-cover border border-slate-200" />}
+                <input type="file" accept="image/*" onChange={async e => { const f = e.target.files?.[0]; if (f) setLogoData(await compressImage(f, 600)); }} className="text-sm" />
+              </div>
+            </Field>
+            <Field label={`Photos (${photosData.length}/${VENUE_MIN_PHOTOS} minimum)`}>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {photosData.map((p, i) => (
+                  <div key={i} className="relative">
+                    <img src={p} alt={`Venue photo ${i + 1}`} className="w-full aspect-square rounded-lg object-cover border border-slate-200" />
+                    <button type="button" onClick={() => setPhotosData(a => a.filter((_, j) => j !== i))} className="absolute top-1 right-1 bg-white/90 rounded-full w-6 h-6 text-xs text-slate-700">✕</button>
+                  </div>
+                ))}
+              </div>
+              {photosData.length < 6 && (
+                <input type="file" accept="image/*" multiple onChange={async e => {
+                  const files = Array.from(e.target.files ?? []).slice(0, 6 - photosData.length);
+                  const out = await Promise.all(files.map(f => compressImage(f, 1600)));
+                  setPhotosData(a => [...a, ...out.filter(Boolean) as string[]]);
+                  e.target.value = "";
+                }} className="text-sm" />
+              )}
+            </Field>
+            <Field label="Instagram handle">
+              <TextInput value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@yourvenue" />
+              {instagram.trim() && !isVenueMediaComplete({ hasLogo: true, photoCount: VENUE_MIN_PHOTOS, instagram }) && <p className="text-xs text-red-600 mt-1">Please enter a valid Instagram handle.</p>}
+            </Field>
+            <PrimaryButton disabled={!ready} onClick={() => setStep("location-search")}>Next</PrimaryButton>
           </Card>
         </div>
       </Page>
