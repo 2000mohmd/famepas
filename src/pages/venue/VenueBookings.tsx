@@ -18,7 +18,7 @@ import { DEFAULT_TEMPLATES, TEMPLATE_TYPE_LABEL } from "@/lib/messageTemplates";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
-const PINK = "#b8923a";
+const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
 
 interface Row {
   id: string;
@@ -389,8 +389,8 @@ const VenueBookings = () => {
         {tab === "upcoming" && (
           <div className="flex items-center gap-2 mb-4">
             <div className="flex bg-white border border-border rounded-lg p-1">
-              <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "text-muted-foreground"}`}><List className="w-4 h-4" /></button>
-              <button onClick={() => setView("calendar")} className={`p-1.5 rounded ${view === "calendar" ? "bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "text-muted-foreground"}`}><CalIcon className="w-4 h-4" /></button>
+              <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}><List className="w-4 h-4" /></button>
+              <button onClick={() => setView("calendar")} className={`p-1.5 rounded ${view === "calendar" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}><CalIcon className="w-4 h-4" /></button>
             </div>
             {view === "calendar" && (
               <>
@@ -420,7 +420,7 @@ const VenueBookings = () => {
                 if (!cell) return <div key={i} className="min-h-[110px] border-r border-b border-border/40 bg-muted/20" />;
                 const items = rowsByDate[cell.date] ?? [];
                 return (
-                  <div key={i} className={`min-h-[110px] border-r border-b border-border/40 p-2 ${isToday(cell.day) ? "bg-[hsl(42_65%_50%_/_0.06)]" : ""}`}>
+                  <div key={i} className={`min-h-[110px] border-r border-b border-border/40 p-2 ${isToday(cell.day) ? "bg-primary/6" : ""}`}>
                     <span className={`text-xs font-medium ${isToday(cell.day) ? "inline-flex w-6 h-6 rounded-full text-white items-center justify-center" : "text-foreground"}`} style={isToday(cell.day) ? { background: PINK } : undefined}>{cell.day}</span>
                     <div className="mt-1 space-y-1">
                       {items.slice(0, 3).map(r => (
@@ -513,7 +513,7 @@ const VenueBookings = () => {
           <div className="flex justify-center gap-1 py-2">
             {[1, 2, 3, 4, 5].map(n => (
               <button key={n} type="button" onClick={() => setReviewRating(n)} className="p-1">
-                <Star className={`w-7 h-7 ${n <= reviewRating ? "fill-[#b8923a] text-[#b8923a]" : "text-slate-300"}`} />
+                <Star className={`w-7 h-7 ${n <= reviewRating ? "fill-primary text-primary" : "text-slate-300"}`} />
               </button>
             ))}
           </div>

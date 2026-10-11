@@ -19,7 +19,7 @@ type Deliverable = {
   quantity: number;
 };
 
-const PINK = "#b8923a";
+const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
 const newDeliverable = (): Deliverable => ({
   media_type: "video",
   format: "9:16",
@@ -177,8 +177,8 @@ const VenueBriefCreate = () => {
 
             <div>
               <Label className="text-sm font-semibold">Cover Image</Label>
-              <p className="text-xs text-muted-foreground mb-2">Upload a cover image for your brief {uploading && <span className="text-[#b8923a]">(uploading…)</span>}</p>
-              <label className="block w-full h-40 border border-dashed border-border rounded-xl cursor-pointer overflow-hidden relative hover:border-[#b8923a]">
+              <p className="text-xs text-muted-foreground mb-2">Upload a cover image for your brief {uploading && <span className="text-primary">(uploading…)</span>}</p>
+              <label className="block w-full h-40 border border-dashed border-border rounded-xl cursor-pointer overflow-hidden relative hover:border-primary">
                 {coverUrl ? (
                   <>
                     <img src={coverUrl} alt="" className="w-full h-full object-cover" />
@@ -234,10 +234,10 @@ const VenueBriefCreate = () => {
                   const on = d.media_type === opt.v;
                   return (
                     <button key={opt.v} type="button" onClick={() => updateD(i, { media_type: opt.v as any })}
-                      className={`text-left p-3 rounded-xl border ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.08)]" : "border-border"}`}>
+                      className={`text-left p-3 rounded-xl border ${on ? "border-primary bg-primary/8" : "border-border"}`}>
                       <div className="flex items-center gap-2">
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 ${on ? "border-[#b8923a]" : "border-border"} flex items-center justify-center`}>
-                          {on && <span className="w-1.5 h-1.5 rounded-full bg-[#b8923a]" />}
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 ${on ? "border-primary" : "border-border"} flex items-center justify-center`}>
+                          {on && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                         </span>
                         <div>
                           <p className="text-sm font-semibold">{opt.label}</p>
@@ -255,8 +255,8 @@ const VenueBriefCreate = () => {
                   const on = d.format === f.v;
                   return (
                     <button key={f.v} type="button" onClick={() => updateD(i, { format: f.v })}
-                      className={`p-3 rounded-xl border text-center ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.08)]" : "border-border"}`}>
-                      <div className={`mx-auto mb-1 border-2 ${on ? "border-[#b8923a]" : "border-muted-foreground"}`}
+                      className={`p-3 rounded-xl border text-center ${on ? "border-primary bg-primary/8" : "border-border"}`}>
+                      <div className={`mx-auto mb-1 border-2 ${on ? "border-primary" : "border-muted-foreground"}`}
                         style={{
                           width: f.v === "16:9" ? 22 : f.v === "1:1" ? 16 : 12,
                           height: f.v === "16:9" ? 12 : f.v === "4:5" ? 18 : f.v === "1:1" ? 16 : 20,
@@ -294,7 +294,7 @@ const VenueBriefCreate = () => {
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
                 {d.references.map((r, j) => (
-                  <span key={j} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a] text-xs max-w-xs truncate">
+                  <span key={j} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs max-w-xs truncate">
                     {r}
                     <button onClick={() => removeReference(i, j)}><X className="w-3 h-3" /></button>
                   </span>
@@ -312,7 +312,7 @@ const VenueBriefCreate = () => {
 
           <button
             onClick={() => setDeliverables([...deliverables, newDeliverable()])}
-            className="w-full py-3 rounded-xl border border-dashed border-border flex items-center justify-center gap-2 text-sm font-medium hover:border-[#b8923a] hover:text-[#b8923a]"
+            className="w-full py-3 rounded-xl border border-dashed border-border flex items-center justify-center gap-2 text-sm font-medium hover:border-primary hover:text-primary"
           >
             <Plus className="w-4 h-4" /> Add another deliverable
           </button>

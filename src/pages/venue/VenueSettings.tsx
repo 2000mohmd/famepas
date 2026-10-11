@@ -723,7 +723,7 @@ const VenueSettings = () => {
                 {tiers.map(t => {
                   const isSelected = selectedTierId === t.id;
                   return (
-                    <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-[#b8923a] ring-1 ring-[#b8923a]" : "border-border"}`}>
+                    <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-primary ring-1 ring-primary" : "border-border"}`}>
                       <p className="font-semibold text-foreground">{t.name}</p>
                       <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
                       {(() => {

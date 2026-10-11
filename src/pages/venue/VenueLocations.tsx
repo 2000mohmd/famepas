@@ -149,7 +149,7 @@ const VenueLocations = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[28px] font-bold text-foreground">Locations</h1>
-          <Button style={{ background: "#b8923a" }} className="text-white hover:opacity-90" onClick={openAdd} disabled={!venue}>
+          <Button style={{ background: "hsl(24 47% 63%)" }} className="text-white hover:opacity-90" onClick={openAdd} disabled={!venue}>
             <Plus className="w-4 h-4 mr-1.5" /> Add Location
           </Button>
         </div>
@@ -172,7 +172,7 @@ const VenueLocations = () => {
                 role="button"
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fce7eb" }}>
-                  <MapPin className="w-5 h-5" style={{ color: "#b8923a" }} />
+                  <MapPin className="w-5 h-5" style={{ color: "hsl(24 47% 63%)" }} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ const VenueLocations = () => {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={save} disabled={saving} style={{ background: "#b8923a" }} className="text-white">
+              <Button onClick={save} disabled={saving} style={{ background: "hsl(24 47% 63%)" }} className="text-white">
                 {saving ? "Saving…" : editingId ? "Save Changes" : "Add Location"}
               </Button>
             </DialogFooter>

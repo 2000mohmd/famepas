@@ -107,7 +107,7 @@ const VenueReports = () => {
     Object.entries(m.byType).filter(([, v]) => v > 0).map(([k, v]) => ({ name: k, value: v })),
     [m.byType]
   );
-  const pieColors = ["#b8923a", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
+  const pieColors = ["#CD9774", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
 
   // Per-offer (campaign) performance: posts delivered and the reach they earned.
   const campaignRows = useMemo(() => {
@@ -213,7 +213,7 @@ const VenueReports = () => {
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="bookings" stroke="#b8923a" strokeWidth={2} />
+                      <Line type="monotone" dataKey="bookings" stroke="#CD9774" strokeWidth={2} />
                       <Line type="monotone" dataKey="redemptions" stroke="#2a9d8f" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -251,7 +251,7 @@ const VenueReports = () => {
                   <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#b8923a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#CD9774" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

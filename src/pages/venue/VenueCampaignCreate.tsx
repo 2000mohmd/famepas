@@ -348,9 +348,9 @@ const VenueCampaignCreate = () => {
             </div>
             <div>
               <Label className="text-sm font-semibold">Upload Images</Label>
-              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign {uploading && <span className="text-[#b8923a]">(uploading…)</span>}</p>
+              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign {uploading && <span className="text-primary">(uploading…)</span>}</p>
               <div className="flex gap-3 flex-wrap">
-                <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#b8923a] cursor-pointer overflow-hidden relative">
+                <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-primary cursor-pointer overflow-hidden relative">
                   {coverVideoUrl ? (
                     <>
                       <video src={coverVideoUrl} className="w-full h-full object-cover" />
@@ -370,7 +370,7 @@ const VenueCampaignCreate = () => {
                   </div>
                 ))}
                 {coverImages.length < 5 && (
-                  <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-[#b8923a] cursor-pointer">
+                  <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-primary cursor-pointer">
                     <ImageIcon className="w-5 h-5" /> Choose images
                     <input type="file" accept="image/*" multiple className="hidden" onChange={e => onPickImages(e.target.files)} />
                   </label>
@@ -395,7 +395,7 @@ const VenueCampaignCreate = () => {
                 {DIETARY.map(d => {
                   const on = dietary.includes(d);
                   return (
-                    <button key={d} type="button" onClick={() => toggle(dietary, d, setDietary)} className={`px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border text-foreground"}`}>
+                    <button key={d} type="button" onClick={() => toggle(dietary, d, setDietary)} className={`px-3 py-1.5 rounded-full border text-sm ${on ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground"}`}>
                       {d}
                     </button>
                   );
@@ -439,7 +439,7 @@ const VenueCampaignCreate = () => {
         {/* INSTAGRAM OFFERS */}
         <SectionCard title="Instagram Offers" action={<button className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>}>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-[hsl(42_78%_68%)] via-[hsl(42_65%_50%)] to-[hsl(38_60%_38%)] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-[hsl(var(--gold-light))] via-primary to-[hsl(var(--gold-dark))] flex items-center justify-center">
               <Instagram className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -476,11 +476,11 @@ const VenueCampaignCreate = () => {
             <p className="text-xs text-muted-foreground mb-2">Let the influencer know who to tag in their content</p>
             <div className="flex gap-2">
               <Input placeholder="@ Enter a handle and press Enter (or click Add)" value={handleInput} onChange={e => setHandleInput(e.target.value)} onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addHandle())} />
-              <Button onClick={addHandle} disabled={!handleInput.trim()} style={{ background: "#b8923a" }} className="text-white">Add</Button>
+              <Button onClick={addHandle} disabled={!handleInput.trim()} style={{ background: "hsl(24 47% 63%)" }} className="text-white">Add</Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {handles.map(h => (
-                <span key={h} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a] text-sm">
+                <span key={h} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
                   <Instagram className="w-3 h-3" /> @{h}
                   <button onClick={() => setHandles(handles.filter(x => x !== h))}><X className="w-3 h-3" /></button>
                 </span>
@@ -539,7 +539,7 @@ const VenueCampaignCreate = () => {
 
         {/* TIKTOK */}
         {!tkEnabled ? (
-          <button onClick={() => { setTkEnabled(true); setTkOffers([{ min_followers: "1000", max_followers: "", max_guests: "1", offer: "" }]); }} className="w-full mb-5 py-3 rounded-2xl border border-dashed border-border flex items-center justify-center gap-2 text-sm font-medium hover:border-[#b8923a] hover:text-[#b8923a]">
+          <button onClick={() => { setTkEnabled(true); setTkOffers([{ min_followers: "1000", max_followers: "", max_guests: "1", offer: "" }]); }} className="w-full mb-5 py-3 rounded-2xl border border-dashed border-border flex items-center justify-center gap-2 text-sm font-medium hover:border-primary hover:text-primary">
             <Plus className="w-4 h-4" /> Add TikTok Offers
           </button>
         ) : (
@@ -582,11 +582,11 @@ const VenueCampaignCreate = () => {
             ].map(opt => {
               const on = availabilityType === opt.v;
               return (
-                <button key={opt.v} disabled={opt.disabled} onClick={() => setAvailabilityType(opt.v)} className={`relative text-left p-3 rounded-xl border ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.08)]" : "border-border"} ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
-                  {opt.badge && <span className="absolute -top-2 left-3 text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#b8923a" }}>{opt.badge}</span>}
+                <button key={opt.v} disabled={opt.disabled} onClick={() => setAvailabilityType(opt.v)} className={`relative text-left p-3 rounded-xl border ${on ? "border-primary bg-primary/8" : "border-border"} ${opt.disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  {opt.badge && <span className="absolute -top-2 left-3 text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "hsl(24 47% 63%)" }}>{opt.badge}</span>}
                   <div className="flex items-start gap-2">
-                    <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 ${on ? "border-[#b8923a]" : "border-border"} flex items-center justify-center`}>
-                      {on && <span className="w-1.5 h-1.5 rounded-full bg-[#b8923a]" />}
+                    <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 ${on ? "border-primary" : "border-border"} flex items-center justify-center`}>
+                      {on && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                     </span>
                     <div>
                       <p className="text-sm font-semibold">{opt.title}</p>
@@ -654,7 +654,7 @@ const VenueCampaignCreate = () => {
                     setSlotInput("");
                   }}
                   disabled={!slotInput}
-                  style={{ background: "#b8923a" }}
+                  style={{ background: "hsl(24 47% 63%)" }}
                   className="text-white"
                 >
                   Add
@@ -662,7 +662,7 @@ const VenueCampaignCreate = () => {
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {timeSlots.map(t => (
-                  <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a] text-sm">
+                  <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
                     {t}
                     <button onClick={() => setTimeSlots(timeSlots.filter(x => x !== t))}><X className="w-3 h-3" /></button>
                   </span>
@@ -691,7 +691,7 @@ const VenueCampaignCreate = () => {
                 {DAYS.map(d => {
                   const on = availableDays.includes(d);
                   return (
-                    <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.10)] text-[#b8923a]" : "border-border"}`}>
+                    <button key={d} onClick={() => toggle(availableDays, d, setAvailableDays)} className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm ${on ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>
                       {d} {on && <X className="w-3 h-3" />}
                     </button>
                   );
@@ -746,11 +746,11 @@ const VenueCampaignCreate = () => {
             ].map(o => {
               const on = approvalType === o.v;
               return (
-                <button key={o.v} onClick={() => setApprovalType(o.v)} className={`relative text-left p-3 rounded-xl border ${on ? "border-[#b8923a] bg-[hsl(42_65%_50%_/_0.08)]" : "border-border"}`}>
-                  {o.badge && <span className="absolute -top-2 left-3 text-[9px] font-bold px-1.5 py-0.5 rounded text-white whitespace-nowrap" style={{ background: "#b8923a" }}>{o.badge}</span>}
+                <button key={o.v} onClick={() => setApprovalType(o.v)} className={`relative text-left p-3 rounded-xl border ${on ? "border-primary bg-primary/8" : "border-border"}`}>
+                  {o.badge && <span className="absolute -top-2 left-3 text-[9px] font-bold px-1.5 py-0.5 rounded text-white whitespace-nowrap" style={{ background: "hsl(24 47% 63%)" }}>{o.badge}</span>}
                   <div className="flex items-start gap-2">
-                    <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 ${on ? "border-[#b8923a]" : "border-border"} flex items-center justify-center`}>
-                      {on && <span className="w-1.5 h-1.5 rounded-full bg-[#b8923a]" />}
+                    <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 ${on ? "border-primary" : "border-border"} flex items-center justify-center`}>
+                      {on && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                     </span>
                     <div>
                       <p className="text-sm font-semibold">{o.t}</p>
@@ -762,7 +762,7 @@ const VenueCampaignCreate = () => {
             })}
           </div>
           {approvalType === "smart" && (
-            <div className="mb-5 p-4 rounded-xl border border-[#b8923a]/30 bg-[hsl(42_65%_50%_/_0.06)] space-y-4">
+            <div className="mb-5 p-4 rounded-xl border border-primary/30 bg-primary/6 space-y-4">
               <div>
                 <p className="text-sm font-semibold">Auto-approval criteria</p>
                 <p className="text-xs text-muted-foreground">Applicants meeting all of these are approved instantly. Everyone else goes to manual review.</p>
@@ -817,8 +817,8 @@ const VenueCampaignCreate = () => {
               <h3 className="text-lg font-bold text-foreground">{title || "Untitled offer"}</h3>
               {description && <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>}
               {igOffers[0]?.offer && (
-                <div className="rounded-lg bg-[hsl(42_65%_50%_/_0.10)] border border-[#b8923a]/30 p-3">
-                  <p className="text-xs font-semibold text-[#b8923a] uppercase">Offer</p>
+                <div className="rounded-lg bg-primary/10 border border-primary/30 p-3">
+                  <p className="text-xs font-semibold text-primary uppercase">Offer</p>
                   <p className="text-sm text-foreground mt-1">{igOffers[0].offer}</p>
                   {igOffers[0].min_followers && (
                     <p className="text-xs text-muted-foreground mt-1">Min followers: {igOffers[0].min_followers}</p>
@@ -853,7 +853,7 @@ const VenueCampaignCreate = () => {
                     </div>
                   )}
                   {allowPostOrReel && (
-                    <p className="text-xs text-[#b8923a]">Influencers may choose between a post or a reel.</p>
+                    <p className="text-xs text-primary">Influencers may choose between a post or a reel.</p>
                   )}
                 </div>
               </div>

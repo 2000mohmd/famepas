@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Stage = "draft" | "matching" | "in_progress" | "review" | "complete";
 
-const PINK = "#b8923a";
+const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
 
 const VenueBriefs = () => {
   const { user } = useAuth();
@@ -234,7 +234,7 @@ const VenueBriefs = () => {
               <button
                 key={s.key}
                 onClick={() => setStage(s.key)}
-                className={`bg-white border rounded-xl p-4 text-left transition-all ${isActive ? "border-2" : "border-border hover:border-[hsl(42_65%_50%_/_0.30)]"}`}
+                className={`bg-white border rounded-xl p-4 text-left transition-all ${isActive ? "border-2" : "border-border hover:border-primary/30"}`}
                 style={isActive ? { borderColor: PINK } : undefined}
               >
                 <Icon className="w-5 h-5 mb-2" style={{ color: isActive ? PINK : "#94a3b8" }} />

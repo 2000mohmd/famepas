@@ -208,7 +208,7 @@ const VenueCampaigns = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] font-bold text-foreground">Offers</h1>
-          <Button onClick={() => openNew()} style={{ background: "#b8923a" }} className="text-white hover:opacity-90">
+          <Button onClick={() => openNew()} style={{ background: "hsl(24 47% 63%)" }} className="text-white hover:opacity-90">
             <Plus className="w-4 h-4 mr-1.5" /> New Offer
           </Button>
         </div>
@@ -218,12 +218,12 @@ const VenueCampaigns = () => {
 
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-6">
-            <button onClick={() => setView("list")} className={`pb-3 px-1 text-sm font-medium ${view === "list" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "list" ? { borderColor: "#b8923a" } : undefined}>
+            <button onClick={() => setView("list")} className={`pb-3 px-1 text-sm font-medium ${view === "list" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "list" ? { borderColor: "hsl(24 47% 63%)" } : undefined}>
               List
             </button>
-            <button onClick={() => setView("calendar")} className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "calendar" ? { borderColor: "#b8923a" } : undefined}>
+            <button onClick={() => setView("calendar")} className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "calendar" ? { borderColor: "hsl(24 47% 63%)" } : undefined}>
               Calendar
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "#b8923a" }}>NEW</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "hsl(24 47% 63%)" }}>NEW</span>
             </button>
           </div>
         </div>
@@ -245,7 +245,7 @@ const VenueCampaigns = () => {
                 <span className="font-semibold text-foreground ml-2">{monthName}</span>
               </div>
               <div className="flex gap-1 bg-white border border-border rounded-lg p-1">
-                <button className="px-3 py-1 text-xs font-medium rounded text-white" style={{ background: "#b8923a" }}>Monthly</button>
+                <button className="px-3 py-1 text-xs font-medium rounded text-white" style={{ background: "hsl(24 47% 63%)" }}>Monthly</button>
                 <button className="px-3 py-1 text-xs font-medium rounded text-muted-foreground">Quarterly</button>
               </div>
             </div>
@@ -271,9 +271,9 @@ const VenueCampaigns = () => {
                   const dayEvents = culturalEvents.filter(e => cell.date >= e.start_date.slice(0, 10) && cell.date <= e.end_date.slice(0, 10));
                   const isEmpty = dayCampaigns.length === 0 && dayVisits.length === 0 && dayEvents.length === 0;
                   return (
-                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-[hsl(42_65%_50%_/_0.10)]" : pastCell ? "bg-muted/30" : ""}`}>
+                    <div key={i} className={`aspect-square border-r border-b border-border/40 p-1.5 relative group ${todayCell ? "bg-primary/10" : pastCell ? "bg-muted/30" : ""}`}>
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : pastCell ? "text-muted-foreground" : "text-foreground"}`} style={todayCell ? { background: "#b8923a" } : undefined}>
+                        <span className={`text-xs font-medium ${todayCell ? "w-6 h-6 rounded-full text-white flex items-center justify-center" : pastCell ? "text-muted-foreground" : "text-foreground"}`} style={todayCell ? { background: "hsl(24 47% 63%)" } : undefined}>
                           {cell.day}
                         </span>
                         {!pastCell && (
@@ -281,7 +281,7 @@ const VenueCampaigns = () => {
                             onClick={() => openNew(cell.date)}
                             title={dayEvents.length ? `Create offer for ${dayEvents[0].title}` : "New offer"}
                             className="w-5 h-5 rounded text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ background: "#b8923a" }}
+                            style={{ background: "hsl(24 47% 63%)" }}
                           >
                             <Plus className="w-3 h-3" />
                           </button>
