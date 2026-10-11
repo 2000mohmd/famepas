@@ -182,7 +182,7 @@ const VenueCampaignCreate = () => {
 
   const save = async (mode: "draft" | "live") => {
     if (!venueId) return;
-    if (!title.trim()) { toast({ title: "Campaign name required", variant: "destructive" }); return; }
+    if (!title.trim()) { toast({ title: "Offer name required", variant: "destructive" }); return; }
     setSaving(true);
     const payload: any = {
       venue_id: venueId,
@@ -287,7 +287,7 @@ const VenueCampaignCreate = () => {
     }
 
     setSaving(false);
-    toast({ title: mode === "draft" ? "Saved to drafts" : "Campaign is live" });
+    toast({ title: mode === "draft" ? "Saved to drafts" : "Offer is live" });
     navigate("/venue/campaigns");
   };
 
@@ -332,16 +332,16 @@ const VenueCampaignCreate = () => {
         </button>
 
         {/* CAMPAIGN DETAILS */}
-        <SectionCard title="Campaign Details">
+        <SectionCard title="Offer Details">
 
           <div className="space-y-5">
             <div>
-              <Label className="text-sm font-semibold">Campaign Name</Label>
+              <Label className="text-sm font-semibold">Offer Name</Label>
               <p className="text-xs text-muted-foreground mb-2">Max 50 characters</p>
               <Input maxLength={50} value={title} onChange={e => setTitle(e.target.value)} placeholder="Example campaign name..." />
             </div>
             <div>
-              <Label className="text-sm font-semibold">Campaign Details</Label>
+              <Label className="text-sm font-semibold">Offer Details</Label>
               <p className="text-xs text-muted-foreground mb-2">Outline your campaign to help the influencer understand your goals</p>
               <Textarea maxLength={2000} rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your campaign..." />
               <p className="text-right text-xs text-muted-foreground mt-1">{description.length}/2000</p>
@@ -422,7 +422,7 @@ const VenueCampaignCreate = () => {
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
               <div>
                 <p className="text-sm font-semibold">Invite Only</p>
-                <p className="text-xs text-muted-foreground">Campaigns are visible to all eligible creators by default. Turn this on to hide it and share privately.</p>
+                <p className="text-xs text-muted-foreground">Offers are visible to all eligible creators by default. Turn this on to hide it and share privately.</p>
               </div>
               <Switch checked={inviteOnly} onCheckedChange={setInviteOnly} />
             </div>
@@ -618,7 +618,7 @@ const VenueCampaignCreate = () => {
             </div>
           ) : (
             <div className="mb-5">
-              <Label className="text-sm font-semibold">Campaign Dates</Label>
+              <Label className="text-sm font-semibold">Offer Dates</Label>
               <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
@@ -805,7 +805,7 @@ const VenueCampaignCreate = () => {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Campaign Preview</DialogTitle>
+            <DialogTitle>Offer Preview</DialogTitle>
           </DialogHeader>
           <div className="rounded-2xl overflow-hidden border border-border bg-white">
             {coverImages[0] ? (
@@ -814,7 +814,7 @@ const VenueCampaignCreate = () => {
               <div className="w-full h-44 bg-muted flex items-center justify-center text-muted-foreground text-sm">No cover image</div>
             )}
             <div className="p-4 space-y-3">
-              <h3 className="text-lg font-bold text-foreground">{title || "Untitled campaign"}</h3>
+              <h3 className="text-lg font-bold text-foreground">{title || "Untitled offer"}</h3>
               {description && <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>}
               {igOffers[0]?.offer && (
                 <div className="rounded-lg bg-[hsl(42_65%_50%_/_0.10)] border border-[#b8923a]/30 p-3">

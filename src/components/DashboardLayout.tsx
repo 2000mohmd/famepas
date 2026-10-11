@@ -109,7 +109,7 @@ const venueGroups: NavGroup[] = [
     items: [
       { to: "/venue/reports", icon: BarChart3, label: "Reports" },
       { to: "/venue/content", icon: Film, label: "Content" },
-      { to: "/venue/campaigns", icon: Megaphone, label: "Campaigns" },
+      { to: "/venue/campaigns", icon: Megaphone, label: "Offers" },
       { to: "/venue/bookings", icon: Clipboard, label: "Bookings" },
     ],
   },

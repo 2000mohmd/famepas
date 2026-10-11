@@ -69,7 +69,7 @@ const VenueCampaigns = () => {
     const next = c.status === "paused" ? "active" : "paused";
     const { error } = await (supabase as any).from("campaigns").update({ status: next }).eq("id", c.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: next === "paused" ? "Campaign paused" : "Campaign resumed" });
+    toast({ title: next === "paused" ? "Offer paused" : "Offer resumed" });
     load();
   };
 
@@ -88,7 +88,7 @@ const VenueCampaigns = () => {
     delete payload.updated_at;
     const { error } = await (supabase as any).from("campaigns").insert(payload);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Campaign duplicated", description: "A draft copy was created." });
+    toast({ title: "Offer duplicated", description: "A draft copy was created." });
     load();
   };
 
@@ -96,7 +96,7 @@ const VenueCampaigns = () => {
     if (!deleteCampaign) return;
     const { error } = await (supabase as any).from("campaigns").delete().eq("id", deleteCampaign.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Campaign deleted" });
+    toast({ title: "Offer deleted" });
     setDeleteCampaign(null);
     load();
   };
@@ -162,7 +162,7 @@ const VenueCampaigns = () => {
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded hover:bg-muted text-muted-foreground" aria-label="Campaign actions">
+                          <button className="p-1 rounded hover:bg-muted text-muted-foreground" aria-label="Offer actions">
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -207,9 +207,9 @@ const VenueCampaigns = () => {
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[28px] font-bold text-foreground">Campaigns</h1>
+          <h1 className="text-[28px] font-bold text-foreground">Offers</h1>
           <Button onClick={() => openNew()} style={{ background: "#b8923a" }} className="text-white hover:opacity-90">
-            <Plus className="w-4 h-4 mr-1.5" /> New Campaign
+            <Plus className="w-4 h-4 mr-1.5" /> New Offer
           </Button>
         </div>
 
@@ -279,7 +279,7 @@ const VenueCampaigns = () => {
                         {!pastCell && (
                           <button
                             onClick={() => openNew(cell.date)}
-                            title={dayEvents.length ? `Create offer for ${dayEvents[0].title}` : "New campaign"}
+                            title={dayEvents.length ? `Create offer for ${dayEvents[0].title}` : "New offer"}
                             className="w-5 h-5 rounded text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{ background: "#b8923a" }}
                           >

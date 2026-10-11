@@ -9,6 +9,17 @@ import heroBrand from "@/assets/hero-brand.jpg";
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
 
+// Adnan, recap C13: "pending approval" isn't an error — it shouldn't flash
+// red like one. Only genuine failures get the destructive (red) toast.
+const showLoginError = (toast: (opts: any) => void, message: string) => {
+  const isPending = /pending admin approval/i.test(message);
+  toast({
+    title: isPending ? "Almost there" : "Login failed",
+    description: message,
+    variant: isPending ? "default" : "destructive",
+  });
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,7 +66,7 @@ const Login = () => {
         return;
       }
       const { error } = await signIn(email, password);
-      if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
+      if (error) showLoginError(toast, error.message);
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +83,7 @@ const Login = () => {
     }
     const { error } = await signIn(email, password);
     setIsLoading(false);
-    if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    if (error) showLoginError(toast, error.message);
     else { setOtpRequired(false); setOtpCode(""); }
   };
 

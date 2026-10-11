@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Eye, UserCog, MoreHorizontal, X } from "lucide-react";
+import { Plus, Search, Trash2, Eye, UserCog, MoreHorizontal, X, MessageCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import VenueDetailDialog from "@/components/admin/VenueDetailDialog";
 import PageControls from "@/components/admin/PageControls";
@@ -32,6 +32,7 @@ interface Venue {
   approval_status: string;
   created_at: string;
   logo_url: string | null;
+  contact_person_name: string | null;
 }
 
 // Single-word, obviously-placeholder business names — flagged for admin review,
@@ -63,14 +64,24 @@ const AdminVenues = () => {
   // Sales pipeline per venue: stage, owner, and how far through activation it
   // is. Read from venue_activation, which already joins each venue to its lead.
   const [pipeline, setPipeline] = useState<Record<string, { stage: string | null; rep: string | null; done: number }>>({});
+  // Adnan, recap B3: the person in charge's name + mobile, per venue. Phone
+  // columns are locked at the DB level (RE: Re: IT Tasks #23), so this goes
+  // through get_venue_contact() — the already-existing admin/owner RPC for it.
+  const [contacts, setContacts] = useState<Record<string, { phone: string | null; whatsapp: string | null }>>({});
 
   const fetchVenues = async () => {
     setLoading(true);
     const [{ data }, { data: act }] = await Promise.all([
-      supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false }),
+      supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url, contact_person_name").order("created_at", { ascending: false }),
       (supabase as any).from("venue_activation").select("venue_id, lead_stage, rep_id, profile_complete, photos_uploaded, first_offer_posted, first_creator_visit, first_content_published"),
     ]);
     setVenues((data as any) ?? []);
+
+    const venueIds = (data ?? []).map((v: any) => v.id);
+    Promise.all(venueIds.map((id: string) => (supabase as any).rpc("get_venue_contact", { _venue_id: id }).then(({ data: c }: any) => [id, c?.[0]])))
+      .then((pairs) => setContacts(Object.fromEntries(
+        pairs.filter(([, c]) => c).map(([id, c]: any) => [id, { phone: c.phone, whatsapp: c.whatsapp_phone }])
+      )));
 
     const repIds = [...new Set((act ?? []).map((a: any) => a.rep_id).filter(Boolean))] as string[];
     const { data: reps } = repIds.length
@@ -334,7 +345,8 @@ const AdminVenues = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">City</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Approval</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Stage</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Owner</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Contact</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Assigned to</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Activation</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
@@ -342,9 +354,9 @@ const AdminVenues = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
               ) : (
                 paged.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -374,6 +386,23 @@ const AdminVenues = () => {
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">
                       {pipeline[venue.id]?.stage ? stageLabel(pipeline[venue.id].stage!) : "—"}
+                    </td>
+                    <td className="p-4 text-sm">
+                      {venue.contact_person_name || contacts[venue.id]?.phone ? (
+                        <div className="space-y-0.5">
+                          {venue.contact_person_name && <p className="text-foreground">{venue.contact_person_name}</p>}
+                          {contacts[venue.id]?.phone && <p className="text-muted-foreground text-xs">{contacts[venue.id].phone}</p>}
+                          {(contacts[venue.id]?.whatsapp || contacts[venue.id]?.phone) && (
+                            <a
+                              href={`https://wa.me/${(contacts[venue.id].whatsapp || contacts[venue.id].phone)!.replace(/\D/g, "")}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-success hover:underline"
+                            >
+                              <MessageCircle className="w-3 h-3" /> WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">{pipeline[venue.id]?.rep ?? "—"}</td>
                     <td className="p-4 text-sm" title="Profile, photos, first offer, first visit, first content">

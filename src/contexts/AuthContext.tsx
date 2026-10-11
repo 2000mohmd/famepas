@@ -102,8 +102,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const res = await checkApprovedWithRetry(sess.user.id);
     if (!res.ok) {
       await supabase.auth.signOut();
+      // Adnan, recap C13: pending approval is the expected state right after
+      // signup, not an error — it shouldn't get the red/destructive toast a
+      // genuine sign-in failure does.
+      const isPending = !res.error && res.status !== "rejected" && res.status !== "missing";
       toast({
-        title: res.error ? "Sign-in problem" : "Account not active yet",
+        title: res.error ? "Sign-in problem" : isPending ? "Almost there" : "Account not active yet",
         description: res.error
           ? res.error
           : res.status === "rejected"
@@ -111,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             : res.status === "missing"
               ? "We couldn't find a FamePass account for this Google email. Please create an account first."
               : "Your account is pending admin approval. You'll be notified once approved.",
-        variant: "destructive",
+        variant: isPending ? "default" : "destructive",
       });
       return false;
     }

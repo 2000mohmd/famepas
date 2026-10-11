@@ -384,7 +384,7 @@ const AdminInfluencers = () => {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">TikTok</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Followers</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[110px]">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Joined</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[90px]">Joined</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground sticky right-0 bg-card">Actions</th>
               </tr>
             </thead>

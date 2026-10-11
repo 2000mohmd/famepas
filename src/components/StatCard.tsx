@@ -18,7 +18,14 @@ interface StatCardProps {
   tone?: "danger";
 }
 
-const StatCard = ({ title, value, icon, trend, trendUp, tone }: StatCardProps) => (
+const StatCard = ({ title, value, icon, trend, trendUp, tone }: StatCardProps) => {
+  // Adnan, recap A9: a headline value of 0 showed an up-arrow whenever the
+  // trend referenced a different, non-zero metric (e.g. "0 Active Offers"
+  // next to a trend keyed off total offers). A zero headline never gets an
+  // arrow, regardless of what the trend text itself says.
+  const isZero = value === 0 || value === "0";
+  const showUp = trendUp && !isZero;
+  return (
   <div className="gradient-card rounded-xl border border-border p-6 glow-purple transition-all hover:border-gold/20">
     <div className="flex items-start justify-between">
       <div>
@@ -26,15 +33,16 @@ const StatCard = ({ title, value, icon, trend, trendUp, tone }: StatCardProps) =
         <p className="text-3xl font-display font-bold text-foreground mt-2">{value}</p>
         {trend && (
           <p className={`text-xs mt-2 font-medium ${
-            tone === "danger" ? "text-destructive" : trendUp ? "text-success" : "text-muted-foreground"
+            tone === "danger" ? "text-destructive" : showUp ? "text-success" : "text-muted-foreground"
           }`}>
-            {tone === "danger" ? "⚠ " : trendUp ? "↑ " : ""}{trend}
+            {tone === "danger" ? "⚠ " : showUp ? "↑ " : ""}{trend}
           </p>
         )}
       </div>
       <div className="p-3 rounded-lg bg-primary/10 text-gold">{icon}</div>
     </div>
   </div>
-);
+  );
+};
 
 export default StatCard;

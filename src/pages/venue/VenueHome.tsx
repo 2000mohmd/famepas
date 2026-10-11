@@ -104,7 +104,7 @@ const VenueHome = () => {
               {liveCampaigns.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-sm text-muted-foreground mb-3">No live campaigns yet.</p>
-                  <Button size="sm" asChild><Link to="/venue/campaigns/new">Create your first campaign</Link></Button>
+                  <Button size="sm" asChild><Link to="/venue/campaigns/new">Create your first offer</Link></Button>
                 </div>
               ) : (
                 <div className="space-y-2">

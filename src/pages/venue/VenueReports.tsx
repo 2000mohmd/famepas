@@ -118,7 +118,7 @@ const VenueReports = () => {
 
     const rows: Record<string, any> = {};
     const bump = (key: string) => (rows[key] ??= {
-      key, title: key === "none" ? "Direct bookings" : (offerTitle[key] || "Campaign"),
+      key, title: key === "none" ? "Direct bookings" : (offerTitle[key] || "Offer"),
       posts: 0, views: 0, likes: 0, comments: 0, shares: 0, bookings: 0,
     });
 
@@ -257,14 +257,14 @@ const VenueReports = () => {
             </div>
 
             <div className="bg-white border border-border rounded-2xl p-5 mb-8 overflow-x-auto">
-              <h3 className="text-sm font-semibold mb-3">Campaign performance</h3>
+              <h3 className="text-sm font-semibold mb-3">Offer performance</h3>
               {campaignRows.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-6 text-center">No campaign activity yet</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                      <th className="py-2 pr-4 font-medium">Campaign</th>
+                      <th className="py-2 pr-4 font-medium">Offer</th>
                       <th className="py-2 pr-4 font-medium">Bookings</th>
                       <th className="py-2 pr-4 font-medium">Posts</th>
                       <th className="py-2 pr-4 font-medium">Views</th>
