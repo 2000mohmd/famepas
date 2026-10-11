@@ -4,7 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
-import { isValidEmail, isValidName, isValidPhoneNumber, normalizePhone } from "@/lib/validation";
+import { isValidEmail, isValidName, isValidPhoneNumber, normalizePhone, isVenueMediaComplete, normalizeHandle, VENUE_MIN_PHOTOS } from "@/lib/validation";
+
+/** Downscale an image to a JPEG data URL so signup uploads stay small. */
+const compressImage = (file: File, maxSide: number): Promise<string | null> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
 import { useServiceCountryCodes } from "@/lib/serviceCountries";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
 
@@ -20,6 +37,7 @@ type Step =
   | "hear"
   | "business-check"
   | "brand"
+  | "media"
   | "location-search"
   | "location-details"
   | "done";
@@ -191,6 +209,9 @@ const VenueSignup = () => {
   const [editHours, setEditHours] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [logoData, setLogoData] = useState<string | null>(null);
+  const [photosData, setPhotosData] = useState<string[]>([]);
+  const [instagram, setInstagram] = useState("");
 
   // Opened from a rep's lead link (/signup/business?lead=<id>): prefill what
   // the rep already captured. Best effort only — a bad or already-converted
@@ -269,7 +290,7 @@ const VenueSignup = () => {
   useEffect(() => { if (email && !locationEmail) setLocationEmail(email); }, [email, locationEmail]);
 
   const stepIndex = useMemo(() => {
-    const order: Step[] = ["account","details","hear","brand","location-search","location-details"];
+    const order: Step[] = ["account","details","hear","brand","media","location-search","location-details"];
     return order.indexOf(step);
   }, [step]);
 
@@ -325,6 +346,9 @@ const VenueSignup = () => {
           hear_about_us: hear,
           latitude: lat,
           longitude: lng,
+          venue_logo_data: logoData,
+          venue_photos_data: photosData,
+          venue_instagram: normalizeHandle(instagram),
         },
       });
       // Parse possible error payload from edge function (supabase-js may surface non-2xx as error)
@@ -454,7 +478,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("account")} step={1} total={7} />
+          <BackBar onBack={() => setStep("account")} step={1} total={8} />
           <Card className="text-center">
             <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
               <Mail className="w-7 h-7 text-primary" />
@@ -482,7 +506,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("check-inbox")} step={2} total={7} />
+          <BackBar onBack={() => setStep("check-inbox")} step={2} total={8} />
           <Card>
             <Heading title="Confirm your details" />
             <Field label="First Name">
@@ -516,7 +540,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("details")} step={3} total={7} />
+          <BackBar onBack={() => setStep("details")} step={3} total={8} />
           <Card>
             <Heading title="How did you hear about us?" sub="Please pick any that apply:" />
             <div className="grid grid-cols-2 gap-3 mb-6">
@@ -537,7 +561,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("hear")} step={4} total={7} />
+          <BackBar onBack={() => setStep("hear")} step={4} total={8} />
           <Card>
             <Heading title="Is this sign-up for a registered business?" sub="This form is for venues and businesses only — not for individual creators or freelancers." />
             <div className="space-y-3">
@@ -560,7 +584,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("business-check")} step={5} total={7} />
+          <BackBar onBack={() => setStep("business-check")} step={5} total={8} />
           <Card>
             <Heading title="Describe your business" />
             <Field label="Name">
@@ -651,7 +675,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("brand")} step={6} total={7} />
+          <BackBar onBack={() => setStep("media")} step={7} total={8} />
           <Card>
             <Heading title="Add your first location" sub="A location can be any physical place for influencer visits, such as hotels, restaurants, cafes, entertainment venues, and more" />
             <Field label="Search for address">
@@ -687,12 +711,13 @@ const VenueSignup = () => {
             {!isLoaded && (
               <p className="text-xs text-slate-400 mt-2">Loading address search…</p>
             )}
-            <button
+            {(!isLoaded || /unavailable/.test(locationSearchStatus)) && <button
               onClick={() => { setLocationAddress(addressQuery); setSelectedPlaceId(null); setStep("location-details"); }}
               className="mt-4 text-sm text-primary font-medium"
             >
-              Skip — enter manually
-            </button>
+              Map search isn't working — enter manually
+            </button>}
+            <p className="text-xs text-slate-500 mt-3">Pick your venue from the map results so creators can find you.</p>
           </Card>
         </div>
       </Page>
@@ -703,7 +728,7 @@ const VenueSignup = () => {
     return (
       <Page>
         <div className="w-full max-w-xl">
-          <BackBar onBack={() => setStep("location-search")} step={7} total={7} />
+          <BackBar onBack={() => setStep("location-search")} step={8} total={8} />
           <Card>
             <Heading title="Add your first location" />
             <Field label="Name">
