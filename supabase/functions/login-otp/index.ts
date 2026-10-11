@@ -67,9 +67,13 @@ serve(async (req) => {
       });
     }
 
-    // Check 2FA enabled
+    // Check 2FA enabled. Adnan, recap D1: required for admin/sales_manager/
+    // sales_rep regardless of their personal toggle, not just opt-in.
     const { data: profile } = await supabase.from("profiles").select("two_factor_enabled, full_name").eq("user_id", user.id).maybeSingle();
-    const twoFA = !!profile?.two_factor_enabled;
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const roles = new Set((roleRows ?? []).map((r: any) => r.role));
+    const requiresTwoFA = roles.has("admin") || roles.has("sales_manager") || roles.has("sales_rep");
+    const twoFA = requiresTwoFA || !!profile?.two_factor_enabled;
 
     if (action === "send") {
       if (!twoFA) {
