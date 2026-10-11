@@ -14,6 +14,20 @@ export const isValidFullName = (v: string, min = 3) => {
 /** Real handle shape: letters/numbers/dots/underscores only, 2-30 chars — no URLs, no spaces. */
 export const HANDLE_REGEX = /^[a-zA-Z0-9._]{2,30}$/;
 
+/** Strip a pasted profile URL / leading @ down to the bare handle. */
+export const normalizeHandle = (raw: string) => {
+  let s = raw.trim();
+  const m = s.match(/^https?:\/\/[^/]+\/(@?[^/?#]+)/i);
+  if (m) s = m[1];
+  return s.replace(/^@+/, "").trim();
+};
+
+export const VENUE_MIN_PHOTOS = 3;
+
+/** B6: venue signup can't continue without a logo, 3+ photos and a real Instagram handle. */
+export const isVenueMediaComplete = (v: { hasLogo: boolean; photoCount: number; instagram: string }) =>
+  v.hasLogo && v.photoCount >= VENUE_MIN_PHOTOS && HANDLE_REGEX.test(normalizeHandle(v.instagram));
+
 /** Handle is acceptable when empty (optional) or matches a real handle's shape. */
 export const isValidOptionalHandle = (normalized: string, raw: string) => {
   if (!raw.trim()) return true;

@@ -47,6 +47,8 @@ serve(async (req) => {
       contact_person_name, contact_phone, whatsapp_phone,
       latitude, longitude, signup_completed,
       referred_by,
+      // B6: mandatory venue media (data: URLs, compressed client-side)
+      venue_logo_data, venue_photos_data, venue_instagram,
     } = body;
 
 
@@ -283,6 +285,42 @@ serve(async (req) => {
       }).select().single();
       if (venueError || !venueData) return await rollback("venue", venueError ?? new Error("No venue returned"));
       venue = venueData;
+
+      // Logo, photos and Instagram handle collected by the web wizard.
+      // Best-effort: a failed upload never loses the application.
+      try {
+        const uploadData = async (dataUrl: unknown, name: string): Promise<string | null> => {
+          if (typeof dataUrl !== "string") return null;
+          const m = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+          if (!m) return null;
+          const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+          if (bytes.length > 3 * 1024 * 1024) return null;
+          const path = `${userId}/venue-${name}-${Date.now()}.${m[1].split("/")[1]}`;
+          const { error: upErr } = await supabaseAdmin.storage.from("avatars").upload(path, bytes, { contentType: m[1], upsert: true });
+          if (upErr) { console.error("venue media upload failed", upErr); return null; }
+          return supabaseAdmin.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+        };
+        const logoUrl = await uploadData(venue_logo_data, "logo");
+        const photos = Array.isArray(venue_photos_data) ? venue_photos_data.slice(0, 6) : [];
+        const photoUrls: string[] = [];
+        for (let i = 0; i < photos.length; i++) {
+          const u = await uploadData(photos[i], `photo${i + 1}`);
+          if (u) photoUrls.push(u);
+        }
+        const ig = typeof venue_instagram === "string" ? sanitizeHandle(venue_instagram) : null;
+        const patch: Record<string, unknown> = {};
+        if (logoUrl) patch.logo_url = logoUrl;
+        if (photoUrls[0]) patch.cover_image_url = photoUrls[0];
+        if (ig) patch.instagram_handle = ig;
+        if (Object.keys(patch).length) await supabaseAdmin.from("venues").update(patch).eq("id", venueData.id);
+        if (logoUrl) await supabaseAdmin.from("brands").update({ logo_url: logoUrl }).eq("id", brandRow.id);
+        if (photoUrls.length) {
+          await supabaseAdmin.from("venue_photos").insert(photoUrls.map((url, position) => ({ venue_id: venueData.id, url, position })));
+        }
+      } catch (mediaErr) {
+        console.error("Venue media step failed", mediaErr);
+      }
+
 
       // First (primary) location from the signup wizard — keeps the typed location
       // name/address instead of discarding it. Best-effort: never blocks signup.
