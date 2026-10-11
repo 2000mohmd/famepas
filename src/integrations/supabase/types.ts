@@ -2746,6 +2746,7 @@ export type Database = {
           email: string | null
           hear_about_us: string[] | null
           id: string
+          instagram_handle: string | null
           is_active: boolean
           latitude: number | null
           location_email: string | null
@@ -2792,6 +2793,7 @@ export type Database = {
           email?: string | null
           hear_about_us?: string[] | null
           id?: string
+          instagram_handle?: string | null
           is_active?: boolean
           latitude?: number | null
           location_email?: string | null
@@ -2838,6 +2840,7 @@ export type Database = {
           email?: string | null
           hear_about_us?: string[] | null
           id?: string
+          instagram_handle?: string | null
           is_active?: boolean
           latitude?: number | null
           location_email?: string | null
@@ -3219,6 +3222,7 @@ export type Database = {
           email: string | null
           hear_about_us: string[] | null
           id: string
+          instagram_handle: string | null
           is_active: boolean
           latitude: number | null
           location_email: string | null
