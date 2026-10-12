@@ -233,7 +233,7 @@ const InfluencerBookings = () => {
                       {confirmingReceipt === d.id ? "Confirming..." : "I received it"}
                     </Button>
                   )}
-                  {d.received_at && due && (
+                  {due && d.delivery_stage === "visited" && (!d.shipped_at || d.received_at) && (
                     <p className={`text-xs ${due < new Date() ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                       Post due by {format(due, "PPP p")}
                     </p>
