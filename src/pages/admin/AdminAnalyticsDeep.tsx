@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +44,7 @@ const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)}%` :
 const days = (ms: number) => `${(ms / 86400000).toFixed(1)} d`;
 
 const AdminAnalyticsDeep = () => {
+  const { t } = useTranslation();
   const [rangeKey, setRangeKey] = useState<RangeKey>("30");
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [loading, setLoading] = useState(true);
@@ -63,8 +65,8 @@ const AdminAnalyticsDeep = () => {
     }
     const n = parseInt(rangeKey === "custom" ? "30" : rangeKey, 10);
     const from = new Date(); from.setDate(from.getDate() - n);
-    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: `last ${n} days` };
-  }, [rangeKey, customRange]);
+    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: t("admin.analyticsDeep.lastNDays", { n }) };
+  }, [rangeKey, customRange, t]);
 
   useEffect(() => {
     const load = async () => {
@@ -159,7 +161,7 @@ const AdminAnalyticsDeep = () => {
       offersInRange.reduce((acc: Record<string, number>, o) => {
         acc[o.venue_id] = (acc[o.venue_id] ?? 0) + 1; return acc;
       }, {})
-    ).map(([vid, count]) => ({ name: venueById[vid]?.name ?? "Unknown", count: count as number }))
+    ).map(([vid, count]) => ({ name: venueById[vid]?.name ?? t("admin.auditLog.unknown"), count: count as number }))
       .sort((a, b) => b.count - a.count).slice(0, 8);
 
     const weekly: Record<string, number> = {};
@@ -196,7 +198,7 @@ const AdminAnalyticsDeep = () => {
     const cityRows = Object.entries(byCity).map(([city, v]) => ({ city, ...v })).sort((a, b) => b.offers - a.offers);
 
     const byCategory: Record<string, number> = {};
-    venues.forEach(v => { const c = v.category || "Uncategorised"; byCategory[c] = (byCategory[c] ?? 0) + 1; });
+    venues.forEach(v => { const c = v.category || t("admin.analyticsDeep.uncategorised"); byCategory[c] = (byCategory[c] ?? 0) + 1; });
     const categoryRows = Object.entries(byCategory).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
 
     // 3. Influencer-side
@@ -267,7 +269,7 @@ const AdminAnalyticsDeep = () => {
     const applicantRows = (d.influencers as any[])
       .filter(p => activeInfIds.has(p.user_id))
       .map(p => ({
-        name: p.full_name || "Influencer",
+        name: p.full_name || t("admin.dashboard.influencerFallback"),
         followers: Math.max(p.followers_count ?? 0, p.tiktok_followers ?? 0),
         engagement: p.engagement_rate ?? 0,
         city: [p.city, p.country].filter(Boolean).join(", ") || "—",
@@ -289,7 +291,7 @@ const AdminAnalyticsDeep = () => {
         id: r.id,
         offer: o?.title ?? "—",
         venue: o ? (venueById[o.venue_id]?.name ?? "—") : "—",
-        influencer: (d.influencers as any[]).find(p => p.user_id === r.influencer_id)?.full_name ?? "Influencer",
+        influencer: (d.influencers as any[]).find(p => p.user_id === r.influencer_id)?.full_name ?? t("admin.dashboard.influencerFallback"),
         stage,
         link: del?.post_url || del?.content_url || null,
         disputed: !!del?.disputed,
@@ -319,26 +321,26 @@ const AdminAnalyticsDeep = () => {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <Link to="/admin/analytics" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mb-2">
-              <ArrowLeft className="w-3 h-3" /> Back to overview
+              <ArrowLeft className="w-3 h-3" /> {t("admin.analyticsDeep.backToOverview")}
             </Link>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-1">Deep <span className="text-gold">Analytics</span></h1>
-            <p className="text-muted-foreground text-sm">Marketplace, venue, influencer and delivery insight for the {rangeLabel}.</p>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-1">{t("admin.analyticsDeep.titlePrefix")} <span className="text-gold">{t("navLabel.Analytics", "Analytics")}</span></h1>
+            <p className="text-muted-foreground text-sm">{t("admin.analyticsDeep.subtitle", { range: rangeLabel })}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Select value={rangeKey} onValueChange={(v) => setRangeKey(v as RangeKey)}>
               <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="7">{t("admin.analytics.last7Days")}</SelectItem>
+                <SelectItem value="30">{t("admin.analytics.last30Days")}</SelectItem>
+                <SelectItem value="90">{t("admin.analytics.last90Days")}</SelectItem>
+                <SelectItem value="custom">{t("admin.analytics.customRange")}</SelectItem>
               </SelectContent>
             </Select>
             {rangeKey === "custom" && (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !customRange?.from && "text-muted-foreground")}>
-                    <CalendarIcon className="w-4 h-4 mr-2" />{customRange?.from ? rangeLabel : "Pick dates"}
+                    <CalendarIcon className="w-4 h-4 mr-2" />{customRange?.from ? rangeLabel : t("admin.analytics.pickDates")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -356,42 +358,41 @@ const AdminAnalyticsDeep = () => {
         ) : (
           <Tabs defaultValue="health">
             <TabsList className="flex flex-wrap h-auto">
-              <TabsTrigger value="health">Marketplace</TabsTrigger>
-              <TabsTrigger value="venue">Venues</TabsTrigger>
-              <TabsTrigger value="influencer">Influencers</TabsTrigger>
-              <TabsTrigger value="roi">ROI</TabsTrigger>
-              <TabsTrigger value="offers">Offer performance</TabsTrigger>
-              <TabsTrigger value="quality">Quality &amp; fit</TabsTrigger>
-              <TabsTrigger value="delivery">Delivery</TabsTrigger>
+              <TabsTrigger value="health">{t("admin.analyticsDeep.marketplace")}</TabsTrigger>
+              <TabsTrigger value="venue">{t("navLabel.Venues", "Venues")}</TabsTrigger>
+              <TabsTrigger value="influencer">{t("navLabel.Influencers", "Influencers")}</TabsTrigger>
+              <TabsTrigger value="roi">{t("admin.analyticsDeep.roi")}</TabsTrigger>
+              <TabsTrigger value="offers">{t("admin.analyticsDeep.offerPerformance")}</TabsTrigger>
+              <TabsTrigger value="quality">{t("admin.analyticsDeep.qualityFit")}</TabsTrigger>
+              <TabsTrigger value="delivery">{t("admin.analyticsDeep.delivery")}</TabsTrigger>
             </TabsList>
 
             {/* 1 */}
             <TabsContent value="health" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Metric label="Active venues (posted an offer)" value={m.activeVenues} hint={`of ${m.totalVenues} total venues`} />
-                <Metric label="Active influencers" value={m.activeInfluencers} hint={`${m.followerTotal.toLocaleString()} combined followers`} />
-                <Metric label="Open offers" value={m.openOffers} hint={`${pct(m.openOffers, m.totalOffers)} of all offers`} />
-                <Metric label="Claimed offers" value={m.claimedOffers} hint={`${pct(m.claimedOffers, m.totalOffers)} of all offers`} />
-                <Metric label="Average time to fill" value={m.avgFill ? days(m.avgFill) : "—"} hint="Offer posted → first approved applicant" />
-                <Metric label="Live offers right now" value={m.liveOffers} hint="Active and not expired" />
+                <Metric label={t("admin.analyticsDeep.activeVenuesLabel")} value={m.activeVenues} hint={t("admin.analyticsDeep.ofTotalVenues", { n: m.totalVenues })} />
+                <Metric label={t("admin.analytics.activeInfluencers")} value={m.activeInfluencers} hint={t("admin.analyticsDeep.combinedFollowers", { n: m.followerTotal.toLocaleString() })} />
+                <Metric label={t("admin.analyticsDeep.openOffers")} value={m.openOffers} hint={t("admin.analyticsDeep.ofAllOffers", { pct: pct(m.openOffers, m.totalOffers) })} />
+                <Metric label={t("admin.analyticsDeep.claimedOffers")} value={m.claimedOffers} hint={t("admin.analyticsDeep.ofAllOffers", { pct: pct(m.claimedOffers, m.totalOffers) })} />
+                <Metric label={t("admin.analyticsDeep.avgTimeToFill")} value={m.avgFill ? days(m.avgFill) : "—"} hint={t("admin.analyticsDeep.fillHint")} />
+                <Metric label={t("admin.analyticsDeep.liveOffersNow")} value={m.liveOffers} hint={t("admin.analyticsDeep.activeNotExpired")} />
               </div>
               <NoteBox>
-                Time-to-fill uses the creation time of the first approved application, since applications do not store a
-                separate approval timestamp. Values are accurate to the application date.
+                {t("admin.analyticsDeep.fillNote")}
               </NoteBox>
             </TabsContent>
 
             {/* 2 */}
             <TabsContent value="venue" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Metric label="Repeat usage rate" value={pct(m.repeatVenues, m.venuesWithOffers)} hint={`${m.repeatVenues} venues posted more than one offer`} />
-                <Metric label="Venues at churn risk" value={m.churnedVenues} hint="No new offer in 30 days" />
-                <Metric label="Venues with no offer yet" value={m.neverPostedVenues} hint="Signed up, never posted" />
-                <Metric label="Offers posted in range" value={m.offersInRange} />
-                <Metric label="Value of redeemed offers" value={`$${m.totalValue.toLocaleString()}`} hint="Based on the offer value field" />
+                <Metric label={t("admin.analyticsDeep.repeatUsageRate")} value={pct(m.repeatVenues, m.venuesWithOffers)} hint={t("admin.analyticsDeep.repeatUsageHint", { n: m.repeatVenues })} />
+                <Metric label={t("admin.analyticsDeep.churnRisk")} value={m.churnedVenues} hint={t("admin.analyticsDeep.noNewOffer30d")} />
+                <Metric label={t("admin.analyticsDeep.noOfferYet")} value={m.neverPostedVenues} hint={t("admin.analyticsDeep.signedUpNeverPosted")} />
+                <Metric label={t("admin.analyticsDeep.offersPostedInRange")} value={m.offersInRange} />
+                <Metric label={t("admin.analyticsDeep.valueRedeemed")} value={`$${m.totalValue.toLocaleString()}`} hint={t("admin.analyticsDeep.basedOnOfferValue")} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Section title="Offers posted per venue">
+                <Section title={t("admin.analyticsDeep.offersPerVenue")}>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={m.offersPerVenue}>
@@ -404,7 +405,7 @@ const AdminAnalyticsDeep = () => {
                     </ResponsiveContainer>
                   </div>
                 </Section>
-                <Section title="Offers posted over time">
+                <Section title={t("admin.analyticsDeep.offersOverTime")}>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={m.offersOverTime}>
@@ -417,17 +418,17 @@ const AdminAnalyticsDeep = () => {
                     </ResponsiveContainer>
                   </div>
                 </Section>
-                <Section title="Geographic breakdown">
+                <Section title={t("admin.analyticsDeep.geoBreakdown")}>
                   <div className="space-y-2 max-h-64 overflow-auto">
                     {m.cityRows.map(r => (
                       <div key={r.city} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
                         <span className="text-foreground">{r.city}</span>
-                        <span className="text-muted-foreground">{r.venues} venues · {r.offers} offers</span>
+                        <span className="text-muted-foreground">{t("admin.analyticsDeep.venuesOffersCount", { venues: r.venues, offers: r.offers })}</span>
                       </div>
                     ))}
                   </div>
                 </Section>
-                <Section title="Category breakdown">
+                <Section title={t("admin.analyticsDeep.categoryBreakdown")}>
                   <div className="space-y-2 max-h-64 overflow-auto">
                     {m.categoryRows.map(r => (
                       <div key={r.name} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
@@ -439,44 +440,43 @@ const AdminAnalyticsDeep = () => {
                 </Section>
               </div>
               <NoteBox>
-                Cost per offer uses the offer value stored on each offer. Offers created before that field was filled in show
-                as $0 — set a value on new offers so this stays accurate.
+                {t("admin.analyticsDeep.costPerOfferNote")}
               </NoteBox>
             </TabsContent>
 
             {/* 3 */}
             <TabsContent value="influencer" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Metric label="No-show / flake rate" value={pct(m.flaked, m.approvedCount)} hint={`${m.flaked} of ${m.approvedCount} approved applications never delivered`} />
-                <Metric label="Average reliability rating" value={m.avgInfRating ? m.avgInfRating.toFixed(2) : "—"} hint="Venue-to-influencer reviews" />
-                <Metric label="Repeat participation" value={pct(m.repeatInf, m.totalInfluencers)} hint={`${m.repeatInf} influencers with more than one claim`} />
-                <Metric label="Active influencers" value={m.activeInfluencers} />
+                <Metric label={t("admin.analyticsDeep.flakeRate")} value={pct(m.flaked, m.approvedCount)} hint={t("admin.analyticsDeep.flakeHint", { flaked: m.flaked, approved: m.approvedCount })} />
+                <Metric label={t("admin.analyticsDeep.avgReliability")} value={m.avgInfRating ? m.avgInfRating.toFixed(2) : "—"} hint={t("admin.analyticsDeep.venueToInfReviews")} />
+                <Metric label={t("admin.analyticsDeep.repeatParticipation")} value={pct(m.repeatInf, m.totalInfluencers)} hint={t("admin.analyticsDeep.repeatParticipationHint", { n: m.repeatInf })} />
+                <Metric label={t("admin.analytics.activeInfluencers")} value={m.activeInfluencers} />
               </div>
             </TabsContent>
 
             {/* 4 */}
             <TabsContent value="roi" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Metric label="Total value redeemed" value={`$${m.totalValue.toLocaleString()}`} />
-                <Metric label="Total views" value={m.totalViews.toLocaleString()} hint={`${m.totalLikes.toLocaleString()} likes · ${m.totalComments.toLocaleString()} comments`} />
-                <Metric label="Cost per view" value={m.costPerView ? `$${m.costPerView.toFixed(4)}` : "—"} />
-                <Metric label="Content pieces received" value={Object.values(m.contentTypeCounts).reduce((s: number, n: any) => s + n, 0)} />
+                <Metric label={t("admin.analyticsDeep.totalValueRedeemed")} value={`$${m.totalValue.toLocaleString()}`} />
+                <Metric label={t("admin.analyticsDeep.totalViews")} value={m.totalViews.toLocaleString()} hint={t("admin.analyticsDeep.likesCommentsHint", { likes: m.totalLikes.toLocaleString(), comments: m.totalComments.toLocaleString() })} />
+                <Metric label={t("admin.analyticsDeep.costPerView")} value={m.costPerView ? `$${m.costPerView.toFixed(4)}` : "—"} />
+                <Metric label={t("admin.analyticsDeep.contentPiecesReceived")} value={Object.values(m.contentTypeCounts).reduce((s: number, n: any) => s + n, 0)} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Section title="Content received by type">
+                <Section title={t("admin.analyticsDeep.contentByType")}>
                   <div className="space-y-2">
                     {Object.entries(m.contentTypeCounts).length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No content in this range.</p>
-                    ) : Object.entries(m.contentTypeCounts).map(([t, c]) => (
-                      <div key={t} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
-                        <span className="capitalize text-foreground">{t}</span><span className="text-gold">{c as number}</span>
+                      <p className="text-sm text-muted-foreground">{t("admin.analyticsDeep.noContentInRange")}</p>
+                    ) : Object.entries(m.contentTypeCounts).map(([ct, c]) => (
+                      <div key={ct} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
+                        <span className="capitalize text-foreground">{ct}</span><span className="text-gold">{c as number}</span>
                       </div>
                     ))}
                   </div>
                 </Section>
-                <Section title="Value redeemed per venue">
+                <Section title={t("admin.analyticsDeep.valuePerVenue")}>
                   <div className="space-y-2 max-h-64 overflow-auto">
-                    {m.valueRows.length === 0 ? <p className="text-sm text-muted-foreground">No creator visits in this range.</p> :
+                    {m.valueRows.length === 0 ? <p className="text-sm text-muted-foreground">{t("admin.analyticsDeep.noVisitsInRange")}</p> :
                       m.valueRows.map(r => (
                         <div key={r.venue} className="flex justify-between text-sm p-2 rounded bg-secondary/50">
                           <span className="text-foreground">{r.venue}</span><span className="text-gold">${r.value.toLocaleString()}</span>
@@ -490,23 +490,22 @@ const AdminAnalyticsDeep = () => {
             {/* 5 */}
             <TabsContent value="offers" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Metric label="Fill rate" value={m.fillRate} hint="Offers with at least one approved applicant" />
-                <Metric label="Listing views" value={m.listingViewsTotal} hint="Tracked since 14 Aug 2026" />
-                <Metric label="Applications received" value={Object.values(m.offerRows).reduce((s: number, r: any) => s + r.applications, 0)} />
-                <Metric label="Average time to fill" value={m.avgFill ? days(m.avgFill) : "—"} />
+                <Metric label={t("admin.analyticsDeep.fillRate")} value={m.fillRate} hint={t("admin.analyticsDeep.fillRateHint")} />
+                <Metric label={t("admin.analyticsDeep.listingViews")} value={m.listingViewsTotal} hint={t("admin.analyticsDeep.trackedSince")} />
+                <Metric label={t("admin.analyticsDeep.applicationsReceived")} value={Object.values(m.offerRows).reduce((s: number, r: any) => s + r.applications, 0)} />
+                <Metric label={t("admin.analyticsDeep.avgTimeToFill")} value={m.avgFill ? days(m.avgFill) : "—"} />
               </div>
               <NoteBox>
-                Offer listing view tracking started on 14 Aug 2026. Offers published before that date have no historical view
-                counts, so early numbers under-report real interest.
+                {t("admin.analyticsDeep.listingViewsNote")}
               </NoteBox>
-              <Section title="Per-offer performance">
+              <Section title={t("admin.analyticsDeep.perOfferPerformance")}>
                 <div className="overflow-auto">
                   <table className="w-full text-sm">
                     <thead className="text-xs text-muted-foreground">
                       <tr className="border-b border-border">
-                        <th className="text-left p-2">Offer</th><th className="text-left p-2">Venue</th>
-                        <th className="text-right p-2">Views</th><th className="text-right p-2">Applications</th>
-                        <th className="text-right p-2">Filled</th><th className="text-right p-2">Time to fill</th>
+                        <th className="text-left p-2">{t("navLabel.Offers", "Offer")}</th><th className="text-left p-2">{t("admin.events.venue")}</th>
+                        <th className="text-right p-2">{t("admin.analyticsDeep.views")}</th><th className="text-right p-2">{t("admin.analyticsDeep.applications")}</th>
+                        <th className="text-right p-2">{t("admin.analyticsDeep.filled")}</th><th className="text-right p-2">{t("admin.analyticsDeep.timeToFill")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -516,11 +515,11 @@ const AdminAnalyticsDeep = () => {
                           <td className="p-2 text-muted-foreground">{r.venue}</td>
                           <td className="p-2 text-right">{r.listingViews}</td>
                           <td className="p-2 text-right">{r.applications}</td>
-                          <td className="p-2 text-right">{r.filled ? "Yes" : "No"}</td>
+                          <td className="p-2 text-right">{r.filled ? t("admin.analyticsDeep.yes") : t("admin.analyticsDeep.no")}</td>
                           <td className="p-2 text-right">{r.fill ? days(r.fill) : "—"}</td>
                         </tr>
                       ))}
-                      {m.offerRows.length === 0 && <tr><td colSpan={6} className="p-4 text-muted-foreground text-center">No offers in this range.</td></tr>}
+                      {m.offerRows.length === 0 && <tr><td colSpan={6} className="p-4 text-muted-foreground text-center">{t("admin.analyticsDeep.noOffersInRange")}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -529,14 +528,14 @@ const AdminAnalyticsDeep = () => {
 
             {/* 6 */}
             <TabsContent value="quality" className="space-y-6 mt-6">
-              <Section title="Influencers who claimed offers in this range">
+              <Section title={t("admin.analyticsDeep.influencersWhoClaimed")}>
                 <div className="overflow-auto">
                   <table className="w-full text-sm">
                     <thead className="text-xs text-muted-foreground">
                       <tr className="border-b border-border">
-                        <th className="text-left p-2">Influencer</th><th className="text-left p-2">Location</th>
-                        <th className="text-left p-2">Niche</th><th className="text-right p-2">Followers</th>
-                        <th className="text-right p-2">Engagement</th><th className="text-right p-2">Rating</th>
+                        <th className="text-left p-2">{t("navLabel.Influencers", "Influencer")}</th><th className="text-left p-2">{t("admin.analyticsDeep.location")}</th>
+                        <th className="text-left p-2">{t("admin.creatorOps.niche")}</th><th className="text-right p-2">{t("admin.creatorOps.followers")}</th>
+                        <th className="text-right p-2">{t("admin.analyticsDeep.engagement")}</th><th className="text-right p-2">{t("admin.moderation.rating")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -550,7 +549,7 @@ const AdminAnalyticsDeep = () => {
                           <td className="p-2 text-right">{r.rating ? r.rating.toFixed(1) : "—"}</td>
                         </tr>
                       ))}
-                      {m.applicantRows.length === 0 && <tr><td colSpan={6} className="p-4 text-muted-foreground text-center">No applicants in this range.</td></tr>}
+                      {m.applicantRows.length === 0 && <tr><td colSpan={6} className="p-4 text-muted-foreground text-center">{t("admin.analyticsDeep.noApplicantsInRange")}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -559,14 +558,14 @@ const AdminAnalyticsDeep = () => {
 
             {/* 7 */}
             <TabsContent value="delivery" className="space-y-6 mt-6">
-              <Section title="Delivery pipeline">
+              <Section title={t("admin.analyticsDeep.deliveryPipeline")}>
                 <div className="overflow-auto">
                   <table className="w-full text-sm">
                     <thead className="text-xs text-muted-foreground">
                       <tr className="border-b border-border">
-                        <th className="text-left p-2">Offer</th><th className="text-left p-2">Venue</th>
-                        <th className="text-left p-2">Influencer</th><th className="text-left p-2">Stage</th>
-                        <th className="text-left p-2">Content</th>
+                        <th className="text-left p-2">{t("navLabel.Offers", "Offer")}</th><th className="text-left p-2">{t("admin.events.venue")}</th>
+                        <th className="text-left p-2">{t("navLabel.Influencers", "Influencer")}</th><th className="text-left p-2">{t("admin.venues.stage")}</th>
+                        <th className="text-left p-2">{t("admin.chatbot.content", "Content")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -577,26 +576,25 @@ const AdminAnalyticsDeep = () => {
                           <td className="p-2 text-muted-foreground">{r.influencer}</td>
                           <td className="p-2">
                             <Badge variant="secondary" className="capitalize text-xs">{r.stage}</Badge>
-                            {r.disputed && <Badge variant="destructive" className="ml-2 text-xs">Disputed</Badge>}
+                            {r.disputed && <Badge variant="destructive" className="ml-2 text-xs">{t("admin.analyticsDeep.disputed")}</Badge>}
                             {r.disputed && r.disputeReason && <p className="text-xs text-muted-foreground mt-1">{r.disputeReason}</p>}
                           </td>
                           <td className="p-2">
                             {r.link ? (
                               <a href={r.link} target="_blank" rel="noreferrer" className="text-gold inline-flex items-center gap-1">
-                                View <ExternalLink className="w-3 h-3" />
+                                {t("admin.moderation.view")} <ExternalLink className="w-3 h-3" />
                               </a>
                             ) : <span className="text-muted-foreground">—</span>}
                           </td>
                         </tr>
                       ))}
-                      {m.pipeline.length === 0 && <tr><td colSpan={5} className="p-4 text-muted-foreground text-center">No claims in this range.</td></tr>}
+                      {m.pipeline.length === 0 && <tr><td colSpan={5} className="p-4 text-muted-foreground text-center">{t("admin.analyticsDeep.noClaimsInRange")}</td></tr>}
                     </tbody>
                   </table>
                 </div>
               </Section>
               <NoteBox>
-                Venues can flag a delivery from their Content page. Flagged items appear here and in the Moderation queue for
-                admin review.
+                {t("admin.analyticsDeep.deliveryNote")}
               </NoteBox>
             </TabsContent>
           </Tabs>
