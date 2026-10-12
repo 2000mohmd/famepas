@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
 import { isValidEmail, isValidName, isValidPhoneNumber, normalizePhone, isVenueMediaComplete, normalizeHandle, VENUE_MIN_PHOTOS } from "@/lib/validation";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 /** Downscale an image to a JPEG data URL so signup uploads stay small. */
 const compressImage = (file: File, maxSide: number): Promise<string | null> =>
@@ -88,8 +90,11 @@ const Page = ({ children }: { children: React.ReactNode }) => (
           Fame<span className="text-primary">Pass</span>
         </span>
       </Link>
-      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
-        <UserCheck className="w-5 h-5" />
+      <div className="flex items-center gap-4">
+        <LanguageSwitcher />
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
+          <UserCheck className="w-5 h-5" />
+        </div>
       </div>
     </header>
     <main className="flex justify-center px-4 pb-16">{children}</main>
@@ -150,10 +155,12 @@ const ChoicePill = ({
   </button>
 );
 
-const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; total: number }) => (
+const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; total: number }) => {
+  const { t } = useTranslation();
+  return (
   <div className="w-full max-w-xl mb-4 flex items-center justify-between">
     <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
-      <ArrowLeft className="w-4 h-4" /> Back
+      <ArrowLeft className="w-4 h-4" /> {t("signup.back")}
     </button>
     <div className="flex gap-1">
       {Array.from({ length: total }).map((_, i) => (
@@ -161,7 +168,8 @@ const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; to
       ))}
     </div>
   </div>
-);
+  );
+};
 
 /* ---------- main component ---------- */
 
@@ -169,6 +177,7 @@ const VenueSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoaded } = useGoogleMaps();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>("account");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -201,6 +210,7 @@ const VenueSignup = () => {
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [locationSearchStatus, setLocationSearchStatus] = useState("");
+  const [locationSearchUnavailable, setLocationSearchUnavailable] = useState(false);
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [locationEmail, setLocationEmail] = useState("");
@@ -258,13 +268,14 @@ const VenueSignup = () => {
   }, [isLoaded]);
 
   useEffect(() => {
-    if (addressQuery.trim().length < 3) { setSuggestions([]); setLocationSearchStatus(""); return; }
+    if (addressQuery.trim().length < 3) { setSuggestions([]); setLocationSearchStatus(""); setLocationSearchUnavailable(false); return; }
     if (!isLoaded || !window.google?.maps?.places?.AutocompleteSuggestion) {
-      setLocationSearchStatus("Address search is still loading…");
+      setLocationSearchStatus(t("venueSignup.addressSearchLoading"));
       return;
     }
-    const t = setTimeout(() => {
-      setLocationSearchStatus("Searching…");
+    const timer = setTimeout(() => {
+      setLocationSearchStatus(t("venueSignup.searching"));
+      setLocationSearchUnavailable(false);
       google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input: addressQuery.trim(),
         includedRegionCodes: serviceCountryCodes,
@@ -280,10 +291,10 @@ const VenueSignup = () => {
           };
         }).filter((item: PlaceSuggestion) => item.placeId || item.description);
         setSuggestions(mapped);
-        setLocationSearchStatus(mapped.length ? "" : "No matching locations found");
-      }).catch(() => setLocationSearchStatus("Location search is unavailable. You can enter the address manually."));
+        setLocationSearchStatus(mapped.length ? "" : t("venueSignup.noLocationsFound"));
+      }).catch(() => { setLocationSearchStatus(t("venueSignup.locationSearchUnavailable")); setLocationSearchUnavailable(true); });
     }, 250);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [addressQuery, isLoaded, serviceCountryCodes]);
 
   // sync email to confirm screen
@@ -397,11 +408,11 @@ const VenueSignup = () => {
       <Page>
         <div className="w-full max-w-md">
           <Card>
-            <Heading title="Registrations are closed" />
+            <Heading title={t("venueSignup.registrationsClosed")} />
             <p className="text-slate-600 mb-6">
-              Venue signups are temporarily disabled. Please check back soon.
+              {t("venueSignup.registrationsClosedSub")}
             </p>
-            <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+            <PrimaryButton onClick={() => navigate("/login")}>{t("venueSignup.backToSignIn")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -414,24 +425,24 @@ const VenueSignup = () => {
       <Page>
         <div className="w-full max-w-md">
           <Card>
-            <Heading title="Create your FamePass business account" />
+            <Heading title={t("venueSignup.createAccountTitle")} />
 
-            <Field label="Email" hint="This will be your login email, and where we'll send approval and account updates.">
+            <Field label={t("login.email")} hint={t("venueSignup.emailHint")}>
               <TextInput type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
-            <Field label="Password">
+            <Field label={t("login.password")}>
               <div className="relative">
-                <TextInput type={showPwd ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" className="pr-16" />
+                <TextInput type={showPwd ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder={t("venueSignup.createPassword")} className="pr-16" />
                 <button type="button" onClick={() => setShowPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
-                  {showPwd ? "Hide" : "Show"}
+                  {showPwd ? t("login.hide") : t("login.show")}
                 </button>
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-2 mb-4 text-xs text-slate-600">
               {[
-                ["length", "8+ characters"],
-                ["letter", "A letter"],
-                ["number", "A number"],
+                ["length", t("venueSignup.pwLength")],
+                ["letter", t("venueSignup.pwLetter")],
+                ["number", t("venueSignup.pwNumber")],
               ].map(([key, label]) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordChecks[key as keyof typeof passwordChecks] ? "bg-primary" : "bg-slate-200"}`}>
@@ -442,32 +453,32 @@ const VenueSignup = () => {
               ))}
             </div>
             {password.length >= 6 && !passwordReady && (
-              <p className="text-xs text-amber-600 mb-4">For better security, we recommend a stronger password — but you can continue.</p>
+              <p className="text-xs text-amber-600 mb-4">{t("venueSignup.weakPasswordHint")}</p>
             )}
-            <Field label="Confirm password">
+            <Field label={t("venueSignup.confirmPassword")}>
               <div className="relative">
-                <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pr-16" />
+                <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t("venueSignup.reenterPassword")} className="pr-16" />
                 <button type="button" onClick={() => setShowConfirmPwd(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary">
-                  {showConfirmPwd ? "Hide" : "Show"}
+                  {showConfirmPwd ? t("login.hide") : t("login.show")}
                 </button>
               </div>
               {confirmPassword.length > 0 && !passwordsMatch && (
-                <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                <p className="text-xs text-red-500 mt-1">{t("venueSignup.passwordsDontMatch")}</p>
               )}
             </Field>
             <PrimaryButton
               disabled={!email || password.length < 6 || !passwordsMatch}
               onClick={() => setStep("check-inbox")}
             >
-              Create Account
+              {t("venueSignup.createAccountBtn")}
             </PrimaryButton>
             <p className="mt-4 text-center text-xs text-slate-500">
-              By continuing you agree to FamePass's <Link to="/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link> and Terms of Service.
+              {t("venueSignup.agreeToPrivacy")} <Link to="/privacy-policy" className="text-primary hover:underline">{t("venueSignup.privacyPolicy")}</Link> {t("venueSignup.andTerms")}
             </p>
           </Card>
           <p className="mt-5 text-center text-sm text-slate-500">
-            Already have an account?{" "}
-            <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">Log in</button>
+            {t("welcome.alreadyHaveAccount")}{" "}
+            <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">{t("welcome.login")}</button>
           </p>
         </div>
       </Page>
@@ -483,18 +494,17 @@ const VenueSignup = () => {
             <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
               <Mail className="w-7 h-7 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Let's finish your setup</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t("venueSignup.finishSetup")}</h1>
             <p className="text-slate-500 mt-2 text-sm">
-              We'll email <span className="font-semibold text-slate-800">{email}</span> as soon as you complete
-              the next few steps — your account isn't created until then.
+              {t("venueSignup.finishSetupSub1")} <span className="font-semibold text-slate-800">{email}</span> {t("venueSignup.finishSetupSub2")}
             </p>
             <div className="text-left bg-[#faf8f3] border border-slate-100 rounded-xl p-4 my-6 text-sm text-slate-600 space-y-2">
-              <p className="font-semibold text-slate-800">What's next</p>
-              <p>1. Tell us about you and your brand</p>
-              <p>2. Add your first location</p>
-              <p>3. We send your confirmation email and open your dashboard</p>
+              <p className="font-semibold text-slate-800">{t("venueSignup.whatsNext")}</p>
+              <p>{t("venueSignup.whatsNext1")}</p>
+              <p>{t("venueSignup.whatsNext2")}</p>
+              <p>{t("venueSignup.whatsNext3")}</p>
             </div>
-            <PrimaryButton onClick={() => setStep("details")}>Continue setup</PrimaryButton>
+            <PrimaryButton onClick={() => setStep("details")}>{t("venueSignup.continueSetup")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -508,16 +518,16 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("check-inbox")} step={2} total={8} />
           <Card>
-            <Heading title="Confirm your details" />
-            <Field label="First Name">
+            <Heading title={t("venueSignup.confirmDetails")} />
+            <Field label={t("signup.firstName")}>
               <TextInput value={firstName} onChange={e => setFirstName(e.target.value)} />
-              {firstName.trim() && !isValidName(firstName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
+              {firstName.trim() && !isValidName(firstName) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.min2Chars")}</p>}
             </Field>
-            <Field label="Last Name">
+            <Field label={t("signup.lastName")}>
               <TextInput value={lastName} onChange={e => setLastName(e.target.value)} />
-              {lastName.trim() && !isValidName(lastName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
+              {lastName.trim() && !isValidName(lastName) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.min2Chars")}</p>}
             </Field>
-            <Field label="Email">
+            <Field label={t("login.email")}>
               <div className="relative">
                 <TextInput value={email} readOnly className="pr-10 bg-slate-50" />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
@@ -525,11 +535,11 @@ const VenueSignup = () => {
                 </div>
               </div>
             </Field>
-            <Field label="Phone">
+            <Field label={t("signup.phone")}>
               <TextInput type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+961 70 000 000" />
-              {phone.trim() && !isValidPhone(phone) && <p className="text-xs text-red-600 mt-1">Please enter a valid phone number.</p>}
+              {phone.trim() && !isValidPhone(phone) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.invalidPhone")}</p>}
             </Field>
-            <PrimaryButton disabled={!isValidName(firstName) || !isValidName(lastName) || !isValidPhone(phone)} onClick={() => setStep("hear")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!isValidName(firstName) || !isValidName(lastName) || !isValidPhone(phone)} onClick={() => setStep("hear")}>{t("signup.next")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -542,7 +552,7 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("details")} step={3} total={8} />
           <Card>
-            <Heading title="How did you hear about us?" sub="Please pick any that apply:" />
+            <Heading title={t("signup.hearAbout")} sub={t("venueSignup.pickAnyApply")} />
             <div className="grid grid-cols-2 gap-3 mb-6">
               {HEAR_OPTIONS.map(opt => (
                 <ChoicePill key={opt} selected={hear.includes(opt)} onClick={() => toggle(hear, opt, setHear)}>
@@ -550,7 +560,7 @@ const VenueSignup = () => {
                 </ChoicePill>
               ))}
             </div>
-            <PrimaryButton disabled={hear.length === 0} onClick={() => setStep("business-check")}>Next</PrimaryButton>
+            <PrimaryButton disabled={hear.length === 0} onClick={() => setStep("business-check")}>{t("signup.next")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -563,15 +573,15 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("hear")} step={4} total={8} />
           <Card>
-            <Heading title="Is this sign-up for a registered business?" sub="This form is for venues and businesses only — not for individual creators or freelancers." />
+            <Heading title={t("signup.businessCheckTitle")} sub={t("signup.businessCheckSub")} />
             <div className="space-y-3">
-              <PrimaryButton onClick={() => setStep("brand")}>Yes, I'm signing up a business</PrimaryButton>
+              <PrimaryButton onClick={() => setStep("brand")}>{t("venueSignup.yesBusiness")}</PrimaryButton>
               <button
                 type="button"
                 onClick={() => navigate("/signup/influencer")}
                 className="w-full h-12 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold hover:border-slate-300 transition"
               >
-                No, I'm an individual creator
+                {t("venueSignup.noCreator")}
               </button>
             </div>
           </Card>
@@ -586,12 +596,12 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("business-check")} step={5} total={8} />
           <Card>
-            <Heading title="Describe your business" />
-            <Field label="Name">
+            <Heading title={t("signup.brandTitle")} />
+            <Field label={t("signup.brandName")}>
               <TextInput value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="e.g. Honest Burgers" />
-              {brandName.trim() && !isValidName(brandName) && <p className="text-xs text-red-600 mt-1">Please enter at least 2 characters.</p>}
+              {brandName.trim() && !isValidName(brandName) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.min2Chars")}</p>}
             </Field>
-            <Field label="Category" hint="Pick all that apply — this helps us find the right influencers">
+            <Field label={t("venueSignup.category")} hint={t("venueSignup.categoryHint")}>
               <div className="grid grid-cols-2 gap-3">
                 {categories.map(c => (
                   <ChoicePill key={c} selected={brandCategories.includes(c)} onClick={() => toggle(brandCategories, c, setBrandCategories)}>
@@ -600,13 +610,13 @@ const VenueSignup = () => {
                 ))}
               </div>
             </Field>
-            <Field label="City" hint="Which city is your business based in?">
+            <Field label={t("venueSignup.city")} hint={t("venueSignup.cityHint")}>
               <select
                 value={venueCity}
                 onChange={e => setVenueCity(e.target.value)}
                 className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">Select a city…</option>
+                <option value="">{t("venueSignup.selectCity")}</option>
                 {(() => {
                   const groups = new Map<string, string[]>();
                   cities.forEach(({ city, area }) => {
@@ -621,7 +631,7 @@ const VenueSignup = () => {
                 })()}
               </select>
             </Field>
-            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("media")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!isValidName(brandName) || brandCategories.length === 0 || !venueCity} onClick={() => setStep("media")}>{t("signup.next")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -635,14 +645,14 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("brand")} step={6} total={8} />
           <Card>
-            <Heading title="Show creators your venue" sub="Your logo, at least 3 photos and your Instagram handle are required." />
-            <Field label="Logo">
+            <Heading title={t("signup.mediaTitle")} sub={t("signup.mediaSub")} />
+            <Field label={t("venueSignup.logo")}>
               <div className="flex items-center gap-3">
                 {logoData && <img src={logoData} alt="Logo preview" className="w-16 h-16 rounded-lg object-cover border border-slate-200" />}
                 <input type="file" accept="image/*" onChange={async e => { const f = e.target.files?.[0]; if (f) setLogoData(await compressImage(f, 600)); }} className="text-sm" />
               </div>
             </Field>
-            <Field label={`Photos (${photosData.length}/${VENUE_MIN_PHOTOS} minimum)`}>
+            <Field label={t("venueSignup.photosLabel", { count: photosData.length, min: VENUE_MIN_PHOTOS })}>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 {photosData.map((p, i) => (
                   <div key={i} className="relative">
@@ -660,11 +670,11 @@ const VenueSignup = () => {
                 }} className="text-sm" />
               )}
             </Field>
-            <Field label="Instagram handle">
+            <Field label={t("venueSignup.instagramHandle")}>
               <TextInput value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@yourvenue" />
-              {instagram.trim() && !isVenueMediaComplete({ hasLogo: true, photoCount: VENUE_MIN_PHOTOS, instagram }) && <p className="text-xs text-red-600 mt-1">Please enter a valid Instagram handle.</p>}
+              {instagram.trim() && !isVenueMediaComplete({ hasLogo: true, photoCount: VENUE_MIN_PHOTOS, instagram }) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.invalidInstagram")}</p>}
             </Field>
-            <PrimaryButton disabled={!ready} onClick={() => setStep("location-search")}>Next</PrimaryButton>
+            <PrimaryButton disabled={!ready} onClick={() => setStep("location-search")}>{t("signup.next")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -677,12 +687,12 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("media")} step={7} total={8} />
           <Card>
-            <Heading title="Add your first location" sub="A location can be any physical place for influencer visits, such as hotels, restaurants, cafes, entertainment venues, and more" />
-            <Field label="Search for address">
+            <Heading title={t("signup.locationTitle")} sub={t("venueSignup.locationSub")} />
+            <Field label={t("venueSignup.searchAddress")}>
               <TextInput
                 value={addressQuery}
                 onChange={e => setAddressQuery(e.target.value)}
-                placeholder="Start typing an address..."
+                placeholder={t("venueSignup.startTypingAddress")}
                 autoFocus
               />
             </Field>
@@ -709,15 +719,15 @@ const VenueSignup = () => {
             )}
             {locationSearchStatus && <p className="text-xs text-slate-400 mt-2">{locationSearchStatus}</p>}
             {!isLoaded && (
-              <p className="text-xs text-slate-400 mt-2">Loading address search…</p>
+              <p className="text-xs text-slate-400 mt-2">{t("venueSignup.loadingAddressSearch")}</p>
             )}
-            {(!isLoaded || /unavailable/.test(locationSearchStatus)) && <button
+            {(!isLoaded || locationSearchUnavailable) && <button
               onClick={() => { setLocationAddress(addressQuery); setSelectedPlaceId(null); setStep("location-details"); }}
               className="mt-4 text-sm text-primary font-medium"
             >
-              Map search isn't working — enter manually
+              {t("venueSignup.mapSearchNotWorking")}
             </button>}
-            <p className="text-xs text-slate-500 mt-3">Pick your venue from the map results so creators can find you.</p>
+            <p className="text-xs text-slate-500 mt-3">{t("venueSignup.pickVenueFromMap")}</p>
           </Card>
         </div>
       </Page>
@@ -730,11 +740,11 @@ const VenueSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("location-search")} step={8} total={8} />
           <Card>
-            <Heading title="Add your first location" />
-            <Field label="Name">
+            <Heading title={t("signup.locationTitle")} />
+            <Field label={t("venueSignup.locationName")}>
               <TextInput value={locationName} onChange={e => setLocationName(e.target.value)} placeholder="e.g. Downtown Branch" />
             </Field>
-            <Field label="Address">
+            <Field label={t("venueSignup.address")}>
               <textarea
                 value={locationAddress}
                 onChange={e => setLocationAddress(e.target.value)}
@@ -742,18 +752,18 @@ const VenueSignup = () => {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </Field>
-            <Field label="Email" hint="This email will receive notifications when a booking is confirmed at this location.">
+            <Field label={t("login.email")} hint={t("venueSignup.locationEmailHint")}>
               <TextInput type="email" value={locationEmail} onChange={e => setLocationEmail(e.target.value)} />
               {locationEmail.trim() && !isValidEmail(locationEmail) && (
-                <p className="text-xs text-red-600 mt-1">Please enter a valid email address.</p>
+                <p className="text-xs text-red-600 mt-1">{t("venueSignup.invalidEmail")}</p>
               )}
             </Field>
 
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-semibold text-slate-800">Opening Hours</div>
+                <div className="text-sm font-semibold text-slate-800">{t("venueSignup.openingHours")}</div>
                 <button onClick={() => setEditHours(v => !v)} className="text-sm text-primary font-medium inline-flex items-center gap-1">
-                  <Pencil className="w-3.5 h-3.5" /> {editHours ? "Done" : "Edit"}
+                  <Pencil className="w-3.5 h-3.5" /> {editHours ? t("venueSignup.done") : t("venueSignup.edit")}
                 </button>
               </div>
               <div className="space-y-2">
@@ -769,7 +779,7 @@ const VenueSignup = () => {
                             onChange={e => setHours(h => ({ ...h, [d]: { ...h[d], closed: e.target.checked } }))}
                             className="w-4 h-4 accent-primary"
                           />
-                          Closed
+                          {t("venueSignup.closed")}
                         </label>
                         {!hours[d].closed && (
                           <>
@@ -781,7 +791,7 @@ const VenueSignup = () => {
                       </div>
                     ) : (
                       <span className={hours[d].closed ? "text-slate-400" : "text-slate-600"}>
-                        {hours[d].closed ? "Closed" : `${hours[d].open} - ${hours[d].close}`}
+                        {hours[d].closed ? t("venueSignup.closed") : `${hours[d].open} - ${hours[d].close}`}
                       </span>
                     )}
                   </div>
@@ -793,7 +803,7 @@ const VenueSignup = () => {
               disabled={!isValidName(locationName) || !locationAddress.trim() || !isValidEmail(locationEmail) || submitting}
               onClick={handleFinalize}
             >
-              {submitting ? "Creating account..." : "Save"}
+              {submitting ? t("venueSignup.creatingAccount") : t("common.save")}
             </PrimaryButton>
           </Card>
         </div>
@@ -809,8 +819,8 @@ const VenueSignup = () => {
           <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center mb-4">
             <Check className="w-8 h-8 text-primary" strokeWidth={3} />
           </div>
-          <Heading title="Application received" sub="Thanks! An admin will review your venue and email you as soon as it's approved. You can sign in once your account is active." />
-          <PrimaryButton onClick={() => navigate("/login")}>Go to Sign In</PrimaryButton>
+          <Heading title={t("venueSignup.applicationReceived")} sub={t("venueSignup.applicationReceivedSub")} />
+          <PrimaryButton onClick={() => navigate("/login")}>{t("venueSignup.goToSignIn")}</PrimaryButton>
         </Card>
       </div>
     </Page>
