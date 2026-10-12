@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ const AdminVenues = () => {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: "convert" | "delete"; venue: Venue } | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Sales pipeline per venue: stage, owner, and how far through activation it
   // is. Read from venue_activation, which already joins each venue to its lead.
@@ -87,10 +89,10 @@ const AdminVenues = () => {
     const { data: reps } = repIds.length
       ? await supabase.from("profiles").select("user_id, full_name").in("user_id", repIds)
       : { data: [] as any[] };
-    const repName = Object.fromEntries((reps ?? []).map((r: any) => [r.user_id, r.full_name || "Unnamed"]));
+    const repName = Object.fromEntries((reps ?? []).map((r: any) => [r.user_id, r.full_name || t("admin.messages.unnamed")]));
     setPipeline(Object.fromEntries((act ?? []).map((a: any) => [a.venue_id, {
       stage: a.lead_stage,
-      rep: a.rep_id ? repName[a.rep_id] ?? "Unnamed" : null,
+      rep: a.rep_id ? repName[a.rep_id] ?? t("admin.messages.unnamed") : null,
       done: [a.profile_complete, a.photos_uploaded, a.first_offer_posted, a.first_creator_visit, a.first_content_published].filter(Boolean).length,
     }])));
     setLoading(false);
@@ -136,16 +138,16 @@ const AdminVenues = () => {
     // CRM review, rule 2: every approval is logged with who and when.
     void (supabase as any).rpc("log_staff_action", { _action: status === "approved" ? "approve" : "reject", _table: "venues", _target: id });
     if (status === "approved") {
-      toast({ title: "Venue approved", description: "The venue is now active and visible to influencers." });
+      toast({ title: t("admin.venues.venueApproved"), description: t("admin.venues.venueApprovedDesc") });
       const sent = await notifyEmail({ event: "venue_approved", venue_id: id });
       if (!sent) {
-        toast({ title: "Notification email not sent", description: "The venue was approved, but the approval email could not be sent." });
+        toast({ title: t("admin.venues.emailNotSent"), description: t("admin.venues.emailNotSentDesc") });
       }
     } else if (status === "rejected") {
       const sent = await notifyEmail({ event: "venue_rejected", venue_id: id });
       toast({
-        title: "Venue rejected",
-        description: sent ? "Notification email sent." : "Notification email could not be sent.",
+        title: t("admin.venues.venueRejected"),
+        description: sent ? t("admin.venues.emailSent") : t("admin.venues.emailCouldntSend"),
         variant: sent ? undefined : "destructive",
       });
     }
@@ -156,10 +158,10 @@ const AdminVenues = () => {
   const deleteVenue = async (id: string, name: string) => {
     const { error } = await supabase.functions.invoke("delete-user", { body: { venue_id: id } });
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
       void (supabase as any).rpc("log_staff_action", { _action: "delete", _table: "venues", _target: id, _detail: { name } });
-      toast({ title: `${name} deleted` });
+      toast({ title: t("admin.venues.deletedTitle", { name }) });
       fetchVenues();
     }
   };
@@ -167,24 +169,24 @@ const AdminVenues = () => {
   const convertToCreator = async (id: string, name: string) => {
     const { error, data } = await supabase.functions.invoke("convert-venue-to-influencer", { body: { venue_id: id } });
     if (error || data?.error) {
-      toast({ title: "Error", description: data?.error || error?.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: data?.error || error?.message, variant: "destructive" });
     } else {
-      toast({ title: `${name} moved to creators`, description: "Now sitting in the influencer queue, pending approval." });
+      toast({ title: t("admin.venues.movedToCreators", { name }), description: t("admin.venues.movedToCreatorsDesc") });
       fetchVenues();
     }
   };
 
   const handleCreateVenue = async () => {
     if (!isValidName(newVenue.name)) {
-      toast({ title: "Invalid venue name", description: "Venue name must be at least 2 characters.", variant: "destructive" });
+      toast({ title: t("admin.venues.invalidName"), description: t("admin.venues.invalidNameDesc"), variant: "destructive" });
       return;
     }
     if (!isValidEmail(newVenue.email)) {
-      toast({ title: "Invalid email", description: "Please enter a valid login email address.", variant: "destructive" });
+      toast({ title: t("admin.venues.invalidEmail"), description: t("admin.venues.invalidEmailDesc"), variant: "destructive" });
       return;
     }
     if (newVenue.password.length < 6) {
-      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      toast({ title: t("admin.venues.weakPassword"), description: t("admin.venues.weakPasswordDesc"), variant: "destructive" });
       return;
     }
     setIsCreating(true);
@@ -205,12 +207,12 @@ const AdminVenues = () => {
         throw new Error(res.data?.error || res.error?.message || "Failed to create venue");
       }
 
-      toast({ title: "Venue created", description: `${newVenue.name} account is ready` });
+      toast({ title: t("admin.venues.venueCreated"), description: t("admin.venues.venueCreatedDesc", { name: newVenue.name }) });
       setOpen(false);
       setNewVenue({ name: "", category: "", city: "", email: "", password: "" });
       fetchVenues();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: err.message, variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
@@ -222,47 +224,47 @@ const AdminVenues = () => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Manage <span className="text-gold">Venues</span></h1>
-            <p className="text-muted-foreground mt-1">{venues.length} venues registered</p>
+            <h1 className="text-3xl font-display font-bold text-foreground">{t("admin.venues.manage")} <span className="text-gold">{t("navLabel.Venues", "Venues")}</span></h1>
+            <p className="text-muted-foreground mt-1">{t("admin.venues.registeredCount", { count: venues.length })}</p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="gradient-gold text-accent-foreground font-semibold">
-                <Plus className="w-4 h-4 mr-2" /> Add Venue
+                <Plus className="w-4 h-4 mr-2" /> {t("admin.venues.addVenue")}
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-border">
               <DialogHeader>
-                <DialogTitle className="text-foreground font-display">Create Venue Account</DialogTitle>
+                <DialogTitle className="text-foreground font-display">{t("admin.venues.createVenueAccount")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Venue Name</Label>
+                  <Label className="text-muted-foreground">{t("admin.venues.venueName")}</Label>
                   <Input value={newVenue.name} onChange={e => setNewVenue(v => ({ ...v, name: e.target.value }))} placeholder="e.g. Sky Lounge" className="bg-secondary border-border" />
                   {newVenue.name.trim() && !isValidName(newVenue.name) && (
-                    <p className="text-xs text-destructive">Venue name must be at least 2 characters.</p>
+                    <p className="text-xs text-destructive">{t("admin.venues.invalidNameDesc")}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Login Email</Label>
+                  <Label className="text-muted-foreground">{t("admin.venues.loginEmail")}</Label>
                   <Input type="email" value={newVenue.email} onChange={e => setNewVenue(v => ({ ...v, email: e.target.value }))} placeholder="venue@example.com" className="bg-secondary border-border" />
                   {newVenue.email.trim() && !isValidEmail(newVenue.email) && (
-                    <p className="text-xs text-destructive">Please enter a valid email address.</p>
+                    <p className="text-xs text-destructive">{t("admin.venues.invalidEmailDesc")}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Password</Label>
+                  <Label className="text-muted-foreground">{t("login.password")}</Label>
                   <Input type="password" value={newVenue.password} onChange={e => setNewVenue(v => ({ ...v, password: e.target.value }))} placeholder="Min 6 characters" className="bg-secondary border-border" />
                   {newVenue.password.length > 0 && newVenue.password.length < 6 && (
-                    <p className="text-xs text-destructive">Password must be at least 6 characters.</p>
+                    <p className="text-xs text-destructive">{t("admin.venues.weakPasswordDesc")}</p>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-muted-foreground">Category</Label>
+                    <Label className="text-muted-foreground">{t("admin.chatbot.content", "Category")}</Label>
                     <Select value={newVenue.category} onValueChange={val => setNewVenue(v => ({ ...v, category: val }))}>
                       <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={t("admin.venues.selectEllipsis")} />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map(c => (
@@ -273,22 +275,22 @@ const AdminVenues = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-muted-foreground">City</Label>
+                    <Label className="text-muted-foreground">{t("admin.locations.city")}</Label>
                     <Select value={newVenue.city} onValueChange={val => setNewVenue(v => ({ ...v, city: val }))}>
                       <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder={t("admin.venues.selectEllipsis")} />
                       </SelectTrigger>
                       <SelectContent>
                         {locations.map(l => (
                           <SelectItem key={l.id} value={l.city}>{l.city}</SelectItem>
                         ))}
-                        {locations.length === 0 && <SelectItem value="">Other</SelectItem>}
+                        {locations.length === 0 && <SelectItem value="">{t("admin.venues.other")}</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <Button onClick={handleCreateVenue} disabled={isCreating} className="w-full gradient-gold text-accent-foreground font-semibold">
-                  {isCreating ? "Creating..." : "Create Venue Account"}
+                  {isCreating ? t("admin.venues.creatingEllipsis") : t("admin.venues.createVenueAccount")}
                 </Button>
               </div>
             </DialogContent>
@@ -298,39 +300,39 @@ const AdminVenues = () => {
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search venues..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+            <Input placeholder={t("admin.venues.searchVenues")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder={t("admin.chatbot.content", "Category")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t("admin.venues.allCategories")}</SelectItem>
               {categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="City" /></SelectTrigger>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder={t("admin.locations.city")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Cities</SelectItem>
+              <SelectItem value="all">{t("admin.analytics.allCities")}</SelectItem>
               {allCities.map(c => <SelectItem key={c} value={c!}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={approvalFilter} onValueChange={setApprovalFilter}>
-            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder="Approval" /></SelectTrigger>
+            <SelectTrigger className="w-[160px] bg-secondary border-border"><SelectValue placeholder={t("admin.venues.approval")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Approvals</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="all">{t("admin.venues.allApprovals")}</SelectItem>
+              <SelectItem value="pending">{t("admin.dashboard.status.pending")}</SelectItem>
+              <SelectItem value="approved">{t("admin.dashboard.status.approved")}</SelectItem>
+              <SelectItem value="rejected">{t("admin.dashboard.status.rejected")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder={t("admin.offers.sortBy")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="created_desc">Newest first</SelectItem>
-              <SelectItem value="created_asc">Oldest first</SelectItem>
-              <SelectItem value="name_asc">Name (A–Z)</SelectItem>
-              <SelectItem value="name_desc">Name (Z–A)</SelectItem>
-              <SelectItem value="status">Approval status</SelectItem>
+              <SelectItem value="created_desc">{t("admin.offers.newestFirst")}</SelectItem>
+              <SelectItem value="created_asc">{t("admin.offers.oldestFirst")}</SelectItem>
+              <SelectItem value="name_asc">{t("admin.venues.nameAZ")}</SelectItem>
+              <SelectItem value="name_desc">{t("admin.venues.nameZA")}</SelectItem>
+              <SelectItem value="status">{t("admin.venues.approvalStatus")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -340,23 +342,23 @@ const AdminVenues = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Category</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">City</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Approval</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Stage</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Contact</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Assigned to</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Activation</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.salesTeam.fullName", "Name")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.chatbot.content", "Category")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.locations.city")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.approval")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.stage")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.contact")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.assignedTo")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.activation")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.locations.status")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.culturalEvents.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Loading venues…</td></tr>
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">{t("admin.venues.loadingVenues")}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No venues found</td></tr>
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">{t("admin.venues.noVenuesFound")}</td></tr>
               ) : (
                 paged.map((venue) => (
                   <tr key={venue.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -369,7 +371,7 @@ const AdminVenues = () => {
                         )}
                         <span className="font-medium text-foreground">{venue.name}</span>
                         {isGenericName(venue.name) && (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-[10px]">Generic name — review</Badge>
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-[10px]">{t("admin.venues.genericName")}</Badge>
                         )}
                       </div>
                     </td>
@@ -405,7 +407,7 @@ const AdminVenues = () => {
                       ) : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="p-4 text-muted-foreground text-sm">{pipeline[venue.id]?.rep ?? "—"}</td>
-                    <td className="p-4 text-sm" title="Profile, photos, first offer, first visit, first content">
+                    <td className="p-4 text-sm" title={t("admin.venues.activationTitle")}>
                       {pipeline[venue.id] ? (
                         <span className={pipeline[venue.id].done === 5 ? "text-success" : "text-muted-foreground"}>
                           {pipeline[venue.id].done}/5
@@ -414,39 +416,39 @@ const AdminVenues = () => {
                     </td>
                     <td className="p-4">
                       <Badge className={venue.is_active ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
-                        {venue.is_active ? "Active" : "Inactive"}
+                        {venue.is_active ? t("admin.locations.active") : t("admin.locations.inactive")}
                       </Badge>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-1">
                         {venue.approval_status === "pending" && (
-                          <Button size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">Approve</Button>
+                          <Button size="sm" onClick={() => setApprovalStatus(venue.id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">{t("admin.redemptions.approve")}</Button>
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="More actions">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title={t("admin.venues.moreActions")}>
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-popover z-50">
                             <DropdownMenuItem onClick={() => { setDetailId(venue.id); setDetailOpen(true); }}>
-                              <Eye className="w-4 h-4 mr-2" /> View details
+                              <Eye className="w-4 h-4 mr-2" /> {t("admin.venues.viewDetails")}
                             </DropdownMenuItem>
                             {venue.approval_status === "pending" && (
                               <DropdownMenuItem onClick={() => setApprovalStatus(venue.id, "rejected")} className="text-destructive focus:text-destructive">
-                                <X className="w-4 h-4 mr-2" /> Reject
+                                <X className="w-4 h-4 mr-2" /> {t("admin.billing.reject")}
                               </DropdownMenuItem>
                             )}
                             {venue.approval_status === "approved" && (
                               <DropdownMenuItem onClick={() => toggleActive(venue.id, venue.is_active)}>
-                                {venue.is_active ? "Deactivate" : "Activate"}
+                                {venue.is_active ? t("admin.locations.deactivate") : t("admin.locations.activate")}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => setConfirmAction({ type: "convert", venue })}>
-                              <UserCog className="w-4 h-4 mr-2" /> Move to Creator
+                              <UserCog className="w-4 h-4 mr-2" /> {t("admin.venues.moveToCreator")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setConfirmAction({ type: "delete", venue })} className="text-destructive focus:text-destructive">
-                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                              <Trash2 className="w-4 h-4 mr-2" /> {t("admin.common.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -474,29 +476,27 @@ const AdminVenues = () => {
             {confirmAction?.type === "convert" ? (
               <>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Move to Creator?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("admin.venues.moveToCreatorConfirm")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Converts {confirmAction.venue.name} from a venue into a creator account. This deletes the venue's
-                    brand/location records and moves the account into the influencer queue as pending.
-                    This cannot be undone.
+                    {t("admin.venues.moveToCreatorDesc", { name: confirmAction.venue.name })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => { convertToCreator(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }}>Move to Creator</AlertDialogAction>
+                  <AlertDialogCancel>{t("admin.common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => { convertToCreator(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }}>{t("admin.venues.moveToCreator")}</AlertDialogAction>
                 </AlertDialogFooter>
               </>
             ) : confirmAction?.type === "delete" ? (
               <>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete venue?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("admin.venues.deleteVenueConfirm")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This permanently deletes {confirmAction.venue.name} and its owner account. This cannot be undone.
+                    {t("admin.venues.deleteVenueDesc", { name: confirmAction.venue.name })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => { deleteVenue(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                  <AlertDialogCancel>{t("admin.common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => { deleteVenue(confirmAction.venue.id, confirmAction.venue.name); setConfirmAction(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("admin.common.delete")}</AlertDialogAction>
                 </AlertDialogFooter>
               </>
             ) : null}
