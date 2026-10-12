@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ const AdminBilling = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [numbersHidden, setNumbersHidden] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const fetchAll = async () => {
     const [tiersRes, earningsRes, withdrawalsRes, pendingRes, settingRes] = await Promise.all([
@@ -62,9 +64,9 @@ const AdminBilling = () => {
       is_active: editTier.is_active,
     } as any).eq("id", editTier.id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Tier updated" });
+      toast({ title: t("admin.billing.tierUpdated") });
       setEditTier(null);
       fetchAll();
     }
@@ -88,8 +90,8 @@ const AdminBilling = () => {
       const available = earned - reserved;
       if (Number(withdrawal.amount) > available) {
         toast({
-          title: "Insufficient balance",
-          description: `This influencer only has $${available.toFixed(2)} available. Payout blocked.`,
+          title: t("admin.billing.insufficientBalance"),
+          description: t("admin.billing.insufficientBalanceDesc", { amount: available.toFixed(2) }),
           variant: "destructive",
         });
         return;
@@ -98,7 +100,7 @@ const AdminBilling = () => {
 
     const { error } = await supabase.from("withdrawal_requests").update({ status, processed_at: new Date().toISOString() } as any).eq("id", id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
       return;
     }
 
@@ -113,7 +115,7 @@ const AdminBilling = () => {
       } as any);
     }
 
-    toast({ title: `Withdrawal ${status}` });
+    toast({ title: t("admin.billing.withdrawalStatus", { status: t(`admin.dashboard.status.${status}`, status) }) });
     fetchAll();
   };
 
@@ -123,35 +125,35 @@ const AdminBilling = () => {
       <AdminPermissionGate permission="manage_billing">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Billing & <span className="text-gold">Subscriptions</span>
+          {t("admin.billing.titlePrefix")} <span className="text-gold">{t("admin.billing.titleAccent")}</span>
         </h1>
-        <p className="text-muted-foreground mb-8">Manage subscription tiers, commissions and transactions</p>
+        <p className="text-muted-foreground mb-8">{t("admin.billing.subtitle")}</p>
 
         {numbersHidden ? (
           <div className="mb-8 flex items-center gap-3 p-4 rounded-lg border border-border bg-secondary/40">
             <EyeOff className="w-5 h-5 text-muted-foreground shrink-0" />
             <p className="text-sm text-muted-foreground">
-              Revenue and withdrawal numbers are hidden — mostly test data with real venues still ramping up.
-              Turn this off in <strong>Platform Settings</strong> once there's real volume to show.
+              {t("admin.billing.numbersHidden")}{" "}
+              {t("admin.billing.turnOffIn")} <strong>{t("admin.settings.title")} {t("admin.settings.titleAccent")}</strong> {t("admin.billing.onceRealVolume")}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatCard title="Platform Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="w-6 h-6" />} trend="From commissions" trendUp />
-            <StatCard title="Pending Withdrawals" value={pendingWithdrawals} icon={<CreditCard className="w-6 h-6" />} trend="Awaiting processing" trendUp={pendingWithdrawals === 0} />
-            <StatCard title="Active Tiers" value={loading ? "…" : tiers.filter(t => t.is_active).length} icon={<Percent className="w-6 h-6" />} trend="Subscription plans" trendUp />
+            <StatCard title={t("admin.billing.platformRevenue")} value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="w-6 h-6" />} trend={t("admin.billing.fromCommissions")} trendUp />
+            <StatCard title={t("admin.billing.pendingWithdrawals")} value={pendingWithdrawals} icon={<CreditCard className="w-6 h-6" />} trend={t("admin.billing.awaitingProcessing")} trendUp={pendingWithdrawals === 0} />
+            <StatCard title={t("admin.billing.activeTiers")} value={loading ? "…" : tiers.filter(t2 => t2.is_active).length} icon={<Percent className="w-6 h-6" />} trend={t("admin.billing.subscriptionPlans")} trendUp />
           </div>
         )}
 
         {/* Subscription Tiers */}
         <div className="mb-8">
-          <h2 className="font-display text-xl font-bold text-foreground mb-4">Subscription Tiers</h2>
+          <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.billing.subscriptionTiers")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {tiers.map((tier) => (
               <div key={tier.id} className="gradient-card rounded-xl border border-border p-6 relative">
                 {!tier.is_active && (
                   <div className="absolute inset-0 bg-background/60 rounded-xl flex items-center justify-center z-10">
-                    <Badge className="bg-destructive/20 text-destructive border-destructive/30">Inactive</Badge>
+                    <Badge className="bg-destructive/20 text-destructive border-destructive/30">{t("admin.locations.inactive")}</Badge>
                   </div>
                 )}
                 <div className="flex items-start justify-between mb-3">
@@ -166,7 +168,7 @@ const AdminBilling = () => {
                 <p className="text-muted-foreground text-sm mb-3">{tier.description}</p>
                 <div className="flex items-center gap-2 mb-4">
                   <Percent className="w-4 h-4 text-gold" />
-                  <span className="text-sm text-foreground">{tier.commission_pct}% commission</span>
+                  <span className="text-sm text-foreground">{t("admin.billing.commissionPct", { pct: tier.commission_pct })}</span>
                 </div>
                 <ul className="space-y-1">
                   {(tier.features || []).map((f: string, i: number) => (
@@ -183,21 +185,21 @@ const AdminBilling = () => {
 
         {/* Withdrawal Requests */}
         <div>
-          <h2 className="font-display text-xl font-bold text-foreground mb-4">Withdrawal Requests</h2>
+          <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.billing.withdrawalRequests")}</h2>
           <div className="gradient-card rounded-xl border border-border overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Amount</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Method</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.events.date")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.billing.amount")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.billing.method")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.locations.status")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.culturalEvents.actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {withdrawals.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No withdrawal requests yet</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("admin.billing.noWithdrawals")}</td></tr>
                 ) : (
                   withdrawals.map((w) => (
                     <tr key={w.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
@@ -209,13 +211,13 @@ const AdminBilling = () => {
                           w.status === "completed" ? "bg-success/20 text-success border-success/30" :
                           w.status === "pending" ? "bg-yellow-500/20 text-yellow-400 border-yellow-400/30" :
                           "bg-destructive/20 text-destructive border-destructive/30"
-                        }>{w.status}</Badge>
+                        }>{String(t(`admin.dashboard.status.${w.status}`, w.status))}</Badge>
                       </td>
                       <td className="p-4 flex gap-2">
                         {w.status === "pending" && (
                           <>
-                            <Button size="sm" onClick={() => handleWithdrawalStatus(w.id, "completed")} className="gradient-gold text-accent-foreground h-7 text-xs">Approve</Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleWithdrawalStatus(w.id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 text-xs">Reject</Button>
+                            <Button size="sm" onClick={() => handleWithdrawalStatus(w.id, "completed")} className="gradient-gold text-accent-foreground h-7 text-xs">{t("admin.billing.approve")}</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleWithdrawalStatus(w.id, "rejected")} className="text-destructive hover:bg-destructive/10 h-7 text-xs">{t("admin.billing.reject")}</Button>
                           </>
                         )}
                       </td>
@@ -232,28 +234,28 @@ const AdminBilling = () => {
           <Dialog open={!!editTier} onOpenChange={() => setEditTier(null)}>
             <DialogContent className="bg-card border-border">
               <DialogHeader>
-                <DialogTitle className="font-display text-foreground">Edit Tier: {editTier.name}</DialogTitle>
+                <DialogTitle className="font-display text-foreground">{t("admin.billing.editTier")}: {editTier.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-muted-foreground">Monthly Price ($)</Label>
-                    <Input type="number" value={editTier.price} onChange={e => setEditTier(t => t ? { ...t, price: Number(e.target.value) } : t)} className="bg-secondary border-border" />
+                    <Label className="text-muted-foreground">{t("admin.billing.monthlyPrice")}</Label>
+                    <Input type="number" value={editTier.price} onChange={e => setEditTier(t2 => t2 ? { ...t2, price: Number(e.target.value) } : t2)} className="bg-secondary border-border" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-muted-foreground">Commission (%)</Label>
-                    <Input type="number" value={editTier.commission_pct} onChange={e => setEditTier(t => t ? { ...t, commission_pct: Number(e.target.value) } : t)} className="bg-secondary border-border" />
+                    <Label className="text-muted-foreground">{t("admin.billing.commissionLabel")}</Label>
+                    <Input type="number" value={editTier.commission_pct} onChange={e => setEditTier(t2 => t2 ? { ...t2, commission_pct: Number(e.target.value) } : t2)} className="bg-secondary border-border" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">Description</Label>
-                  <Textarea value={editTier.description ?? ""} onChange={e => setEditTier(t => t ? { ...t, description: e.target.value } : t)} className="bg-secondary border-border" rows={2} />
+                  <Label className="text-muted-foreground">{t("admin.chatbot.content", "Description")}</Label>
+                  <Textarea value={editTier.description ?? ""} onChange={e => setEditTier(t2 => t2 ? { ...t2, description: e.target.value } : t2)} className="bg-secondary border-border" rows={2} />
                 </div>
                 <div className="flex items-center gap-3">
-                  <input type="checkbox" id="tier-active" checked={editTier.is_active} onChange={e => setEditTier(t => t ? { ...t, is_active: e.target.checked } : t)} className="w-4 h-4" />
-                  <Label htmlFor="tier-active" className="text-muted-foreground cursor-pointer">Active</Label>
+                  <input type="checkbox" id="tier-active" checked={editTier.is_active} onChange={e => setEditTier(t2 => t2 ? { ...t2, is_active: e.target.checked } : t2)} className="w-4 h-4" />
+                  <Label htmlFor="tier-active" className="text-muted-foreground cursor-pointer">{t("admin.locations.active")}</Label>
                 </div>
-                <Button onClick={handleSaveTier} className="w-full gradient-gold text-accent-foreground font-semibold">Save Changes</Button>
+                <Button onClick={handleSaveTier} className="w-full gradient-gold text-accent-foreground font-semibold">{t("admin.categories.saveChanges")}</Button>
               </div>
             </DialogContent>
           </Dialog>
