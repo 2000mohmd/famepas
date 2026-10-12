@@ -161,7 +161,7 @@ const VenueContent = () => {
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
         <h1 className="text-[28px] font-bold text-foreground mb-2">Content</h1>
-        <p className="text-sm text-muted-foreground mb-6">Posts submitted by influencers from your campaigns and bookings.</p>
+        <p className="text-sm text-muted-foreground mb-6">Posts submitted by influencers from your offers and bookings.</p>
 
         <div className="flex gap-1 border-b border-border mb-6">
           {(["submitted","approved","rejected","all"] as Tab[]).map(t => (

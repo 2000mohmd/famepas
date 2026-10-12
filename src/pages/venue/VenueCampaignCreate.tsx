@@ -338,17 +338,17 @@ const VenueCampaignCreate = () => {
             <div>
               <Label className="text-sm font-semibold">Offer Name</Label>
               <p className="text-xs text-muted-foreground mb-2">Max 50 characters</p>
-              <Input maxLength={50} value={title} onChange={e => setTitle(e.target.value)} placeholder="Example campaign name..." />
+              <Input maxLength={50} value={title} onChange={e => setTitle(e.target.value)} placeholder="Example offer name..." />
             </div>
             <div>
               <Label className="text-sm font-semibold">Offer Details</Label>
-              <p className="text-xs text-muted-foreground mb-2">Outline your campaign to help the influencer understand your goals</p>
-              <Textarea maxLength={2000} rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your campaign..." />
+              <p className="text-xs text-muted-foreground mb-2">Outline your offer to help the influencer understand your goals</p>
+              <Textarea maxLength={2000} rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your offer..." />
               <p className="text-right text-xs text-muted-foreground mt-1">{description.length}/2000</p>
             </div>
             <div>
               <Label className="text-sm font-semibold">Upload Images</Label>
-              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your campaign {uploading && <span className="text-primary">(uploading…)</span>}</p>
+              <p className="text-xs text-muted-foreground mb-2">Choose 1 video and up to 5 images to showcase your offer {uploading && <span className="text-primary">(uploading…)</span>}</p>
               <div className="flex gap-3 flex-wrap">
                 <label className="w-32 h-24 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground hover:border-primary cursor-pointer overflow-hidden relative">
                   {coverVideoUrl ? (
@@ -619,7 +619,7 @@ const VenueCampaignCreate = () => {
           ) : (
             <div className="mb-5">
               <Label className="text-sm font-semibold">Offer Dates</Label>
-              <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite campaign.</p>
+              <p className="text-xs text-muted-foreground mb-2">Influencers can apply from these dates. Leave the end date for an indefinite offer.</p>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-1.5">
                   <span className="text-xs text-muted-foreground">Start</span>

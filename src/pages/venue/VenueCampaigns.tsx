@@ -140,7 +140,7 @@ const VenueCampaigns = () => {
       {open && (
         items.length === 0 ? (
           <div className="border border-border rounded-xl p-6 text-center bg-muted/30">
-            <p className="text-sm text-muted-foreground">No {title.toLowerCase()} campaigns</p>
+            <p className="text-sm text-muted-foreground">No {title.toLowerCase()} offers</p>
           </div>
         ) : (
           <div className="grid gap-3">
@@ -332,7 +332,7 @@ const VenueCampaigns = () => {
       <AlertDialog open={!!deleteCampaign} onOpenChange={(o) => !o && setDeleteCampaign(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this campaign?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this offer?</AlertDialogTitle>
             <AlertDialogDescription>
               "{deleteCampaign?.title}" will be permanently deleted. This can't be undone.
             </AlertDialogDescription>

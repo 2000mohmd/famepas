@@ -104,12 +104,12 @@ const VenueHome = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2"><Megaphone className="w-4 h-4" /> Live campaigns</h2>
+                <h2 className="font-semibold text-foreground flex items-center gap-2"><Megaphone className="w-4 h-4" /> Live offers</h2>
                 <Link to="/venue/campaigns" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
               </div>
               {liveCampaigns.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-muted-foreground mb-3">No live campaigns yet.</p>
+                  <p className="text-sm text-muted-foreground mb-3">No live offers yet.</p>
                   <Button size="sm" asChild><Link to="/venue/campaigns/new">Create your first offer</Link></Button>
                 </div>
               ) : (

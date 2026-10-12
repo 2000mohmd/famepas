@@ -170,7 +170,7 @@ const VenueBriefCreate = () => {
                 <Label className="text-sm font-semibold">Description</Label>
                 <Info className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground mb-2">A short statement explaining your brand or campaign objective</p>
+              <p className="text-xs text-muted-foreground mb-2">A short statement explaining your brand or offer objective</p>
               <Textarea maxLength={1000} rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Write a short description..." />
               <p className="text-right text-xs text-muted-foreground mt-1">{description.length}/1000</p>
             </div>

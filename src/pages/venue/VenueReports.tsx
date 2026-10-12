@@ -259,7 +259,7 @@ const VenueReports = () => {
             <div className="bg-white border border-border rounded-2xl p-5 mb-8 overflow-x-auto">
               <h3 className="text-sm font-semibold mb-3">Offer performance</h3>
               {campaignRows.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-6 text-center">No campaign activity yet</p>
+                <p className="text-xs text-muted-foreground py-6 text-center">No offer activity yet</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
