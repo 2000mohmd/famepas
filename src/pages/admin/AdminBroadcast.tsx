@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +15,13 @@ import RecipientPicker from "@/components/admin/RecipientPicker";
 
 type Audience = "all_venues" | "approved_venues" | "all_influencers" | "approved_influencers" | "venue" | "influencer";
 
-const AUDIENCE_LABELS: Record<Audience, string> = {
-  all_venues: "All venues",
-  approved_venues: "Approved venues only",
-  all_influencers: "All influencers",
-  approved_influencers: "Approved influencers only",
-  venue: "A specific venue",
-  influencer: "A specific influencer",
+const AUDIENCE_LABEL_KEYS: Record<Audience, string> = {
+  all_venues: "admin.broadcast.allVenues",
+  approved_venues: "admin.broadcast.approvedVenues",
+  all_influencers: "admin.broadcast.allInfluencers",
+  approved_influencers: "admin.broadcast.approvedInfluencers",
+  venue: "admin.broadcast.specificVenue",
+  influencer: "admin.broadcast.specificInfluencer",
 };
 
 interface Venue { id: string; name: string; approval_status: string | null; }
@@ -28,6 +29,7 @@ interface Influencer { user_id: string; full_name: string | null; approval_statu
 
 const AdminBroadcast = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [audience, setAudience] = useState<Audience | "">("");
   const [targetIds, setTargetIds] = useState<string[]>([]);
   const [pickerSearch, setPickerSearch] = useState("");
@@ -77,10 +79,10 @@ const AdminBroadcast = () => {
     });
     setSending(false);
     if (error || data?.error) {
-      toast({ title: "Error", description: data?.error || error?.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: data?.error || error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: `Sent to ${data.sent} of ${data.total} recipient${data.total === 1 ? "" : "s"}` });
+    toast({ title: t("admin.broadcast.sentTo", { sent: data.sent, total: data.total }) });
     setSubject("");
     setMessage("");
   };
@@ -90,18 +92,18 @@ const AdminBroadcast = () => {
       <AdminPermissionGate permission="manage_influencers">
       <div className="animate-fade-in max-w-2xl">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2 flex items-center gap-2">
-          <Megaphone className="w-7 h-7 text-gold" /> Send <span className="text-gold">Broadcast</span>
+          <Megaphone className="w-7 h-7 text-gold" /> {t("admin.broadcast.send")} <span className="text-gold">{t("navLabel.Broadcast", "Broadcast")}</span>
         </h1>
-        <p className="text-muted-foreground mb-8">Email venues or creators about an event, announcement, or update.</p>
+        <p className="text-muted-foreground mb-8">{t("admin.broadcast.subtitle")}</p>
 
         <div className="gradient-card rounded-xl border border-border p-6 space-y-4">
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Send to</Label>
+            <Label className="text-muted-foreground">{t("admin.broadcast.sendTo")}</Label>
             <Select value={audience} onValueChange={(v: Audience) => { setAudience(v); setTargetIds([]); setPickerSearch(""); }}>
-              <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Choose an audience..." /></SelectTrigger>
+              <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder={t("admin.broadcast.chooseAudience")} /></SelectTrigger>
               <SelectContent>
-                {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
-                  <SelectItem key={a} value={a}>{AUDIENCE_LABELS[a]}</SelectItem>
+                {(Object.keys(AUDIENCE_LABEL_KEYS) as Audience[]).map((a) => (
+                  <SelectItem key={a} value={a}>{t(AUDIENCE_LABEL_KEYS[a])}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -109,7 +111,7 @@ const AdminBroadcast = () => {
 
           {needsTarget && (
             <RecipientPicker
-              label={audience === "venue" ? "Venues" : "Creators"}
+              label={audience === "venue" ? t("navLabel.Venues", "Venues") : t("admin.broadcast.creators")}
               options={audience === "venue"
                 ? venues.map((v) => ({ id: v.id, name: v.name }))
                 : influencers.map((i) => ({ id: i.user_id, name: i.full_name || "Unnamed" }))}
@@ -123,21 +125,21 @@ const AdminBroadcast = () => {
 
           {audience && (
             <p className="text-xs text-muted-foreground">
-              {recipientCount === 0 ? "No recipients match this audience yet." : `This will reach ${recipientCount} recipient${recipientCount === 1 ? "" : "s"}.`}
+              {recipientCount === 0 ? t("admin.broadcast.noRecipients") : t("admin.broadcast.willReach", { count: recipientCount })}
             </p>
           )}
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Subject</Label>
+            <Label className="text-muted-foreground">{t("admin.broadcast.subject")}</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. New rooftop event this Friday" className="bg-secondary border-border" />
           </div>
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Message</Label>
-            <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={6} placeholder="Write the announcement..." className="bg-secondary border-border" />
+            <Label className="text-muted-foreground">{t("admin.broadcast.message")}</Label>
+            <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={6} placeholder={t("admin.broadcast.writeAnnouncement")} className="bg-secondary border-border" />
           </div>
 
           <Button onClick={() => setConfirming(true)} disabled={sending || !canSend || recipientCount === 0} className="w-full gradient-gold text-accent-foreground font-semibold">
-            {sending ? "Sending..." : "Send Broadcast"}
+            {sending ? t("admin.broadcast.sending") : t("admin.broadcast.sendBroadcast")}
           </Button>
         </div>
       </div>
@@ -145,14 +147,14 @@ const AdminBroadcast = () => {
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Send to {recipientCount} recipient{recipientCount === 1 ? "" : "s"}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.broadcast.sendToRecipients", { count: recipientCount })}</AlertDialogTitle>
             <AlertDialogDescription>
-              "{subject}" will be emailed to {AUDIENCE_LABELS[audience as Audience]?.toLowerCase()} ({recipientCount} {recipientCount === 1 ? "person" : "people"}). This can't be undone.
+              {t("admin.broadcast.confirmBody", { subject, audience: t(AUDIENCE_LABEL_KEYS[audience as Audience] ?? "").toLowerCase(), count: recipientCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={send}>Send</AlertDialogAction>
+            <AlertDialogCancel>{t("admin.common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={send}>{t("common.send")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

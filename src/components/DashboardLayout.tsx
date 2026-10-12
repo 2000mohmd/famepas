@@ -362,7 +362,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               )}
               {type === "admin" && (
                 <DropdownMenuItem asChild>
-                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> Platform settings</NavLink>
+                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> {t("nav.platformSettings")}</NavLink>
                 </DropdownMenuItem>
               )}
               {type === "influencer" && (
@@ -462,7 +462,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               )}
               {type === "admin" && (
                 <DropdownMenuItem asChild>
-                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> Platform settings</NavLink>
+                  <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> {t("nav.platformSettings")}</NavLink>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />

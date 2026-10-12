@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,6 +20,7 @@ const ACTION_TONE: Record<string, string> = {
 };
 
 const AdminAuditLog = () => {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<Entry[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -42,14 +44,14 @@ const AdminAuditLog = () => {
     <DashboardLayout type="admin">
       <AdminPermissionGate permission="manage_users">
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Audit <span className="text-gold">log</span></h1>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">{t("admin.auditLog.title")} <span className="text-gold">{t("admin.auditLog.titleAccent")}</span></h1>
         <p className="text-muted-foreground mb-6">
-          Every approval, rejection, deletion, export, bulk reassignment and login change — who did it and when. Founder and COO only.
+          {t("admin.auditLog.subtitle")}
         </p>
 
         {loadError && (
           <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            Couldn't load the log: {loadError}
+            {t("admin.auditLog.couldntLoad")} {loadError}
           </div>
         )}
 
@@ -58,22 +60,22 @@ const AdminAuditLog = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="p-3 font-medium">When</th>
-                  <th className="p-3 font-medium">Who</th>
-                  <th className="p-3 font-medium">Action</th>
-                  <th className="p-3 font-medium">On</th>
-                  <th className="p-3 font-medium">Detail</th>
+                  <th className="p-3 font-medium">{t("admin.auditLog.when")}</th>
+                  <th className="p-3 font-medium">{t("admin.auditLog.who")}</th>
+                  <th className="p-3 font-medium">{t("admin.auditLog.action")}</th>
+                  <th className="p-3 font-medium">{t("admin.auditLog.on")}</th>
+                  <th className="p-3 font-medium">{t("admin.auditLog.detail")}</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Loading…</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("common.loading")}</td></tr>
                 ) : rows.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nothing logged yet.</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("admin.auditLog.nothingLogged")}</td></tr>
                 ) : rows.map((r) => (
                   <tr key={r.id} className="border-b border-border/50">
                     <td className="p-3 text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</td>
-                    <td className="p-3 text-foreground">{r.user_id ? names[r.user_id] ?? "Unknown" : "System"}</td>
+                    <td className="p-3 text-foreground">{r.user_id ? names[r.user_id] ?? t("admin.auditLog.unknown") : t("admin.auditLog.system")}</td>
                     <td className="p-3"><Badge variant="outline" className={ACTION_TONE[r.action]}>{r.action.replace("_", " ")}</Badge></td>
                     <td className="p-3 text-muted-foreground">{[r.target_table, r.target_id?.slice(0, 8)].filter(Boolean).join(" · ") || "—"}</td>
                     <td className="p-3 text-xs text-muted-foreground max-w-xs truncate" title={JSON.stringify(r.detail)}>
