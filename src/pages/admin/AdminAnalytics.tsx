@@ -3,6 +3,7 @@ import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import StatCard from "@/components/StatCard";
 import { TrendingUp, Users, Tag, Eye, Filter, CalendarIcon, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface CategoryStat { name: string; count: number; }
 type RangeKey = "7" | "30" | "90" | "custom";
 
 const AdminAnalytics = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     venues: 0,
     influencers: 0,
@@ -55,8 +57,8 @@ const AdminAnalytics = () => {
     }
     const days = parseInt(rangeKey === "custom" ? "30" : rangeKey, 10);
     const from = new Date(); from.setDate(from.getDate() - days);
-    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: `Last ${days} days` };
-  }, [rangeKey, customRange]);
+    return { fromISO: from.toISOString(), toISO: new Date().toISOString(), rangeLabel: t("admin.analytics.lastNDays", { count: days }) };
+  }, [rangeKey, customRange, t]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -212,17 +214,17 @@ const AdminAnalytics = () => {
       <div className="animate-fade-in">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-2">Platform <span className="text-gold">Analytics</span></h1>
-            <p className="text-muted-foreground">Track platform performance and generate insights</p>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">{t("admin.analytics.titlePrefix")} <span className="text-gold">{t("navLabel.Analytics", "Analytics")}</span></h1>
+            <p className="text-muted-foreground">{t("admin.analytics.subtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
             <Select value={cityFilter} onValueChange={setCityFilter}>
               <SelectTrigger className="w-44 bg-secondary border-border">
-                <SelectValue placeholder="All cities" />
+                <SelectValue placeholder={t("admin.analytics.allCities")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
+                <SelectItem value="all">{t("admin.analytics.allCities")}</SelectItem>
                 {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -231,10 +233,10 @@ const AdminAnalytics = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="7">{t("admin.analytics.last7Days")}</SelectItem>
+                <SelectItem value="30">{t("admin.analytics.last30Days")}</SelectItem>
+                <SelectItem value="90">{t("admin.analytics.last90Days")}</SelectItem>
+                <SelectItem value="custom">{t("admin.analytics.customRange")}</SelectItem>
               </SelectContent>
             </Select>
             {rangeKey === "custom" && (
@@ -242,7 +244,7 @@ const AdminAnalytics = () => {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !customRange?.from && "text-muted-foreground")}>
                     <CalendarIcon className="w-4 h-4 mr-2" />
-                    {customRange?.from ? rangeLabel : "Pick dates"}
+                    {customRange?.from ? rangeLabel : t("admin.analytics.pickDates")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -261,53 +263,53 @@ const AdminAnalytics = () => {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <p className="text-xs text-muted-foreground">Showing data for {rangeLabel.toLowerCase()}</p>
+          <p className="text-xs text-muted-foreground">{t("admin.analytics.showingDataFor", { range: rangeLabel.toLowerCase() })}</p>
           <Button asChild variant="outline" size="sm">
-            <Link to="/admin/analytics/deep">Open deep analytics</Link>
+            <Link to="/admin/analytics/deep">{t("admin.analytics.openDeepAnalytics")}</Link>
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="space-y-2">
-            <StatCard title="Active Venues" value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? `In ${cityFilter}` : "Platform-wide"} trendUp />
+            <StatCard title={t("admin.analytics.activeVenues")} value={stats.venues} icon={<Eye className="w-6 h-6" />} trend={cityFilter !== "all" ? t("admin.analytics.inCity", { city: cityFilter }) : t("admin.analytics.platformWide")} trendUp />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{sub.venuesSignedUp}</span> signed up</p>
-              <p><span className="text-foreground font-medium">{sub.venuesPosted}</span> posted an offer</p>
+              <p>{t("admin.analytics.signedUp", { count: sub.venuesSignedUp })}</p>
+              <p>{t("admin.analytics.postedOffer", { count: sub.venuesPosted })}</p>
             </div>
           </div>
           <div className="space-y-2">
-            <StatCard title="Active Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={`Claimed/delivered in the ${rangeLabel.toLowerCase()}`} trendUp />
+            <StatCard title={t("admin.analytics.activeInfluencers")} value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={t("admin.analytics.claimedDelivered", { range: rangeLabel.toLowerCase() })} trendUp />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{sub.influencersRegistered}</span> registered in the {rangeLabel.toLowerCase()}</p>
+              <p>{t("admin.analytics.registeredInRange", { count: sub.influencersRegistered, range: rangeLabel.toLowerCase() })}</p>
             </div>
           </div>
           <div className="space-y-2">
-            <StatCard title="Visit Completion Rate" value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend="Completed ÷ claimed (all time)" trendUp={redemptionRate > 50} />
+            <StatCard title={t("admin.analytics.visitCompletionRate")} value={`${redemptionRate}%`} icon={<Tag className="w-6 h-6" />} trend={t("admin.analytics.completedOverClaimed")} trendUp={redemptionRate > 50} />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{stats.claims}</span> total creator visits claimed</p>
-              <p><span className="text-foreground font-medium">{stats.completedRedemptions}</span> completed</p>
+              <p>{t("admin.analytics.totalVisitsClaimed", { count: stats.claims })}</p>
+              <p>{t("admin.analytics.completedCount", { count: stats.completedRedemptions })}</p>
             </div>
           </div>
           <div className="space-y-2">
-            <StatCard title="Total Offers" value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend="All time, across all venues" trendUp />
+            <StatCard title={t("admin.analytics.totalOffers")} value={stats.offers} icon={<TrendingUp className="w-6 h-6" />} trend={t("admin.analytics.allTimeAcrossVenues")} trendUp />
             <div className="px-1 text-xs text-muted-foreground space-y-0.5">
-              <p><span className="text-foreground font-medium">{stats.offersInRange}</span> created in the {rangeLabel.toLowerCase()}</p>
-              <p><span className="text-foreground font-medium">{sub.offersLive}</span> live right now</p>
-              <p><span className="text-foreground font-medium">{sub.offersDone}</span> with a completed creator visit in range</p>
+              <p>{t("admin.analytics.createdInRange", { count: stats.offersInRange, range: rangeLabel.toLowerCase() })}</p>
+              <p>{t("admin.analytics.liveRightNow", { count: sub.offersLive })}</p>
+              <p>{t("admin.analytics.doneInRange", { count: sub.offersDone })}</p>
             </div>
           </div>
-          <StatCard title="Live Offers" value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend="Currently active (all time)" trendUp />
+          <StatCard title={t("admin.analytics.liveOffers")} value={stats.liveOffers} icon={<Zap className="w-6 h-6" />} trend={t("admin.analytics.currentlyActiveAllTime")} trendUp />
         </div>
 
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Venues */}
           <div className="gradient-card rounded-xl border border-border p-6">
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">Top Venues by Creator Visits</h2>
+            <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.analytics.topVenuesByVisits")}</h2>
             {loading ? (
               <div className="space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="h-10 rounded-lg bg-secondary/50 animate-pulse" />)}</div>
             ) : topVenues.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No venue data yet.</p>
+              <p className="text-muted-foreground text-sm">{t("admin.analytics.noVenueData")}</p>
             ) : (
               <div className="space-y-3">
                 {topVenues.map((v, i) => (
@@ -316,7 +318,7 @@ const AdminAnalytics = () => {
                       <span className="text-gold font-bold text-sm w-6">#{i + 1}</span>
                       <span className="text-foreground text-sm">{v.name}</span>
                     </div>
-                    <span className="text-muted-foreground text-sm">{v.redemptions} creator visits</span>
+                    <span className="text-muted-foreground text-sm">{t("admin.analytics.creatorVisitsCount", { count: v.redemptions })}</span>
                   </div>
                 ))}
               </div>
@@ -325,11 +327,11 @@ const AdminAnalytics = () => {
 
           {/* Category Distribution */}
           <div className="gradient-card rounded-xl border border-border p-6">
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">Venue Categories</h2>
+            <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.analytics.venueCategories")}</h2>
             {loading ? (
               <div className="space-y-4">{[1,2,3,4].map(i => <div key={i} className="h-8 rounded bg-secondary/50 animate-pulse" />)}</div>
             ) : categoryStats.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No category data yet.</p>
+              <p className="text-muted-foreground text-sm">{t("admin.analytics.noCategoryData")}</p>
             ) : (
               <div className="space-y-4">
                 {categoryStats.map(({ name, count }) => {
@@ -338,7 +340,7 @@ const AdminAnalytics = () => {
                     <div key={name}>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-foreground">{formatLabel(name)}</span>
-                        <span className="text-gold">{count} venues</span>
+                        <span className="text-gold">{t("admin.analytics.venuesCount", { count })}</span>
                       </div>
                       <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div className="h-full rounded-full gradient-gold transition-all duration-500" style={{ width: `${pct}%` }} />
