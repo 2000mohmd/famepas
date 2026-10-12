@@ -5,6 +5,8 @@ project_id = "dvauueqtqrveqcckfrjx"
     verify_jwt = false
   [functions.chatbot]
     verify_jwt = false
+  [functions.check-posts-still-live]
+    verify_jwt = false # called by the daily cron job, no end-user session
   [functions.google-maps-key]
     verify_jwt = false
   [functions.instagram-oauth]
