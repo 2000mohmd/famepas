@@ -1,6 +1,8 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,16 +57,17 @@ const normalizePhone = (p: string | null) => (p || "").replace(/\D/g, "");
 
 /** Suspended/pending/rejected/verified are independent flags in the schema —
  * show one priority-ordered pill instead of stacking all of them. */
-const statusBadge = (inf: Influencer) => {
-  if (inf.is_suspended) return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Suspended</Badge>;
-  if (inf.approval_status === "pending") return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">Pending</Badge>;
-  if (inf.approval_status === "rejected") return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">Rejected</Badge>;
-  if (inf.is_verified) return <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">Verified</Badge>;
-  return <Badge variant="secondary" className="text-xs w-fit">Active</Badge>;
+const statusBadge = (inf: Influencer, t: TFunction) => {
+  if (inf.is_suspended) return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">{t("admin.users.suspended")}</Badge>;
+  if (inf.approval_status === "pending") return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30 text-xs w-fit">{t("admin.influencers.pending")}</Badge>;
+  if (inf.approval_status === "rejected") return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs w-fit">{t("admin.dashboard.status.rejected")}</Badge>;
+  if (inf.is_verified) return <Badge className="bg-gold/20 text-gold border-gold/30 text-xs w-fit">{t("admin.influencers.verified")}</Badge>;
+  return <Badge variant="secondary" className="text-xs w-fit">{t("admin.locations.active")}</Badge>;
 };
 
 const AdminInfluencers = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -107,9 +110,9 @@ const AdminInfluencers = () => {
   const toggleVerified = async (userId: string, current: boolean) => {
     const { error } = await supabase.from("profiles").update({ is_verified: !current } as any).eq("user_id", userId);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: current ? "Verification removed" : "Influencer verified" });
+      toast({ title: current ? t("admin.influencers.verificationRemoved") : t("admin.influencers.influencerVerified") });
       fetchInfluencers();
     }
   };
@@ -117,9 +120,9 @@ const AdminInfluencers = () => {
   const toggleSuspended = async (userId: string, current: boolean) => {
     const { error } = await supabase.from("profiles").update({ is_suspended: !current } as any).eq("user_id", userId);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: current ? "Account reinstated" : "Account suspended" });
+      toast({ title: current ? t("admin.influencers.accountReinstated") : t("admin.influencers.accountSuspended") });
       fetchInfluencers();
     }
   };
@@ -127,28 +130,28 @@ const AdminInfluencers = () => {
   const deleteInfluencer = async (userId: string) => {
     const { error } = await supabase.functions.invoke("delete-user", { body: { user_id: userId } });
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Influencer deleted" });
+      toast({ title: t("admin.influencers.influencerDeleted") });
       fetchInfluencers();
     }
   };
 
   const setApprovalStatus = async (userId: string, status: "approved" | "rejected", reason?: string) => {
     const { error } = await supabase.from("profiles").update({ approval_status: status } as any).eq("user_id", userId);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" }); return; }
     if (status === "approved") {
       const sent = await notifyEmail({ event: "influencer_approved", user_id: userId });
       toast({
-        title: "Influencer approved",
-        description: sent ? "Approval email sent." : "Approval email could not be sent.",
+        title: t("admin.influencers.influencerApproved"),
+        description: sent ? t("admin.influencers.approvalEmailSent") : t("admin.influencers.approvalEmailFailed"),
         variant: sent ? undefined : "destructive",
       });
     } else {
       const sent = await notifyEmail({ event: "influencer_rejected", user_id: userId, reason });
       toast({
-        title: "Influencer rejected",
-        description: sent ? "Notification email sent." : "Notification email could not be sent.",
+        title: t("admin.influencers.influencerRejected"),
+        description: sent ? t("admin.venues.emailSent") : t("admin.venues.emailCouldntSend"),
         variant: sent ? undefined : "destructive",
       });
     }
@@ -182,7 +185,7 @@ const AdminInfluencers = () => {
   const bulkSetApprovalStatus = async (ids: string[], status: "approved" | "rejected", reason?: string) => {
     if (!ids.length) return;
     const { error } = await supabase.from("profiles").update({ approval_status: status } as any).in("user_id", ids);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" }); return; }
     await Promise.all(ids.map((id) =>
       notifyEmail(
         status === "approved"
@@ -190,7 +193,7 @@ const AdminInfluencers = () => {
           : { event: "influencer_rejected", user_id: id, reason }
       )
     ));
-    toast({ title: `${ids.length} influencer${ids.length === 1 ? "" : "s"} ${status}` });
+    toast({ title: t("admin.influencers.bulkStatusResult", { count: ids.length, status: t(`admin.dashboard.status.${status}`, status) }) });
     setSelectedIds(new Set());
     fetchInfluencers();
   };
@@ -207,8 +210,8 @@ const AdminInfluencers = () => {
   const resendApproval = async (userId: string) => {
     const sent = await notifyEmail({ event: "influencer_approved", user_id: userId });
     toast({
-      title: sent ? "Approval email sent" : "Email could not be sent",
-      description: sent ? undefined : "Check the email service configuration.",
+      title: sent ? t("admin.influencers.approvalEmailSentTitle") : t("admin.influencers.emailCouldntSendTitle"),
+      description: sent ? undefined : t("admin.influencers.checkEmailConfig"),
       variant: sent ? undefined : "destructive",
     });
   };
@@ -221,9 +224,9 @@ const AdminInfluencers = () => {
       issued_by: user.id,
     });
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Warning sent to influencer" });
+      toast({ title: t("admin.influencers.warningSent") });
       setWarningOpen(false);
       setWarningMessage("");
       setWarningTarget(null);
@@ -286,7 +289,7 @@ const AdminInfluencers = () => {
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, "Influencers");
     XLSX.writeFile(book, `famepass-influencers-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast({ title: `Exported ${rows.length} influencers` });
+    toast({ title: t("admin.influencers.exportedCount", { count: rows.length }) });
   };
 
   return (
@@ -294,43 +297,43 @@ const AdminInfluencers = () => {
     <DashboardLayout type="admin">
       <AdminPermissionGate permission="manage_influencers">
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Manage <span className="text-gold">Influencers</span></h1>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">{t("admin.influencers.manage")} <span className="text-gold">{t("navLabel.Influencers", "Influencers")}</span></h1>
         <p className="text-muted-foreground mb-8">
           {statusFilter === "all" && !search
-            ? `${influencers.length} influencers registered`
-            : `${filtered.length} of ${influencers.length} influencers`}
+            ? t("admin.influencers.registeredCount", { count: influencers.length })
+            : t("admin.influencers.filteredCount", { filtered: filtered.length, total: influencers.length })}
         </p>
 
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="relative flex-1 min-w-[200px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search by name or @handle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+            <Input placeholder={t("admin.influencers.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-[150px] bg-secondary border-border"><SelectValue placeholder={t("admin.locations.status")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending Approval</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="ig_unverified">Instagram unverified</SelectItem>
+              <SelectItem value="all">{t("admin.influencers.allStatus")}</SelectItem>
+              <SelectItem value="pending">{t("admin.influencers.pendingApproval")}</SelectItem>
+              <SelectItem value="verified">{t("admin.influencers.verified")}</SelectItem>
+              <SelectItem value="active">{t("admin.locations.active")}</SelectItem>
+              <SelectItem value="suspended">{t("admin.users.suspended")}</SelectItem>
+              <SelectItem value="ig_unverified">{t("admin.influencers.igUnverified")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder={t("admin.offers.sortBy")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="followers">Most IG Followers</SelectItem>
-              <SelectItem value="tiktok">Most TikTok Followers</SelectItem>
-              <SelectItem value="score">Highest Score</SelectItem>
-              <SelectItem value="name">Name A-Z</SelectItem>
-              <SelectItem value="name_desc">Name Z-A</SelectItem>
+              <SelectItem value="newest">{t("admin.offers.newestFirst")}</SelectItem>
+              <SelectItem value="oldest">{t("admin.offers.oldestFirst")}</SelectItem>
+              <SelectItem value="followers">{t("admin.influencers.mostIGFollowers")}</SelectItem>
+              <SelectItem value="tiktok">{t("admin.influencers.mostTikTokFollowers")}</SelectItem>
+              <SelectItem value="score">{t("admin.influencers.highestScore")}</SelectItem>
+              <SelectItem value="name">{t("admin.venues.nameAZ")}</SelectItem>
+              <SelectItem value="name_desc">{t("admin.venues.nameZA")}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={exportToExcel} disabled={filtered.length === 0}>
-            <Download className="w-4 h-4 mr-2" /> Export to Excel
+            <Download className="w-4 h-4 mr-2" /> {t("admin.influencers.exportToExcel")}
           </Button>
         </div>
 
@@ -339,7 +342,7 @@ const AdminInfluencers = () => {
           return pendingIds.length > 0 && selectedIds.size === 0 ? (
             <div className="mb-4">
               <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set(pendingIds))}>
-                Select all {pendingIds.length} pending
+                {t("admin.influencers.selectAllPending", { count: pendingIds.length })}
               </Button>
             </div>
           ) : null;
@@ -347,15 +350,15 @@ const AdminInfluencers = () => {
 
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-3 mb-4 p-3 rounded-xl border border-gold/30 bg-gold/10">
-            <span className="text-sm font-medium text-foreground">{selectedIds.size} selected</span>
+            <span className="text-sm font-medium text-foreground">{t("admin.influencers.selectedCount", { count: selectedIds.size })}</span>
             <Button size="sm" onClick={() => bulkSetApprovalStatus([...selectedIds], "approved")} className="bg-success/20 text-success hover:bg-success/30">
-              Approve all
+              {t("admin.influencers.approveAll")}
             </Button>
             <Button size="sm" variant="outline" onClick={openBulkReject} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-              Reject all
+              {t("admin.influencers.rejectAll")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} className="ml-auto text-muted-foreground">
-              Clear
+              {t("admin.influencers.clear")}
             </Button>
           </div>
         )}
@@ -368,7 +371,7 @@ const AdminInfluencers = () => {
                 <th className="p-4 w-10">
                   <input
                     type="checkbox"
-                    aria-label="Select all on this page"
+                    aria-label={t("admin.influencers.selectAllPage")}
                     checked={paged.length > 0 && paged.every((i) => selectedIds.has(i.user_id))}
                     onChange={(e) => {
                       setSelectedIds((prev) => {
@@ -379,20 +382,20 @@ const AdminInfluencers = () => {
                     }}
                   />
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Instagram</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">TikTok</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Followers</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[110px]">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[90px]">Joined</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground sticky right-0 bg-card">Actions</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.influencers.name")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.influencers.instagram")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.influencers.tiktok")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.influencers.followers")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[110px]">{t("admin.locations.status")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground whitespace-nowrap min-w-[90px]">{t("admin.influencers.joined")}</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground sticky right-0 bg-card">{t("admin.influencers.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Loading influencers…</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{t("admin.influencers.loading")}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No influencers found</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{t("admin.influencers.noneFound")}</td></tr>
               ) : (
                 paged.map((inf) => (
                   <tr key={inf.user_id} className={`border-b border-border/50 hover:bg-secondary/30 transition-colors ${inf.is_suspended ? "opacity-60" : ""}`}>
@@ -421,14 +424,14 @@ const AdminInfluencers = () => {
                             <span className="font-medium text-foreground">{inf.full_name || "—"}</span>
                             {inf.is_verified && <ShieldCheck className="w-4 h-4 text-gold shrink-0" />}
                             {nameDupeIds.has(inf.user_id) && (
-                              <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4" title="Similar name found elsewhere in this list">Similar name</Badge>
+                              <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4" title={t("admin.influencers.similarNameTitle")}>{t("admin.influencers.similarName")}</Badge>
                             )}
                           </div>
                           {inf.phone && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               {inf.phone}
                               {(phoneCounts.get(normalizePhone(inf.phone)) ?? 0) > 1 && (
-                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">Possible duplicate</Badge>
+                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">{t("admin.influencers.possibleDuplicate")}</Badge>
                               )}
                             </p>
                           )}
@@ -440,11 +443,11 @@ const AdminInfluencers = () => {
                         <div className="flex items-center gap-2">
                           <a href={`https://instagram.com/${stripAt(inf.instagram_handle)}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">@{stripAt(inf.instagram_handle)}</a>
                           {inf.instagram_verified === true ? (
-                            <Badge className="bg-success/20 text-success border-success/30 text-[10px] w-fit">IG ✓</Badge>
+                            <Badge className="bg-success/20 text-success border-success/30 text-[10px] w-fit">{t("admin.influencers.igVerifiedBadge")}</Badge>
                           ) : inf.instagram_verified === false ? (
-                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px] w-fit">IG not found</Badge>
+                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px] w-fit">{t("admin.influencers.igNotFound")}</Badge>
                           ) : (
-                            <Badge variant="secondary" className="text-[10px] w-fit">IG unchecked</Badge>
+                            <Badge variant="secondary" className="text-[10px] w-fit">{t("admin.influencers.igUnchecked")}</Badge>
                           )}
                         </div>
                       ) : "—"}
@@ -468,53 +471,53 @@ const AdminInfluencers = () => {
                             <>
                               <Badge className={`text-[10px] px-1.5 py-0 h-4 ${tierBadgeClass[tier]}`}>{tier}</Badge>
                               {max < LOW_FOLLOWER_THRESHOLD && inf.approval_status === "pending" && (
-                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">Low followers</Badge>
+                                <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[9px] px-1 py-0 h-4">{t("admin.influencers.lowFollowers")}</Badge>
                               )}
                             </>
                           );
                         })() : null}
                       </div>
                     </td>
-                    <td className="p-4">{statusBadge(inf)}</td>
+                    <td className="p-4">{statusBadge(inf, t)}</td>
                     <td className="p-4 text-muted-foreground text-sm whitespace-nowrap">{new Date(inf.created_at).toLocaleDateString()}</td>
                     <td className="p-4 sticky right-0 bg-card">
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title="View profile">
+                        <Button variant="ghost" size="sm" onClick={() => { setDetailUserId(inf.user_id); setDetailOpen(true); }} className="text-muted-foreground hover:text-gold h-7 px-2" title={t("admin.influencers.viewProfile")}>
                           <Eye className="w-4 h-4" />
                         </Button>
                         {inf.approval_status === "pending" && (
-                          <Button size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">Approve</Button>
+                          <Button size="sm" onClick={() => setApprovalStatus(inf.user_id, "approved")} className="bg-success/20 text-success hover:bg-success/30 h-7 text-xs">{t("admin.influencers.approve")}</Button>
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title="More actions">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-gold h-7 px-2" title={t("admin.influencers.moreActions")}>
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-popover z-50">
                             {inf.approval_status === "pending" && (
                               <DropdownMenuItem onClick={() => openReject(inf.user_id)} className="text-destructive focus:text-destructive">
-                                <X className="w-4 h-4 mr-2" /> Reject
+                                <X className="w-4 h-4 mr-2" /> {t("admin.influencers.reject")}
                               </DropdownMenuItem>
                             )}
                             {inf.approval_status === "approved" && (
                               <DropdownMenuItem onClick={() => resendApproval(inf.user_id)}>
-                                <Mail className="w-4 h-4 mr-2" /> Resend approval email
+                                <Mail className="w-4 h-4 mr-2" /> {t("admin.influencers.resendApprovalEmail")}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => toggleVerified(inf.user_id, inf.is_verified)}>
                               {inf.is_verified ? <ShieldOff className="w-4 h-4 mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                              {inf.is_verified ? "Remove verification" : "Verify"}
+                              {inf.is_verified ? t("admin.influencers.removeVerification") : t("admin.influencers.verify")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toggleSuspended(inf.user_id, inf.is_suspended)}>
                               {inf.is_suspended ? <UserCheck className="w-4 h-4 mr-2" /> : <UserX className="w-4 h-4 mr-2" />}
-                              {inf.is_suspended ? "Reinstate" : "Suspend"}
+                              {inf.is_suspended ? t("admin.influencers.reinstate") : t("admin.influencers.suspend")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => { setWarningTarget(inf.user_id); setWarningOpen(true); }}>
-                              <AlertTriangle className="w-4 h-4 mr-2" /> Send Warning
+                              <AlertTriangle className="w-4 h-4 mr-2" /> {t("admin.influencers.sendWarning")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDeleteTarget(inf)} className="text-destructive focus:text-destructive">
-                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                              <Trash2 className="w-4 h-4 mr-2" /> {t("admin.common.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -532,14 +535,14 @@ const AdminInfluencers = () => {
         <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
           <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete influencer?</AlertDialogTitle>
+              <AlertDialogTitle>{t("admin.influencers.deleteTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This permanently deletes {deleteTarget?.full_name || "this influencer"} and all related data. This cannot be undone.
+                {t("admin.influencers.deleteDescription", { name: deleteTarget?.full_name || t("admin.influencers.thisInfluencer") })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { if (deleteTarget) deleteInfluencer(deleteTarget.user_id); setDeleteTarget(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+              <AlertDialogCancel>{t("admin.common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (deleteTarget) deleteInfluencer(deleteTarget.user_id); setDeleteTarget(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("admin.common.delete")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -549,12 +552,12 @@ const AdminInfluencers = () => {
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
               <DialogTitle className="font-display text-foreground">
-                {bulkRejectOpen ? `Reject ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}` : "Reject application"}
+                {bulkRejectOpen ? t("admin.influencers.rejectNApplications", { count: selectedIds.size }) : t("admin.influencers.rejectApplication")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-2">
               <div>
-                <Label className="text-muted-foreground">Reason</Label>
+                <Label className="text-muted-foreground">{t("admin.influencers.reason")}</Label>
                 <Select value={rejectReason} onValueChange={setRejectReason}>
                   <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -564,17 +567,17 @@ const AdminInfluencers = () => {
               </div>
               {rejectReason === "Other" && (
                 <div>
-                  <Label className="text-muted-foreground">Details</Label>
-                  <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Reason for rejection..." className="bg-secondary border-border mt-1" rows={3} />
+                  <Label className="text-muted-foreground">{t("admin.influencers.details")}</Label>
+                  <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder={t("admin.influencers.reasonForRejection")} className="bg-secondary border-border mt-1" rows={3} />
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
                 {bulkRejectOpen
-                  ? "This reason is included in the automatic email sent to each applicant."
-                  : "This reason is included in the automatic email sent to the applicant."}
+                  ? t("admin.influencers.rejectBulkEmailNotice")
+                  : t("admin.influencers.rejectSingleEmailNotice")}
               </p>
               <Button onClick={submitReject} className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold">
-                {bulkRejectOpen ? `Reject ${selectedIds.size} & Notify` : "Reject & Notify"}
+                {bulkRejectOpen ? t("admin.influencers.rejectNAndNotify", { count: selectedIds.size }) : t("admin.influencers.rejectAndNotify")}
               </Button>
             </div>
           </DialogContent>
@@ -585,22 +588,22 @@ const AdminInfluencers = () => {
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
               <DialogTitle className="font-display text-foreground flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-warning" /> Send Warning
+                <AlertTriangle className="w-5 h-5 text-warning" /> {t("admin.influencers.sendWarning")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-2">
               <div>
-                <Label className="text-muted-foreground">Warning Message</Label>
+                <Label className="text-muted-foreground">{t("admin.influencers.warningMessage")}</Label>
                 <Textarea
                   value={warningMessage}
                   onChange={e => setWarningMessage(e.target.value)}
-                  placeholder="Describe the violation or issue..."
+                  placeholder={t("admin.influencers.warningPlaceholder")}
                   className="bg-secondary border-border mt-1"
                   rows={4}
                 />
               </div>
               <Button onClick={sendWarning} disabled={!warningMessage.trim()} className="w-full bg-warning/20 text-warning hover:bg-warning/30 font-semibold">
-                Send Warning
+                {t("admin.influencers.sendWarning")}
               </Button>
             </div>
           </DialogContent>
