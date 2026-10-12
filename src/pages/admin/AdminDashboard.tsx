@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import StatCard from "@/components/StatCard";
 import { Building2, Users, Tag, TrendingUp, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,6 +15,7 @@ interface ActivityItem {
 }
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [sales, setSales] = useState({ live: 0, signedThisWeek: 0, liveTarget: 500, weeklyTarget: 12 });
 
   useEffect(() => {
@@ -94,17 +96,17 @@ const AdminDashboard = () => {
 
       const activity: ActivityItem[] = [];
       (recentVenues.data ?? []).forEach((v: any) => {
-        activity.push({ id: v.id, type: "venue", label: `New venue: ${v.name}`, time: v.created_at, status: v.approval_status });
+        activity.push({ id: v.id, type: "venue", label: t("admin.dashboard.newVenue", { name: v.name }), time: v.created_at, status: v.approval_status });
       });
       const influencerIds = [...new Set((recentRedemptions.data ?? []).map((r: any) => r.influencer_id).filter(Boolean))];
       const { data: redemptionProfiles } = influencerIds.length
         ? await supabase.from("profiles").select("user_id, full_name").in("user_id", influencerIds)
         : { data: [] as any[] };
       (recentRedemptions.data ?? []).forEach((r: any) => {
-        const influencerName = redemptionProfiles?.find((p: any) => p.user_id === r.influencer_id)?.full_name || "Influencer";
-        const offerTitle = r.offers?.title || "an offer";
-        const venueName = r.offers?.venues?.name ? ` at ${r.offers.venues.name}` : "";
-        activity.push({ id: r.id, type: "redemption", label: `${influencerName} applied to ${offerTitle}${venueName}`, time: r.created_at, status: r.status });
+        const influencerName = redemptionProfiles?.find((p: any) => p.user_id === r.influencer_id)?.full_name || t("admin.dashboard.influencerFallback");
+        const offerTitle = r.offers?.title || t("admin.dashboard.anOffer");
+        const venueName = r.offers?.venues?.name ? t("admin.dashboard.atVenue", { name: r.offers.venues.name }) : "";
+        activity.push({ id: r.id, type: "redemption", label: t("admin.dashboard.appliedTo", { influencer: influencerName, offer: offerTitle, venue: venueName }), time: r.created_at, status: r.status });
       });
       activity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       setRecentActivity(activity.slice(0, 6));
@@ -116,10 +118,10 @@ const AdminDashboard = () => {
   const timeAgo = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 60) return t("admin.dashboard.minsAgo", { count: mins });
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
+    if (hrs < 24) return t("admin.dashboard.hoursAgo", { count: hrs });
+    return t("admin.dashboard.daysAgo", { count: Math.floor(hrs / 24) });
   };
 
   const activityIcon = (type: string) => {
@@ -131,41 +133,42 @@ const AdminDashboard = () => {
 
   const statusBadge = (status?: string) => {
     if (!status) return null;
-    if (status === "approved" || status === "completed") return <Badge className="bg-success/20 text-success border-success/30 text-xs">{status}</Badge>;
-    if (status === "pending") return <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">pending</Badge>;
-    if (status === "rejected" || status === "failed") return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">{status}</Badge>;
-    return <Badge variant="secondary" className="text-xs">{status}</Badge>;
+    const label = t(`admin.dashboard.status.${status}`, status);
+    if (status === "approved" || status === "completed") return <Badge className="bg-success/20 text-success border-success/30 text-xs">{label}</Badge>;
+    if (status === "pending") return <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">{label}</Badge>;
+    if (status === "rejected" || status === "failed") return <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">{label}</Badge>;
+    return <Badge variant="secondary" className="text-xs">{label}</Badge>;
   };
 
   return (
     <DashboardLayout type="admin">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Admin <span className="text-gold">Dashboard</span>
+          {t("admin.dashboard.titlePrefix")} <span className="text-gold">{t("navLabel.Dashboard", "Dashboard")}</span>
         </h1>
-        <p className="text-muted-foreground mb-8">Platform overview & KPIs</p>
+        <p className="text-muted-foreground mb-8">{t("admin.dashboard.subtitle")}</p>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
           {/* Spec: sales numbers lead, because a signup count hides whether
               venues ever go live. Total venues survives as context. */}
           <StatCard
-            title="Live Venues"
+            title={t("admin.dashboard.liveVenues")}
             value={sales.live}
             icon={<Building2 className="w-6 h-6" />}
-            trend={`of ${sales.liveTarget} target · ${stats.venues} signed up`}
+            trend={t("admin.dashboard.liveVenuesTrend", { target: sales.liveTarget, signedUp: stats.venues })}
             trendUp={sales.live > 0}
           />
           <StatCard
-            title="Signings This Week"
+            title={t("admin.dashboard.signingsThisWeek")}
             value={sales.signedThisWeek}
             icon={<TrendingUp className="w-6 h-6" />}
-            trend={`target ${sales.weeklyTarget}`}
+            trend={t("admin.dashboard.targetTrend", { target: sales.weeklyTarget })}
             trendUp={sales.signedThisWeek >= sales.weeklyTarget}
           />
-          <StatCard title="Influencers" value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={`+${stats.newInfluencersThisWeek} this week`} trendUp={stats.newInfluencersThisWeek > 0} />
-          <StatCard title="Active Offers" value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={`${stats.offers} total offers`} trendUp={stats.offers > 0} />
-          <StatCard title="Total Creator Visits" value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={`${stats.completedRedemptions} completed visit${stats.completedRedemptions === 1 ? "" : "s"}`} trendUp={stats.completedRedemptions > 0} />
+          <StatCard title={t("navLabel.Influencers", "Influencers")} value={stats.influencers} icon={<Users className="w-6 h-6" />} trend={t("admin.dashboard.thisWeekTrend", { count: stats.newInfluencersThisWeek })} trendUp={stats.newInfluencersThisWeek > 0} />
+          <StatCard title={t("admin.dashboard.activeOffers")} value={stats.activeOffers} icon={<Tag className="w-6 h-6" />} trend={t("admin.dashboard.totalOffersTrend", { count: stats.offers })} trendUp={stats.offers > 0} />
+          <StatCard title={t("admin.dashboard.totalCreatorVisits")} value={stats.redemptions} icon={<TrendingUp className="w-6 h-6" />} trend={t("admin.dashboard.completedVisitsTrend", { count: stats.completedRedemptions })} trendUp={stats.completedRedemptions > 0} />
         </div>
 
         {/* Alert banners */}
@@ -173,8 +176,8 @@ const AdminDashboard = () => {
           <div className="mb-6 flex items-center gap-3 p-4 rounded-lg border border-gold/30 bg-gold/10">
             <Clock className="w-5 h-5 text-gold shrink-0" />
             <p className="text-sm text-foreground">
-              <strong>{stats.pendingVenues} venue{stats.pendingVenues > 1 ? "s" : ""}</strong> pending approval.{" "}
-              <a href="/admin/venues" className="underline text-gold hover:opacity-80">Review now →</a>
+              <strong>{t("admin.dashboard.venuesCount", { count: stats.pendingVenues })}</strong> {t("admin.dashboard.pendingApproval")}{" "}
+              <a href="/admin/venues" className="underline text-gold hover:opacity-80">{t("admin.dashboard.reviewNow")}</a>
             </p>
           </div>
         )}
@@ -182,7 +185,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activity */}
           <div className="gradient-card rounded-xl border border-border p-6">
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">Recent Activity</h2>
+            <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.dashboard.recentActivity")}</h2>
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (
@@ -190,7 +193,7 @@ const AdminDashboard = () => {
                 ))}
               </div>
             ) : recentActivity.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No recent activity yet.</p>
+              <p className="text-muted-foreground text-sm">{t("admin.dashboard.noRecentActivity")}</p>
             ) : (
               <div className="space-y-3">
                 {recentActivity.map((item) => (
@@ -211,23 +214,23 @@ const AdminDashboard = () => {
 
           {/* Quick Links */}
           <div className="gradient-card rounded-xl border border-border p-6">
-            <h2 className="font-display text-xl font-bold text-foreground mb-4">Quick Actions</h2>
+            <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.dashboard.quickActions")}</h2>
             <div className="space-y-3">
               {[
-                { label: "Manage Venues & Approvals", href: "/admin/venues", icon: Building2, desc: "Add, edit, approve partners" },
-                { label: "Review Offers", href: "/admin/offers", icon: Tag, desc: "Audit all active campaigns" },
-                { label: "Influencer Management", href: "/admin/influencers", icon: Users, desc: "Verify & manage users" },
-                { label: "Platform Analytics", href: "/admin/analytics", icon: TrendingUp, desc: "Metrics & reports" },
-                { label: "Billing & Subscriptions", href: "/admin/billing", icon: CheckCircle, desc: "Tiers & commission config" },
-                { label: "Content Moderation", href: "/admin/moderation", icon: XCircle, desc: "Review flagged content" },
-              ].map(({ label, href, icon: Icon, desc }) => (
+                { labelKey: "admin.dashboard.manageVenues", href: "/admin/venues", icon: Building2, descKey: "admin.dashboard.manageVenuesDesc" },
+                { labelKey: "admin.dashboard.reviewOffers", href: "/admin/offers", icon: Tag, descKey: "admin.dashboard.reviewOffersDesc" },
+                { labelKey: "admin.dashboard.influencerManagement", href: "/admin/influencers", icon: Users, descKey: "admin.dashboard.influencerManagementDesc" },
+                { labelKey: "admin.dashboard.platformAnalytics", href: "/admin/analytics", icon: TrendingUp, descKey: "admin.dashboard.platformAnalyticsDesc" },
+                { labelKey: "admin.dashboard.billingSubscriptions", href: "/admin/billing", icon: CheckCircle, descKey: "admin.dashboard.billingSubscriptionsDesc" },
+                { labelKey: "admin.dashboard.contentModeration", href: "/admin/moderation", icon: XCircle, descKey: "admin.dashboard.contentModerationDesc" },
+              ].map(({ labelKey, href, icon: Icon, descKey }) => (
                 <a key={href} href={href} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group">
                   <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center shrink-0 group-hover:bg-gold/20 transition-colors">
                     <Icon className="w-4 h-4 text-gold" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">{desc}</p>
+                    <p className="text-sm font-medium text-foreground">{t(labelKey)}</p>
+                    <p className="text-xs text-muted-foreground">{t(descKey)}</p>
                   </div>
                 </a>
               ))}
