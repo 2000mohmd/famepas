@@ -1,11 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
 import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle, normalizePhone } from "@/lib/validation";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 
 const normalizeHandle = (v: string) => {
@@ -40,8 +42,11 @@ const Page = ({ children }: { children: React.ReactNode }) => (
           Fame<span className="text-primary">Pass</span>
         </span>
       </Link>
-      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
-        <UserCheck className="w-5 h-5" />
+      <div className="flex items-center gap-4">
+        <LanguageSwitcher />
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
+          <UserCheck className="w-5 h-5" />
+        </div>
       </div>
     </header>
     <main className="flex justify-center px-4 pb-16">{children}</main>
@@ -108,6 +113,7 @@ const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; to
 const InfluencerSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   // Present only when arriving from "Continue with Instagram" on the Login
@@ -184,13 +190,13 @@ const InfluencerSignup = () => {
   // profile validation
   const nameError =
     !fullName.trim() ? "" :
-    !isValidName(fullName, 3) ? "Please enter at least 3 characters." :
-    !isValidFullName(fullName) ? "Please enter your first and last name." : "";
+    !isValidName(fullName, 3) ? t("influencerSignup.min3Chars") :
+    !isValidFullName(fullName) ? t("influencerSignup.enterFirstLast") : "";
   const usernameError =
     !username.trim() ? "" :
-    !isValidOptionalHandle(normalizeHandle(username), username) ? "Please enter a valid username (at least 2 letters or numbers)." : "";
-  const bioError = bio.trim().length > 0 && bio.trim().length < 10 ? "Please write at least 10 characters, or leave it empty." : "";
-  const emailError = !igLinkToken ? "" : !email.trim() ? "" : !isValidEmail(email) ? "Please enter a valid email." : "";
+    !isValidOptionalHandle(normalizeHandle(username), username) ? t("influencerSignup.invalidUsername") : "";
+  const bioError = bio.trim().length > 0 && bio.trim().length < 10 ? t("influencerSignup.bioTooShort") : "";
+  const emailError = !igLinkToken ? "" : !email.trim() ? "" : !isValidEmail(email) ? t("influencerSignup.invalidEmail") : "";
   const profileReady =
     isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError &&
     (!igLinkToken || (email.trim().length > 0 && !emailError));
@@ -287,15 +293,15 @@ const InfluencerSignup = () => {
       await supabase.auth.signOut();
 
       setStep("done");
-      toast({ title: "Application submitted", description: "Your creator account is under review." });
+      toast({ title: t("influencerSignup.applicationSubmitted"), description: t("influencerSignup.accountUnderReview") });
 
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Please try again.";
+      const message = e instanceof Error ? e.message : t("influencerSignup.pleaseTryAgain");
       const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
       toast({
-        title: isDuplicate ? "Email already registered" : "Signup failed",
+        title: isDuplicate ? t("influencerSignup.emailAlreadyRegistered") : t("influencerSignup.signupFailed"),
         description: isDuplicate
-          ? "An account with this email already exists. Redirecting you to sign in..."
+          ? t("influencerSignup.redirectingToSignIn")
           : message,
         variant: "destructive",
       });
@@ -315,10 +321,10 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <Card>
             <Heading
-              title="Registrations are closed"
-              sub="Influencer signups are temporarily disabled. Please check back soon."
+              title={t("influencerSignup.registrationsClosed")}
+              sub={t("influencerSignup.registrationsClosedSub")}
             />
-            <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+            <PrimaryButton onClick={() => navigate("/login")}>{t("venueSignup.backToSignIn")}</PrimaryButton>
           </Card>
         </div>
       </Page>
@@ -332,11 +338,11 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => navigate("/login")} step={1} total={4} />
           <Card>
-            <Heading title="Create your creator account" sub="Join FamePass and start collaborating with brands." />
-            <Field label="Email">
+            <Heading title={t("signup.creatorTitle")} sub={t("influencerSignup.joinAndCollaborate")} />
+            <Field label={t("login.email")}>
               <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
             </Field>
-            <Field label="Password" hint="At least 8 characters, including a letter and a number.">
+            <Field label={t("login.password")} hint={t("influencerSignup.passwordHint")}>
               <div className="relative">
                 <TextInput
                   type={showPwd ? "text" : "password"}
@@ -349,14 +355,14 @@ const InfluencerSignup = () => {
                   onClick={() => setShowPwd((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary"
                 >
-                  {showPwd ? "Hide" : "Show"}
+                  {showPwd ? t("login.hide") : t("login.show")}
                 </button>
               </div>
               <ul className="mt-2 grid grid-cols-2 gap-1 text-xs">
                 {[
-                  ["length", "8+ characters"],
-                  ["letter", "A letter"],
-                  ["number", "A number"],
+                  ["length", t("venueSignup.pwLength")],
+                  ["letter", t("venueSignup.pwLetter")],
+                  ["number", t("venueSignup.pwNumber")],
                 ].map(([k, label]) => (
                   <li key={k} className={`flex items-center gap-1 ${pwdChecks[k as keyof typeof pwdChecks] ? "text-emerald-600" : "text-slate-400"}`}>
                     <Check className="w-3 h-3" /> {label}
@@ -364,35 +370,35 @@ const InfluencerSignup = () => {
                 ))}
               </ul>
               {password.length >= 6 && !pwdReady && (
-                <p className="mt-2 text-xs text-amber-600">For better security, we recommend a stronger password — but you can continue.</p>
+                <p className="mt-2 text-xs text-amber-600">{t("venueSignup.weakPasswordHint")}</p>
               )}
             </Field>
-            <Field label="Confirm password">
+            <Field label={t("venueSignup.confirmPassword")}>
               <div className="relative">
                 <TextInput
                   type={showConfirmPwd ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter password"
+                  placeholder={t("venueSignup.reenterPassword")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPwd((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary"
                 >
-                  {showConfirmPwd ? "Hide" : "Show"}
+                  {showConfirmPwd ? t("login.hide") : t("login.show")}
                 </button>
               </div>
               {confirmPassword.length > 0 && !passwordsMatch && (
-                <p className="text-xs text-red-500 mt-1">Passwords do not match.</p>
+                <p className="text-xs text-red-500 mt-1">{t("venueSignup.passwordsDontMatch")}</p>
               )}
             </Field>
             <PrimaryButton disabled={!email || password.length < 6 || !passwordsMatch} onClick={() => setStep("profile")}>
-              Continue <ChevronRight className="inline w-4 h-4 ml-1" />
+              {t("influencerSignup.continueBtn")} <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
             <p className="mt-4 text-center text-sm text-slate-500">
-              Already have an account?{" "}
-              <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">Sign in</button>
+              {t("login.noAccount")}{" "}
+              <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">{t("welcome.signIn")}</button>
             </p>
           </Card>
         </div>
@@ -406,27 +412,27 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => (igLinkToken ? navigate("/login") : setStep("account"))} step={2} total={4} />
           <Card>
-            <Heading title="Tell us about you" sub="This is how brands will discover you." />
+            <Heading title={t("influencerSignup.tellUsAboutYou")} sub={t("influencerSignup.howBrandsDiscover")} />
             {igLinkToken && (
-              <Field label="Email" hint="We'll use this to notify you once your account is approved.">
+              <Field label={t("login.email")} hint={t("influencerSignup.emailNotifyHint")}>
                 <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
                 {emailError && <p className="text-xs text-red-600 mt-1">{emailError}</p>}
               </Field>
             )}
-            <Field label="Full name">
-              <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+            <Field label={t("influencerSignup.fullName")}>
+              <TextInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("influencerSignup.yourFullName")} />
               {nameError && <p className="text-xs text-red-600 mt-1">{nameError}</p>}
             </Field>
-            <Field label="Phone number" hint="So venues can reach you about bookings.">
+            <Field label={t("influencerSignup.phoneNumber")} hint={t("influencerSignup.phoneHint")}>
               <TextInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961 70 000 000" />
-              {phone.trim() && !normalizePhone(phone) && <p className="text-xs text-red-600 mt-1">Please enter a valid phone number.</p>}
+              {phone.trim() && !normalizePhone(phone) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.invalidPhone")}</p>}
             </Field>
-            <Field label="Username / display name" hint="Optional — how you want to be shown publicly.">
+            <Field label={t("influencerSignup.usernameLabel")} hint={t("influencerSignup.usernameHint")}>
               <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
               {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
             </Field>
 
-            <Field label="Location" hint="Choose your city from the list.">
+            <Field label={t("influencerSignup.location")} hint={t("influencerSignup.locationHint")}>
               <select
                 value={city}
                 onChange={(e) => {
@@ -436,7 +442,7 @@ const InfluencerSignup = () => {
                 }}
                 className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">Select your city…</option>
+                <option value="">{t("influencerSignup.selectCity")}</option>
                 {Array.from(
                   svcLocations.reduce((m, l) => {
                     const k = l.area || "Other";
@@ -451,7 +457,7 @@ const InfluencerSignup = () => {
               </select>
             </Field>
 
-            <Field label="Short bio" hint="Optional — a 1–2 sentence intro about you and the content you create.">
+            <Field label={t("influencerSignup.shortBio")} hint={t("influencerSignup.bioHint")}>
               <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="I create food & travel content for Gen-Z audiences..." />
               {bioError && <p className="text-xs text-red-600 mt-1">{bioError}</p>}
             </Field>
@@ -459,17 +465,17 @@ const InfluencerSignup = () => {
             {!profileReady && (
               <p className="text-xs text-amber-600 mb-3">
                 {!isValidFullName(fullName)
-                  ? "Enter your first and last name to continue."
+                  ? t("influencerSignup.enterNameToContinue")
                   : !country.trim()
-                    ? "Select your country to continue."
+                    ? t("influencerSignup.selectCountryToContinue")
                     : igLinkToken && !email.trim()
-                      ? "Enter your email to continue."
-                      : "Please fix the highlighted fields to continue."}
+                      ? t("influencerSignup.enterEmailToContinue")
+                      : t("influencerSignup.fixHighlightedFields")}
               </p>
             )}
 
             <PrimaryButton disabled={!profileReady} onClick={() => setStep("photo")}>
-              Continue <ChevronRight className="inline w-4 h-4 ml-1" />
+              {t("influencerSignup.continueBtn")} <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
 
           </Card>
@@ -493,17 +499,17 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("profile")} step={3} total={4} />
           <Card>
-            <Heading title="Add a profile photo" sub="Optional, but creators with a photo get 3× more matches." />
+            <Heading title={t("influencerSignup.addProfilePhoto")} sub={t("influencerSignup.photoSub")} />
             <div className="flex flex-col items-center gap-4 mb-6">
               <div className="w-32 h-32 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-slate-400 text-sm">No photo</span>
+                  <span className="text-slate-400 text-sm">{t("influencerSignup.noPhoto")}</span>
                 )}
               </div>
               <label className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-slate-200 cursor-pointer hover:border-primary text-sm font-medium text-slate-700">
-                {avatarFile ? "Change photo" : "Upload photo"}
+                {avatarFile ? t("influencerSignup.changePhoto") : t("influencerSignup.uploadPhoto")}
                 <input
                   type="file"
                   accept="image/*"
@@ -513,12 +519,12 @@ const InfluencerSignup = () => {
               </label>
               {avatarFile && (
                 <button onClick={() => onFile(null)} className="text-xs text-slate-500 hover:text-primary">
-                  Remove
+                  {t("influencerSignup.remove")}
                 </button>
               )}
             </div>
             <PrimaryButton onClick={() => setStep("niche")}>
-              {avatarFile ? "Continue" : "Skip for now"} <ChevronRight className="inline w-4 h-4 ml-1" />
+              {avatarFile ? t("influencerSignup.continueBtn") : t("influencerSignup.skipForNow")} <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
           </Card>
         </div>
@@ -534,7 +540,7 @@ const InfluencerSignup = () => {
         <div className="w-full max-w-xl">
           <BackBar onBack={() => setStep("photo")} step={4} total={4} />
           <Card>
-            <Heading title="Pick your content niches" sub="Choose all that apply — we'll match you with relevant offers." />
+            <Heading title={t("influencerSignup.pickNiches")} sub={t("influencerSignup.pickNichesSub")} />
             <div className="flex flex-wrap gap-2 mb-6">
               {niches.map((n) => {
                 const active = selectedNiches.includes(n.name);
@@ -555,7 +561,7 @@ const InfluencerSignup = () => {
               })}
             </div>
             <PrimaryButton disabled={submitting || selectedNiches.length === 0} onClick={handleFinalize}>
-              {submitting ? "Creating your account..." : "Finish & Enter FamePass"}
+              {submitting ? t("influencerSignup.creatingYourAccount") : t("influencerSignup.finishAndEnter")}
             </PrimaryButton>
           </Card>
         </div>
@@ -572,10 +578,10 @@ const InfluencerSignup = () => {
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
           <Heading
-            title="Your application is under review"
-            sub="Thanks for signing up! Our team reviews every creator profile before granting access. You'll get an email at the address you provided as soon as your account is approved — then you can sign in and start applying to offers."
+            title={t("influencerSignup.underReview")}
+            sub={t("influencerSignup.underReviewSub")}
           />
-          <PrimaryButton onClick={() => navigate("/login")}>Back to sign in</PrimaryButton>
+          <PrimaryButton onClick={() => navigate("/login")}>{t("venueSignup.backToSignIn")}</PrimaryButton>
         </Card>
       </div>
     </Page>
