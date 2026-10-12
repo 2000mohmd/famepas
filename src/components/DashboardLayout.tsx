@@ -1,4 +1,5 @@
 import ConnectAccountsGate from "@/components/influencer/ConnectAccountsGate";
+import VenueReferralCard from "@/components/venue/VenueReferralCard";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -422,6 +423,8 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             </div>
           ))}
         </nav>
+
+        {type === "venue" && <VenueReferralCard />}
 
         {/* User profile */}
         <div className="p-3 border-t border-border">

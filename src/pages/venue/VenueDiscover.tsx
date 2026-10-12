@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ const FOLLOWER_TIERS = [
 
 const VenueDiscover = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [venueId, setVenueId] = useState<string | null>(null);
@@ -194,14 +196,14 @@ const VenueDiscover = () => {
             return (
               <Card key={c.user_id}>
                 <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 cursor-pointer" onClick={() => navigate(`/venue/creator/${c.user_id}`)}>
                     {c.avatar_url ? (
                       <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-border" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-muted" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate">{c.full_name}</p>
+                      <p className="font-semibold text-foreground truncate hover:underline">{c.full_name}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Users className="w-3 h-3" /> {maxFollowers.toLocaleString()} followers
                       </p>

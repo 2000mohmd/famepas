@@ -46,17 +46,17 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const sendMessage = async () => {
+  const sendMessage = async (kind: "text" | "system") => {
     if (!venueId || !venue?.owner_id || !messageText.trim() || !user) return;
     setSendingMessage(true);
     const { error } = await supabase.from("messages").insert({
       sender_id: user.id, receiver_id: venue.owner_id, venue_id: venueId,
-      content: messageText.trim(), message_type: "text",
+      content: messageText.trim(), message_type: kind,
     } as any);
     setSendingMessage(false);
     if (error) { toast({ title: "Couldn't send", description: error.message, variant: "destructive" }); return; }
     setMessageText("");
-    toast({ title: "Message sent" });
+    toast({ title: kind === "system" ? "Notification sent" : "Message sent" });
   };
 
   const saveNotes = async () => {
@@ -208,8 +208,12 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
             <div className="grid grid-cols-2 gap-3 text-sm">
               {venue.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> {venue.email}</div>}
               {venue.location_email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-4 h-4 text-gold" /> Location email: {venue.location_email}</div>}
-              {(venue.phone || venue.contact_phone) && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> {venue.phone || venue.contact_phone}</div>}
-              {venue.whatsapp_phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="w-4 h-4 text-gold" /> WhatsApp: {venue.whatsapp_phone}</div>}
+              {(venue.phone || venue.contact_phone) && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-4 h-4 text-gold" /> {venue.phone || venue.contact_phone}
+                  <a href={`https://wa.me/${(venue.whatsapp_phone || venue.phone || venue.contact_phone).replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-xs text-gold hover:underline">WhatsApp</a>
+                </div>
+              )}
               {venue.website && <a href={venue.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-gold hover:underline"><Globe className="w-4 h-4" /> Website</a>}
               {venue.contact_person_name && <div className="flex items-center gap-2 text-muted-foreground"><User className="w-4 h-4 text-gold" /> {venue.contact_person_name}</div>}
               {(venue.city || venue.country) && (() => {
@@ -291,10 +295,15 @@ export default function VenueDetailDialog({ venueId, open, onOpenChange, onAppro
             {venue.owner_id && (
               <div className="border-t border-border pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Message venue</p>
-                <Textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Send an in-app message to the venue owner..." rows={2} className="bg-secondary border-border" />
-                <Button size="sm" variant="outline" onClick={sendMessage} disabled={sendingMessage || !messageText.trim()} className="mt-2">
-                  {sendingMessage ? "Sending..." : "Send"}
-                </Button>
+                <Textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Write a message or notification for the venue owner..." rows={2} className="bg-secondary border-border" />
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" variant="outline" onClick={() => sendMessage("text")} disabled={sendingMessage || !messageText.trim()}>
+                    {sendingMessage ? "Sending..." : "Send in-app message"}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => sendMessage("system")} disabled={sendingMessage || !messageText.trim()}>
+                    {sendingMessage ? "Sending..." : "Send notification"}
+                  </Button>
+                </div>
               </div>
             )}
 
