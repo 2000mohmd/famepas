@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,17 +14,18 @@ import { DEFAULT_SCORE_CONFIG, type ScoreConfig } from "@/pages/sales/leadMeta";
 
 const db = supabase as any;
 
-const WEIGHT_LABELS: { key: keyof ScoreConfig["weights"]; label: string }[] = [
-  { key: "category", label: "Category fit" },
-  { key: "area", label: "Area fit" },
-  { key: "google_rating", label: "Google rating" },
-  { key: "google_reviews", label: "Google review count" },
-  { key: "instagram_followers", label: "Instagram followers" },
-  { key: "price_level", label: "Price level" },
+const WEIGHT_LABELS: { key: keyof ScoreConfig["weights"]; labelKey: string }[] = [
+  { key: "category", labelKey: "admin.salesConfig.categoryFit" },
+  { key: "area", labelKey: "admin.salesConfig.areaFit" },
+  { key: "google_rating", labelKey: "admin.salesConfig.googleRating" },
+  { key: "google_reviews", labelKey: "admin.salesConfig.googleReviewCount" },
+  { key: "instagram_followers", labelKey: "admin.salesConfig.instagramFollowers" },
+  { key: "price_level", labelKey: "admin.salesConfig.priceLevel" },
 ];
 
 const AdminSalesConfig = () => {
   const { role } = useAuth();
+  const { t } = useTranslation();
   const [cfg, setCfg] = useState<ScoreConfig>(DEFAULT_SCORE_CONFIG);
   const [categories, setCategories] = useState<string[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
@@ -43,8 +45,8 @@ const AdminSalesConfig = () => {
     const { error } = await supabase.from("platform_settings")
       .update({ value: targets as any }).eq("key", "sales_targets");
     setSavingTargets(false);
-    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Targets updated" });
+    if (error) { toast({ title: t("admin.salesConfig.couldntSave"), description: error.message, variant: "destructive" }); return; }
+    toast({ title: t("admin.salesConfig.targetsUpdated") });
   };
 
   const saveCommission = async () => {
@@ -52,8 +54,8 @@ const AdminSalesConfig = () => {
     const { error } = await supabase.from("platform_settings")
       .update({ value: commission as any }).eq("key", "sales_commission");
     setSavingCommission(false);
-    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Commission rules updated" });
+    if (error) { toast({ title: t("admin.salesConfig.couldntSave"), description: error.message, variant: "destructive" }); return; }
+    toast({ title: t("admin.salesConfig.commissionUpdated") });
   };
 
   const loadTerritories = async () => {
@@ -94,8 +96,8 @@ const AdminSalesConfig = () => {
     const { error } = await supabase.from("platform_settings")
       .update({ value: cfg as any }).eq("key", "lead_score_weights");
     setSaving(false);
-    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Scoring updated", description: "Lead scores recalculate the next time a rep opens their list." });
+    if (error) { toast({ title: t("admin.salesConfig.couldntSave"), description: error.message, variant: "destructive" }); return; }
+    toast({ title: t("admin.salesConfig.scoringUpdated"), description: t("admin.salesConfig.scoringUpdatedDesc") });
   };
 
   const toggleIn = (list: string[], value: string) =>
@@ -105,7 +107,7 @@ const AdminSalesConfig = () => {
     if (!newTerritory.area || !newTerritory.rep_id) return;
     const { error } = await db.from("sales_territories")
       .upsert({ area: newTerritory.area, rep_id: newTerritory.rep_id, updated_at: new Date().toISOString() });
-    if (error) { toast({ title: "Couldn't save territory", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast({ title: t("admin.salesConfig.couldntSaveTerritory"), description: error.message, variant: "destructive" }); return; }
     setNewTerritory({ area: "", rep_id: "" });
     void loadTerritories();
   };
@@ -115,24 +117,24 @@ const AdminSalesConfig = () => {
     void loadTerritories();
   };
 
-  const repName = (id: string) => reps.find((r) => r.user_id === id)?.full_name ?? "Unknown";
+  const repName = (id: string) => reps.find((r) => r.user_id === id)?.full_name ?? t("admin.auditLog.unknown");
 
   return (
     <DashboardLayout type={role === "admin" ? "admin" : "sales"}>
       <div className="animate-fade-in max-w-3xl">
         <h1 className="text-3xl font-display font-bold text-foreground mb-1">
-          Sales <span className="text-gold">configuration</span>
+          {t("admin.salesConfig.titlePrefix")} <span className="text-gold">{t("admin.salesConfig.titleAccent")}</span>
         </h1>
         <p className="text-muted-foreground text-sm mb-8">
-          How leads are scored, and which rep owns which area.
+          {t("admin.salesConfig.subtitle")}
         </p>
 
         <div className="gradient-card rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-display text-lg font-bold text-foreground mb-1">Targets</h2>
-          <p className="text-xs text-muted-foreground mb-4">What the sales dashboard measures against.</p>
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">{t("admin.salesConfig.targets")}</h2>
+          <p className="text-xs text-muted-foreground mb-4">{t("admin.salesConfig.targetsDesc")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div className="space-y-1.5">
-              <Label>Signings per week</Label>
+              <Label>{t("admin.salesConfig.signingsPerWeek")}</Label>
               <Input
                 type="number" min="0"
                 value={targets.weekly_signings}
@@ -140,7 +142,7 @@ const AdminSalesConfig = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Live venues per year</Label>
+              <Label>{t("admin.salesConfig.liveVenuesPerYear")}</Label>
               <Input
                 type="number" min="0"
                 value={targets.annual_live_venues}
@@ -149,21 +151,20 @@ const AdminSalesConfig = () => {
             </div>
           </div>
           <Button onClick={() => void saveTargets()} disabled={savingTargets} className="btn-sales-primary font-semibold">
-            {savingTargets ? "Saving…" : "Save targets"}
+            {savingTargets ? t("admin.events.savingEllipsis") : t("admin.salesConfig.saveTargets")}
           </Button>
         </div>
 
         <div className="gradient-card rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-display text-lg font-bold text-foreground mb-1">Lead scoring</h2>
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">{t("admin.salesConfig.leadScoring")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Weights are relative, so they don't need to add up to 100 — currently {totalWeight}.
-            A lead is scored only on the fields it actually has.
+            {t("admin.salesConfig.weightsDesc", { total: totalWeight })}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-            {WEIGHT_LABELS.map(({ key, label }) => (
+            {WEIGHT_LABELS.map(({ key, labelKey }) => (
               <div key={key} className="space-y-1.5">
-                <Label>{label}</Label>
+                <Label>{t(labelKey)}</Label>
                 <Input
                   type="number" min="0"
                   value={cfg.weights[key]}
@@ -175,7 +176,7 @@ const AdminSalesConfig = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
             <div className="space-y-1.5">
-              <Label>Reviews counted as a full score</Label>
+              <Label>{t("admin.salesConfig.reviewsFullScore")}</Label>
               <Input
                 type="number" min="1"
                 value={cfg.targets.google_reviews}
@@ -183,7 +184,7 @@ const AdminSalesConfig = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Followers counted as a full score</Label>
+              <Label>{t("admin.salesConfig.followersFullScore")}</Label>
               <Input
                 type="number" min="1"
                 value={cfg.targets.instagram_followers}
@@ -193,9 +194,9 @@ const AdminSalesConfig = () => {
           </div>
 
           <div className="mb-4">
-            <Label className="mb-2 block">Preferred categories</Label>
+            <Label className="mb-2 block">{t("admin.salesConfig.preferredCategories")}</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Pick none and category is left out of the score entirely, rather than counting against every lead.
+              {t("admin.salesConfig.preferredCategoriesDesc")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {categories.map((c) => (
@@ -209,7 +210,7 @@ const AdminSalesConfig = () => {
           </div>
 
           <div className="mb-5">
-            <Label className="mb-2 block">Preferred areas</Label>
+            <Label className="mb-2 block">{t("admin.salesConfig.preferredAreas")}</Label>
             <div className="flex flex-wrap gap-1.5">
               {areas.map((a) => (
                 <button key={a} onClick={() => setCfg({ ...cfg, preferred_areas: toggleIn(cfg.preferred_areas, a) })}>
@@ -222,18 +223,18 @@ const AdminSalesConfig = () => {
           </div>
 
           <Button onClick={() => void saveWeights()} disabled={saving} className="btn-sales-primary font-semibold">
-            {saving ? "Saving…" : "Save scoring"}
+            {saving ? t("admin.events.savingEllipsis") : t("admin.salesConfig.saveScoring")}
           </Button>
         </div>
 
         <div className="gradient-card rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-display text-lg font-bold text-foreground mb-1">Commission</h2>
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">{t("admin.salesConfig.commission")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Paid on venues that are still live after the qualifying period, so a signup that goes quiet doesn't earn.
+            {t("admin.salesConfig.commissionDesc")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div className="space-y-1.5">
-              <Label>Days live before it qualifies</Label>
+              <Label>{t("admin.salesConfig.daysLiveQualify")}</Label>
               <Input
                 type="number" min="0"
                 value={commission.qualifying_days}
@@ -241,18 +242,18 @@ const AdminSalesConfig = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>How it's calculated</Label>
+              <Label>{t("admin.salesConfig.howCalculated")}</Label>
               <Select value={commission.mode} onValueChange={(v) => setCommission({ ...commission, mode: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="flat">Flat amount per venue</SelectItem>
-                  <SelectItem value="percent">Percentage of their plan</SelectItem>
+                  <SelectItem value="flat">{t("admin.salesConfig.flatAmount")}</SelectItem>
+                  <SelectItem value="percent">{t("admin.salesConfig.percentOfPlan")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {commission.mode === "flat" ? (
               <div className="space-y-1.5">
-                <Label>Amount per venue</Label>
+                <Label>{t("admin.salesConfig.amountPerVenue")}</Label>
                 <Input
                   type="number" min="0"
                   value={commission.flat_amount}
@@ -261,7 +262,7 @@ const AdminSalesConfig = () => {
               </div>
             ) : (
               <div className="space-y-1.5">
-                <Label>Percent of plan price</Label>
+                <Label>{t("admin.salesConfig.percentOfPlanPrice")}</Label>
                 <Input
                   type="number" min="0" max="100"
                   value={commission.percent_of_plan}
@@ -271,40 +272,40 @@ const AdminSalesConfig = () => {
             )}
           </div>
           <Button onClick={() => void saveCommission()} disabled={savingCommission} className="btn-sales-primary font-semibold">
-            {savingCommission ? "Saving…" : "Save commission"}
+            {savingCommission ? t("admin.events.savingEllipsis") : t("admin.salesConfig.saveCommission")}
           </Button>
         </div>
 
         <div className="gradient-card rounded-xl border border-border p-6">
-          <h2 className="font-display text-lg font-bold text-foreground mb-1">Territories</h2>
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">{t("admin.salesConfig.territories")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Imported leads in these areas go straight to the right rep. Anything unmapped falls back to whoever runs the import.
+            {t("admin.salesConfig.territoriesDesc")}
           </p>
 
           <div className="flex flex-wrap gap-2 mb-4">
             <Select value={newTerritory.area} onValueChange={(v) => setNewTerritory({ ...newTerritory, area: v })}>
-              <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Area" /></SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder={t("admin.salesConfig.area")} /></SelectTrigger>
               <SelectContent>{areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={newTerritory.rep_id} onValueChange={(v) => setNewTerritory({ ...newTerritory, rep_id: v })}>
-              <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder="Rep" /></SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-secondary border-border"><SelectValue placeholder={t("admin.salesConfig.rep")} /></SelectTrigger>
               <SelectContent>{reps.map((r) => <SelectItem key={r.user_id} value={r.user_id}>{r.full_name}</SelectItem>)}</SelectContent>
             </Select>
             <Button variant="outline" onClick={() => void addTerritory()} disabled={!newTerritory.area || !newTerritory.rep_id}>
-              Assign
+              {t("admin.salesConfig.assign")}
             </Button>
           </div>
 
           {territories.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No territories assigned yet.</p>
+            <p className="text-sm text-muted-foreground">{t("admin.salesConfig.noTerritories")}</p>
           ) : (
             <div className="space-y-1.5">
-              {territories.map((t) => (
-                <div key={t.area} className="flex items-center justify-between text-sm border-b border-border/50 pb-1.5">
-                  <span className="text-foreground">{t.area}</span>
+              {territories.map((terr) => (
+                <div key={terr.area} className="flex items-center justify-between text-sm border-b border-border/50 pb-1.5">
+                  <span className="text-foreground">{terr.area}</span>
                   <span className="flex items-center gap-2 text-muted-foreground">
-                    {repName(t.rep_id)}
-                    <button onClick={() => void removeTerritory(t.area)} aria-label={`Remove ${t.area}`}>
+                    {repName(terr.rep_id)}
+                    <button onClick={() => void removeTerritory(terr.area)} aria-label={t("admin.salesConfig.removeArea", { area: terr.area })}>
                       <Trash2 className="w-3.5 h-3.5 text-destructive" />
                     </button>
                   </span>
