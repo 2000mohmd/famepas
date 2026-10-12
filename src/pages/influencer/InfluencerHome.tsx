@@ -8,10 +8,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, MapPin, ChevronRight, Star, Tag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 const InfluencerHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { data: profile } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -94,16 +96,16 @@ const InfluencerHome = () => {
         {/* Hero */}
         <div className="rounded-2xl bg-gradient-to-r from-primary/30 to-accent/20 border border-border p-8">
           <h1 className="text-3xl font-display font-bold text-foreground">
-            Welcome back, <span className="text-gold">{fullName}</span> 👋
+            {t("influencerHome.greeting")}, <span className="text-gold">{fullName}</span> 👋
           </h1>
           {handle && <p className="text-sm text-muted-foreground">@{handle}</p>}
-          <p className="text-muted-foreground mt-2">Discover venues and exclusive offers curated for you</p>
+          <p className="text-muted-foreground mt-2">{t("influencerHome.subtitle")}</p>
           <div className="flex gap-3 mt-4">
             <Button onClick={() => navigate("/influencer/explore")} className="gap-2">
-              <MapPin className="w-4 h-4" /> Explore Map
+              <MapPin className="w-4 h-4" /> {t("influencerHome.exploreMap")}
             </Button>
             <Button variant="outline" onClick={() => navigate("/influencer/bookings")}>
-              My Bookings
+              {t("influencerHome.myBookings")}
             </Button>
           </div>
         </div>
@@ -111,7 +113,7 @@ const InfluencerHome = () => {
         {/* Categories */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-display font-semibold text-foreground">Browse by Category</h2>
+            <h2 className="text-xl font-display font-semibold text-foreground">{t("influencerHome.browseByCategory")}</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {categories?.map((cat: any) => (
@@ -155,7 +157,7 @@ const InfluencerHome = () => {
                   className="text-gold"
                   onClick={() => navigate(`/influencer/explore?category=${cat.name}`)}
                 >
-                  View All <ChevronRight className="w-4 h-4 ml-1" />
+                  {t("influencerHome.viewAll")} <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
 
@@ -171,7 +173,7 @@ const InfluencerHome = () => {
         {/* Featured Venues */}
         {featuredVenues.length > 0 && (
         <div>
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">Featured Venues</h2>
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">{t("influencerHome.featuredVenues")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {featuredVenues.slice(0, 6).map((venue) => (
               <Card
@@ -194,7 +196,7 @@ const InfluencerHome = () => {
                     <div>
                       <h3 className="font-semibold text-foreground text-sm">{venue.name}</h3>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {venue.city || "N/A"}
+                        <MapPin className="w-3 h-3" /> {venue.city || t("influencerHome.na")}
                       </p>
                     </div>
                   </div>
@@ -205,7 +207,7 @@ const InfluencerHome = () => {
           </div>
           <div className="flex justify-center mt-6">
             <Button variant="outline" onClick={() => navigate("/influencer/explore")}>
-              View all venues & offers
+              {t("influencerHome.viewAllVenuesOffers")}
             </Button>
           </div>
         </div>

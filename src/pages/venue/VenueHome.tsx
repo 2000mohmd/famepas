@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { format } from "date-fns";
  * and a pending venue sees "Under review" instead of an empty dashboard. */
 const VenueHome = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [venue, setVenue] = useState<any>(null);
   const [liveCampaigns, setLiveCampaigns] = useState<any[]>([]);
@@ -61,7 +63,7 @@ const VenueHome = () => {
   if (loading) {
     return (
       <DashboardLayout type="venue">
-        <div className="text-center text-muted-foreground py-24">Loading…</div>
+        <div className="text-center text-muted-foreground py-24">{t("common.loading")}</div>
       </DashboardLayout>
     );
   }
@@ -72,9 +74,9 @@ const VenueHome = () => {
         <Card className="max-w-lg mx-auto mt-16">
           <CardContent className="pt-10 pb-10 text-center space-y-3">
             <ShieldCheck className="w-10 h-10 mx-auto text-muted-foreground" />
-            <h1 className="text-xl font-bold text-foreground">Your venue is under review</h1>
+            <h1 className="text-xl font-bold text-foreground">{t("venueHome.underReviewTitle")}</h1>
             <p className="text-sm text-muted-foreground">
-              Our team is reviewing your application. You'll get an email as soon as you're approved — then your dashboard opens up fully.
+              {t("venueHome.underReviewSub")}
             </p>
           </CardContent>
         </Card>
@@ -87,8 +89,8 @@ const VenueHome = () => {
       <DashboardLayout type="venue">
         <Card className="max-w-lg mx-auto mt-16">
           <CardContent className="pt-10 pb-10 text-center space-y-3">
-            <h1 className="text-xl font-bold text-foreground">Your application wasn't approved</h1>
-            <p className="text-sm text-muted-foreground">Contact support if you think this is a mistake.</p>
+            <h1 className="text-xl font-bold text-foreground">{t("venueHome.rejectedTitle")}</h1>
+            <p className="text-sm text-muted-foreground">{t("venueHome.rejectedSub")}</p>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -98,19 +100,19 @@ const VenueHome = () => {
   return (
     <DashboardLayout type="venue">
       <div className="space-y-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">Welcome back{venue.name ? `, ${venue.name}` : ""}</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">{t("venueHome.welcomeBack")}{venue.name ? `, ${venue.name}` : ""}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2"><Megaphone className="w-4 h-4" /> Live offers</h2>
-                <Link to="/venue/campaigns" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
+                <h2 className="font-semibold text-foreground flex items-center gap-2"><Megaphone className="w-4 h-4" /> {t("venueHome.liveOffers")}</h2>
+                <Link to="/venue/campaigns" className="text-xs text-muted-foreground hover:text-foreground">{t("venueHome.viewAll")}</Link>
               </div>
               {liveCampaigns.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-muted-foreground mb-3">No live offers yet.</p>
-                  <Button size="sm" asChild><Link to="/venue/campaigns/new">Create your first offer</Link></Button>
+                  <p className="text-sm text-muted-foreground mb-3">{t("venueHome.noLiveOffers")}</p>
+                  <Button size="sm" asChild><Link to="/venue/campaigns/new">{t("venueHome.createFirstOffer")}</Link></Button>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -128,18 +130,18 @@ const VenueHome = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Upcoming visits</h2>
-                <Link to="/venue/bookings" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
+                <h2 className="font-semibold text-foreground flex items-center gap-2"><CalendarDays className="w-4 h-4" /> {t("venueHome.upcomingVisits")}</h2>
+                <Link to="/venue/bookings" className="text-xs text-muted-foreground hover:text-foreground">{t("venueHome.viewAll")}</Link>
               </div>
               {upcomingVisits.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No upcoming visits scheduled.</p>
+                <p className="text-sm text-muted-foreground text-center py-6">{t("venueHome.noUpcomingVisits")}</p>
               ) : (
                 <div className="space-y-2">
                   {upcomingVisits.map((b) => (
                     <div key={b.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                      <span className="text-sm font-medium truncate">{b.profile?.full_name ?? "Creator"}</span>
+                      <span className="text-sm font-medium truncate">{b.profile?.full_name ?? t("venueHome.creatorFallback")}</span>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {b.scheduled_date ? format(new Date(b.scheduled_date), "MMM d") : "TBD"}
+                        <Clock className="w-3 h-3" /> {b.scheduled_date ? format(new Date(b.scheduled_date), "MMM d") : t("venueHome.tbd")}
                       </span>
                     </div>
                   ))}
@@ -151,16 +153,16 @@ const VenueHome = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2"><Film className="w-4 h-4" /> Content received</h2>
-                <Link to="/venue/content" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
+                <h2 className="font-semibold text-foreground flex items-center gap-2"><Film className="w-4 h-4" /> {t("venueHome.contentReceived")}</h2>
+                <Link to="/venue/content" className="text-xs text-muted-foreground hover:text-foreground">{t("venueHome.viewAll")}</Link>
               </div>
               {recentContent.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No content submitted yet.</p>
+                <p className="text-sm text-muted-foreground text-center py-6">{t("venueHome.noContentYet")}</p>
               ) : (
                 <div className="space-y-2">
                   {recentContent.map((d) => (
                     <div key={d.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                      <span className="text-sm font-medium truncate">{d.profile?.full_name ?? "Creator"}</span>
+                      <span className="text-sm font-medium truncate">{d.profile?.full_name ?? t("venueHome.creatorFallback")}</span>
                       <span className="text-xs text-muted-foreground capitalize">{d.platform}</span>
                     </div>
                   ))}
@@ -173,7 +175,7 @@ const VenueHome = () => {
         {topCreators.length > 0 && (
           <Card>
             <CardContent className="pt-6">
-              <h2 className="font-semibold text-foreground mb-4">Creators on FamePass</h2>
+              <h2 className="font-semibold text-foreground mb-4">{t("venueHome.creatorsOnFamePass")}</h2>
               <div className="flex flex-wrap gap-4">
                 {topCreators.map((c) => (
                   <div key={c.user_id} className="flex flex-col items-center w-20 text-center">
@@ -184,7 +186,7 @@ const VenueHome = () => {
                     )}
                     <span className="text-xs font-medium text-foreground mt-1 truncate w-full">{c.full_name}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0).toLocaleString()} followers
+                      {t("venueHome.followersCount", { count: Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0).toLocaleString() })}
                     </span>
                   </div>
                 ))}

@@ -3,8 +3,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { roleHome } from "@/lib/roleHome";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import heroBrand from "@/assets/hero-brand.jpg";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -14,7 +17,7 @@ const safeNext = (value: string | null) =>
 const showLoginError = (toast: (opts: any) => void, message: string) => {
   const isPending = /pending admin approval/i.test(message);
   toast({
-    title: isPending ? "Almost there" : "Login failed",
+    title: isPending ? i18n.t("login.almostThere") : i18n.t("login.loginFailed"),
     description: message,
     variant: isPending ? "default" : "destructive",
   });
@@ -28,6 +31,7 @@ const Login = () => {
   const { signIn, role, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const nextParam = safeNext(params.get("next"));
   const stored = sessionStorage.getItem("postLoginRedirect");
@@ -95,11 +99,14 @@ const Login = () => {
         style={{ backgroundImage: `url(${heroBrand})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-black/50" />
-        <Link to="/" className="relative z-10 flex items-center gap-2">
-          <span className="font-display text-3xl font-bold text-white">
-            Fame<span className="text-[hsl(var(--gold-light))]">Pass</span>
-          </span>
-        </Link>
+        <div className="relative z-10 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="font-display text-3xl font-bold text-white">
+              Fame<span className="text-[hsl(var(--gold-light))]">Pass</span>
+            </span>
+          </Link>
+          <LanguageSwitcher className="!text-white/80 hover:!text-white" />
+        </div>
         <p className="relative z-10 font-display text-3xl text-white max-w-sm leading-snug">
           Where creators and venues make fame happen.
         </p>
@@ -107,42 +114,45 @@ const Login = () => {
 
       <main className="flex justify-center items-center px-4 py-12 lg:py-16">
         <div className="w-full max-w-xl">
-          <Link to="/" className="flex lg:hidden items-center gap-2 mb-8 justify-center">
-            <span className="font-display text-3xl font-bold text-foreground">
-              Fame<span className="text-primary">Pass</span>
-            </span>
-          </Link>
+          <div className="flex lg:hidden items-center justify-between mb-8">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="font-display text-3xl font-bold text-foreground">
+                Fame<span className="text-primary">Pass</span>
+              </span>
+            </Link>
+            <LanguageSwitcher />
+          </div>
 
           <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-6">Welcome back to FamePass</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-6">{t("login.title")}</h1>
 
             {otpRequired ? (
               <form onSubmit={handleVerifyOtp} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-2">Verification code</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">{t("login.verificationCode")}</label>
                   <input
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
-                    placeholder="6-digit code"
+                    placeholder={t("login.sixDigitCode")}
                     required
                     maxLength={6}
                     className="w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-center tracking-widest text-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
-                  <p className="text-xs text-slate-500 mt-2">We sent a code to {email}. It expires in 10 minutes.</p>
+                  <p className="text-xs text-slate-500 mt-2">{t("login.codeSentTo", { email })}</p>
                 </div>
                 <button type="submit" disabled={isLoading} className="w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold transition">
-                  {isLoading ? "Verifying..." : "Verify & Sign In"}
+                  {isLoading ? t("login.verifying") : t("login.verifyAndSignIn")}
                 </button>
                 <button type="button" className="w-full h-12 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition" onClick={() => { setOtpRequired(false); setOtpCode(""); }}>
 
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </form>
             ) : (
               <>
                 <form onSubmit={handleLogin} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">Email</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">{t("login.email")}</label>
                     <input
                       type="email"
                       value={email}
@@ -153,7 +163,7 @@ const Login = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-800 mb-2">Password</label>
+                    <label className="block text-sm font-semibold text-slate-800 mb-2">{t("login.password")}</label>
                     <div className="relative">
                       <input
                         type={showPwd ? "text" : "password"}
@@ -168,13 +178,13 @@ const Login = () => {
                         onClick={() => setShowPwd((s) => !s)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-primary"
                       >
-                        {showPwd ? "Hide" : "Show"}
+                        {showPwd ? t("login.hide") : t("login.show")}
                       </button>
                     </div>
                   </div>
                   <div className="flex justify-end -mt-2">
                     <Link to="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
-                      Forgot password?
+                      {t("login.forgot")}
                     </Link>
                   </div>
                   <button
@@ -182,7 +192,7 @@ const Login = () => {
                     disabled={isLoading}
                     className="w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-semibold transition"
                   >
-                    {isLoading ? "Signing in..." : "Sign In"}
+                    {isLoading ? t("login.submitting") : t("login.submit")}
                   </button>
                 </form>
               </>
@@ -190,9 +200,9 @@ const Login = () => {
           </div>
 
           <p className="mt-6 text-center text-sm text-foreground/70">
-            Don't have an account?{" "}
+            {t("login.noAccount")}{" "}
             <Link to="/signup" className="font-semibold text-primary hover:underline">
-              Create an account
+              {t("login.createAccount")}
             </Link>
           </p>
         </div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, Sparkles, Store, X, Mail, LogIn } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import imgHospitality from "@/assets/onboarding-hospitality.jpg";
 import imgCreator from "@/assets/onboarding-creator.jpg";
 import imgNightlife from "@/assets/onboarding-nightlife.jpg";
@@ -19,6 +21,7 @@ const SLIDES = [
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -41,9 +44,12 @@ const Welcome = () => {
         <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
           Fame<span className="italic text-primary">Pass</span>
         </span>
-        <button onClick={() => navigate("/login")} className="text-sm text-foreground/70 hover:text-foreground">
-          Sign in
-        </button>
+        <div className="flex items-center gap-4">
+          <LanguageSwitcher />
+          <button onClick={() => navigate("/login")} className="text-sm text-foreground/70 hover:text-foreground">
+            {t("welcome.signIn")}
+          </button>
+        </div>
       </header>
 
       <div className="relative flex-1 px-6 pt-8 pb-6 flex items-center justify-center">
@@ -98,7 +104,7 @@ const Welcome = () => {
           Welcome to <span className="gradient-text">FamePass</span>
         </h1>
         <p className="mt-2 text-center text-sm text-foreground/60">
-          The collab platform connecting venues with creators.
+          {t("welcome.tagline")}
         </p>
 
         <div className="mt-6 space-y-3">
@@ -106,22 +112,22 @@ const Welcome = () => {
             onClick={() => setSheetOpen(true)}
             className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold flex items-center justify-center gap-2 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] active:scale-[0.99] transition"
           >
-            <Sparkles className="w-5 h-5" /> I'm an Influencer
+            <Sparkles className="w-5 h-5" /> {t("welcome.creatorCta")}
             <ArrowRight className="w-4 h-4 ml-1" />
           </button>
           <button
             onClick={() => navigate("/signup/business")}
             className="w-full h-14 rounded-2xl bg-card border border-border text-card-foreground font-semibold flex items-center justify-center gap-2 hover:border-primary active:scale-[0.99] transition"
           >
-            <Store className="w-5 h-5 text-primary" /> I'm a Business
+            <Store className="w-5 h-5 text-primary" /> {t("welcome.businessCta")}
             <ArrowRight className="w-4 h-4 ml-1 text-card-foreground/60" />
           </button>
         </div>
 
         <p className="mt-5 text-center text-sm text-foreground/60">
-          Already have an account?{" "}
+          {t("welcome.alreadyHaveAccount")}{" "}
           <button onClick={() => navigate("/login")} className="text-primary font-semibold hover:underline">
-            Sign in
+            {t("welcome.signIn")}
           </button>
         </p>
       </div>
@@ -144,9 +150,9 @@ const Welcome = () => {
           <div className="px-6 pt-4 pb-8 max-w-md mx-auto">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-xl font-bold">Join as a Creator</h2>
+                <h2 className="text-xl font-bold">{t("welcome.joinAsCreator")}</h2>
                 <p className="text-sm text-card-foreground/70 mt-1">
-                  Sign up with your email to get started.
+                  {t("welcome.joinAsCreatorSub")}
                 </p>
               </div>
               <button
@@ -163,18 +169,18 @@ const Welcome = () => {
                 onClick={() => { setSheetOpen(false); navigate("/signup/influencer"); }}
                 className="w-full h-12 rounded-xl gradient-gold font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition"
               >
-                <Mail className="w-5 h-5" /> Sign Up
+                <Mail className="w-5 h-5" /> {t("welcome.signUp")}
               </button>
               <button
                 onClick={() => { setSheetOpen(false); navigate("/login"); }}
                 className="w-full h-12 rounded-xl bg-card border border-border text-card-foreground font-semibold flex items-center justify-center gap-2 hover:border-primary active:scale-[0.99] transition"
               >
-                <LogIn className="w-5 h-5 text-primary" /> Login
+                <LogIn className="w-5 h-5 text-primary" /> {t("welcome.login")}
               </button>
             </div>
 
             <p className="mt-5 text-center text-[11px] text-card-foreground/50 leading-relaxed">
-              By continuing you agree to FamePass's Terms & Privacy Policy.
+              {t("welcome.terms")}
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import ConnectAccountsGate from "@/components/influencer/ConnectAccountsGate";
 import VenueReferralCard from "@/components/venue/VenueReferralCard";
+import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -180,6 +181,7 @@ const influencerGroups: NavGroup[] = [
 const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" | "sales" }) => {
   const { signOut, user, role } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
   const rawGroups = type === "admin" ? adminGroups : type === "venue" ? venueGroups : type === "sales" ? salesGroups : influencerGroups;
   // A rep shouldn't see links that ProtectedRoute would only bounce them off.
   const isManager = role === "admin" || role === "sales_manager";
@@ -351,7 +353,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               {type === "venue" && (
                 <>
                   <DropdownMenuItem asChild>
-                    <NavLink to="/venue/settings"><Settings className="w-4 h-4 mr-2" /> Venue settings</NavLink>
+                    <NavLink to="/venue/settings"><Settings className="w-4 h-4 mr-2" /> {t("nav.venueSettings")}</NavLink>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <NavLink to="/venue/locations"><MapPin className="w-4 h-4 mr-2" /> Locations</NavLink>
@@ -365,12 +367,12 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               )}
               {type === "influencer" && (
                 <DropdownMenuItem asChild>
-                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
+                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> {t("nav.profile")}</NavLink>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => { void signOut(); }}>
-                <LogOut className="w-4 h-4 mr-2" /> Log out
+                <LogOut className="w-4 h-4 mr-2" /> {t("nav.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -383,7 +385,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               {group.label && (
                 <div className="px-2.5 mb-1.5 flex items-center gap-2">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-card-foreground/50">
-                    {group.label}
+                    {t(`navLabel.${group.label}`, group.label!)}
                   </p>
                   {group.badge && (
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
@@ -410,7 +412,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                       style={exactActive ? { background: "hsl(var(--primary) / 0.14)" } : undefined}
                     >
                       <Icon className="w-[15px] h-[15px]" />
-                      <span className="flex-1">{label}</span>
+                      <span className="flex-1">{t(`navLabel.${label}`, label)}</span>
                       {badge && (
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
                           {badge}
@@ -448,13 +450,13 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             <DropdownMenuContent align="start" side="top" className="w-[196px] bg-card">
               {type === "influencer" && (
                 <DropdownMenuItem asChild>
-                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> My profile</NavLink>
+                  <NavLink to="/influencer/profile"><Users className="w-4 h-4 mr-2" /> {t("nav.profile")}</NavLink>
                 </DropdownMenuItem>
               )}
               {(type === "venue" || type === "influencer") && (
                 <DropdownMenuItem asChild>
                   <NavLink to={type === "venue" ? "/venue/settings" : "/influencer/settings"}>
-                    <Settings className="w-4 h-4 mr-2" /> Settings
+                    <Settings className="w-4 h-4 mr-2" /> {t("nav.settings")}
                   </NavLink>
                 </DropdownMenuItem>
               )}
@@ -465,7 +467,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => { void signOut(); }}>
-                <LogOut className="w-4 h-4 mr-2" /> Log out
+                <LogOut className="w-4 h-4 mr-2" /> {t("nav.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
