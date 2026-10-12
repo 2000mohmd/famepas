@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface Message {
 
 const AdminMessages = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<"creators" | "venues">("creators");
   const [influencers, setInfluencers] = useState<Person[]>([]);
   const [venueThreads, setVenueThreads] = useState<VenueThread[]>([]);
@@ -138,7 +140,7 @@ const AdminMessages = () => {
     if (error) {
       // Previously swallowed: a failed send looked identical to a successful
       // one that simply rendered nothing.
-      toast({ title: "Message not sent", description: error.message, variant: "destructive" });
+      toast({ title: t("admin.messages.notSent"), description: error.message, variant: "destructive" });
       return;
     }
     if (data) {
@@ -154,9 +156,9 @@ const AdminMessages = () => {
     <DashboardLayout type="admin">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          <span className="text-gold">Messages</span>
+          <span className="text-gold">{t("navLabel.Messages", "Messages")}</span>
         </h1>
-        <p className="text-muted-foreground mb-6">Message creators and venues directly.</p>
+        <p className="text-muted-foreground mb-6">{t("admin.messages.subtitle")}</p>
 
         <div className="flex gap-2 mb-4 bg-secondary/50 rounded-lg p-1 w-fit">
           {(["creators", "venues"] as const).map((m) => (
@@ -165,7 +167,7 @@ const AdminMessages = () => {
               onClick={() => { setMode(m); setSelected(null); setSelectedVenueId(null); setThread([]); setSearch(""); }}
               className={`px-3 py-1.5 text-sm rounded-md font-medium capitalize ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
             >
-              {m}
+              {m === "creators" ? t("admin.broadcast.creators") : t("navLabel.Venues", "Venues")}
             </button>
           ))}
         </div>
@@ -175,14 +177,14 @@ const AdminMessages = () => {
             <div className="p-3 border-b border-border">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder={mode === "creators" ? "Search creators..." : "Search venues..."} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 bg-secondary border-border h-9" />
+                <Input placeholder={mode === "creators" ? t("admin.messages.searchCreators") : t("admin.messages.searchVenues")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 bg-secondary border-border h-9" />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {mode === "venues" ? (
                 filteredVenues.length === 0 ? (
                   <p className="p-3 text-sm text-muted-foreground">
-                    {venueThreads.length === 0 ? "No venues have messaged yet." : "No venues match that search."}
+                    {venueThreads.length === 0 ? t("admin.messages.noVenuesMessaged") : t("admin.messages.noVenuesMatch")}
                   </p>
                 ) : filteredVenues.map((v) => (
                   <button
@@ -196,14 +198,14 @@ const AdminMessages = () => {
                       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs shrink-0">{(v.name || "?")[0]}</div>
                     )}
                     <span className="text-sm text-foreground truncate flex-1">{v.name}</span>
-                    {unreadVenueIds.has(v.venue_id) && <Badge className="bg-gold text-background text-[10px] px-1.5">New</Badge>}
+                    {unreadVenueIds.has(v.venue_id) && <Badge className="bg-gold text-background text-[10px] px-1.5">{t("admin.messages.newBadge")}</Badge>}
                   </button>
                 ))
               ) : loadError ? (
-                <p className="p-3 text-sm text-destructive">Couldn't load creators: {loadError}</p>
+                <p className="p-3 text-sm text-destructive">{t("admin.messages.couldntLoadCreators")} {loadError}</p>
               ) : filtered.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">
-                  {influencers.length === 0 ? "No creators yet." : "No creators match that search."}
+                  {influencers.length === 0 ? t("admin.messages.noCreatorsYet") : t("admin.messages.noCreatorsMatch")}
                 </p>
               ) : null}
               {mode === "creators" && filtered.map((p) => (
@@ -217,8 +219,8 @@ const AdminMessages = () => {
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs shrink-0">{(p.full_name || "?")[0]}</div>
                   )}
-                  <span className="text-sm text-foreground truncate flex-1">{p.full_name || "Unnamed"}</span>
-                  {unreadIds.has(p.user_id) && <Badge className="bg-gold text-background text-[10px] px-1.5">New</Badge>}
+                  <span className="text-sm text-foreground truncate flex-1">{p.full_name || t("admin.messages.unnamed")}</span>
+                  {unreadIds.has(p.user_id) && <Badge className="bg-gold text-background text-[10px] px-1.5">{t("admin.messages.newBadge")}</Badge>}
                 </button>
               ))}
             </div>
@@ -227,11 +229,11 @@ const AdminMessages = () => {
           <div className="md:col-span-2 flex flex-col">
             {!selected ? (
               <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-                Select a {mode === "creators" ? "creator" : "venue"} to start messaging
+                {mode === "creators" ? t("admin.messages.selectCreator") : t("admin.messages.selectVenue")}
               </div>
             ) : (
               <>
-                <div className="p-3 border-b border-border font-medium text-foreground">{selected.full_name || "Unnamed"}</div>
+                <div className="p-3 border-b border-border font-medium text-foreground">{selected.full_name || t("admin.messages.unnamed")}</div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {thread.map((m) => (
                     <div key={m.id} className={`flex ${m.sender_id === user?.id ? "justify-end" : "justify-start"}`}>
@@ -247,7 +249,7 @@ const AdminMessages = () => {
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                    placeholder="Type a message..."
+                    placeholder={t("admin.messages.typeMessage")}
                     className="bg-secondary border-border"
                   />
                   <Button onClick={sendMessage} disabled={sending || !draft.trim()} size="icon" className="bg-gold text-background hover:bg-gold/90 shrink-0">

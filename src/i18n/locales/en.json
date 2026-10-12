@@ -243,6 +243,22 @@
       "hideBillingTitle": "Hide Billing Numbers From Demo",
       "hideBillingDesc": "Hides the revenue and withdrawal figures on the Billing page (mostly test data right now). Turn off once there are ~10 live venues generating real numbers."
     },
+    "messages": {
+      "notSent": "Message not sent",
+      "subtitle": "Message creators and venues directly.",
+      "searchCreators": "Search creators...",
+      "searchVenues": "Search venues...",
+      "noVenuesMessaged": "No venues have messaged yet.",
+      "noVenuesMatch": "No venues match that search.",
+      "couldntLoadCreators": "Couldn't load creators:",
+      "noCreatorsYet": "No creators yet.",
+      "noCreatorsMatch": "No creators match that search.",
+      "unnamed": "Unnamed",
+      "newBadge": "New",
+      "selectCreator": "Select a creator to start messaging",
+      "selectVenue": "Select a venue to start messaging",
+      "typeMessage": "Type a message..."
+    },
     "users": {
       "permManageVenues": "Manage Venues",
       "permManageInfluencers": "Manage Influencers",
