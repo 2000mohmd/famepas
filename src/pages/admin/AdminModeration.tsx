@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ interface Deliverable {
 }
 
 const AdminModeration = () => {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
@@ -57,13 +59,13 @@ const AdminModeration = () => {
       const { data: profs } = await supabase.rpc("get_public_profiles_basic", { _user_ids: ids });
       map = new Map(((profs as any[]) ?? []).map((p) => [p.user_id, p.full_name]));
     }
-    setDisputes(rows.map((r) => ({ ...r, influencer_name: map.get(r.influencer_id) ?? "Influencer" })));
+    setDisputes(rows.map((r) => ({ ...r, influencer_name: map.get(r.influencer_id) ?? t("admin.dashboard.influencerFallback") })));
   };
 
   const resolveDispute = async (id: string) => {
     const { error } = await supabase.from("deliverables").update({ disputed: false } as any).eq("id", id);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Dispute resolved" });
+    if (error) { toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" }); return; }
+    toast({ title: t("admin.moderation.disputeResolved") });
     fetchDisputes();
   };
   const [search, setSearch] = useState("");
@@ -131,15 +133,15 @@ const AdminModeration = () => {
 
   const toggleHidden = async (id: string, hidden: boolean) => {
     const { error } = await supabase.from("reviews").update({ is_hidden: !hidden } as any).eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: hidden ? "Review unhidden" : "Review hidden" }); fetchReviews(); }
+    if (error) toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: hidden ? t("admin.moderation.reviewUnhidden") : t("admin.moderation.reviewHidden") }); fetchReviews(); }
   };
 
   const deleteReview = async (id: string) => {
-    if (!confirm("Permanently delete this review?")) return;
+    if (!confirm(t("admin.moderation.deleteReviewConfirm"))) return;
     const { error } = await supabase.from("reviews").delete().eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Review deleted" }); fetchReviews(); }
+    if (error) toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: t("admin.moderation.reviewDeleted") }); fetchReviews(); }
   };
 
   const approveDeliverable = async (id: string) => {
@@ -147,8 +149,8 @@ const AdminModeration = () => {
       .from("deliverables")
       .update({ status: "approved", reviewed_at: new Date().toISOString() } as any)
       .eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Content approved" }); notifyEmail({ event: "content_approved", deliverable_id: id }); fetchDeliverables(); }
+    if (error) toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: t("admin.moderation.contentApproved") }); notifyEmail({ event: "content_approved", deliverable_id: id }); fetchDeliverables(); }
   };
 
   const submitReject = async () => {
@@ -161,9 +163,9 @@ const AdminModeration = () => {
         reviewed_at: new Date().toISOString(),
       } as any)
       .eq("id", rejectTarget.id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
     else {
-      toast({ title: "Content rejected" });
+      toast({ title: t("admin.moderation.contentRejected") });
       notifyEmail({ event: "content_rejected", deliverable_id: rejectTarget.id, feedback: rejectReason || undefined });
       setRejectTarget(null);
       setRejectReason("");
@@ -192,21 +194,21 @@ const AdminModeration = () => {
       <AdminPermissionGate permission="manage_moderation">
       <div className="animate-fade-in">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          Content <span className="text-gold">Moderation</span>
+          {t("admin.moderation.titlePrefix")} <span className="text-gold">{t("navLabel.Moderation", "Moderation")}</span>
         </h1>
-        <p className="text-muted-foreground mb-8">Review and moderate user-generated content</p>
+        <p className="text-muted-foreground mb-8">{t("admin.moderation.subtitle")}</p>
 
         <Tabs defaultValue="reviews">
           <TabsList>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="reviews">{t("admin.moderation.reviews")}</TabsTrigger>
             <TabsTrigger value="content" className="gap-2">
-              Content
+              {t("admin.moderation.content")}
               {deliverables.length > 0 && (
                 <Badge className="bg-gold text-background ml-1">{deliverables.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="disputes" className="gap-2">
-              Disputes
+              {t("admin.moderation.disputes")}
               {disputes.length > 0 && <Badge variant="destructive" className="text-xs">{disputes.length}</Badge>}
             </TabsTrigger>
           </TabsList>
@@ -214,22 +216,22 @@ const AdminModeration = () => {
           <TabsContent value="disputes" className="mt-6">
             {disputes.length === 0 ? (
               <div className="bg-white border border-border rounded-2xl py-16 text-center text-muted-foreground">
-                No flagged deliveries.
+                {t("admin.moderation.noFlagged")}
               </div>
             ) : (
               <div className="space-y-3">
                 {disputes.map((d) => (
                   <div key={d.id} className="bg-white border border-border rounded-xl p-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">{d.influencer_name} · <span className="capitalize">{d.content_type || "content"}</span></p>
-                      <p className="text-sm text-muted-foreground mt-1">{d.dispute_reason || "No reason provided."}</p>
+                      <p className="text-sm font-medium text-foreground">{d.influencer_name} · <span className="capitalize">{d.content_type || t("admin.moderation.contentFallback")}</span></p>
+                      <p className="text-sm text-muted-foreground mt-1">{d.dispute_reason || t("admin.moderation.noReasonProvided")}</p>
                       {(d.post_url || d.content_url) && (
                         <a href={d.post_url || d.content_url} target="_blank" rel="noreferrer" className="text-xs text-gold inline-flex items-center gap-1 mt-2">
-                          Open content <ExternalLink className="w-3 h-3" />
+                          {t("admin.moderation.openContent")} <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => resolveDispute(d.id)}>Mark resolved</Button>
+                    <Button size="sm" variant="outline" onClick={() => resolveDispute(d.id)}>{t("admin.moderation.markResolved")}</Button>
                   </div>
                 ))}
               </div>
@@ -240,12 +242,12 @@ const AdminModeration = () => {
             <div className="flex flex-wrap gap-4 mb-6">
               <div className="relative flex-1 min-w-64 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search reviews, venue, reviewer..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+                <Input placeholder={t("admin.moderation.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
               </div>
               <div className="flex gap-2">
                 {(["all", "public", "hidden"] as const).map((f) => (
                   <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)} className={filter === f ? "gradient-gold text-accent-foreground" : "border-border text-muted-foreground"}>
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                    {t(`admin.moderation.filter_${f}`)}
                   </Button>
                 ))}
               </div>
@@ -255,34 +257,34 @@ const AdminModeration = () => {
               <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Review</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Rating</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Type</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Venue</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Reviewer</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.moderation.review")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.moderation.rating")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.offers.type")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.events.venue")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.moderation.reviewer")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.locations.status")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.events.date")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.culturalEvents.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredReviews.length === 0 ? (
-                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No reviews found</td></tr>
+                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{t("admin.moderation.noReviewsFound")}</td></tr>
                   ) : (
                     filteredReviews.map((review) => (
                       <tr key={review.id} className={`border-b border-border/50 hover:bg-secondary/30 transition-colors ${review.is_hidden ? "opacity-50" : ""}`}>
                         <td className="p-4 max-w-xs">
-                          <p className="text-sm text-foreground truncate">{review.review_text || <span className="text-muted-foreground italic">No text</span>}</p>
+                          <p className="text-sm text-foreground truncate">{review.review_text || <span className="text-muted-foreground italic">{t("admin.moderation.noText")}</span>}</p>
                         </td>
                         <td className="p-4">{renderStars(review.rating)}</td>
                         <td className="p-4"><Badge variant="secondary" className="capitalize text-xs">{review.review_type}</Badge></td>
                         <td className="p-4 text-sm text-foreground">{review.venue_name || "—"}</td>
-                        <td className="p-4 text-sm text-foreground">{review.reviewer_name || "Anonymous"}</td>
+                        <td className="p-4 text-sm text-foreground">{review.reviewer_name || t("admin.moderation.anonymous")}</td>
                         <td className="p-4">
                           {review.is_hidden ? (
-                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">Hidden</Badge>
+                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">{t("admin.moderation.hidden")}</Badge>
                           ) : (
-                            <Badge className="bg-success/20 text-success border-success/30 text-xs">Visible</Badge>
+                            <Badge className="bg-success/20 text-success border-success/30 text-xs">{t("admin.moderation.visible")}</Badge>
                           )}
                         </td>
                         <td className="p-4 text-muted-foreground text-sm">{new Date(review.created_at).toLocaleDateString()}</td>
@@ -307,17 +309,17 @@ const AdminModeration = () => {
               <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Influencer</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Venue</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Type</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Post</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Submitted</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("navLabel.Influencers", "Influencer")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.events.venue")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.offers.type")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.redemptions.post")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.moderation.submitted")}</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.culturalEvents.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {deliverables.length === 0 ? (
-                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No content pending review</td></tr>
+                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("admin.moderation.noContentPending")}</td></tr>
                   ) : (
                     deliverables.map((d) => {
                       const url = d.post_url || d.content_url;
@@ -329,7 +331,7 @@ const AdminModeration = () => {
                           <td className="p-4 text-sm">
                             {url ? (
                               <a href={url} target="_blank" rel="noreferrer" className="text-gold inline-flex items-center gap-1 hover:underline">
-                                View <ExternalLink className="w-3 h-3" />
+                                {t("admin.moderation.view")} <ExternalLink className="w-3 h-3" />
                               </a>
                             ) : "—"}
                           </td>
@@ -338,10 +340,10 @@ const AdminModeration = () => {
                           </td>
                           <td className="p-4 flex gap-2">
                             <Button size="sm" onClick={() => approveDeliverable(d.id)} className="bg-success text-background hover:bg-success/90 h-8">
-                              <CheckCircle className="w-4 h-4 mr-1" /> Approve
+                              <CheckCircle className="w-4 h-4 mr-1" /> {t("admin.redemptions.approve")}
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => { setRejectTarget(d); setRejectReason(""); }} className="border-destructive/30 text-destructive hover:bg-destructive/10 h-8">
-                              <XCircle className="w-4 h-4 mr-1" /> Reject
+                              <XCircle className="w-4 h-4 mr-1" /> {t("admin.billing.reject")}
                             </Button>
                           </td>
                         </tr>
@@ -356,19 +358,19 @@ const AdminModeration = () => {
 
         <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Reject content</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("admin.moderation.rejectContent")}</DialogTitle></DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Provide a reason that will be saved with this submission and shared with the influencer.
+              {t("admin.moderation.rejectContentDesc")}
             </p>
             <Textarea
-              placeholder="Reason for rejection..."
+              placeholder={t("admin.moderation.reasonPlaceholder")}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={4}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setRejectTarget(null)}>Cancel</Button>
-              <Button onClick={submitReject} className="bg-destructive text-background hover:bg-destructive/90">Reject</Button>
+              <Button variant="outline" onClick={() => setRejectTarget(null)}>{t("admin.common.cancel")}</Button>
+              <Button onClick={submitReject} className="bg-destructive text-background hover:bg-destructive/90">{t("admin.billing.reject")}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
