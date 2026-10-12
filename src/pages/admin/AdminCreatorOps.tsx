@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import AdminPermissionGate from "@/components/admin/AdminPermissionGate";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +16,15 @@ import { Plus, AlertTriangle } from "lucide-react";
 const db = supabase as any;
 
 const STAGES = [
-  { key: "sourced", label: "Sourced" },
-  { key: "contacted", label: "Contacted" },
-  { key: "applied", label: "Applied" },
-  { key: "approved", label: "Approved" },
-  { key: "active", label: "Active" },
-  { key: "inactive", label: "Inactive" },
-  { key: "removed", label: "Removed" },
-  { key: "lost", label: "Lost" },
-  { key: "rejected", label: "Rejected" },
+  { key: "sourced", labelKey: "admin.creatorOps.sourced" },
+  { key: "contacted", labelKey: "admin.creatorOps.contacted" },
+  { key: "applied", labelKey: "admin.creatorOps.applied" },
+  { key: "approved", labelKey: "admin.creatorOps.approved" },
+  { key: "active", labelKey: "admin.locations.active" },
+  { key: "inactive", labelKey: "admin.locations.inactive" },
+  { key: "removed", labelKey: "admin.creatorOps.removed" },
+  { key: "lost", labelKey: "admin.creatorOps.lost" },
+  { key: "rejected", labelKey: "admin.creatorOps.rejected" },
 ];
 const SOURCES = ["outreach", "referral", "inbound", "event", "other"];
 
@@ -60,6 +61,7 @@ const DAY = 86400000;
 const AdminCreatorOps = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<PipelineRow[]>([]);
   const [reds, setReds] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
@@ -137,7 +139,7 @@ const AdminCreatorOps = () => {
   const list = rows.filter((r) => r.stage === stage);
 
   const addProspect = async () => {
-    if (!form.full_name.trim()) { toast({ title: "Add a name", variant: "destructive" }); return; }
+    if (!form.full_name.trim()) { toast({ title: t("admin.creatorOps.addName"), variant: "destructive" }); return; }
     const { error } = await db.from("creator_prospects").insert({
       full_name: form.full_name.trim(),
       instagram_handle: form.instagram_handle.trim().replace(/^@/, "") || null,
@@ -146,8 +148,8 @@ const AdminCreatorOps = () => {
       next_action: form.next_action || null, next_action_date: form.next_action_date || null,
       owner_id: user?.id,
     });
-    if (error) { toast({ title: "Couldn't add", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Prospect added" });
+    if (error) { toast({ title: t("admin.creatorOps.couldntAdd"), description: error.message, variant: "destructive" }); return; }
+    toast({ title: t("admin.creatorOps.prospectAdded") });
     setAddOpen(false);
     setForm({ full_name: "", instagram_handle: "", followers: "", niche: "", area: "", source: "outreach", next_action: "", next_action_date: "" });
     void load();
@@ -156,18 +158,18 @@ const AdminCreatorOps = () => {
   const moveProspect = async (id: string, next: string) => {
     const patch: Record<string, unknown> = { stage: next };
     if (next === "lost") {
-      const reason = window.prompt("Why was this prospect lost?");
+      const reason = window.prompt(t("admin.creatorOps.whyLost"));
       if (!reason) return;
       patch.lost_reason = reason;
     }
     const { error } = await db.from("creator_prospects").update(patch).eq("id", id);
-    if (error) toast({ title: "Couldn't move", description: error.message, variant: "destructive" });
+    if (error) toast({ title: t("admin.creatorOps.couldntMove"), description: error.message, variant: "destructive" });
     else void load();
   };
 
   const saveTargets = async () => {
     const { error } = await supabase.from("platform_settings").update({ value: targets as any }).eq("key", "creator_targets");
-    toast(error ? { title: "Couldn't save", description: error.message, variant: "destructive" } : { title: "Targets saved" });
+    toast(error ? { title: t("admin.salesConfig.couldntSave"), description: error.message, variant: "destructive" } : { title: t("admin.creatorOps.targetsSaved") });
   };
 
   const Stat = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
@@ -192,33 +194,33 @@ const AdminCreatorOps = () => {
       <div className="animate-fade-in">
         <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-1">Creator <span className="text-gold">operations</span></h1>
-            <p className="text-muted-foreground text-sm">Whether creators deliver — the half of the business that keeps venues renewing.</p>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-1">{t("admin.creatorOps.titlePrefix")} <span className="text-gold">{t("admin.creatorOps.titleAccent")}</span></h1>
+            <p className="text-muted-foreground text-sm">{t("admin.creatorOps.subtitle")}</p>
           </div>
           <Button onClick={() => setAddOpen(true)} className="gradient-gold text-accent-foreground font-semibold">
-            <Plus className="w-4 h-4 mr-1.5" /> Add prospect
+            <Plus className="w-4 h-4 mr-1.5" /> {t("admin.creatorOps.addProspect")}
           </Button>
         </div>
 
         {loadError && (
           <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            Some numbers couldn't load, so they may read as zero: {loadError}
+            {t("admin.creatorOps.someNumbersFailed")} {loadError}
           </div>
         )}
 
-        {loading ? <p className="text-muted-foreground">Loading…</p> : (
+        {loading ? <p className="text-muted-foreground">{t("common.loading")}</p> : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-              <Stat label="Post rate" value={m.postRate} sub="Verified posts ÷ visits" />
-              <Stat label="On-time rate" value={m.onTimeRate} sub="Posted before the deadline" />
-              <Stat label="No-show rate" value={m.noShowRate} />
-              <Stat label="Posts due in 24h" value={m.dueSoon} sub="Today's workload" />
+              <Stat label={t("admin.creatorOps.postRate")} value={m.postRate} sub={t("admin.creatorOps.postRateSub")} />
+              <Stat label={t("admin.creatorOps.onTimeRate")} value={m.onTimeRate} sub={t("admin.creatorOps.onTimeRateSub")} />
+              <Stat label={t("admin.creatorOps.noShowRate")} value={m.noShowRate} />
+              <Stat label={t("admin.creatorOps.postsDue24h")} value={m.dueSoon} sub={t("admin.creatorOps.todaysWorkload")} />
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-              <Stat label="Approved this week" value={m.approvedThisWeek} sub={`Target ${targets.weekly_approved}`} />
-              <Stat label="Active creators" value={m.active} sub={`Posted in 30 days · target ${targets.active_creators}`} />
-              <Stat label="Avg views per post" value={m.avgViews ?? "—"} />
-              <Stat label="Avg engagement per post" value={m.avgEng ?? "—"} sub="Likes + comments" />
+              <Stat label={t("admin.creatorOps.approvedThisWeek")} value={m.approvedThisWeek} sub={t("admin.creatorOps.targetN", { n: targets.weekly_approved })} />
+              <Stat label={t("admin.creatorOps.activeCreators")} value={m.active} sub={t("admin.creatorOps.postedIn30Days", { n: targets.active_creators })} />
+              <Stat label={t("admin.creatorOps.avgViewsPerPost")} value={m.avgViews ?? "—"} />
+              <Stat label={t("admin.creatorOps.avgEngagementPerPost")} value={m.avgEng ?? "—"} sub={t("admin.creatorOps.likesPlusComments")} />
             </div>
 
             {(m.waiting48.length > 0 || m.quiet.length > 0) && (
@@ -227,14 +229,14 @@ const AdminCreatorOps = () => {
                   <div className="rounded-xl border border-gold/40 bg-gold/10 p-4">
                     <p className="font-semibold text-foreground mb-2">
                       <AlertTriangle className="w-4 h-4 inline mr-1.5 -mt-0.5 text-gold" />
-                      {m.waiting48.length} application{m.waiting48.length === 1 ? "" : "s"} waiting over 48 hours
+                      {t("admin.creatorOps.waitingOver48h", { count: m.waiting48.length })}
                     </p>
-                    <p className="text-xs text-muted-foreground mb-2">Oldest first. Approve or reject them in Influencers.</p>
+                    <p className="text-xs text-muted-foreground mb-2">{t("admin.creatorOps.oldestFirst")}</p>
                     <div className="text-sm space-y-0.5 max-h-40 overflow-y-auto">
                       {m.waiting48.slice(0, 15).map((r) => (
                         <p key={r.id} className="text-foreground">
-                          {r.full_name || "Unnamed"} <span className="text-muted-foreground">
-                            — {Math.floor((Date.now() - new Date(r.applied_at!).getTime()) / DAY)} days
+                          {r.full_name || t("admin.messages.unnamed")} <span className="text-muted-foreground">
+                            — {t("admin.creatorOps.daysCount", { count: Math.floor((Date.now() - new Date(r.applied_at!).getTime()) / DAY) })}
                           </span>
                         </p>
                       ))}
@@ -244,11 +246,11 @@ const AdminCreatorOps = () => {
                 {m.quiet.length > 0 && (
                   <div className="rounded-xl border border-border bg-card p-4">
                     <p className="font-semibold text-foreground mb-2">
-                      {m.quiet.length} approved creator{m.quiet.length === 1 ? "" : "s"} with no visit in 30 days
+                      {t("admin.creatorOps.noVisitIn30Days", { count: m.quiet.length })}
                     </p>
                     <div className="text-sm space-y-0.5 max-h-40 overflow-y-auto">
                       {m.quiet.slice(0, 15).map((r) => (
-                        <p key={r.id} className="text-foreground">{r.full_name || "Unnamed"}</p>
+                        <p key={r.id} className="text-foreground">{r.full_name || t("admin.messages.unnamed")}</p>
                       ))}
                     </div>
                   </div>
@@ -260,7 +262,7 @@ const AdminCreatorOps = () => {
               {STAGES.map((s) => (
                 <button key={s.key} onClick={() => setStage(s.key)}
                   className={`px-3 py-1.5 rounded-lg text-sm border ${stage === s.key ? "bg-gold/15 border-gold/40 text-foreground" : "border-border text-muted-foreground hover:bg-secondary"}`}>
-                  {s.label} <span className="text-xs opacity-70">{counts[s.key] ?? 0}</span>
+                  {t(s.labelKey)} <span className="text-xs opacity-70">{counts[s.key] ?? 0}</span>
                 </button>
               ))}
             </div>
@@ -270,39 +272,39 @@ const AdminCreatorOps = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
-                      <th className="p-3 font-medium">Name</th>
+                      <th className="p-3 font-medium">{t("admin.salesTeam.fullName", "Name")}</th>
                       <th className="p-3 font-medium">Instagram</th>
-                      <th className="p-3 font-medium">Followers</th>
-                      <th className="p-3 font-medium">Area</th>
-                      <th className="p-3 font-medium">Source</th>
-                      <th className="p-3 font-medium">Posts</th>
-                      <th className="p-3 font-medium">Strikes</th>
-                      <th className="p-3 font-medium">Next</th>
+                      <th className="p-3 font-medium">{t("admin.creatorOps.followers")}</th>
+                      <th className="p-3 font-medium">{t("admin.salesConfig.area")}</th>
+                      <th className="p-3 font-medium">{t("admin.creatorOps.source")}</th>
+                      <th className="p-3 font-medium">{t("admin.creatorOps.posts")}</th>
+                      <th className="p-3 font-medium">{t("admin.creatorOps.strikes")}</th>
+                      <th className="p-3 font-medium">{t("admin.creatorOps.next")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {list.length === 0 ? (
-                      <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Nobody at this stage.</td></tr>
+                      <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">{t("admin.creatorOps.nobodyAtStage")}</td></tr>
                     ) : list.slice(0, 200).map((r) => (
                       <tr key={`${r.kind}-${r.id}`} className="border-b border-border/50">
                         <td className="p-3 text-foreground">
-                          {r.full_name || "Unnamed"}
-                          {r.is_suspended && <Badge variant="outline" className="ml-2 text-[10px] border-destructive/40 text-destructive">Suspended</Badge>}
+                          {r.full_name || t("admin.messages.unnamed")}
+                          {r.is_suspended && <Badge variant="outline" className="ml-2 text-[10px] border-destructive/40 text-destructive">{t("admin.users.suspended")}</Badge>}
                         </td>
                         <td className="p-3 text-muted-foreground">{r.instagram_handle ? `@${r.instagram_handle.replace(/^@/, "")}` : "—"}</td>
                         <td className="p-3 text-muted-foreground">{r.followers ? r.followers.toLocaleString() : "—"}</td>
                         <td className="p-3 text-muted-foreground">{r.area ?? "—"}</td>
                         <td className="p-3 text-muted-foreground capitalize">{r.source}</td>
-                        <td className="p-3 text-muted-foreground">{r.kind === "creator" ? `${r.verified_posts} verified` : "—"}</td>
+                        <td className="p-3 text-muted-foreground">{r.kind === "creator" ? t("admin.creatorOps.nVerified", { n: r.verified_posts }) : "—"}</td>
                         <td className={`p-3 ${r.strikes ? "text-destructive font-medium" : "text-muted-foreground"}`}>{r.strikes || "—"}</td>
                         <td className="p-3">
                           {r.kind === "prospect" ? (
                             <Select value={r.stage} onValueChange={(v) => void moveProspect(r.id, v)}>
                               <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="sourced">Sourced</SelectItem>
-                                <SelectItem value="contacted">Contacted</SelectItem>
-                                <SelectItem value="lost">Lost</SelectItem>
+                                <SelectItem value="sourced">{t("admin.creatorOps.sourced")}</SelectItem>
+                                <SelectItem value="contacted">{t("admin.creatorOps.contacted")}</SelectItem>
+                                <SelectItem value="lost">{t("admin.creatorOps.lost")}</SelectItem>
                               </SelectContent>
                             </Select>
                           ) : <span className="text-xs text-muted-foreground">{r.next_action ?? "—"}</span>}
@@ -312,43 +314,43 @@ const AdminCreatorOps = () => {
                   </tbody>
                 </table>
               </div>
-              {list.length > 200 && <p className="text-xs text-muted-foreground p-3">Showing the first 200 of {list.length}.</p>}
+              {list.length > 200 && <p className="text-xs text-muted-foreground p-3">{t("admin.creatorOps.showingFirst200", { count: list.length })}</p>}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <Card title="Supply by area" note="Approved venues against approved creators. A high ratio means venues there will wait for visits.">
-                {m.areas.length === 0 ? <p className="text-sm text-muted-foreground">No data yet.</p> : (
+              <Card title={t("admin.creatorOps.supplyByArea")} note={t("admin.creatorOps.supplyByAreaNote")}>
+                {m.areas.length === 0 ? <p className="text-sm text-muted-foreground">{t("admin.creatorOps.noDataYet")}</p> : (
                   <div className="space-y-1.5 text-sm">
                     {m.areas.map(([area, x]) => (
                       <div key={area} className="flex justify-between">
                         <span className="text-foreground">{area}</span>
                         <span className={x.creators === 0 && x.venues > 0 ? "text-destructive" : "text-muted-foreground"}>
-                          {x.venues} venues · {x.creators} creators
+                          {t("admin.creatorOps.venuesCreatorsCount", { venues: x.venues, creators: x.creators })}
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
               </Card>
-              <Card title="Creator leaderboard" note="Who to push.">
-                {m.leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">No delivered posts yet.</p> : (
+              <Card title={t("admin.creatorOps.creatorLeaderboard")} note={t("admin.creatorOps.whoToPush")}>
+                {m.leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">{t("admin.creatorOps.noDeliveredPosts")}</p> : (
                   <div className="space-y-1.5 text-sm">
                     {m.leaderboard.map((r) => (
                       <div key={r.id} className="flex justify-between">
                         <span className="text-foreground">{r.full_name}</span>
-                        <span className="text-muted-foreground">{r.verified_posts} verified · {pct(r.on_time_posts, r.delivered_posts)} on time</span>
+                        <span className="text-muted-foreground">{t("admin.creatorOps.verifiedOnTime", { verified: r.verified_posts, pct: pct(r.on_time_posts, r.delivered_posts) })}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </Card>
-              <Card title="Strike list" note="Who to cut.">
-                {m.strikeList.length === 0 ? <p className="text-sm text-muted-foreground">No strikes.</p> : (
+              <Card title={t("admin.creatorOps.strikeList")} note={t("admin.creatorOps.whoToCut")}>
+                {m.strikeList.length === 0 ? <p className="text-sm text-muted-foreground">{t("admin.creatorOps.noStrikes")}</p> : (
                   <div className="space-y-1.5 text-sm">
                     {m.strikeList.map((r) => (
                       <div key={r.id} className="flex justify-between">
                         <span className="text-foreground">{r.full_name}</span>
-                        <span className="text-destructive">{r.strikes} strike{r.strikes === 1 ? "" : "s"}{r.is_suspended ? " · suspended" : ""}</span>
+                        <span className="text-destructive">{t("admin.creatorOps.strikesCount", { count: r.strikes })}{r.is_suspended ? ` · ${t("admin.users.suspended").toLowerCase()}` : ""}</span>
                       </div>
                     ))}
                   </div>
@@ -360,20 +362,20 @@ const AdminCreatorOps = () => {
               {/* Adnan, "More Fixes" #22: this card judges creator recruitment
                   on active creators and post rate, not raw sign-ups — that
                   rationale was leaking into the visible note below. */}
-              <Card title="Targets" note="Weekly goals for new approvals and active creators.">
+              <Card title={t("admin.salesConfig.targets")} note={t("admin.creatorOps.targetsNote")}>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="space-y-1.5">
-                    <Label>New approved per week</Label>
+                    <Label>{t("admin.creatorOps.newApprovedPerWeek")}</Label>
                     <Input type="number" min="0" value={targets.weekly_approved}
                       onChange={(e) => setTargets({ ...targets, weekly_approved: Number(e.target.value) })} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Active creators</Label>
+                    <Label>{t("admin.creatorOps.activeCreators")}</Label>
                     <Input type="number" min="0" value={targets.active_creators}
                       onChange={(e) => setTargets({ ...targets, active_creators: Number(e.target.value) })} />
                   </div>
                 </div>
-                <Button onClick={() => void saveTargets()} className="gradient-gold text-accent-foreground font-semibold">Save targets</Button>
+                <Button onClick={() => void saveTargets()} className="gradient-gold text-accent-foreground font-semibold">{t("admin.salesConfig.saveTargets")}</Button>
               </Card>
             </div>
           </>
@@ -382,13 +384,13 @@ const AdminCreatorOps = () => {
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="bg-card border-border max-w-lg">
-          <DialogHeader><DialogTitle>Add a creator prospect</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("admin.creatorOps.addProspectTitle")}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            When they sign up with this Instagram handle, they join the pipeline here with you as their owner.
+            {t("admin.creatorOps.addProspectDesc")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5 col-span-2">
-              <Label>Name *</Label>
+              <Label>{t("admin.creatorOps.nameRequired")}</Label>
               <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
@@ -396,36 +398,36 @@ const AdminCreatorOps = () => {
               <Input value={form.instagram_handle} placeholder="@handle" onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Followers</Label>
+              <Label>{t("admin.creatorOps.followers")}</Label>
               <Input type="number" value={form.followers} onChange={(e) => setForm({ ...form, followers: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Niche</Label>
+              <Label>{t("admin.creatorOps.niche")}</Label>
               <Input value={form.niche} placeholder="Food, fitness…" onChange={(e) => setForm({ ...form, niche: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Area</Label>
+              <Label>{t("admin.salesConfig.area")}</Label>
               <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Source</Label>
+              <Label>{t("admin.creatorOps.source")}</Label>
               <Select value={form.source} onValueChange={(v) => setForm({ ...form, source: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{SOURCES.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Follow up on</Label>
+              <Label>{t("admin.creatorOps.followUpOn")}</Label>
               <Input type="date" value={form.next_action_date} onChange={(e) => setForm({ ...form, next_action_date: e.target.value })} />
             </div>
             <div className="space-y-1.5 col-span-2">
-              <Label>Next action</Label>
+              <Label>{t("admin.creatorOps.next")}</Label>
               <Input value={form.next_action} placeholder="DM about the Hamra cafés" onChange={(e) => setForm({ ...form, next_action: e.target.value })} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={() => void addProspect()} className="gradient-gold text-accent-foreground font-semibold">Add prospect</Button>
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>{t("admin.common.cancel")}</Button>
+            <Button onClick={() => void addProspect()} className="gradient-gold text-accent-foreground font-semibold">{t("admin.creatorOps.addProspect")}</Button>
           </div>
         </DialogContent>
       </Dialog>
