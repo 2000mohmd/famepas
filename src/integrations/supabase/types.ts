@@ -1852,6 +1852,7 @@ export type Database = {
           is_verified: boolean
           niche: string[] | null
           phone: string | null
+          referred_by: string | null
           social_links: Json | null
           suspended_until: string | null
           tiktok_followers: number | null
@@ -1884,6 +1885,7 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          referred_by?: string | null
           social_links?: Json | null
           suspended_until?: string | null
           tiktok_followers?: number | null
@@ -1916,6 +1918,7 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          referred_by?: string | null
           social_links?: Json | null
           suspended_until?: string | null
           tiktok_followers?: number | null
@@ -2074,6 +2077,49 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      saved_creators: {
+        Row: {
+          created_at: string
+          id: string
+          influencer_id: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          influencer_id: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          influencer_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_creators_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "saved_creators_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "saved_creators_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_offers: {
         Row: {
@@ -2488,6 +2534,7 @@ export type Database = {
           created_at: string
           id: string
           title: string
+          type: string | null
           updated_at: string
           venue_id: string
         }
@@ -2496,6 +2543,7 @@ export type Database = {
           created_at?: string
           id?: string
           title: string
+          type?: string | null
           updated_at?: string
           venue_id: string
         }
@@ -2504,6 +2552,7 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
+          type?: string | null
           updated_at?: string
           venue_id?: string
         }
@@ -2681,6 +2730,7 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           approval_status: string
+          best_visit_times: string | null
           brand_id: string | null
           cancellation_policy: boolean
           cancellation_reason: string | null
@@ -2696,16 +2746,19 @@ export type Database = {
           email: string | null
           hear_about_us: string[] | null
           id: string
+          instagram_handle: string | null
           is_active: boolean
           latitude: number | null
           location_email: string | null
           logo_url: string | null
           longitude: number | null
           name: string
+          no_show_policy: boolean
           opening_hours: Json | null
           owner_id: string
           payment_status: string | null
           phone: string | null
+          price_range: string | null
           require_ad_disclosure: boolean
           require_venue_tag: boolean
           signup_completed: boolean
@@ -2724,6 +2777,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           approval_status?: string
+          best_visit_times?: string | null
           brand_id?: string | null
           cancellation_policy?: boolean
           cancellation_reason?: string | null
@@ -2739,16 +2793,19 @@ export type Database = {
           email?: string | null
           hear_about_us?: string[] | null
           id?: string
+          instagram_handle?: string | null
           is_active?: boolean
           latitude?: number | null
           location_email?: string | null
           logo_url?: string | null
           longitude?: number | null
           name: string
+          no_show_policy?: boolean
           opening_hours?: Json | null
           owner_id: string
           payment_status?: string | null
           phone?: string | null
+          price_range?: string | null
           require_ad_disclosure?: boolean
           require_venue_tag?: boolean
           signup_completed?: boolean
@@ -2767,6 +2824,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           approval_status?: string
+          best_visit_times?: string | null
           brand_id?: string | null
           cancellation_policy?: boolean
           cancellation_reason?: string | null
@@ -2782,16 +2840,19 @@ export type Database = {
           email?: string | null
           hear_about_us?: string[] | null
           id?: string
+          instagram_handle?: string | null
           is_active?: boolean
           latitude?: number | null
           location_email?: string | null
           logo_url?: string | null
           longitude?: number | null
           name?: string
+          no_show_policy?: boolean
           opening_hours?: Json | null
           owner_id?: string
           payment_status?: string | null
           phone?: string | null
+          price_range?: string | null
           require_ad_disclosure?: boolean
           require_venue_tag?: boolean
           signup_completed?: boolean
@@ -2990,6 +3051,10 @@ export type Database = {
         Args: { _redemption_id: string }
         Returns: Json
       }
+      confirm_delivery_received: {
+        Args: { _redemption_id: string }
+        Returns: Json
+      }
       confirm_post_live: {
         Args: { _redemption_id: string; _still_live: boolean }
         Returns: Json
@@ -3008,6 +3073,25 @@ export type Database = {
         }[]
       }
       gen_checkin_code: { Args: never; Returns: string }
+      get_booking_disclosure_rules: { Args: never; Returns: Json }
+      get_discoverable_creators: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          country: string
+          followers_count: number
+          full_name: string
+          instagram_handle: string
+          instagram_verified: boolean
+          is_verified: boolean
+          niche: string[]
+          tiktok_followers: number
+          tiktok_handle: string
+          user_id: string
+        }[]
+      }
       get_discoverable_influencers: {
         Args: never
         Returns: {
@@ -3065,9 +3149,11 @@ export type Database = {
           badge: string
           city: string
           country: string
+          followers_count: number
           full_name: string
           instagram_handle: string
           is_verified: boolean
+          tiktok_followers: number
           tiktok_handle: string
           user_id: string
         }[]
@@ -3094,6 +3180,16 @@ export type Database = {
         }[]
       }
       get_support_admin_id: { Args: never; Returns: string }
+      get_top_creators: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          followers_count: number
+          full_name: string
+          tiktok_followers: number
+          user_id: string
+        }[]
+      }
       get_venue_contact: {
         Args: { _venue_id: string }
         Returns: {
@@ -3110,6 +3206,7 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           approval_status: string
+          best_visit_times: string | null
           brand_id: string | null
           cancellation_policy: boolean
           cancellation_reason: string | null
@@ -3125,16 +3222,19 @@ export type Database = {
           email: string | null
           hear_about_us: string[] | null
           id: string
+          instagram_handle: string | null
           is_active: boolean
           latitude: number | null
           location_email: string | null
           logo_url: string | null
           longitude: number | null
           name: string
+          no_show_policy: boolean
           opening_hours: Json | null
           owner_id: string
           payment_status: string | null
           phone: string | null
+          price_range: string | null
           require_ad_disclosure: boolean
           require_venue_tag: boolean
           signup_completed: boolean
@@ -3188,6 +3288,10 @@ export type Database = {
         Returns: Json
       }
       mark_booking_shipped: { Args: { _redemption_id: string }; Returns: Json }
+      mark_redemption_shipped: {
+        Args: { _redemption_id: string }
+        Returns: Json
+      }
       my_staff_access: { Args: never; Returns: Json }
       normalize_lb_phone: { Args: { _p: string }; Returns: string }
       recycle_lost_leads: { Args: never; Returns: number }
@@ -3210,6 +3314,17 @@ export type Database = {
         Args: { _redemption_id: string; _url: string }
         Returns: Json
       }
+      submit_shipping_address: {
+        Args: {
+          _address: string
+          _city: string
+          _name: string
+          _phone: string
+          _redemption_id: string
+        }
+        Returns: Json
+      }
+      venue_activation_reminders: { Args: never; Returns: number }
     }
     Enums: {
       app_role:
