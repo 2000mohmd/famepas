@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ const empty = { entry_type: "qa" as "qa" | "doc", question: "", answer: "", doc_
 
 const AdminChatbot = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,16 +65,16 @@ const AdminChatbot = () => {
       doc_content: form.entry_type === "doc" ? form.doc_content : null,
     };
     if (form.entry_type === "qa" && (!form.question.trim() || !form.answer.trim())) {
-      return toast({ title: "Missing fields", description: "Question and answer required.", variant: "destructive" });
+      return toast({ title: t("admin.chatbot.missingFields"), description: t("admin.chatbot.qaRequired"), variant: "destructive" });
     }
     if (form.entry_type === "doc" && (!form.doc_title.trim() || !form.doc_content.trim())) {
-      return toast({ title: "Missing fields", description: "Title and content required.", variant: "destructive" });
+      return toast({ title: t("admin.chatbot.missingFields"), description: t("admin.chatbot.docRequired"), variant: "destructive" });
     }
     const { error } = editingId
       ? await supabase.from("chatbot_knowledge").update(payload).eq("id", editingId)
       : await supabase.from("chatbot_knowledge").insert(payload);
-    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
-    toast({ title: editingId ? "Updated" : "Added" });
+    if (error) return toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
+    toast({ title: editingId ? t("admin.chatbot.updated") : t("admin.chatbot.added") });
     setOpen(false);
     load();
   };
@@ -83,7 +85,7 @@ const AdminChatbot = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this entry?")) return;
+    if (!confirm(t("admin.chatbot.deleteConfirm"))) return;
     await supabase.from("chatbot_knowledge").delete().eq("id", id);
     load();
   };
@@ -94,19 +96,19 @@ const AdminChatbot = () => {
         <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-              Train <span className="text-gold">Chatbot</span>
+              {t("admin.chatbot.titlePrefix")} <span className="text-gold">{t("admin.chatbot.titleAccent")}</span>
             </h1>
-            <p className="text-muted-foreground">Manage the knowledge the AI assistant uses to answer visitors.</p>
+            <p className="text-muted-foreground">{t("admin.chatbot.subtitle")}</p>
           </div>
           <Button onClick={openNew} className="bg-gold hover:bg-gold/90 text-background">
-            <Plus className="w-4 h-4 mr-2" /> Add Entry
+            <Plus className="w-4 h-4 mr-2" /> {t("admin.chatbot.addEntry")}
           </Button>
         </div>
 
         <div className="grid gap-4">
           {entries.length === 0 && (
             <div className="gradient-card rounded-xl border border-border p-8 text-center text-muted-foreground">
-              No entries yet. Add your first Q&A or document to teach the chatbot.
+              {t("admin.chatbot.noEntries")}
             </div>
           )}
           {entries.map((e) => (
@@ -114,7 +116,7 @@ const AdminChatbot = () => {
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge className={e.entry_type === "qa" ? "bg-primary/20 text-primary border-primary/30" : "bg-gold/20 text-gold border-gold/30"}>
-                    {e.entry_type === "qa" ? "Q&A" : "Document"}
+                    {e.entry_type === "qa" ? t("admin.chatbot.qa") : t("admin.chatbot.document")}
                   </Badge>
                   {e.category && <Badge variant="secondary">{e.category}</Badge>}
                 </div>
@@ -142,41 +144,41 @@ const AdminChatbot = () => {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Entry" : "New Knowledge Entry"}</DialogTitle>
+              <DialogTitle>{editingId ? t("admin.chatbot.editEntry") : t("admin.chatbot.newEntry")}</DialogTitle>
             </DialogHeader>
             <Tabs value={form.entry_type} onValueChange={(v: any) => setForm({ ...form, entry_type: v })}>
               <TabsList>
-                <TabsTrigger value="qa">Q&A Pair</TabsTrigger>
-                <TabsTrigger value="doc">Document / Snippet</TabsTrigger>
+                <TabsTrigger value="qa">{t("admin.chatbot.qaPair")}</TabsTrigger>
+                <TabsTrigger value="doc">{t("admin.chatbot.docSnippet")}</TabsTrigger>
               </TabsList>
               <TabsContent value="qa" className="space-y-3 pt-3">
                 <div>
-                  <Label>Question</Label>
+                  <Label>{t("admin.chatbot.question")}</Label>
                   <Input value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder="How do I sign up as an influencer?" />
                 </div>
                 <div>
-                  <Label>Answer</Label>
+                  <Label>{t("admin.chatbot.answer")}</Label>
                   <Textarea rows={5} value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder="Click 'Get Started' in the top-right..." />
                 </div>
               </TabsContent>
               <TabsContent value="doc" className="space-y-3 pt-3">
                 <div>
-                  <Label>Title</Label>
+                  <Label>{t("admin.culturalEvents.titleCol")}</Label>
                   <Input value={form.doc_title} onChange={(e) => setForm({ ...form, doc_title: e.target.value })} placeholder="About FamePass" />
                 </div>
                 <div>
-                  <Label>Content</Label>
+                  <Label>{t("admin.chatbot.content")}</Label>
                   <Textarea rows={8} value={form.doc_content} onChange={(e) => setForm({ ...form, doc_content: e.target.value })} placeholder="Paste documentation, policies, or any information the chatbot should know..." />
                 </div>
               </TabsContent>
             </Tabs>
             <div>
-              <Label>Category (optional)</Label>
+              <Label>{t("admin.chatbot.categoryOptional")}</Label>
               <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="onboarding, billing, faq..." />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={save} className="bg-gold hover:bg-gold/90 text-background">Save</Button>
+              <Button variant="ghost" onClick={() => setOpen(false)}>{t("admin.common.cancel")}</Button>
+              <Button onClick={save} className="bg-gold hover:bg-gold/90 text-background">{t("admin.common.save")}</Button>
             </div>
           </DialogContent>
         </Dialog>
