@@ -105,9 +105,9 @@ const VenueHome = () => {
           <Button asChild><Link to="/venue/campaigns/new"><Plus /> Create an offer</Link></Button>
         </div>
         <div className="venue-summary">
-          <Link to="/venue/campaigns"><Megaphone /><div><strong>{liveCampaigns.length}</strong><span>{t("venueHome.liveOffers")}</span></div></Link>
-          <Link to="/venue/bookings"><CalendarDays /><div><strong>{upcomingVisits.length}</strong><span>{t("venueHome.upcomingVisits")}</span></div></Link>
-          <Link to="/venue/content"><Film /><div><strong>{recentContent.length}</strong><span>{t("venueHome.contentReceived")}</span></div></Link>
+          <Link to="/venue/campaigns"><Megaphone /><span>{t("venueHome.liveOffers")}</span><ArrowUpRight className="ml-auto" /></Link>
+          <Link to="/venue/bookings"><CalendarDays /><span>{t("venueHome.upcomingVisits")}</span><ArrowUpRight className="ml-auto" /></Link>
+          <Link to="/venue/content"><Film /><span>{t("venueHome.contentReceived")}</span><ArrowUpRight className="ml-auto" /></Link>
         </div>
 
         <div className="venue-home-panels grid grid-cols-1 lg:grid-cols-3 gap-5">

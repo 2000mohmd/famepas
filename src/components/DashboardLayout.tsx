@@ -581,7 +581,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               <div className="flex flex-wrap gap-3">
                 {onboarding.steps.map((s) => (
                   <div key={s.label} className="venue-onboarding-step flex items-center gap-2.5 rounded-md px-3 py-2">
-                    <span className={`text-sm ${s.done ? "opacity-60 line-through" : ""}`}>{s.label}</span>
+                    {s.done && <span className="text-sm opacity-60 line-through">{s.label}</span>}
                     {!s.done && (
                       <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-primary-foreground" style={{ background: "hsl(var(--gold))" }}>
                         {s.label}
