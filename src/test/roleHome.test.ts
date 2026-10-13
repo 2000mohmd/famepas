@@ -6,6 +6,7 @@ describe("roleHome", () => {
     expect(roleHome("admin")).toBe("/admin");
     expect(roleHome("sales_manager")).toBe("/sales");
     expect(roleHome("sales_rep")).toBe("/sales");
+    expect(roleHome("account_manager")).toBe("/admin");
     expect(roleHome("venue")).toBe("/venue");
     expect(roleHome("influencer")).toBe("/influencer/home");
   });

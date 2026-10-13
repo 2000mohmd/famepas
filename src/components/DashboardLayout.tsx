@@ -50,7 +50,7 @@ import {
 
 
 
-type NavItem = { to: string; icon: any; label: string; badge?: string; managerOnly?: boolean; permission?: string };
+type NavItem = { to: string; icon: any; label: string; badge?: string; managerOnly?: boolean; permission?: string; roles?: string[] };
 type NavGroup = { label?: string; items: NavItem[]; badge?: string };
 
 const adminGroups: NavGroup[] = [
@@ -137,9 +137,12 @@ const salesGroups: NavGroup[] = [
   {
     items: [
       { to: "/sales", icon: CalendarDays, label: "My day" },
-      { to: "/sales/leads", icon: Target, label: "Leads" },
-      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales dashboard", managerOnly: true },
-      { to: "/sales/config", icon: Settings, label: "Scoring & targets", managerOnly: true },
+      // A18: account_manager shares this panel (my_day/sales_dashboard in
+      // the staff_permissions matrix) but has no "leads" or "config" area —
+      // Leads and Scoring & targets stay sales_rep/sales_manager-only.
+      { to: "/sales/leads", icon: Target, label: "Leads", roles: ["sales_rep", "sales_manager", "admin"] },
+      { to: "/sales/dashboard", icon: TrendingUp, label: "Sales dashboard", roles: ["sales_manager", "admin", "account_manager"] },
+      { to: "/sales/config", icon: Settings, label: "Scoring & targets", roles: ["sales_manager", "admin"] },
     ],
   },
 ];
@@ -202,10 +205,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
     ? rawGroups
     : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }))
   )
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.roles || i.roles.includes(role as string)) }))
     .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || hasAdminPermission(adminPermissions, i.permission)) }))
     .filter((g) => g.items.length > 0)
     .filter((g) => g.label !== "Ad Studio" || hasLiveOffer);
-  const panelLabel = type === "admin" ? "Admin" : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
+  const panelLabel = type === "admin" ? (role === "account_manager" ? "Account Manager" : "Admin") : type === "venue" ? "Venue" : type === "sales" ? "Sales" : "Creator";
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   // Adnan, "Creator Page fixes" #7: the sidebar showed the email's local part
@@ -371,7 +375,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                   </DropdownMenuItem>
                 </>
               )}
-              {type === "admin" && (
+              {type === "admin" && role === "admin" && (
                 <DropdownMenuItem asChild>
                   <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> {t("nav.platformSettings")}</NavLink>
                 </DropdownMenuItem>
@@ -471,7 +475,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
                   </NavLink>
                 </DropdownMenuItem>
               )}
-              {type === "admin" && (
+              {type === "admin" && role === "admin" && (
                 <DropdownMenuItem asChild>
                   <NavLink to="/admin/settings"><Settings className="w-4 h-4 mr-2" /> {t("nav.platformSettings")}</NavLink>
                 </DropdownMenuItem>

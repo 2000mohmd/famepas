@@ -121,18 +121,18 @@ const App = () => (
             <Route path="/signup/creator" element={<Navigate to="/signup/influencer" replace />} />
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/venues" element={<ProtectedRoute allowedRoles={["admin"]}><AdminVenues /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/venues" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminVenues /></ProtectedRoute>} />
             <Route path="/admin/influencers" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInfluencers /></ProtectedRoute>} />
-            <Route path="/admin/offers" element={<ProtectedRoute allowedRoles={["admin"]}><AdminOffers /></ProtectedRoute>} />
-            <Route path="/admin/events" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEvents /></ProtectedRoute>} />
-            <Route path="/admin/redemptions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRedemptions /></ProtectedRoute>} />
+            <Route path="/admin/offers" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminOffers /></ProtectedRoute>} />
+            <Route path="/admin/events" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminEvents /></ProtectedRoute>} />
+            <Route path="/admin/redemptions" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminRedemptions /></ProtectedRoute>} />
             <Route path="/admin/event-attendees" element={<ProtectedRoute allowedRoles={["admin"]}><EventAttendeesPage type="admin" /></ProtectedRoute>} />
-            <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
-            <Route path="/admin/analytics/deep" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalyticsDeep /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminAnalytics /></ProtectedRoute>} />
+            <Route path="/admin/analytics/deep" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminAnalyticsDeep /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCategories /></ProtectedRoute>} />
             <Route path="/admin/locations" element={<ProtectedRoute allowedRoles={["admin"]}><AdminLocations /></ProtectedRoute>} />
-            <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBilling /></ProtectedRoute>} />
+            <Route path="/admin/billing" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminBilling /></ProtectedRoute>} />
             <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={["admin"]}><AdminModeration /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/sales-team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSalesTeam /></ProtectedRoute>} />
@@ -142,14 +142,17 @@ const App = () => (
             <Route path="/admin/chatbot" element={<ProtectedRoute allowedRoles={["admin"]}><AdminChatbot /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/broadcast" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBroadcast /></ProtectedRoute>} />
-            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
+            <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin", "account_manager"]}><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/cultural-events" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCulturalEvents /></ProtectedRoute>} />
 
             {/* Sales Routes — reps and managers; admins get the same pages
-                inside their own panel, so Adnan runs it all from one login. */}
-            <Route path="/sales" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesMyDay /></ProtectedRoute>} />
+                inside their own panel, so Adnan runs it all from one login.
+                account_manager (A18/staff_permissions) gets My day + Sales
+                dashboard (own/view in the matrix) but not Leads, which stays
+                sales_rep/sales_manager only. */}
+            <Route path="/sales" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin", "account_manager"]}><SalesMyDay /></ProtectedRoute>} />
             <Route path="/sales/leads" element={<ProtectedRoute allowedRoles={["sales_rep", "sales_manager", "admin"]}><SalesLeads /></ProtectedRoute>} />
-            <Route path="/sales/dashboard" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><SalesDashboard /></ProtectedRoute>} />
+            <Route path="/sales/dashboard" element={<ProtectedRoute allowedRoles={["sales_manager", "admin", "account_manager"]}><SalesDashboard /></ProtectedRoute>} />
             <Route path="/sales/config" element={<ProtectedRoute allowedRoles={["sales_manager", "admin"]}><AdminSalesConfig /></ProtectedRoute>} />
 
             {/* Door check-in. The QR links here, so any phone camera works. */}
