@@ -1,5 +1,7 @@
 import ConnectAccountsGate from "@/components/influencer/ConnectAccountsGate";
 import VenueReferralCard from "@/components/venue/VenueReferralCard";
+import "@/venue-workspace.css";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +40,7 @@ import {
   Target,
   TrendingUp,
   Search,
+  Plus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -201,6 +204,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const isManager = role === "admin" || role === "sales_manager";
   // Adnan, recap A19: each admin sees only the tabs their admin_user_permissions cover.
   const adminPermissions = useAdminPermissions();
+  const [hasLiveOffer, setHasLiveOffer] = useState(false);
   const groups = (isManager
     ? rawGroups
     : rawGroups.map((g) => ({ ...g, items: g.items.filter((i) => !i.managerOnly) }))
@@ -233,7 +237,6 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const [venueName, setVenueName] = useState<string>("");
   const [venueLogo, setVenueLogo] = useState<string | null>(null);
   // Adnan, Venue Portal item 13: hide Ad Studio until there's at least one live offer.
-  const [hasLiveOffer, setHasLiveOffer] = useState(false);
 
   // Adnan, Venue Portal item 2: a notifications bell — new applications and
   // content awaiting review. Computed live from existing data rather than a
@@ -316,10 +319,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const isInfluencer = type === "influencer";
   // Reps work from phones, so the sales panel gets the same collapsible
   // sidebar the creator panel has rather than the desktop-only fixed one.
-  const mobileNav = isInfluencer || type === "sales";
+  const mobileNav = isInfluencer || type === "sales" || type === "venue";
 
   return (
-    <div className="dashboard-shell flex min-h-screen">
+    <div className={`dashboard-shell flex min-h-screen ${type === "venue" ? "venue-workspace" : ""}`}>
       {/* Mobile backdrop (influencer only) */}
       {mobileNav && mobileOpen && (
         <div
@@ -394,13 +397,20 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         </div>
 
 
+        {type === "venue" && (
+          <div className="px-4 pb-5">
+            <Button asChild className="w-full justify-start h-11 font-semibold">
+              <NavLink to="/venue/campaigns/new"><Plus /> Create an offer</NavLink>
+            </Button>
+          </div>
+        )}
         <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-5 pb-4">
           {groups.map((group, gi) => (
             <div key={group.label ?? `g${gi}`}>
               {group.label && (
                 <div className="px-2.5 mb-1.5 flex items-center gap-2">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-card-foreground/50">
-                    {t(`navLabel.${group.label}`, group.label!)}
+                    {t(`navLabel.${group.label}`, group.label)}
                   </p>
                   {group.badge && (
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
@@ -509,7 +519,9 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
               <Menu className="w-5 h-5" />
             </button>
           ) : null}
-          <div className="hidden md:block" />
+          <div className="hidden md:block text-sm font-semibold text-foreground">
+            {type === "venue" ? venueName || "Venue workspace" : ""}
+          </div>
           {type === "venue" && (
             <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
               <DropdownMenuTrigger asChild>
@@ -556,26 +568,26 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             at the top of every page, until setup is complete. */}
         {type === "venue" && onboarding && onboarding.done < onboarding.total && (
           <div className="px-4 md:px-8 pt-4 md:pt-6">
-            <div className="rounded-2xl p-5 md:p-6" style={{ background: "linear-gradient(135deg, hsl(0 100% 10%), hsl(0 100% 18%))" }}>
+            <div className="venue-onboarding p-5 md:p-6">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                <p className="text-white font-display text-lg">
+                <p className="font-display text-lg">
                   You're {onboarding.total - onboarding.done} step{onboarding.total - onboarding.done > 1 ? "s" : ""} away from receiving creators
                 </p>
-                <p className="text-sm text-white/70">{onboarding.done}/{onboarding.total} done</p>
+                <p className="text-sm opacity-70">{onboarding.done}/{onboarding.total} done</p>
               </div>
-              <div className="h-2 rounded-full bg-white/20 mb-4 overflow-hidden">
+              <div className="venue-onboarding-progress h-1 rounded-full mb-4 overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "hsl(var(--gold))" }} />
               </div>
               <div className="flex flex-wrap gap-3">
                 {onboarding.steps.map((s) => (
-                  <div key={s.label} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 ${s.done ? "bg-white/10" : "bg-white/15"}`}>
-                    <span className={`text-sm ${s.done ? "text-white/60 line-through" : "text-white"}`}>{s.label}</span>
+                  <div key={s.label} className="venue-onboarding-step flex items-center gap-2.5 rounded-md px-3 py-2">
+                    <span className={`text-sm ${s.done ? "opacity-60 line-through" : ""}`}>{s.label}</span>
                     {!s.done && (
                       <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-primary-foreground" style={{ background: "hsl(var(--gold))" }}>
                         {s.label}
                       </NavLink>
                     )}
-                    {s.done && <ChevronRight className="w-3.5 h-3.5 text-white/40 rotate-45" />}
+                    {s.done && <ChevronRight className="w-3.5 h-3.5 rotate-45" />}
                   </div>
                 ))}
               </div>
@@ -591,7 +603,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         )}
 
-        <div className={`p-4 md:p-8 ${isInfluencer ? "pb-24 md:pb-8" : ""}`}>
+        <div className={`p-4 md:p-8 ${type === "venue" ? "venue-page" : ""} ${isInfluencer ? "pb-24 md:pb-8" : ""}`}>
           {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
           {children}
         </div>
