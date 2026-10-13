@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { emailLayout, firstName, paragraph, sendEmail } from "../_shared/email.ts";
+import { applyProfileAvatar, mirrorAvatar } from "../_shared/avatar.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,11 +72,11 @@ serve(async (req) => {
     // Instagram-verified signup: pull the identity confirmed by instagram-oauth's
     // "identify" action out of its short-lived holding row. Never trust a
     // client-supplied Instagram handle/verified flag for this path.
-    let igPending: { ig_user_id: string; ig_username: string | null; access_token: string; token_expires_at: string | null; scope: string | null } | null = null;
+    let igPending: { ig_user_id: string; ig_username: string | null; ig_picture_url: string | null; access_token: string; token_expires_at: string | null; scope: string | null } | null = null;
     if (instagram_link_token) {
       const { data: pending, error: pendingErr } = await supabaseAdmin
         .from("pending_instagram_signups")
-        .select("ig_user_id, ig_username, access_token, token_expires_at, scope, expires_at")
+        .select("ig_user_id, ig_username, ig_picture_url, access_token, token_expires_at, scope, expires_at")
         .eq("id", instagram_link_token)
         .maybeSingle();
       if (pendingErr || !pending || new Date(pending.expires_at) < new Date()) {
@@ -154,6 +155,12 @@ serve(async (req) => {
           connected_at: new Date().toISOString(),
         }, { onConflict: "influencer_id,platform" });
         await supabaseAdmin.from("pending_instagram_signups").delete().eq("id", instagram_link_token);
+
+        // Same mirroring the Settings "Connect Instagram" path already does —
+        // the Instagram CDN URL expires, so copy it into our own bucket rather
+        // than storing the raw link.
+        const mirrored = await mirrorAvatar(supabaseAdmin, userId, "instagram", igPending.ig_picture_url);
+        await applyProfileAvatar(supabaseAdmin, userId, mirrored);
       }
 
       // Welcome / waiting-list email to the influencer (best-effort)

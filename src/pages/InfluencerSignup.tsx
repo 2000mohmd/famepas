@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, ChevronRight, Sparkles, UserCheck } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Instagram, Loader2, ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
 import { isValidEmail, isValidFullName, isValidName, isValidOptionalHandle, normalizePhone } from "@/lib/validation";
 import { fetchSignupConfig, isRegistrationOpen } from "@/lib/signupConfig";
@@ -156,7 +156,8 @@ const InfluencerSignup = () => {
   // profile
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(igUsername || "");
+  const [connectingInstagram, setConnectingInstagram] = useState(false);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
@@ -206,6 +207,22 @@ const InfluencerSignup = () => {
 
   const toggleNiche = (n: string) =>
     setSelectedNiches((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]));
+
+  // Hands off to the same "Continue with Instagram" OAuth flow the Login page
+  // uses (instagram-oauth's public "login_initiate"/"identify" actions) —
+  // this is the only path that actually verifies the handle and pulls a real
+  // avatar; the old free-text "@yourhandle" field did neither.
+  const handleConnectInstagram = async () => {
+    setConnectingInstagram(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("instagram-oauth", { body: { action: "login_initiate" } });
+      if (error || !(data as any)?.url) throw new Error((data as any)?.error || error?.message || "Could not start Instagram sign-in");
+      window.location.href = (data as any).url;
+    } catch (e) {
+      setConnectingInstagram(false);
+      toast({ title: t("influencerSignup.signupFailed"), description: e instanceof Error ? e.message : t("influencerSignup.pleaseTryAgain"), variant: "destructive" });
+    }
+  };
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
 
@@ -339,6 +356,25 @@ const InfluencerSignup = () => {
           <BackBar onBack={() => navigate("/login")} step={1} total={4} />
           <Card>
             <Heading title={t("signup.creatorTitle")} sub={t("influencerSignup.joinAndCollaborate")} />
+
+            <button
+              type="button"
+              onClick={handleConnectInstagram}
+              disabled={connectingInstagram}
+              className="w-full h-12 rounded-xl text-white font-semibold flex items-center justify-center gap-2 mb-3 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4)" }}
+            >
+              {connectingInstagram ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
+              {t("influencerSignup.continueWithInstagram")}
+            </button>
+            <p className="text-xs text-slate-400 text-center mb-5">{t("influencerSignup.instagramVerifiedHint")}</p>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs text-slate-400">{t("influencerSignup.orSignUpWithEmail")}</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+
             <Field label={t("login.email")}>
               <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
             </Field>
@@ -427,10 +463,27 @@ const InfluencerSignup = () => {
               <TextInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961 70 000 000" />
               {phone.trim() && !normalizePhone(phone) && <p className="text-xs text-red-600 mt-1">{t("venueSignup.invalidPhone")}</p>}
             </Field>
-            <Field label={t("influencerSignup.usernameLabel")} hint={t("influencerSignup.usernameHint")}>
-              <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" />
-              {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
-            </Field>
+            {igLinkToken ? (
+              <Field label={t("influencerSignup.usernameLabel")}>
+                <div className="h-11 px-3 rounded-lg border border-emerald-200 bg-emerald-50 flex items-center gap-2 text-emerald-700 text-sm font-medium">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  {username ? `@${normalizeHandle(username)}` : t("influencerSignup.instagramConnected")}
+                  <span className="ml-auto text-xs font-normal text-emerald-600">{t("influencerSignup.verified")}</span>
+                </div>
+              </Field>
+            ) : (
+              <Field label={t("influencerSignup.usernameLabel")} hint={t("influencerSignup.connectToVerifyHint")}>
+                <button
+                  type="button"
+                  onClick={handleConnectInstagram}
+                  disabled={connectingInstagram}
+                  className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm font-medium flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition disabled:opacity-60"
+                >
+                  {connectingInstagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
+                  {t("influencerSignup.connectInstagramBtn")}
+                </button>
+              </Field>
+            )}
 
             <Field label={t("influencerSignup.location")} hint={t("influencerSignup.locationHint")}>
               <select

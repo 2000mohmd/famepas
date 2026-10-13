@@ -234,6 +234,7 @@ Deno.serve(async (req) => {
         ig_user_id: result.igUserId,
         ig_username: result.username,
         ig_account_type: result.accountType,
+        ig_picture_url: result.pictureUrl,
         access_token: result.accessToken,
         scope: result.scope,
         token_expires_at: result.expiresAt,
