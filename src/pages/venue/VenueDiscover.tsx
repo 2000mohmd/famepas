@@ -211,7 +211,12 @@ const VenueDiscover = () => {
                     {venueId && (
                       <Button
                         size="icon" variant="ghost" className="shrink-0"
-                        onClick={() => toggleSave.mutate({ influencerId: c.user_id, isSaved })}
+                        onClick={(e) => {
+                          // Keep the save click from bubbling to the card,
+                          // which would navigate away and lose the filters.
+                          e.stopPropagation();
+                          toggleSave.mutate({ influencerId: c.user_id, isSaved });
+                        }}
                         aria-label={isSaved ? "Remove from shortlist" : "Save to shortlist"}
                       >
                         <Heart className={`w-4 h-4 ${isSaved ? "fill-gold text-gold" : "text-muted-foreground"}`} />

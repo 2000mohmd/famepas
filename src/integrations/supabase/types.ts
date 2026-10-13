@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -114,6 +114,13 @@ export type Database = {
             foreignKeyName: "booking_platform_integrations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "booking_platform_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -205,6 +212,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -435,6 +449,13 @@ export type Database = {
             foreignKeyName: "campaigns_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "campaigns_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -566,6 +587,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "checkin_attempts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -960,6 +988,13 @@ export type Database = {
             foreignKeyName: "events_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1103,6 +1138,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "invitations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -1279,6 +1321,13 @@ export type Database = {
             foreignKeyName: "leads_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "leads_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1422,6 +1471,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "messages_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -1729,6 +1785,13 @@ export type Database = {
             foreignKeyName: "offers_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "offers_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -1774,6 +1837,7 @@ export type Database = {
           expires_at: string
           id: string
           ig_account_type: string | null
+          ig_picture_url: string | null
           ig_user_id: string
           ig_username: string | null
           scope: string | null
@@ -1785,6 +1849,7 @@ export type Database = {
           expires_at?: string
           id?: string
           ig_account_type?: string | null
+          ig_picture_url?: string | null
           ig_user_id: string
           ig_username?: string | null
           scope?: string | null
@@ -1796,6 +1861,7 @@ export type Database = {
           expires_at?: string
           id?: string
           ig_account_type?: string | null
+          ig_picture_url?: string | null
           ig_user_id?: string
           ig_username?: string | null
           scope?: string | null
@@ -2001,6 +2067,13 @@ export type Database = {
             foreignKeyName: "reviews_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "reviews_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2110,6 +2183,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "saved_creators_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -2251,6 +2331,13 @@ export type Database = {
             foreignKeyName: "social_integrations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "social_integrations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2312,8 +2399,14 @@ export type Database = {
           features: Json | null
           id: string
           is_active: boolean
+          is_recommended: boolean
+          max_active_experiences: number | null
+          max_creator_visits: number | null
           name: string
           price: number
+          price_annual: number | null
+          price_quarterly: number | null
+          sort_order: number
           updated_at: string
         }
         Insert: {
@@ -2323,8 +2416,14 @@ export type Database = {
           features?: Json | null
           id?: string
           is_active?: boolean
+          is_recommended?: boolean
+          max_active_experiences?: number | null
+          max_creator_visits?: number | null
           name: string
           price?: number
+          price_annual?: number | null
+          price_quarterly?: number | null
+          sort_order?: number
           updated_at?: string
         }
         Update: {
@@ -2334,8 +2433,14 @@ export type Database = {
           features?: Json | null
           id?: string
           is_active?: boolean
+          is_recommended?: boolean
+          max_active_experiences?: number | null
+          max_creator_visits?: number | null
           name?: string
           price?: number
+          price_annual?: number | null
+          price_quarterly?: number | null
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
@@ -2456,6 +2561,13 @@ export type Database = {
             foreignKeyName: "venue_briefs_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_briefs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2523,6 +2635,13 @@ export type Database = {
             foreignKeyName: "venue_locations_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_locations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2575,6 +2694,97 @@ export type Database = {
             foreignKeyName: "venue_message_templates_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_message_templates_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_payments: {
+        Row: {
+          amount: number
+          billing_period: string
+          collected_by: string
+          created_at: string
+          currency: string
+          id: string
+          method: string
+          notes: string | null
+          paid_at: string
+          period_end: string
+          period_start: string
+          tier_id: string
+          venue_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period: string
+          collected_by?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          period_end: string
+          period_start: string
+          tier_id: string
+          venue_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period?: string
+          collected_by?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          period_end?: string
+          period_start?: string
+          tier_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_payments_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_payments_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "sales_commissions"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_payments_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_payments_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_payments_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2615,6 +2825,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_photos_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -2667,6 +2884,13 @@ export type Database = {
             foreignKeyName: "venue_staff_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
+            referencedRelation: "venue_billing_status"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_staff_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
@@ -2713,6 +2937,13 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venue_activation"
+            referencedColumns: ["venue_id"]
+          },
+          {
+            foreignKeyName: "venue_team_invites_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venue_billing_status"
             referencedColumns: ["venue_id"]
           },
           {
@@ -3008,11 +3239,34 @@ export type Database = {
           },
         ]
       }
+      venue_billing_status: {
+        Row: {
+          name: string | null
+          status: string | null
+          subscription_renews_at: string | null
+          subscription_tier_id: string | null
+          tier_name: string | null
+          venue_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_subscription_tier_id_fkey"
+            columns: ["subscription_tier_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_creator_strike: {
         Args: { _influencer: string; _reason: string; _redemption: string }
         Returns: undefined
+      }
+      auto_check_post_still_live: {
+        Args: { _redemption_id: string; _still_live: boolean }
+        Returns: Json
       }
       booking_window: {
         Args: { _day: string; _hours: Json; _open_before_hours?: number }
@@ -3029,6 +3283,7 @@ export type Database = {
         Args: { _target_role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      can_manage_venue_billing: { Args: never; Returns: boolean }
       check_in_booking: {
         Args: { _code: string; _lat?: number; _lng?: number }
         Returns: Json
@@ -3074,6 +3329,53 @@ export type Database = {
       }
       gen_checkin_code: { Args: never; Returns: string }
       get_booking_disclosure_rules: { Args: never; Returns: Json }
+      get_creator_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          avg_rating: number
+          bio: string
+          city: string
+          collab_count: number
+          country: string
+          followers_count: number
+          full_name: string
+          instagram_handle: string
+          instagram_verified: boolean
+          is_verified: boolean
+          niche: string[]
+          review_count: number
+          tiktok_followers: number
+          tiktok_handle: string
+          user_id: string
+        }[]
+      }
+      get_creator_recent_work: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          post_url: string
+          posted_at: string
+          venue_name: string
+        }[]
+      }
+      get_creator_reviews: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          rating: number
+          review_text: string
+          venue_name: string
+        }[]
+      }
+      get_creator_venues_worked_with: {
+        Args: { _user_id: string }
+        Returns: {
+          logo_url: string
+          venue_id: string
+          venue_name: string
+        }[]
+      }
       get_discoverable_creators: {
         Args: never
         Returns: {
@@ -3294,6 +3596,29 @@ export type Database = {
       }
       my_staff_access: { Args: never; Returns: Json }
       normalize_lb_phone: { Args: { _p: string }; Returns: string }
+      record_cash_payment: {
+        Args: {
+          _amount: number
+          _billing_period: string
+          _notes?: string
+          _paid_at?: string
+          _tier_id: string
+          _venue_id: string
+        }
+        Returns: string
+      }
+      record_venue_payment: {
+        Args: {
+          _amount: number
+          _notes?: string
+          _payment_date?: string
+          _period_end: string
+          _period_start: string
+          _tier_id: string
+          _venue_id: string
+        }
+        Returns: string
+      }
       recycle_lost_leads: { Args: never; Returns: number }
       review_booking_post: {
         Args: { _approve: boolean; _note?: string; _redemption_id: string }

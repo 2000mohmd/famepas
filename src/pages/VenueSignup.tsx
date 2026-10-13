@@ -339,6 +339,8 @@ const VenueSignup = () => {
           email,
           password,
           role: "venue",
+          referred_by:
+            (new URLSearchParams(window.location.search).get("ref") || "").trim() || null,
           full_name: fullName,
           venue_name: brandName,
           venue_category: brandCategories[0],
