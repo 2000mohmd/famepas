@@ -259,24 +259,57 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) return json({ error: "Invalid or expired session", code: "UNAUTHORIZED" }, 401);
 
+    // Venues connect the same way as creators; the venue id rides along as the
+    // 4th state segment and ownership is re-checked on both ends.
+    const ownsVenue = async (venueId: string) => {
+      const { data } = await admin.from("venues").select("id").eq("id", venueId).eq("owner_id", user.id).maybeSingle();
+      return !!data;
+    };
+
     if (body.action === "initiate") {
-      // Remember where the creator started (preview, famepass.app, www…) so the
+      const venueId: string = typeof body.venue_id === "string" ? body.venue_id : "";
+      if (venueId && !(await ownsVenue(venueId))) return json({ error: "Not your venue", code: "FORBIDDEN" }, 403);
+      // Remember where the user started (preview, famepass.app, www…) so the
       // callback page can forward the code back to the domain holding their session.
       const origin = req.headers.get("origin") ?? "";
       const originTag = origin ? btoa(origin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") : "";
-      const state = `${user.id}:${crypto.randomUUID()}${originTag ? `:${originTag}` : ""}`;
+      const state = `${user.id}:${crypto.randomUUID()}:${originTag}${venueId ? `:${venueId}` : ""}`;
       return json({ url: buildAuthUrl(state) });
     }
 
     if (body.action === "exchange") {
       const state: string = body.state ?? "";
-      const stateOwner = state.split(":")[0];
+      const [stateOwner, , , venueId] = state.split(":");
       if (!stateOwner || stateOwner !== user.id) {
         return json({ error: "State does not match the signed-in user", code: "FORBIDDEN" }, 403);
       }
 
       const result = await exchangeCode(String(body.code ?? ""));
       if (!result.ok) return json({ error: result.error, code: "PROVIDER_ERROR" }, 200);
+
+      if (venueId) {
+        if (!(await ownsVenue(venueId))) return json({ error: "Not your venue", code: "FORBIDDEN" }, 403);
+        const { error: vErr } = await admin.from("social_integrations").upsert({
+          venue_id: venueId,
+          influencer_id: null,
+          platform: "instagram",
+          handle: result.username,
+          display_name: result.username,
+          avatar_url: result.pictureUrl,
+          access_token: result.accessToken,
+          refresh_token: null,
+          token_expires_at: result.expiresAt,
+          open_id: result.igUserId,
+          scope: result.scope,
+          status: "connected",
+          connected_at: new Date().toISOString(),
+        }, { onConflict: "venue_id,platform" });
+        if (vErr) {
+          console.error("venue social_integrations save failed", vErr);
+          return json({ error: vErr.message, code: "DB_UPDATE_FAILED" }, 200);
+        }
+        return json({ success: true, handle: result.username, venue: true });
+      }
 
       // The (influencer_id, platform) unique index is partial, so PostgREST
       // upsert/ON CONFLICT can't target it — update-then-insert instead.

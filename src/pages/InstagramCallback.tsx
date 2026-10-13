@@ -33,6 +33,9 @@ const InstagramCallback = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [handle, setHandle] = useState<string | null>(null);
   const ran = useRef(false);
+  // 4th state segment = venue id when a venue (not a creator) is connecting.
+  const isVenue = !!(params.get("state") || "").split(":")[3];
+  const settingsPath = isVenue ? "/venue/settings?tab=integrations" : "/influencer/settings";
 
   useEffect(() => {
     if (ran.current) return; // StrictMode / re-render guard — never exchange the same code twice
@@ -139,13 +142,13 @@ const InstagramCallback = () => {
         }
         setHandle(data.handle ?? null);
         setStatus("success");
-        setTimeout(() => navigate("/influencer/settings?instagram=connected", { replace: true }), 1800);
+        setTimeout(() => navigate(`${settingsPath}${settingsPath.includes("?") ? "&" : "?"}instagram=connected`, { replace: true }), 1800);
       })
       .catch((e) => {
         setStatus("error");
         setMessage(e?.message || "Unexpected error completing the connection.");
       });
-  }, [authLoading, user, params, navigate]);
+  }, [authLoading, user, params, navigate, settingsPath]);
 
   const mode: Mode = (params.get("state") || "").startsWith("login:") ? "login" : "connect";
 
@@ -190,7 +193,7 @@ const InstagramCallback = () => {
             <XCircle className="w-12 h-12 mx-auto text-slate-400 mb-4" />
             <h1 className="text-lg font-semibold">{mode === "login" ? "Sign-in cancelled" : "Connection cancelled"}</h1>
             <p className="text-sm text-slate-500 mt-2">{message}</p>
-            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
+            <Link to={mode === "login" ? "/login" : settingsPath} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
               {mode === "login" ? "Back to login" : "Back to Settings"}
             </Link>
           </>
@@ -201,7 +204,7 @@ const InstagramCallback = () => {
             <XCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
             <h1 className="text-lg font-semibold">{mode === "login" ? "Couldn't sign in with Instagram" : "Couldn't connect Instagram"}</h1>
             <p className="text-sm text-slate-500 mt-2">{message}</p>
-            <Link to={mode === "login" ? "/login" : "/influencer/settings"} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
+            <Link to={mode === "login" ? "/login" : settingsPath} className="inline-block mt-5 text-sm font-semibold text-primary hover:underline">
               {mode === "login" ? "Back to login to try again" : "Back to Settings to try again"}
             </Link>
           </>

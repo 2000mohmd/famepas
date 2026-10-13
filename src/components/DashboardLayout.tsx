@@ -284,7 +284,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       setVenueName(venue.name);
       setVenueLogo((venue as any).logo_url ?? null);
       const [ig, camp, liveOffers] = await Promise.all([
-        supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected"),
+        supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected").not("open_id", "is", null),
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id),
         supabase.from("offers").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("is_active", true),
       ]);
@@ -294,7 +294,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         // flow that doesn't exist — the Settings page itself already labels
         // this "Instagram (Manual)". Relabeled to match; it's otherwise the
         // same step (saving a handle there does satisfy it).
-        { label: "Add your Instagram handle", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
+        { label: "Connect your Instagram", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
         { label: "Create your first offer", done: (camp.count ?? 0) > 0, to: "/venue/campaigns/new" },
       ];
       const done = steps.filter(s => s.done).length;

@@ -108,6 +108,69 @@ const TikTokConnectRow = ({ venue, social, onChange, logo }: any) => {
   );
 };
 
+// Native Instagram Business Login for venues — same instagram-oauth function
+// creators use; the venue id travels in the OAuth state.
+const InstagramConnectRow = ({ venue, social, onChange, logo }: any) => {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("instagram") !== "connected") return;
+    toast({ title: "Instagram connected", description: "Your Instagram account is now linked." });
+    window.history.replaceState({}, "", `${window.location.pathname}?tab=integrations`);
+    onChange?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const connect = async () => {
+    if (!venue) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("instagram-oauth", {
+      body: { action: "initiate", venue_id: venue.id },
+    });
+    if (error || !data?.url) {
+      setBusy(false);
+      toast({ title: "Instagram not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
+      return;
+    }
+    window.location.href = data.url;
+  };
+
+  const disconnect = async () => {
+    if (!venue) return;
+    await supabase.from("social_integrations").delete().eq("venue_id", venue.id).eq("platform", "instagram");
+    toast({ title: "Disconnected" });
+    onChange?.();
+  };
+
+  // A row saved by the old manual flow has no access token — treat it as not connected.
+  const connected = social?.status === "connected" && !!social?.open_id;
+
+  return (
+    <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" }}>{logo}</div>
+        <div>
+          <p className="font-medium text-foreground">Instagram</p>
+          <p className="text-xs text-muted-foreground">
+            {connected ? `@${social.display_name || social.handle}` : social?.handle ? `@${social.handle} — not verified, reconnect` : "Not connected"}
+          </p>
+        </div>
+      </div>
+      {connected ? (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+        </div>
+      ) : (
+        <Button size="sm" onClick={connect} disabled={busy} className="text-white" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}>
+          {busy ? "Redirecting…" : "Connect Instagram"}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const VenueSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -119,7 +182,6 @@ const VenueSettings = () => {
   const [socials, setSocials] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [tiers, setTiers] = useState<any[]>([]);
-  const [igHandle, setIgHandle] = useState("");
   const [ttHandle, setTtHandle] = useState("");
 
   // profile form
@@ -215,20 +277,6 @@ const VenueSettings = () => {
 
   const findSocial = (p: string) => socials.find(s => s.platform === p);
 
-  const connectSocial = async (platform: "instagram" | "tiktok", handle: string) => {
-    if (!venue || !handle) return;
-    const { error } = await supabase.from("social_integrations").upsert({
-      venue_id: venue.id, platform, handle: handle.replace(/^@/, ""), status: "connected",
-    }, { onConflict: "venue_id,platform" });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: `${platform} connected` }); load(); }
-  };
-
-  const disconnectSocial = async (platform: string) => {
-    if (!venue) return;
-    await supabase.from("social_integrations").delete().eq("venue_id", venue.id).eq("platform", platform);
-    toast({ title: "Disconnected" }); load();
-  };
 
   const uploadLogo = async (file: File) => {
     if (!venue) return;
@@ -370,37 +418,6 @@ const VenueSettings = () => {
     setPCats(prev => prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]);
   };
 
-  const SocialRow = ({ platform, label, color, logo, handle, setHandle, note }: any) => {
-    const s = findSocial(platform);
-    return (
-      <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color }}>
-            {logo}
-          </div>
-          <div>
-            <p className="font-medium text-foreground">{label}</p>
-            <p className="text-xs text-muted-foreground">{s ? `@${s.handle}` : "Not connected"}</p>
-            {note && <p className="text-[11px] text-amber-700 mt-0.5">{note}</p>}
-          </div>
-        </div>
-        {s?.status === "connected" ? (
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-              <Check className="w-4 h-4" /> Connected
-            </span>
-            <Button size="sm" variant="ghost" onClick={() => disconnectSocial(platform)}>Disconnect</Button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <Input placeholder="@handle" className="w-40 h-9" value={handle} onChange={e => setHandle(e.target.value)} />
-            <Button size="sm" variant="outline" onClick={() => connectSocial(platform, handle)}>Save</Button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
@@ -425,12 +442,7 @@ const VenueSettings = () => {
               <h2 className="font-semibold text-foreground">Social Profiles</h2>
               <p className="text-xs text-muted-foreground">Connect your social accounts for content tracking and analytics</p>
             </div>
-            <SocialRow
-              platform="instagram" label="Instagram (Manual)"
-              color="linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"
-              logo={<IGLogo />} handle={igHandle} setHandle={setIgHandle}
-              note="Manual handle for display only — no real Instagram API connection yet."
-            />
+            <InstagramConnectRow venue={venue} social={findSocial("instagram")} onChange={load} logo={<IGLogo />} />
             <TikTokConnectRow venue={venue} social={findSocial("tiktok")} onChange={load} logo={<TikTokLogo />} />
           </div>
         )}
