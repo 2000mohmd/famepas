@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { useAuth } from "@/contexts/AuthContext";
 import { roleHome } from "@/lib/roleHome";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
@@ -105,9 +106,7 @@ const Login = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-black/50" />
         <div className="relative z-10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-3xl font-bold text-white">
-              Fame<span className="text-[hsl(var(--gold-light))]">Pass</span>
-            </span>
+            <BrandLogo tone="gold" size={28} />
           </Link>
           <LanguageSwitcher className="!text-white/80 hover:!text-white" />
         </div>
@@ -120,9 +119,7 @@ const Login = () => {
         <div className="w-full max-w-xl">
           <div className="flex lg:hidden items-center justify-between mb-8">
             <Link to="/" className="flex items-center gap-2">
-              <span className="font-display text-3xl font-bold text-foreground">
-                Fame<span className="text-primary">Pass</span>
-              </span>
+              <BrandLogo tone="gold" size={26} />
             </Link>
             <LanguageSwitcher />
           </div>

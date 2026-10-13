@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
+import BrandLogo from "@/components/BrandLogo";
 
 const PrivacyPolicy = () => (
   <div className="min-h-screen bg-background">
     <header className="border-b border-border">
       <div className="max-w-4xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/welcome" className="font-display text-2xl font-semibold text-foreground">
-          Fame<span className="italic text-[hsl(var(--gold-dark))]">Pass</span>
-        </Link>
+        <Link to="/welcome"><BrandLogo tone="gold" size={22} /></Link>
         <Link to="/login" className="text-sm font-medium text-foreground hover:underline">Sign in</Link>
       </div>
     </header>

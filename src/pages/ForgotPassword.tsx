@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +34,7 @@ const ForgotPassword = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="px-8 py-6">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-display text-2xl font-bold">Fame<span className="text-primary">Pass</span></span>
+          <BrandLogo tone="gold" size={26} />
         </Link>
       </header>
       <main className="flex-1 flex justify-center px-4 pb-16">

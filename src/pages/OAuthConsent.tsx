@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -64,9 +65,7 @@ const OAuthConsent = () => {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8">
-        <span className="font-display text-2xl font-bold">
-          Fame<span className="text-primary">Pass</span>
-        </span>
+        <BrandLogo tone="burgundy" size={22} />
 
         {error ? (
           <>

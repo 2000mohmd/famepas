@@ -1,6 +1,7 @@
 import ConnectAccountsGate from "@/components/influencer/ConnectAccountsGate";
+import BrandLogo from "@/components/BrandLogo";
 import VenueReferralCard from "@/components/venue/VenueReferralCard";
-import "@/venue-workspace.css";
+import "@/app-workspace.css";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
@@ -69,7 +70,7 @@ const adminGroups: NavGroup[] = [
   {
     label: "Marketplace",
     items: [
-      { to: "/sales/leads", icon: Target, label: "Leads" },
+      { to: "/sales/leads", icon: Target, label: "Leads", roles: ["admin"] },
       { to: "/admin/venues", icon: Building2, label: "Venues", permission: "manage_venues" },
       { to: "/admin/influencers", icon: Users, label: "Influencers", permission: "manage_influencers" },
       { to: "/admin/offers", icon: Tag, label: "Offers", permission: "manage_offers" },
@@ -81,7 +82,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { to: "/admin/creator-ops", icon: Sparkles, label: "Creator Ops", permission: "manage_influencers" },
       { to: "/admin/redemptions", icon: ClipboardCheck, label: "Offer Attendance", permission: "manage_offers" },
-      { to: "/admin/event-attendees", icon: Users, label: "Event Attendees", permission: "manage_events" },
+      { to: "/admin/event-attendees", icon: Users, label: "Event Attendees", permission: "manage_events", roles: ["admin"] },
       { to: "/admin/moderation", icon: ShieldAlert, label: "Moderation", permission: "manage_moderation" },
       { to: "/admin/billing", icon: CreditCard, label: "Billing", permission: "manage_billing" },
       { to: "/admin/broadcast", icon: Megaphone, label: "Broadcast", permission: "manage_influencers" },
@@ -93,7 +94,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { to: "/admin/categories", icon: FolderTree, label: "Categories", permission: "manage_categories" },
       { to: "/admin/locations", icon: MapPin, label: "Locations", permission: "manage_locations" },
-      { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events", permission: "manage_events" },
+      { to: "/admin/cultural-events", icon: CalendarRange, label: "Cultural Events", permission: "manage_events", roles: ["admin"] },
       { to: "/admin/users", icon: Users, label: "Admin Users", permission: "manage_users" },
       { to: "/admin/audit-log", icon: ShieldAlert, label: "Audit Log", permission: "manage_users" },
       { to: "/admin/sales-team", icon: Target, label: "Sales Team" },
@@ -319,10 +320,10 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   const isInfluencer = type === "influencer";
   // Reps work from phones, so the sales panel gets the same collapsible
   // sidebar the creator panel has rather than the desktop-only fixed one.
-  const mobileNav = isInfluencer || type === "sales" || type === "venue";
+  const mobileNav = true;
 
   return (
-    <div className={`dashboard-shell flex min-h-screen ${type === "venue" ? "venue-workspace" : ""}`}>
+    <div className="dashboard-shell app-workspace flex min-h-screen">
       {/* Mobile backdrop (influencer only) */}
       {mobileNav && mobileOpen && (
         <div
@@ -338,11 +339,9 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             : ""
         }`}
       >
-        <div className="flex items-center gap-2 px-4 py-5">
-          <span className="font-display text-xl font-semibold tracking-tight text-card-foreground">
-            Fame<span className="italic text-primary">Pass</span>
-          </span>
-          <span className="ml-auto text-[10px] uppercase tracking-[0.15em] text-card-foreground/50">{panelLabel}</span>
+        <div className="flex flex-col items-start gap-1.5 px-4 py-5">
+          <BrandLogo tone="gold" size={20} />
+          <span className="text-[10px] uppercase tracking-[0.15em] text-card-foreground/50 pl-0.5">{panelLabel}</span>
         </div>
 
         {/* Workspace switcher */}
@@ -603,7 +602,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         )}
 
-        <div className={`p-4 md:p-8 ${type === "venue" ? "venue-page" : ""} ${isInfluencer ? "pb-24 md:pb-8" : ""}`}>
+        <div className={`p-4 md:p-8 venue-page ${isInfluencer ? "pb-24 md:pb-8" : ""}`}>
           {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
           {children}
         </div>

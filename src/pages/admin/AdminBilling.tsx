@@ -71,7 +71,7 @@ const AdminBilling = () => {
 
   const fetchAll = async () => {
     const [tiersRes, earningsRes, withdrawalsRes, pendingRes, settingRes, venuesRes, paymentsRes] = await Promise.all([
-      supabase.from("subscription_tiers").select("*").order("price"),
+      supabase.from("subscription_tiers").select("*").order("sort_order").order("price"),
       supabase.from("earnings").select("net_amount, commission"),
       supabase.from("withdrawal_requests").select("id, influencer_id, amount, status, created_at, payment_method").order("created_at", { ascending: false }).limit(20),
       supabase.from("withdrawal_requests").select("amount", { count: "exact" }).eq("status", "pending"),

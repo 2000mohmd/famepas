@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -155,9 +156,7 @@ const InstagramCallback = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8 text-center">
-        <span className="font-display text-2xl font-bold block mb-6">
-          Fame<span className="text-primary">Pass</span>
-        </span>
+        <BrandLogo tone="burgundy" size={22} className="mb-6 justify-center" />
 
         {(status === "waiting-for-session" || status === "exchanging") && (
           <>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Sparkles, Store, X, Mail, LogIn } from "lucide-react";
@@ -41,9 +42,7 @@ const Welcome = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
       <header className="px-6 pt-8 flex items-center justify-between">
-        <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
-          Fame<span className="italic text-primary">Pass</span>
-        </span>
+        <BrandLogo tone="gold" size={26} />
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
           <button onClick={() => navigate("/login")} className="text-sm text-foreground/70 hover:text-foreground">

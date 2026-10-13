@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,9 +39,7 @@ const Page = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-background text-foreground">
     <header className="px-6 sm:px-8 py-5 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <span className="font-display text-xl sm:text-2xl font-bold text-foreground">
-          Fame<span className="text-primary">Pass</span>
-        </span>
+        <BrandLogo tone="gold" size={24} />
       </Link>
       <div className="flex items-center gap-4">
         <LanguageSwitcher />

@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import CreatorPhoto from "@/components/CreatorPhoto";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -215,9 +216,7 @@ const VenueHome = () => {
                   const f = Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0);
                   return (
                     <Link key={c.user_id} to={`/venue/creator/${c.user_id}`} className="relative flex flex-col items-center" style={{ marginLeft: i ? -10 : 0, zIndex: 10 - i }}>
-                      {c.avatar_url
-                        ? <img src={c.avatar_url} alt={c.full_name} loading="lazy" className="w-16 h-16 rounded-full object-cover border-2" style={{ borderColor: "hsl(var(--venue-brand))" }} />
-                        : <span className="w-16 h-16 rounded-full flex items-center justify-center font-bold border-2" style={{ background: "hsl(var(--venue-brand-foreground) / .15)", borderColor: "hsl(var(--venue-brand))" }}>{(c.full_name || "FP").slice(0, 2).toUpperCase()}</span>}
+                      <CreatorPhoto src={c.avatar_url} name={c.full_name} className="w-16 h-16 rounded-full object-cover border-2" style={{ borderColor: "hsl(var(--venue-brand))" }} />
                       {f > 0 && (
                         <span className="-mt-2 rounded-full px-2 py-0.5 text-[11px] font-extrabold" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
                           {compact(f)}
