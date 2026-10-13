@@ -56,11 +56,9 @@ const OAuthBrokerRedirect = lazy(() => import("./pages/OAuthBrokerRedirect"));
 const SalesLeads = lazy(() => import("./pages/sales/SalesLeads"));
 const SalesDashboard = lazy(() => import("./pages/sales/SalesDashboard"));
 const VenueSettings = lazy(() => import("./pages/venue/VenueSettings"));
-const InfluencerDashboard = lazy(() => import("./pages/influencer/InfluencerDashboard"));
 const InfluencerExplore = lazy(() => import("./pages/influencer/InfluencerExplore"));
 const InfluencerInvitations = lazy(() => import("./pages/influencer/InfluencerInvitations"));
 const InfluencerBookings = lazy(() => import("./pages/influencer/InfluencerBookings"));
-const InfluencerEarnings = lazy(() => import("./pages/influencer/InfluencerEarnings"));
 const InfluencerProfile = lazy(() => import("./pages/influencer/InfluencerProfile"));
 const InfluencerReviews = lazy(() => import("./pages/influencer/InfluencerReviews"));
 const InfluencerMessages = lazy(() => import("./pages/influencer/InfluencerMessages"));
@@ -185,15 +183,15 @@ const App = () => (
             <Route path="/venue/analytics" element={<Navigate to="/venue" replace />} />
 
             {/* Influencer Routes */}
-            <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerDashboard /></ProtectedRoute>} />
+            <Route path="/influencer" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerHome /></ProtectedRoute>} />
             <Route path="/influencer/dashboard" element={<Navigate to="/influencer" replace />} />
 
-            <Route path="/influencer/home" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerHome /></ProtectedRoute>} />
+            <Route path="/influencer/home" element={<Navigate to="/influencer" replace />} />
             <Route path="/influencer/explore" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerExplore /></ProtectedRoute>} />
             <Route path="/influencer/offers/:id" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerOffer /></ProtectedRoute>} />
             <Route path="/influencer/invitations" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerInvitations /></ProtectedRoute>} />
             <Route path="/influencer/bookings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerBookings /></ProtectedRoute>} />
-            <Route path="/influencer/earnings" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerEarnings /></ProtectedRoute>} />
+            <Route path="/influencer/earnings" element={<Navigate to="/influencer" replace />} />
             <Route path="/influencer/profile" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerProfile /></ProtectedRoute>} />
             <Route path="/influencer/reviews" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerReviews /></ProtectedRoute>} />
             <Route path="/influencer/messages" element={<ProtectedRoute allowedRoles={["influencer"]}><InfluencerMessages /></ProtectedRoute>} />

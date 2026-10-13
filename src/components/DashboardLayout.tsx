@@ -42,6 +42,8 @@ import {
   TrendingUp,
   Search,
   Plus,
+  Star,
+  Award,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -155,8 +157,7 @@ const influencerGroups: NavGroup[] = [
   {
     label: "Overview",
     items: [
-      { to: "/influencer", icon: LayoutDashboard, label: "Dashboard" },
-      { to: "/influencer/home", icon: Home, label: "Home" },
+      { to: "/influencer", icon: Home, label: "Home" },
       { to: "/influencer/explore", icon: MapPin, label: "Explore" },
     ],
   },
@@ -165,20 +166,14 @@ const influencerGroups: NavGroup[] = [
     items: [
       { to: "/influencer/invitations", icon: Send, label: "Invitations" },
       { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
-      { to: "/influencer/reviews", icon: ShieldAlert, label: "Reviews" },
+      { to: "/influencer/reviews", icon: Star, label: "Reviews" },
       { to: "/influencer/messages", icon: MessageCircle, label: "Messages" },
-    ],
-  },
-  {
-    label: "Earnings",
-    items: [
-      { to: "/influencer/earnings", icon: CreditCard, label: "Earnings" },
-      { to: "/influencer/rewards", icon: BarChart3, label: "Rewards" },
     ],
   },
   {
     label: "Account",
     items: [
+      { to: "/influencer/rewards", icon: Award, label: "Rewards" },
       { to: "/influencer/profile", icon: Users, label: "My Profile" },
       { to: "/influencer/settings", icon: Settings, label: "Settings" },
     ],
@@ -189,7 +184,7 @@ const influencerGroups: NavGroup[] = [
 // tab bar on mobile instead of hidden behind the hamburger drawer. Everything
 // else (Invitations, Reviews, Earnings, Rewards, Settings) stays in the drawer.
 const influencerTabBarItems: NavItem[] = [
-  { to: "/influencer/home", icon: Home, label: "Home" },
+  { to: "/influencer", icon: Home, label: "Home" },
   { to: "/influencer/explore", icon: MapPin, label: "Explore" },
   { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
   { to: "/influencer/messages", icon: MessageCircle, label: "Messages" },
@@ -610,7 +605,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
       {isInfluencer && (
         <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-between border-t border-border bg-card/95 backdrop-blur md:hidden pb-[env(safe-area-inset-bottom)]">
           {influencerTabBarItems.map(({ to, icon: Icon, label }) => {
-            const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+            const isActive = location.pathname === to || (to !== "/influencer" && location.pathname.startsWith(to + "/"));
             return (
               <NavLink
                 key={to}

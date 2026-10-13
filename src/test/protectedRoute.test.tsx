@@ -20,7 +20,7 @@ const renderAt = (path: string, allowedRoles?: ("admin" | "venue" | "influencer"
         <Route path="/login" element={<div>login page</div>} />
         <Route path="/" element={<div>home page</div>} />
         <Route path="/venue" element={<div>venue home</div>} />
-        <Route path="/influencer/home" element={<div>creator home</div>} />
+        <Route path="/influencer" element={<div>creator home</div>} />
         <Route
           path="/admin"
           element={

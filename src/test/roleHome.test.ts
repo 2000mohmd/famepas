@@ -8,7 +8,7 @@ describe("roleHome", () => {
     expect(roleHome("sales_rep")).toBe("/sales");
     expect(roleHome("account_manager")).toBe("/admin");
     expect(roleHome("venue")).toBe("/venue");
-    expect(roleHome("influencer")).toBe("/influencer/home");
+    expect(roleHome("influencer")).toBe("/influencer");
   });
 
   it("never sends sales staff to a creator page", () => {
