@@ -102,31 +102,41 @@ const InfluencerRewards = () => {
         <Card className="border-gold/20">
           <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <Gift className="w-6 h-6 text-gold" />
+              <span className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary) / .2)" }}><Gift className="w-6 h-6" style={{ color: "hsl(var(--venue-brand))" }} /></span>
               <div>
-                <p className="font-semibold">Refer a creator, earn 100 points</p>
+                <p className="text-lg font-extrabold">Refer a creator, earn 100 points</p>
                 <p className="text-sm text-muted-foreground">Once your friend's account is approved, you get the points.</p>
               </div>
             </div>
-            <Button size="sm" onClick={shareReferral} className="gap-1.5">
-              <Share2 className="w-3.5 h-3.5" /> Share invite link
-            </Button>
+            <button type="button" onClick={shareReferral} className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-sm font-bold"
+              style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+              <Share2 className="w-4 h-4" /> Share invite link
+            </button>
           </CardContent>
         </Card>
 
         {/* Tier Benefits */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {TIER_BENEFITS.map((t) => (
-            <Card key={t.tier} className={tier === t.tier.toLowerCase() ? "border-gold/30" : ""}>
-              <CardHeader><CardTitle className="text-base">{t.tier}</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground mb-2">{t.points} points</p>
-                <ul className="space-y-1">
-                  {t.perks.map((p) => <li key={p} className="text-sm text-muted-foreground">• {p}</li>)}
+          {TIER_BENEFITS.map((t) => {
+            const current = tier === t.tier.toLowerCase();
+            return (
+              <div key={t.tier} className="relative rounded-[1.75rem] p-6 border shadow-[var(--venue-shadow)]"
+                style={current
+                  ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))", borderColor: "hsl(var(--venue-brand))" }
+                  : { background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}>
+                {current && <span className="absolute right-5 top-5 rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>You're here</span>}
+                <p className={`text-xl font-extrabold ${current ? "" : "text-foreground"}`}>{t.tier}</p>
+                <p className={`text-xs mt-1 mb-4 ${current ? "opacity-70" : "text-muted-foreground"}`}>{t.points} points</p>
+                <ul className="space-y-2">
+                  {t.perks.map((perk) => (
+                    <li key={perk} className={`flex items-center gap-2 text-sm ${current ? "" : "text-foreground/80"}`}>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "hsl(var(--primary))" }} /> {perk}
+                    </li>
+                  ))}
                 </ul>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Leaderboard */}
@@ -135,11 +145,15 @@ const InfluencerRewards = () => {
           <CardContent>
             <div className="space-y-3">
               {leaderboard?.map((entry: any, idx: number) => (
-                <div key={entry.user_id} className={`flex items-center justify-between py-2 px-3 rounded-lg ${entry.user_id === user?.id ? "bg-primary/10 border border-gold/20" : ""}`}>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-lg font-bold ${idx < 3 ? "text-gold" : "text-muted-foreground"}`}>#{idx + 1}</span>
+                <div key={entry.user_id} className={`flex items-center justify-between py-3 px-4 rounded-2xl ${entry.user_id === user?.id ? "bg-primary/15" : idx % 2 ? "" : "bg-muted/50"}`}>
+                  <div className="flex items-center gap-4">
+                    <span className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold shrink-0"
+                      style={idx === 0 ? { background: "linear-gradient(135deg,#F4D58D,#C9A14A)", color: "#3A2A05" }
+                        : idx === 1 ? { background: "linear-gradient(135deg,#E8E8EC,#B9BAC2)", color: "#2B2C33" }
+                        : idx === 2 ? { background: "linear-gradient(135deg,#E9B98F,#B87B4E)", color: "#3A1E0A" }
+                        : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{idx + 1}</span>
                     <div>
-                      <p className="text-sm font-medium">{entry.full_name || "Anonymous"}</p>
+                      <p className="font-bold text-foreground">{entry.full_name || "Anonymous"}</p>
                       <p className="text-xs text-muted-foreground">
                         {[entry.badge ? prettyLabel(entry.badge) : null, (entry.influencer_score ?? 0) > 0 ? `Score: ${entry.influencer_score}` : null]
                           .filter(Boolean)
@@ -147,7 +161,7 @@ const InfluencerRewards = () => {
                       </p>
                     </div>
                   </div>
-                  <span className="text-sm font-semibold">{entry.points} pts</span>
+                  <span className="text-sm font-extrabold text-foreground">{entry.points} <span className="font-medium text-muted-foreground">pts</span></span>
                 </div>
               ))}
             </div>

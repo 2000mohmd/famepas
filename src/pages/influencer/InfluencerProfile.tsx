@@ -157,10 +157,10 @@ const InfluencerProfile = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6 max-w-4xl">
-        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Your public profile</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">My profile</h1>
-            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">This is what venues see when you apply. A great photo, bio and niches get you picked more often.</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-2 text-muted-foreground">Your public profile</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">My profile</h1>
+            <p className="mt-2 text-muted-foreground max-w-2xl">This is what venues see when you apply. A great photo, bio and niches get you picked more often.</p>
           </div>
           <div className="flex items-center gap-2">
             {profile?.is_verified && <Badge className="bg-green-500/10 text-green-500"><Shield className="w-3 h-3 mr-1" /> Verified</Badge>}
@@ -168,49 +168,36 @@ const InfluencerProfile = () => {
           </div>
         </div>
 
-        {/* Cover */}
-        <Card>
-          <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
-          <CardContent>
-            <div className="relative h-36 overflow-hidden rounded-lg border border-border bg-secondary flex items-center justify-center">
-              {form.cover_image_url ? (
-                <img src={form.cover_image_url} alt="Profile cover" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm text-muted-foreground">Add a cover image</span>
-              )}
-              <label className="absolute right-3 bottom-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground cursor-pointer hover:opacity-90 transition-opacity">
-                <Camera className="w-4 h-4" />
-                <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" disabled={coverUploading} />
-              </label>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Avatar */}
-        <Card>
-          <CardHeader><CardTitle>Profile Photo</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
+        {/* Profile header: cover banner + overlapping photo, as venues will see it */}
+        <section className="rounded-[2rem] bg-card border border-border overflow-hidden shadow-[var(--venue-shadow)]">
+          <div className="relative h-44 md:h-56" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}>
+            {form.cover_image_url && <img src={form.cover_image_url} alt="Profile cover" className="absolute inset-0 w-full h-full object-cover" />}
+            <label className="absolute right-4 top-4 inline-flex items-center gap-2 h-10 px-4 rounded-full bg-black/40 backdrop-blur text-white text-sm font-semibold cursor-pointer hover:bg-black/55 transition">
+              <Camera className="w-4 h-4" /> {coverUploading ? "Uploading…" : form.cover_image_url ? "Change cover" : "Add cover"}
+              <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" disabled={coverUploading} />
+            </label>
+          </div>
+          <div className="px-6 md:px-8 pb-6 md:pb-8">
+            <div className="flex flex-wrap items-end gap-5 -mt-14">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-secondary flex items-center justify-center">
-                  {form.avatar_url ? (
-                    <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-3xl text-muted-foreground">{(form.full_name || "?")[0]?.toUpperCase()}</span>
-                  )}
+                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-card bg-muted flex items-center justify-center shadow-lg">
+                  {form.avatar_url
+                    ? <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    : <span className="text-4xl font-extrabold text-muted-foreground">{(form.full_name || "?")[0]?.toUpperCase()}</span>}
                 </div>
-                <label className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                <label className="absolute bottom-1 right-1 w-9 h-9 rounded-full flex items-center justify-center cursor-pointer border-2 border-card hover:opacity-90 transition"
+                  style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} aria-label="Change profile photo">
                   <Camera className="w-4 h-4" />
                   <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={avatarUploading} />
                 </label>
               </div>
-              <div>
-                <p className="text-sm text-foreground font-medium">{form.full_name || "Your Name"}</p>
-                <p className="text-xs text-muted-foreground">{avatarUploading ? "Uploading..." : "Click the camera icon to change photo"}</p>
+              <div className="pb-1 min-w-0">
+                <p className="text-2xl font-extrabold text-foreground truncate">{form.full_name || "Your name"}</p>
+                <p className="text-sm text-muted-foreground">{avatarUploading ? "Uploading photo…" : form.instagram_handle ? `@${String(form.instagram_handle).replace(/^@/, "")}` : "Add your photo and cover — it's the first thing venues see."}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
         <Card>
           <CardHeader><CardTitle>Personal Info</CardTitle></CardHeader>

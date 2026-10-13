@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import OfferTile from "@/components/influencer/OfferTile";
 import { VenueHero } from "@/components/venue/VenueUI";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -451,99 +452,49 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
   const maxGuests = offer.campaigns?.instagram_offers?.[0]?.max_guests
     ? parseInt(offer.campaigns.instagram_offers[0].max_guests)
     : null;
+  const slots = offer.max_redemptions ? offer.max_redemptions - (offer.current_redemptions ?? 0) : null;
+  const brand = { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" };
 
   return (
-    <Card className="rounded-3xl p-2.5 overflow-hidden relative shadow-[var(--venue-shadow)] hover:shadow-[0_16px_40px_-20px_hsl(0_35%_16%/.45)] transition">
-      <Button
-        size="icon"
-        variant="secondary"
-        className="absolute top-5 right-5 z-10 w-10 h-10 rounded-full bg-black/35 backdrop-blur text-white hover:bg-black/50 border-0"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave?.(); }}
-      >
-        <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
-      </Button>
-      <Link to={`/influencer/offers/${offer.id}`} className="block">
-        <div className="rounded-[1.4rem] overflow-hidden aspect-[16/11] bg-muted">
-          {(offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url)
-            ? <img src={offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url} alt={offer.title} className="w-full h-full object-cover hover:scale-[1.04] transition duration-500" />
-            : <div className="w-full h-full" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }} />}
-        </div>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-extrabold">{offer.title}</CardTitle>
-            <Badge variant="outline">{prettyLabel(offer.offer_type)}</Badge>
-          </div>
-        </CardHeader>
-      </Link>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {offer.venues?.logo_url ? (
-            <img
-              src={offer.venues.logo_url}
-              alt={`${offer.venues?.name ?? "Venue"} logo`}
-              loading="lazy"
-              className="w-7 h-7 rounded-full object-cover border border-border bg-white"
-            />
-          ) : (
-            <span className="w-7 h-7 rounded-full border border-border bg-muted flex items-center justify-center">
-              <Building2 className="w-3.5 h-3.5" />
-            </span>
-          )}
-          <span className="font-medium text-foreground">{offer.venues?.name}</span>
-        </div>
-        {offer.venues?.city && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{offer.venues.city}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span>
-            {format(new Date(offer.starts_at), "MMM d, yyyy")}
-            {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+    <OfferTile
+      offer={offer}
+      corner={
+        <button type="button" aria-label={isSaved ? "Remove from saved" : "Save offer"} onClick={() => onToggleSave?.()}
+          className="w-10 h-10 rounded-full bg-black/35 backdrop-blur text-white flex items-center justify-center hover:bg-black/50 transition">
+          <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+        </button>
+      }
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground">
+            {offer.discount_value ? <span className="font-extrabold text-foreground">${offer.discount_value} value</span> : slots != null ? `${slots} spots left` : "Open to apply"}
           </span>
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-2">{offer.description}</p>
-        {offer.min_followers > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Users className="w-3 h-3" />
-            <span>Min {offer.min_followers} followers</span>
-          </div>
-        )}
-        {offer.requirements && (
-          <p className="text-xs text-muted-foreground border-t border-border pt-2">{offer.requirements}</p>
-        )}
-        <div className="flex items-center justify-between pt-2">
-          {offer.max_redemptions && (
-            <span className="text-xs text-muted-foreground">{offer.max_redemptions - offer.current_redemptions} slots left</span>
-          )}
           {hasApplied ? (
-            <Button size="sm" disabled className="bg-success/20 text-success border border-success/30">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              {application.status === "pending" ? "Applied" : application.status === "approved" ? "Approved" : "Rejected"}
-            </Button>
+            <span className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-bold capitalize" style={{ background: "hsl(var(--primary) / .2)", color: "hsl(var(--venue-brand))" }}>
+              <CheckCircle className="w-4 h-4" />
+              {application.status === "pending" ? "Applied" : application.status}
+            </span>
           ) : (
             <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => { if (!o) { setSelectedOffer(null); setAccepted(false); } }}>
               <DialogTrigger asChild>
-                <Button size="sm" className="rounded-full h-10 px-6 font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} onClick={() => setSelectedOffer(offer)}>Apply</Button>
+                <button type="button" className="h-10 px-6 rounded-full text-sm font-bold transition hover:opacity-90" style={brand} onClick={() => setSelectedOffer(offer)}>Apply</button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Apply to: {offer.title}</DialogTitle>
+                  <DialogTitle className="text-2xl font-extrabold">Apply to {offer.title}</DialogTitle>
                   <DialogDescription>Review the offer details and confirm your application.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">{offer.description}</p>
                   {offer.requirements && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-1">Requirements</h4>
+                    <div className="rounded-2xl bg-muted/70 p-4">
+                      <h4 className="text-sm font-extrabold mb-1">What the venue asks for</h4>
                       <p className="text-sm text-muted-foreground">{offer.requirements}</p>
                     </div>
                   )}
-                  <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}, {offer.venues?.city}</p>
+                  <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}{offer.venues?.city ? `, ${offer.venues.city}` : ""}</p>
                   <p className="text-sm">
-                    <strong>Duration:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}
+                    <strong>Dates:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}
                     {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
                   </p>
                   {offer.discount_value && <p className="text-sm"><strong>Value:</strong> ${offer.discount_value}</p>}
@@ -553,16 +504,16 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
                     accepted={accepted}
                     onAcceptedChange={setAccepted}
                   />
-                  <Button className="w-full" onClick={onApply} disabled={isPending || !accepted}>
-                    {isPending ? "Submitting..." : "Confirm Application"}
-                  </Button>
+                  <button type="button" className="w-full h-12 rounded-full font-bold disabled:opacity-50" style={brand} onClick={onApply} disabled={isPending || !accepted}>
+                    {isPending ? "Submitting…" : "Confirm application"}
+                  </button>
                 </div>
               </DialogContent>
             </Dialog>
           )}
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 };
 

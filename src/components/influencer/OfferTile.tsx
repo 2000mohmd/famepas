@@ -3,11 +3,11 @@ import { MapPin, Users, Sparkles } from "lucide-react";
 import { prettyLabel } from "@/lib/format";
 
 /** Photo-led offer card for the creator side (Dashboard, Home, Explore). */
-const OfferTile = ({ offer, className = "", footer }: { offer: any; className?: string; footer?: React.ReactNode }) => {
+const OfferTile = ({ offer, className = "", footer, corner }: { offer: any; className?: string; footer?: React.ReactNode; corner?: React.ReactNode }) => {
   const cover = offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url;
   const slots = offer.max_redemptions ? offer.max_redemptions - (offer.current_redemptions ?? 0) : null;
   return (
-    <div className={`group rounded-3xl bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] hover:shadow-[0_16px_40px_-20px_hsl(0_35%_16%/.45)] transition ${className}`}>
+    <div className={`group relative rounded-3xl bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] hover:shadow-[0_16px_40px_-20px_hsl(0_35%_16%/.45)] transition ${className}`}>
       <Link to={`/influencer/offers/${offer.id}`} className="block">
         <div className="relative rounded-[1.4rem] overflow-hidden aspect-[4/5] bg-muted">
           {cover
@@ -19,7 +19,7 @@ const OfferTile = ({ offer, className = "", footer }: { offer: any; className?: 
               {prettyLabel(offer.offer_type)}
             </span>
           )}
-          {slots != null && slots > 0 && slots <= 5 && (
+          {!corner && slots != null && slots > 0 && slots <= 5 && (
             <span className="absolute right-3 top-3 rounded-full px-3 py-1 text-[11px] font-bold bg-white/90 text-neutral-900">{slots} left</span>
           )}
           <div className="absolute inset-x-0 bottom-0 p-4 text-white">
@@ -37,6 +37,7 @@ const OfferTile = ({ offer, className = "", footer }: { offer: any; className?: 
           </div>
         </div>
       </Link>
+      {corner && <div className="absolute right-5 top-5 z-10">{corner}</div>}
       {footer && <div className="px-2 pt-3 pb-1">{footer}</div>}
     </div>
   );

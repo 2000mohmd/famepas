@@ -188,7 +188,7 @@ const InfluencerBookings = () => {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold">{booking.offers?.title || "Visit"}</h3>
+              <h3 className="text-lg font-extrabold text-foreground">{booking.offers?.title || "Visit"}</h3>
               {/* Adnan, "Creator Page fixes" #5: one clear stage badge, not three
                   disagreeing ones — delivery_stage already carries this label. */}
               {booking.offer_redemptions?.delivery_stage ? (
@@ -206,14 +206,14 @@ const InfluencerBookings = () => {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {booking.venues?.logo_url && (
-                <img src={booking.venues.logo_url} alt={`${booking.venues?.name ?? "Venue"} logo`} loading="lazy" className="w-6 h-6 rounded-full object-cover border border-border bg-white" />
+                <img src={booking.venues.logo_url} alt={`${booking.venues?.name ?? "Venue"} logo`} loading="lazy" className="w-9 h-9 rounded-xl object-cover border border-border bg-white" />
               )}
-              <span>{booking.venues?.name} • {booking.venues?.city}</span>
+              <span className="font-semibold">{booking.venues?.name}{booking.venues?.city ? ` · ${booking.venues.city}` : ""}</span>
             </div>
             {/* Prefer the date the influencer actually requested; scheduled_date
                 falls back to the row's creation time when none was chosen. */}
-            <p className="text-sm text-muted-foreground">
-              📅 {booking.preferred_date
+            <p className="inline-flex items-center gap-2 mt-1 rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-foreground">
+              <CalendarDays className="w-4 h-4" style={{ color: "hsl(var(--venue-brand))" }} /> {booking.preferred_date
                 ? format(parseISO(`${booking.preferred_date}T00:00:00`), "PPP")
                 : format(new Date(booking.scheduled_date), "PPP p")}
             </p>

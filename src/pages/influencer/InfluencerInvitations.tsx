@@ -110,23 +110,23 @@ const InfluencerInvitations = () => {
           {invitations?.map((inv: any) => (
             <Card
               key={inv.id}
-              className="cursor-pointer hover:border-primary/50 transition-colors"
+              className="cursor-pointer hover:border-primary transition"
               onClick={() => setSelected(inv)}
             >
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <Avatar className="w-12 h-12 border border-border">
+                  <Avatar className="w-16 h-16 rounded-2xl border border-border">
                     <AvatarImage src={inv.venues?.logo_url || inv.venues?.image_url || undefined} alt={inv.venues?.name} />
-                    <AvatarFallback className="bg-secondary">
-                      <Building2 className="w-5 h-5 text-muted-foreground" />
+                    <AvatarFallback className="rounded-2xl" style={{ background: "hsl(var(--venue-brand))" }}>
+                      <Building2 className="w-6 h-6" style={{ color: "hsl(var(--primary))" }} />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold">{inv.offers?.title || "Venue Invitation"}</h3>
-                      <Badge className={statusColor(inv.status)}>{inv.status}</Badge>
+                      <h3 className="text-lg font-extrabold text-foreground">{inv.offers?.title || "Venue invitation"}</h3>
+                      <Badge className={`${statusColor(inv.status)} rounded-full px-3 capitalize`}>{inv.status}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{inv.venues?.name} • {inv.venues?.city}</p>
+                    <p className="text-sm font-semibold text-muted-foreground">{inv.venues?.name}{inv.venues?.city ? ` · ${inv.venues.city}` : ""}</p>
                     {inv.scheduled_at && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> {format(new Date(inv.scheduled_at), "PPP p")}

@@ -147,9 +147,12 @@ const InfluencerReviews = () => {
 
         <Card className="border-gold/20">
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="text-4xl font-bold text-gold">{avgRating}</div>
+            <div className="w-20 h-20 rounded-3xl flex flex-col items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--primary))" }}>
+              <span className="text-3xl font-extrabold leading-none">{avgRating}</span>
+              <span className="text-[10px] font-bold mt-1 opacity-80">/ 5</span>
+            </div>
             <div>
-              <p className="text-sm font-medium">Average Rating</p>
+              <p className="text-lg font-extrabold text-foreground">Average rating</p>
               <p className="text-sm text-muted-foreground">{receivedReviews?.length ?? 0} reviews received</p>
             </div>
           </CardContent>
@@ -163,13 +166,13 @@ const InfluencerReviews = () => {
           <TabsContent value="received" className="mt-4">
             <Card><CardContent className="pt-6">
               {receivedReviews?.map(renderReview)}
-              {receivedReviews?.length === 0 && <p className="text-center text-muted-foreground py-4">No reviews received yet</p>}
+              {receivedReviews?.length === 0 && <div className="text-center py-10"><p className="text-xl font-extrabold text-foreground">No reviews yet</p><p className="text-sm text-muted-foreground mt-1">After each visit the venue can rate your content — great work builds your reputation here.</p></div>}
             </CardContent></Card>
           </TabsContent>
           <TabsContent value="given" className="mt-4">
             <Card><CardContent className="pt-6">
               {givenReviews?.map(renderReview)}
-              {givenReviews?.length === 0 && <p className="text-center text-muted-foreground py-4">No reviews given yet</p>}
+              {givenReviews?.length === 0 && <div className="text-center py-10"><p className="text-xl font-extrabold text-foreground">Nothing rated yet</p><p className="text-sm text-muted-foreground mt-1">After a completed visit you can rate the venue from here.</p></div>}
             </CardContent></Card>
           </TabsContent>
         </Tabs>
