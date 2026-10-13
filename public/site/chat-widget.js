@@ -7,22 +7,22 @@
   var style = document.createElement("style");
   style.textContent =
     "#fp-chat-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;" +
-    "background:#b8923a;color:#fff;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);" +
+    "background:#510000;color:#CD9774;border:2px solid #CD9774;cursor:pointer;box-shadow:0 10px 30px rgba(81,0,0,.35);" +
     "z-index:99998;font-size:24px;display:flex;align-items:center;justify-content:center}" +
     "#fp-chat-panel{position:fixed;bottom:88px;right:20px;width:340px;max-width:calc(100vw - 32px);" +
-    "height:460px;max-height:70vh;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.3);" +
+    "height:500px;max-height:72vh;background:#fff;border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,.3);" +
     "display:none;flex-direction:column;overflow:hidden;z-index:99999;font-family:system-ui,-apple-system,sans-serif}" +
     "#fp-chat-panel.open{display:flex}" +
-    "#fp-chat-head{background:#b8923a;color:#fff;padding:14px 16px;font-weight:600;display:flex;justify-content:space-between;align-items:center}" +
-    "#fp-chat-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer}" +
-    "#fp-chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#f7f5f0}" +
-    ".fp-msg{max-width:80%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4;white-space:pre-wrap}" +
-    ".fp-msg.bot{background:#fff;color:#1a1a1a;align-self:flex-start;border:1px solid #eee}" +
-    ".fp-msg.user{background:#b8923a;color:#fff;align-self:flex-end}" +
-    "#fp-chat-form{display:flex;border-top:1px solid #eee;padding:8px;gap:6px}" +
-    "#fp-chat-input{flex:1;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;color:#1a1a1a;background:#fff}" +
+    "#fp-chat-head{background:#510000;color:#F5EBDD;padding:16px 18px;font-weight:700;display:flex;justify-content:space-between;align-items:center}" +
+    "#fp-chat-close{background:none;border:none;color:#F5EBDD;font-size:18px;cursor:pointer}" +
+    "#fp-chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#F7F3EE}" +
+    ".fp-msg{max-width:82%;padding:10px 14px;border-radius:18px;font-size:13.5px;line-height:1.4;white-space:pre-wrap}" +
+    ".fp-msg.bot{background:#fff;color:#1a1a1a;align-self:flex-start;border:1px solid #EDE4DA;border-bottom-left-radius:6px}" +
+    ".fp-msg.user{background:#510000;color:#F5EBDD;align-self:flex-end;border-bottom-right-radius:6px}" +
+    "#fp-chat-form{display:flex;border-top:1px solid #EDE4DA;padding:10px;gap:8px;background:#fff}" +
+    "#fp-chat-input{flex:1;border:1px solid #E7DED4;border-radius:999px;padding:10px 16px;font-size:13px;outline:none;color:#1a1a1a;background:#fff}" +
     "#fp-chat-input::placeholder{color:#999}" +
-    "#fp-chat-send{background:#b8923a;color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-size:13px}" +
+    "#fp-chat-send{background:#510000;color:#F5EBDD;border:none;border-radius:999px;padding:0 18px;font-weight:700;cursor:pointer;font-size:13px}" +
     "#fp-chat-send:disabled{opacity:.5;cursor:default}";
   document.head.appendChild(style);
 
@@ -80,7 +80,7 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var reply = data.reply || data.error || "Sorry, I couldn't reach support right now.";
+        var reply = data.reply || "Sorry, our assistant is unavailable right now. Please try again shortly, or contact us from the Contact page.";
         messages.push({ role: "assistant", content: reply });
         addBubble("bot", reply);
       })

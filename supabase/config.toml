@@ -32,3 +32,5 @@ project_id = "dvauueqtqrveqcckfrjx"
     verify_jwt = false
   [functions.whatsapp-webhook]
     verify_jwt = false # Meta's servers call this directly; signature checked in code
+  [functions.support-assistant]
+    verify_jwt = false # auth checked in code (caller's JWT via getUser)

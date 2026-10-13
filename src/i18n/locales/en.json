@@ -240,7 +240,7 @@
     "enterEmailToContinue": "Enter your email to continue.",
     "fixHighlightedFields": "Please fix the highlighted fields to continue.",
     "addProfilePhoto": "Add a profile photo",
-    "photoSub": "Optional, but creators with a photo get 3× more matches.",
+    "photoSub": "Required — venues choose creators by their photo.",
     "noPhoto": "No photo",
     "changePhoto": "Change photo",
     "uploadPhoto": "Upload photo",

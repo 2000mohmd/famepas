@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Message {
@@ -13,6 +13,7 @@ interface Message {
   receiver_id: string;
   content: string;
   created_at: string;
+  ai_generated?: boolean;
 }
 
 const InfluencerMessages = () => {
@@ -22,16 +23,18 @@ const InfluencerMessages = () => {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [aiThinking, setAiThinking] = useState(false);
+  const [escalated, setEscalated] = useState<Set<string>>(new Set());
 
   const load = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("messages")
-      .select("id, sender_id, receiver_id, content, created_at")
+      .select("id, sender_id, receiver_id, content, created_at, ai_generated")
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .is("venue_id", null)
       .order("created_at", { ascending: true });
-    setThread((data as Message[]) ?? []);
+    setThread(((data as unknown) as Message[]) ?? []);
     setLoading(false);
     await supabase.from("messages").update({ is_read: true } as any).eq("receiver_id", user.id).eq("is_read", false);
   };
@@ -44,11 +47,26 @@ const InfluencerMessages = () => {
     const channel = supabase
       .channel(`influencer-msg-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${user.id}` }, (payload) => {
-        setThread((prev) => [...prev, payload.new as Message]);
+        setThread((prev) => (prev.some((m) => m.id === (payload.new as Message).id) ? prev : [...prev, payload.new as Message]));
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
+
+  // AI first-line support: answers right away, flags what needs the team.
+  // If the assistant is unavailable the message still sits in the team inbox.
+  const askAssistant = async (messageId: string) => {
+    setAiThinking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-assistant", { body: { message_id: messageId } });
+      const reply = (data as any)?.message as Message | undefined;
+      if (!error && reply) {
+        setThread((prev) => (prev.some((m) => m.id === reply.id) ? prev : [...prev, reply]));
+        if ((data as any).escalate) setEscalated((prev) => new Set(prev).add(reply.id));
+      }
+    } catch { /* team still gets the message */ }
+    setAiThinking(false);
+  };
 
   const sendMessage = async () => {
     if (!user || !draft.trim()) return;
@@ -74,8 +92,10 @@ const InfluencerMessages = () => {
       .single();
     setSending(false);
     if (!error && data) {
-      setThread((prev) => [...prev, data as Message]);
+      const sent = data as Message;
+      setThread((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
       setDraft("");
+      void askAssistant(sent.id);
     }
   };
 
@@ -95,8 +115,8 @@ const InfluencerMessages = () => {
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card" />
             </span>
             <div>
-              <p className="font-extrabold text-foreground">FamePass team</p>
-              <p className="text-xs text-muted-foreground">Usually replies within a few hours</p>
+              <p className="font-extrabold text-foreground">FamePass support</p>
+              <p className="text-xs text-muted-foreground">AI assistant replies instantly · our team steps in when needed</p>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3" style={{ background: "hsl(var(--background))" }}>
@@ -118,13 +138,23 @@ const InfluencerMessages = () => {
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[75%] px-4 py-3 text-sm leading-relaxed shadow-sm ${mine ? "rounded-3xl rounded-br-lg" : "rounded-3xl rounded-bl-lg bg-card border border-border text-foreground"}`}
                       style={mine ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}>
+                      {m.ai_generated && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "hsl(var(--venue-brand))" }}><Sparkles className="w-3 h-3" /> FamePass AI</span>}
                       {m.content}
+                      {escalated.has(m.id) && <span className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-emerald-700"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Sent to the FamePass team</span>}
                       {(m as any).created_at && <span className="block text-[10px] mt-1 opacity-60">{new Date((m as any).created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
                     </div>
                   </div>
                 );
               })
             )}
+                {aiThinking && (
+                  <div className="flex justify-start">
+                    <div className="rounded-3xl rounded-bl-lg bg-card border border-border px-4 py-3 text-sm text-muted-foreground inline-flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} /> FamePass AI is typing
+                      <span className="inline-flex gap-1"><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" /><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:.15s]" /><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:.3s]" /></span>
+                    </div>
+                  </div>
+                )}
             <div ref={bottomRef} />
           </div>
           <div className="p-4 border-t border-border flex gap-3 items-center">

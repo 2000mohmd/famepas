@@ -574,8 +574,9 @@ const InfluencerSignup = () => {
                 </button>
               )}
             </div>
-            <PrimaryButton onClick={() => setStep("niche")}>
-              {avatarFile ? t("influencerSignup.continueBtn") : t("influencerSignup.skipForNow")} <ChevronRight className="inline w-4 h-4 ml-1" />
+            {/* Venues pick creators by face — a profile photo is required. */}
+            <PrimaryButton disabled={!avatarFile} onClick={() => setStep("niche")}>
+              {t("influencerSignup.continueBtn")} <ChevronRight className="inline w-4 h-4 ml-1" />
             </PrimaryButton>
           </Card>
         </div>

@@ -100,10 +100,10 @@ const AdminMessages = () => {
     setSelectedVenueId(venueId);
     // Any admin may have been on the other end of this conversation — it's a
     // shared team inbox per creator/venue, not a thread scoped to "me" specifically.
-    let q = supabase.from("messages").select("id, sender_id, receiver_id, content, created_at");
+    let q = supabase.from("messages").select("id, sender_id, receiver_id, content, created_at, ai_generated, needs_human");
     q = venueId ? q.eq("venue_id", venueId) : q.or(`sender_id.eq.${person.user_id},receiver_id.eq.${person.user_id}`).is("venue_id", null);
     const { data } = await q.order("created_at", { ascending: true });
-    setThread((data as Message[]) ?? []);
+    setThread(((data as unknown) as Message[]) ?? []);
     if (venueId) {
       await supabase.from("messages").update({ is_read: true } as any).eq("venue_id", venueId).eq("is_read", false);
       setUnreadVenueIds((prev) => { const next = new Set(prev); next.delete(venueId); return next; });
@@ -236,8 +236,10 @@ const AdminMessages = () => {
                 <div className="p-3 border-b border-border font-medium text-foreground">{selected.full_name || t("admin.messages.unnamed")}</div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {thread.map((m) => (
-                    <div key={m.id} className={`flex ${m.sender_id === user?.id ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.sender_id === user?.id ? "bg-gold text-background" : "bg-secondary text-foreground"}`}>
+                    <div key={m.id} className={`flex ${m.sender_id === user?.id || (m as any).ai_generated ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${m.sender_id === user?.id || (m as any).ai_generated ? "bg-gold text-background" : "bg-secondary text-foreground"}`}>
+                        {(m as any).ai_generated && <span className="block text-[10px] font-bold uppercase tracking-wide opacity-80 mb-0.5">✦ AI assistant</span>}
+                        {(m as any).needs_human && <span className="block text-[10px] font-bold uppercase tracking-wide text-red-700 mb-0.5">Needs the team</span>}
                         {m.content}
                       </div>
                     </div>

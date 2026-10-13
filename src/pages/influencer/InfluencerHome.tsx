@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, MapPin, ChevronRight, Search, Sparkles, Send, CalendarDays, CheckCircle, Star, AlertTriangle, ArrowRight, Award, Instagram } from "lucide-react";
+import { Building2, MapPin, ChevronRight, Search, Sparkles, Send, CalendarDays, CheckCircle, Star, AlertTriangle, ArrowRight, Award, Instagram, Camera } from "lucide-react";
 import { VenueHero, HeroButton, BrandButton, VenueEmpty } from "@/components/venue/VenueUI";
 import OfferTile from "@/components/influencer/OfferTile";
 import { useNavigate } from "react-router-dom";
@@ -182,6 +182,19 @@ const InfluencerHome = () => {
             </div>
           }
         />
+
+        {profile && !profile.avatar_url && (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-card border border-border p-5 shadow-[var(--venue-shadow)]">
+            <div className="flex items-center gap-4">
+              <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)" }}><Camera className="w-5 h-5" style={{ color: "hsl(var(--venue-brand))" }} /></span>
+              <div>
+                <p className="font-extrabold text-foreground">Add your profile photo</p>
+                <p className="text-sm text-muted-foreground">Venues choose creators by their photo — profiles without one rarely get invited.</p>
+              </div>
+            </div>
+            <BrandButton to="/influencer/profile"><Camera /> Add photo</BrandButton>
+          </div>
+        )}
 
         {!!unreviewedCount && unreviewedCount > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-card border border-border p-5 shadow-[var(--venue-shadow)]">
