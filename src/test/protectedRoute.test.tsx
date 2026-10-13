@@ -19,6 +19,8 @@ const renderAt = (path: string, allowedRoles?: ("admin" | "venue" | "influencer"
       <Routes>
         <Route path="/login" element={<div>login page</div>} />
         <Route path="/" element={<div>home page</div>} />
+        <Route path="/venue" element={<div>venue home</div>} />
+        <Route path="/influencer/home" element={<div>creator home</div>} />
         <Route
           path="/admin"
           element={
@@ -56,11 +58,18 @@ describe("ProtectedRoute", () => {
     expect(screen.getByText("login page")).toBeInTheDocument();
   });
 
-  it("sends a signed-in user with the wrong role to the home page", () => {
+  it("sends a signed-in user with the wrong role to their own home, not the landing page", () => {
     authState.user = { id: "u1" };
     authState.role = "influencer";
     renderAt("/admin", ["admin"]);
-    expect(screen.getByText("home page")).toBeInTheDocument();
+    expect(screen.getByText("creator home")).toBeInTheDocument();
+  });
+
+  it("sends a venue that lands on a stale /admin ?next= to the venue home", () => {
+    authState.user = { id: "u1" };
+    authState.role = "venue";
+    renderAt("/admin", ["admin"]);
+    expect(screen.getByText("venue home")).toBeInTheDocument();
   });
 
   it("renders the protected page for an allowed role", () => {

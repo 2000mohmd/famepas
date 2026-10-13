@@ -25,6 +25,7 @@
     "signUp": "Sign up",
     "almostThere": "Almost there",
     "loginFailed": "Login failed",
+    "noAccountOrWrongPassword": "No account found with this email, or the password is wrong. Don't have an account yet? Tap \"Create an account\" below.",
     "verificationCode": "Verification code",
     "sixDigitCode": "6-digit code",
     "codeSentTo": "We sent a code to {{email}}. It expires in 10 minutes.",

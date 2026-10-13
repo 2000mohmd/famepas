@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { roleHome } from "@/lib/roleHome";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -26,7 +27,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (allowedRoles) {
     if (role === null) return <Navigate to={loginUrl} replace />;
-    if (!allowedRoles.includes(role)) return <Navigate to="/" replace />;
+    // A stale ?next= from another role's session (e.g. /admin after logging
+    // in as a venue) used to bounce to the public landing page here.
+    if (!allowedRoles.includes(role)) return <Navigate to={roleHome(role)} replace />;
   }
 
   return <>{children}</>;

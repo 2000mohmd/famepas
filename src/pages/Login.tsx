@@ -61,7 +61,11 @@ const Login = () => {
         } catch { /* ignore */ }
       }
       if (payload?.error) {
-        toast({ title: "Login failed", description: payload.error, variant: "destructive" });
+        toast({
+          title: t("login.loginFailed"),
+          description: payload.code === "invalid_credentials" ? t("login.noAccountOrWrongPassword") : payload.error,
+          variant: "destructive",
+        });
         return;
       }
       if (payload?.twoFactor) {

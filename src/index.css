@@ -217,7 +217,9 @@
   --secondary-foreground: 0 100% 16%;
 
   --muted: 35 35% 82%;
-  --muted-foreground: 24 20% 35%;
+  /* Page-level secondary text sits on burgundy, so it must be light; light
+     surfaces below re-map it back to dark brown. */
+  --muted-foreground: 35 30% 76%;
 
   --accent: 24 47% 63%;
   --accent-foreground: 0 100% 16%;
@@ -303,4 +305,24 @@
 .dashboard-shell .premium-card:hover {
   border-color: hsl(24 47% 63% / 0.35);
   box-shadow: 0 8px 24px -12px hsl(24 47% 55% / 0.22);
+}
+
+/* Light surfaces (cards, dialogs, menus, inputs) are ivory, but --foreground
+   is ivory too (it's the text color for the burgundy page) — so every
+   text-foreground label inside an admin card or dialog was ivory-on-ivory and
+   invisible. Re-map text to burgundy on anything with a light background.
+   In the components layer so explicit text-* utilities still win. Dialogs and
+   menus portal outside .dashboard-shell, hence global rather than scoped. */
+@layer components {
+  .gradient-card, .premium-card, .glass,
+  [class^="bg-card"], [class*=" bg-card"],
+  [class^="bg-white"], [class*=" bg-white"],
+  [class^="bg-popover"], [class*=" bg-popover"],
+  [class^="bg-secondary"], [class*=" bg-secondary"],
+  [class^="bg-muted"], [class*=" bg-muted"],
+  [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"] {
+    --foreground: 0 100% 16%;
+    --muted-foreground: 24 20% 35%;
+    color: hsl(0 100% 16%);
+  }
 }
