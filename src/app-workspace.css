@@ -16,7 +16,7 @@
   --accent-foreground: 0 35% 16%;
   --border: 30 12% 88%;
   --input: 30 12% 85%;
-  --radius: .5rem;
+  --radius: .85rem;
   --venue-brand: 0 100% 16%;
   --venue-brand-foreground: 35 55% 91%;
   --venue-shadow: 0 4px 24px hsl(0 35% 16% / .045);
@@ -91,7 +91,16 @@
 .app-workspace .venue-creator-actions > * { flex:1; }
 .app-workspace .venue-campaign-section { padding:28px 0; border-top:1px solid hsl(var(--border)); }
 .app-workspace .venue-campaign-row { border-radius:8px; background:hsl(var(--card)); }
-.app-workspace .venue-form-section { padding:28px 0; margin-bottom:0; border:0; border-top:1px solid hsl(var(--border)); border-radius:0; background:transparent; }
+/* Form sections as numbered premium cards (offer + brief builders). */
+.app-workspace .venue-page { counter-reset: fsec; }
+.app-workspace .venue-form-section { padding:32px; margin-bottom:20px; border:1px solid hsl(var(--border)); border-radius:2rem; background:hsl(var(--card)); box-shadow:var(--venue-shadow); }
+.app-workspace .venue-form-section > div:first-child > h2, .app-workspace .venue-form-section > h2 { display:flex; align-items:center; gap:14px; font-size:22px; font-weight:800; border:0 !important; padding:0; }
+.app-workspace .venue-form-section > div:first-child > h2::before, .app-workspace .venue-form-section > h2::before {
+  counter-increment: fsec; content: counter(fsec);
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  width:36px; height:36px; border-radius:999px; font-size:15px;
+  background:hsl(var(--venue-brand)); color:hsl(var(--primary));
+}
 .app-workspace .venue-form-section input, .app-workspace .venue-form-section textarea, .app-workspace .venue-form-section [role="combobox"] { background:hsl(var(--card)); }
 @media(min-width:1600px) { .app-workspace .venue-creator-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media(max-width:1100px) { .app-workspace .venue-creator-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .app-workspace .venue-discover-layout { grid-template-columns:180px minmax(0,1fr); gap:24px; } }

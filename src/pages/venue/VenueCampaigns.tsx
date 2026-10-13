@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2, Copy } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, ChevronLeft, Bell, MoreVertical, Pencil, Pause, Play, Trash2, Copy, Megaphone } from "lucide-react";
+import { VenueHero, HeroButton, VenueTabs, VenueEmpty, BrandButton } from "@/components/venue/VenueUI";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -128,35 +129,31 @@ const VenueCampaigns = () => {
   }
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const Section = ({ title, items, open, setOpen, count }: any) => (
-    <div className="venue-campaign-section">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+  const Section = ({ title, items, open, setOpen, count }: any) => items.length === 0 ? null : (
+    <div>
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-3 mb-4">
+        <span className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center">
           {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          <span className="font-semibold text-foreground">{title}</span>
-          <span className="text-xs text-muted-foreground">({count})</span>
-        </div>
+        </span>
+        <span className="text-xl font-extrabold text-foreground">{title}</span>
+        <span className="min-w-[26px] h-[26px] px-2 rounded-full text-xs font-bold inline-flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)", color: "hsl(var(--venue-brand))" }}>{count}</span>
       </button>
       {open && (
-        items.length === 0 ? (
-          <div className="border border-border rounded-xl p-6 text-center bg-muted/30">
-            <p className="text-sm text-muted-foreground">No {title.toLowerCase()} offers</p>
-          </div>
-        ) : (
-          <div className="grid gap-3">
+        (
+          <div className="grid gap-4">
             {items.map((c: Campaign) => {
               const cover = c.cover_image_url || (c.cover_images && c.cover_images[0]);
               const d = c.deliverables || {};
               return (
-                <div key={c.id} className="venue-campaign-row bg-card border border-border overflow-hidden flex hover:shadow-md transition-shadow">
-                  <div className="w-40 h-32 bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <div key={c.id} className="venue-campaign-row rounded-3xl bg-card border border-border p-3 flex gap-5 shadow-[var(--venue-shadow)] hover:border-primary transition">
+                  <div className="w-44 h-36 rounded-2xl bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {c.cover_video_url ? <video src={c.cover_video_url} className="w-full h-full object-cover" muted /> : cover ? <img src={cover} alt={c.title} className="w-full h-full object-cover" /> : <Plus className="w-8 h-8 text-muted-foreground" />}
                   </div>
-                  <div className="flex-1 p-4 flex flex-col">
-                    <div className="flex items-start gap-2 mb-1">
+                  <div className="flex-1 py-2 pr-2 flex flex-col min-w-0">
+                    <div className="flex items-start gap-2 mb-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: displayStatus(c) === "active" ? "#dcfce7" : displayStatus(c) === "scheduled" ? "#dbeafe" : displayStatus(c) === "ended" ? "#fee2e2" : "#f1f5f9", color: displayStatus(c) === "active" ? "#166534" : displayStatus(c) === "scheduled" ? "#1e40af" : displayStatus(c) === "ended" ? "#991b1b" : "#475569" }}>
+                        <h3 className="text-lg font-extrabold text-foreground truncate">{c.title}</h3>
+                        <span className="text-[11px] font-bold px-3 py-1 rounded-full capitalize" style={{ background: displayStatus(c) === "active" ? "#dcfce7" : displayStatus(c) === "scheduled" ? "#dbeafe" : displayStatus(c) === "ended" ? "#fee2e2" : "#f1f5f9", color: displayStatus(c) === "active" ? "#166534" : displayStatus(c) === "scheduled" ? "#1e40af" : displayStatus(c) === "ended" ? "#991b1b" : "#475569" }}>
                           {displayStatus(c) === "ended" ? "Ended" : c.status}
                         </span>
                       </div>
@@ -191,7 +188,7 @@ const VenueCampaigns = () => {
                       )}
                     </div>
                     <div className="mt-auto pt-3 flex justify-end">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}>Edit</Button>
+                      <Button size="sm" className="rounded-full px-5 font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} onClick={() => navigate(`/venue/campaigns/${c.id}/edit`)}>Edit offer</Button>
                     </div>
                   </div>
                 </div>
@@ -205,35 +202,44 @@ const VenueCampaigns = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="venue-heading">
-          <div><p className="venue-eyebrow">Collaborations</p><h1>Offers</h1></div>
-          <Button onClick={() => openNew()}>
-            <Plus className="w-4 h-4 mr-1.5" /> New Offer
-          </Button>
-        </div>
+      <div className="animate-fade-in space-y-8">
+        <VenueHero
+          eyebrow="Collaborations"
+          title="Your offers"
+          subtitle="What you give creators, and what you ask for in return. Live offers are visible to every eligible creator on FamePass."
+          actions={<HeroButton onClick={() => openNew()}><Plus /> New offer</HeroButton>}
+          aside={
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[["Active", active.length], ["Scheduled", scheduled.length], ["Paused", paused.length], ["Ended", ended.length]].map(([l, v]) => (
+                <div key={l as string} className="rounded-2xl px-5 py-4" style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                  <p className="text-3xl font-extrabold leading-none">{v}</p>
+                  <p className="text-xs mt-2 opacity-70">{l}</p>
+                </div>
+              ))}
+            </div>
+          }
+        />
 
         <DeliveredVideosInsights />
 
-
-        <div className="flex items-center justify-between mb-6 border-b border-border">
-          <div className="flex gap-6">
-            <Button variant="ghost" onClick={() => setView("list")} className={`pb-3 px-1 rounded-none text-sm font-medium ${view === "list" ? "border-b-2 border-primary text-foreground" : "text-muted-foreground"}`}>
-              List
-            </Button>
-            <Button variant="ghost" onClick={() => setView("calendar")} className={`pb-3 px-1 rounded-none text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 border-primary text-foreground" : "text-muted-foreground"}`}>
-              Calendar
-            </Button>
-          </div>
-        </div>
+        <VenueTabs<"list" | "calendar"> value={view} onChange={setView} tabs={[{ key: "list", label: "List" }, { key: "calendar", label: "Calendar" }]} />
 
         {view === "list" ? (
-          <div>
+          campaigns.length === 0 ? (
+            <VenueEmpty
+              icon={Megaphone}
+              title="Post your first offer"
+              body="Describe the experience you're offering — a meal, a treatment, a stay — and the content you'd like back. Creators apply, you choose who to work with."
+              actions={<BrandButton onClick={() => openNew()}><Plus /> Create an offer</BrandButton>}
+            />
+          ) : (
+          <div className="space-y-10">
             <Section title="Active" items={active} open={activeOpen} setOpen={setActiveOpen} count={active.length} />
             <Section title="Scheduled" items={scheduled} open={scheduledOpen} setOpen={setScheduledOpen} count={scheduled.length} />
             <Section title="Paused" items={paused} open={pausedOpen} setOpen={setPausedOpen} count={paused.length} />
             <Section title="Ended" items={ended} open={endedOpen} setOpen={setEndedOpen} count={ended.length} />
           </div>
+          )
         ) : (
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -241,15 +247,12 @@ const VenueCampaigns = () => {
                 <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Today</Button>
                 <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} className="p-1.5 rounded hover:bg-white"><ChevronLeft className="w-4 h-4" /></button>
                 <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} className="p-1.5 rounded hover:bg-white"><ChevronRight className="w-4 h-4" /></button>
-                <span className="font-semibold text-foreground ml-2">{monthName}</span>
+                <span className="text-2xl font-extrabold text-foreground ml-3">{monthName}</span>
               </div>
-              <div className="flex gap-1 bg-white border border-border rounded-lg p-1">
-                <button className="px-3 py-1 text-xs font-medium rounded text-white" style={{ background: "hsl(24 47% 63%)" }}>Monthly</button>
-                <button className="px-3 py-1 text-xs font-medium rounded text-muted-foreground">Quarterly</button>
-              </div>
+
             </div>
 
-            <div className="bg-white border border-border rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border rounded-[2rem] overflow-hidden shadow-[var(--venue-shadow)]">
               <div className="grid grid-cols-7 text-xs font-semibold text-muted-foreground border-b border-border">
                 {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => <div key={i} className="p-3 text-center">{d}</div>)}
               </div>

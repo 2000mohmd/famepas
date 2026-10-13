@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueHero, HeroButton } from "@/components/venue/VenueUI";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Stage = "draft" | "matching" | "in_progress" | "review" | "complete";
 
-const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
+const PINK = "#510000"; // Brand burgundy for primary actions (name kept to avoid touching every call site)
 
 const VenueBriefs = () => {
   const { user } = useAuth();
@@ -207,67 +208,57 @@ const VenueBriefs = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            <h1 className="text-[28px] font-bold text-foreground">Briefs</h1>
-            <a href="#" className="text-sm font-medium" style={{ color: PINK }}>How does it work?</a>
-          </div>
-          <Button onClick={() => navigate("/venue/briefs/new")} style={{ background: PINK }} className="text-white hover:opacity-90">
-            <Plus className="w-4 h-4 mr-1.5" /> New Brief
-          </Button>
-        </div>
-        {/* Adnan, Venue Portal item 8: Campaigns, Offers and Briefs looked
-            like three names for one thing. They're not — Campaigns is what
-            you post for creators to find and apply to; a Brief is a specific
-            request FamePass matches and invites creators to for you. */}
-        <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
-          Different from Campaigns: a Campaign is what you post for creators to discover and apply to themselves.
-          A Brief is a specific ask — we match and invite creators to it for you.
-        </p>
-
-        <div className="grid grid-cols-5 gap-2 mb-8">
-          {stages.map(s => {
-            const Icon = s.icon;
-            const isActive = stage === s.key;
-            return (
-              <button
-                key={s.key}
-                onClick={() => setStage(s.key)}
-                className={`bg-white border rounded-xl p-4 text-left transition-all ${isActive ? "border-2" : "border-border hover:border-primary/30"}`}
-                style={isActive ? { borderColor: PINK } : undefined}
-              >
-                <Icon className="w-5 h-5 mb-2" style={{ color: isActive ? PINK : "#94a3b8" }} />
-                <p className="text-sm font-semibold text-foreground">{s.label}</p>
-                <p className="text-xs text-muted-foreground">{counts[s.key]} items</p>
-              </button>
-            );
-          })}
-        </div>
+      <div className="animate-fade-in space-y-8">
+        {/* Adnan, Venue Portal item 8: an offer is what creators find and apply
+            to themselves; a Brief is a specific ask FamePass matches for you. */}
+        <VenueHero
+          eyebrow="Ad Studio"
+          title="Briefs"
+          subtitle="Tell us exactly what content you need. We hand-pick and invite the right creators for you — unlike offers, where creators come to you."
+          actions={<HeroButton onClick={() => navigate("/venue/briefs/new")}><Plus /> New brief</HeroButton>}
+          aside={
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {stages.map((st) => {
+                const Icon = st.icon;
+                const isActive = stage === st.key;
+                return (
+                  <button key={st.key} type="button" onClick={() => setStage(st.key)} className="text-left rounded-2xl px-5 py-4 transition"
+                    style={isActive
+                      ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }
+                      : { background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                    <Icon className="w-5 h-5 mb-4" />
+                    <p className="text-3xl font-extrabold leading-none">{counts[st.key]}</p>
+                    <p className="text-xs mt-2 font-semibold opacity-80">{st.label}</p>
+                  </button>
+                );
+              })}
+            </div>
+          }
+        />
 
         {filtered.length === 0 ? (
           <EmptyState
             icon={<ClipboardIllustration />}
-            title="Start here or pick up where you left off"
-            description="Create your first brief or jump back into your drafts"
+            title={stage === "draft" ? "Create your first brief" : "Nothing in this stage yet"}
+            description="Describe the content you want, your budget and deadline. We match creators to it and send them your invite."
             action={<Button onClick={() => navigate("/venue/briefs/new")} style={{ background: PINK }} className="text-white hover:opacity-90"><Plus className="w-4 h-4 mr-1.5" /> Create a brief</Button>}
           />
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {filtered.map(b => {
               const cover = b.cover_image_url || b.image_url;
               const spec = Array.isArray(b.deliverables_spec) ? b.deliverables_spec : [];
               const totalQty = spec.reduce((s: number, d: any) => s + (Number(d.quantity) || 0), 0);
               return (
-                <div key={b.id} className="bg-white border border-border rounded-2xl overflow-hidden flex hover:shadow-md transition-shadow">
-                  <div className="w-40 h-32 bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <div key={b.id} className="rounded-3xl bg-card border border-border p-3 flex gap-5 shadow-[var(--venue-shadow)] hover:border-primary transition">
+                  <div className="w-44 h-36 rounded-2xl bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {cover ? <img src={cover} alt={b.title} className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 text-muted-foreground" />}
                   </div>
                   <div className="flex-1 p-4 flex flex-col">
                     <div className="flex items-start justify-between gap-3 mb-1">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-semibold text-foreground truncate">{b.title}</h3>
+                          <h3 className="text-lg font-extrabold text-foreground truncate">{b.title}</h3>
                           {stageBadge(b.pipeline_stage ?? "draft")}
                           {b.pipeline_stage === "matching" && (invitedCounts[b.id] ?? 0) > 0 && (
                             <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e" }}>

@@ -327,10 +327,14 @@ const VenueCampaignCreate = () => {
   return (
     <DashboardLayout type="venue">
       <div className="max-w-3xl mx-auto pb-28 animate-fade-in">
-        <Button variant="link" onClick={() => navigate("/venue/campaigns")} className="px-0 text-muted-foreground mb-5">
-          <ChevronLeft className="w-4 h-4" /> Back to Campaigns
-        </Button>
-        <div className="mb-7"><p className="venue-eyebrow">Collaborations / Offers</p><h1>{editing ? "Edit offer" : "Create an offer"}</h1></div>
+        <button type="button" onClick={() => navigate("/venue/campaigns")} className="inline-flex items-center gap-1.5 h-10 pl-3 pr-5 rounded-full bg-card border border-border text-sm font-semibold text-foreground hover:border-primary transition mb-6">
+          <ChevronLeft className="w-4 h-4" /> Back to offers
+        </button>
+        <div className="mb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">Collaborations</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{editing ? "Edit offer" : "Create an offer"}</h1>
+          <p className="mt-3 text-muted-foreground">Describe the experience, the creators you want, and the content you'd like back.</p>
+        </div>
 
         {/* CAMPAIGN DETAILS */}
         <SectionCard title="Offer Details">

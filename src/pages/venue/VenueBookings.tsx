@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ClipboardIllustration } from "@/components/venue/EmptyState";
+import { VenueHero, HeroButton } from "@/components/venue/VenueUI";
 import { CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight, List, Calendar as CalIcon, Instagram, Music2, KeyRound, Loader2, Star, Eye, Users, TrendingUp, MapPin, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,7 +19,7 @@ import { DEFAULT_TEMPLATES, TEMPLATE_TYPE_LABEL } from "@/lib/messageTemplates";
 
 type Tab = "new" | "upcoming" | "in_progress" | "completed";
 
-const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
+const PINK = "#510000"; // Brand burgundy for primary actions (name kept to avoid touching every call site)
 
 interface Row {
   id: string;
@@ -357,40 +358,36 @@ const VenueBookings = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[28px] font-bold text-foreground">Bookings</h1>
-          <div className="flex items-center gap-2">
-            <Button asChild size="sm" style={{ background: PINK }} className="text-white hover:opacity-90">
-              <Link to="/scan"><QrCode className="w-4 h-4 mr-1.5" />Scan creator</Link>
-            </Button>
-            <button onClick={load} className="p-2 rounded-lg hover:bg-white" aria-label="Refresh">
-              <RefreshCw className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-        </div>
+      <div className="animate-fade-in space-y-8">
+        <VenueHero
+          eyebrow="Creator visits"
+          title="Bookings"
+          subtitle="Review who applies, confirm their visit, and check them in at the door with their QR code."
+          actions={<>
+            <HeroButton to="/scan"><QrCode /> Scan creator</HeroButton>
+            <HeroButton variant="ghost" onClick={load}><RefreshCw /> Refresh</HeroButton>
+          </>}
+          aside={
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {tabs.map((t) => (
+                <button key={t.key} type="button" onClick={() => setTab(t.key)} className="text-left rounded-2xl px-5 py-4 transition"
+                  style={tab === t.key
+                    ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }
+                    : { background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                  <p className="text-3xl font-extrabold leading-none">{t.count}</p>
+                  <p className="text-xs mt-2 font-semibold opacity-80">{t.label}</p>
+                </button>
+              ))}
+            </div>
+          }
+        />
 
-        <div className="flex items-center justify-between mb-6 border-b border-border">
-          <div className="flex gap-6">
-            {tabs.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${tab === t.key ? "border-b-2 text-foreground" : "text-muted-foreground"}`}
-                style={tab === t.key ? { borderColor: PINK } : undefined}
-              >
-                {t.label}
-                {t.count > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: PINK }}>{t.count}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {tab === "upcoming" && (
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex bg-white border border-border rounded-lg p-1">
-              <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}><List className="w-4 h-4" /></button>
-              <button onClick={() => setView("calendar")} className={`p-1.5 rounded ${view === "calendar" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}><CalIcon className="w-4 h-4" /></button>
+            <div className="flex bg-card border border-border rounded-full p-1">
+              <button onClick={() => setView("list")} aria-label="List view" className={`w-10 h-10 rounded-full flex items-center justify-center ${view === "list" ? "" : "text-muted-foreground"}`} style={view === "list" ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}><List className="w-4 h-4" /></button>
+              <button onClick={() => setView("calendar")} aria-label="Calendar view" className={`w-10 h-10 rounded-full flex items-center justify-center ${view === "calendar" ? "" : "text-muted-foreground"}`} style={view === "calendar" ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}><CalIcon className="w-4 h-4" /></button>
             </div>
             {view === "calendar" && (
               <>
@@ -411,7 +408,7 @@ const VenueBookings = () => {
             action={tab === "new" ? <Button onClick={() => navigate("/venue/offers")} style={{ background: PINK }} className="text-white hover:opacity-90">Manage Offers</Button> : undefined}
           />
         ) : tab === "upcoming" && view === "calendar" ? (
-          <div className="bg-white border border-border rounded-2xl overflow-hidden">
+          <div className="bg-card border border-border rounded-[2rem] overflow-hidden shadow-[var(--venue-shadow)]">
             <div className="grid grid-cols-7 text-xs font-semibold text-muted-foreground border-b border-border">
               {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(d => <div key={d} className="p-3 text-center">{d}</div>)}
             </div>
@@ -424,7 +421,7 @@ const VenueBookings = () => {
                     <span className={`text-xs font-medium ${isToday(cell.day) ? "inline-flex w-6 h-6 rounded-full text-white items-center justify-center" : "text-foreground"}`} style={isToday(cell.day) ? { background: PINK } : undefined}>{cell.day}</span>
                     <div className="mt-1 space-y-1">
                       {items.slice(0, 3).map(r => (
-                        <div key={r.id} className="text-[10px] truncate px-1.5 py-0.5 rounded" style={{ background: "#fce7f3", color: "#9d174d" }}>
+                        <div key={r.id} className="text-[10px] truncate px-1.5 py-0.5 rounded" style={{ background: "hsl(var(--primary) / .2)", color: "hsl(var(--venue-brand))" }}>
                           {r.profile?.full_name || (r.profile?.instagram_handle ? `@${String(r.profile.instagram_handle).replace(/^@/, "")}` : "Influencer")}
                         </div>
                       ))}

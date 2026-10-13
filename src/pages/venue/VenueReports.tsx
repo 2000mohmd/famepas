@@ -2,7 +2,8 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Eye, Heart, MessageCircle, Share2, Film, Ticket, CalendarCheck, TrendingUp } from "lucide-react";
+import { Eye, Heart, MessageCircle, Share2, Film, Ticket, CalendarCheck, TrendingUp, BarChart3, Plus, Search, Users, DollarSign } from "lucide-react";
+import { VenueHero, VenueStat, VenuePanel, VenueEmpty, BrandButton, SectionLabel } from "@/components/venue/VenueUI";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend,
@@ -107,7 +108,7 @@ const VenueReports = () => {
     Object.entries(m.byType).filter(([, v]) => v > 0).map(([k, v]) => ({ name: k, value: v })),
     [m.byType]
   );
-  const pieColors = ["#CD9774", "#f4a261", "#2a9d8f", "#264653", "#e9c46a", "#9b87f5"];
+  const pieColors = ["#510000", "#CD9774", "#8C3A2B", "#E8C9A8", "#B5654A", "#3A1A14"];
 
   // Per-offer (campaign) performance: posts delivered and the reach they earned.
   const campaignRows = useMemo(() => {
@@ -134,143 +135,146 @@ const VenueReports = () => {
     return Object.values(rows).sort((a: any, b: any) => b.views - a.views);
   }, [offers, bookings, deliverables]);
 
-  const Stat = ({ icon: Icon, label, value, sub }: any) => (
-    <div className="bg-white border border-border rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="p-2 rounded-lg bg-primary/10 text-primary"><Icon className="w-4 h-4" /></div>
-        <span className="text-xs text-muted-foreground">{sub}</span>
-      </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      <div className="text-xs text-muted-foreground mt-1">{label}</div>
-    </div>
-  );
+  const hasActivity = deliverables.length > 0 || bookings.length > 0 || redemptions.length > 0;
+  const periodLabel = (p: Period) => (p === "all" ? "All time" : p === "7d" ? "7 days" : p === "30d" ? "30 days" : "90 days");
+  const chartTick = { fontSize: 12, fill: "hsl(0 5% 44%)" };
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-[28px] font-bold text-foreground">Reports</h1>
-          <div className="flex items-center gap-1 bg-white border border-border rounded-lg p-1">
-            {(["7d","30d","90d","all"] as Period[]).map(p => (
-              <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs rounded-md font-medium ${period===p?"bg-foreground text-white":"text-muted-foreground hover:text-foreground"}`}>
-                {p === "all" ? "All time" : `Last ${p.replace("d"," days")}`}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="animate-fade-in space-y-8">
+        <VenueHero
+          eyebrow="Performance"
+          title="Reports"
+          subtitle="What creators are doing for your venue — visits, reach and the value of the content they publish."
+          actions={
+            <div className="inline-flex gap-1 p-1.5 rounded-full" style={{ background: "hsl(var(--venue-brand-foreground) / .1)" }}>
+              {(["7d", "30d", "90d", "all"] as Period[]).map((p) => (
+                <button key={p} type="button" onClick={() => setPeriod(p)}
+                  className="h-10 px-4 rounded-full text-sm font-semibold transition"
+                  style={period === p ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" } : { color: "hsl(var(--venue-brand-foreground) / .75)" }}>
+                  {periodLabel(p)}
+                </button>
+              ))}
+            </div>
+          }
+          aside={!loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { icon: Users, label: "Creator visits", value: m.completed.toLocaleString() },
+                { icon: Eye, label: "Total reach", value: m.views.toLocaleString() },
+                { icon: DollarSign, label: "Est. media value", value: `$${m.estimatedMediaValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="rounded-3xl p-6" style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                  <Icon className="w-5 h-5 mb-6" style={{ color: "hsl(var(--primary))" }} />
+                  <p className="text-4xl md:text-5xl font-extrabold tracking-tight leading-none">{value}</p>
+                  <p className="text-sm mt-2 opacity-70">{label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        />
 
         {loading ? (
-          <div className="bg-white border border-border rounded-2xl py-24 text-center text-muted-foreground">Loading…</div>
+          <div className="rounded-[2rem] bg-card border border-border py-24 text-center text-muted-foreground">Loading…</div>
+        ) : !hasActivity ? (
+          <VenueEmpty
+            icon={BarChart3}
+            title={`No activity in the last ${periodLabel(period).toLowerCase()}`}
+            body="As soon as creators redeem your offers and post about your venue, their reach, engagement and visits show up here."
+            actions={<>
+              <BrandButton to="/venue/campaigns/new"><Plus /> Create an offer</BrandButton>
+              <BrandButton to="/venue/discover"><Search /> Discover creators</BrandButton>
+            </>}
+          />
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white border border-border rounded-2xl p-6">
-                <div className="text-3xl font-bold text-foreground">{m.completed.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground mt-1">Creator visits</div>
-              </div>
-              <div className="bg-white border border-border rounded-2xl p-6">
-                <div className="text-3xl font-bold text-foreground">{m.views.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground mt-1">Total reach</div>
-              </div>
-              <div className="bg-white border border-border rounded-2xl p-6">
-                <div className="text-3xl font-bold text-foreground">${m.estimatedMediaValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                <div className="text-sm text-muted-foreground mt-1">Estimated media value</div>
+            <div className="space-y-4">
+              <SectionLabel>Reach & engagement</SectionLabel>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <VenueStat icon={Eye} label="Total views" value={m.views.toLocaleString()} accent />
+                <VenueStat icon={Heart} label="Total likes" value={m.likes.toLocaleString()} />
+                <VenueStat icon={MessageCircle} label="Comments" value={m.comments.toLocaleString()} />
+                <VenueStat icon={Share2} label="Shares" value={m.shares.toLocaleString()} />
+                <VenueStat icon={TrendingUp} label="Engagement rate" value={`${m.engagement.toFixed(2)}%`} />
+                <VenueStat icon={Film} label="Posts published" value={m.posts} />
+                <VenueStat icon={Film} label="Reels / videos" value={(m.byType.reel || 0) + (m.byType.video || 0)} />
+                <VenueStat icon={Film} label="Stories" value={m.byType.story || 0} />
               </div>
             </div>
 
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Reach & Engagement</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <Stat icon={Eye} label="Total views" value={m.views.toLocaleString()} />
-              <Stat icon={Heart} label="Total likes" value={m.likes.toLocaleString()} />
-              <Stat icon={MessageCircle} label="Comments" value={m.comments.toLocaleString()} />
-              <Stat icon={Share2} label="Shares" value={m.shares.toLocaleString()} />
-              <Stat icon={TrendingUp} label="Engagement rate" value={`${m.engagement.toFixed(2)}%`} />
-              <Stat icon={Film} label="Posts published" value={m.posts} />
-              <Stat icon={Film} label="Reels / Videos" value={(m.byType.reel||0) + (m.byType.video||0)} />
-              <Stat icon={Film} label="Stories" value={m.byType.story || 0} />
+            <div className="space-y-4">
+              <SectionLabel>Creator visits & bookings</SectionLabel>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <VenueStat icon={Ticket} label="Offers redeemed" value={m.redeemed} hint={`of ${m.totalRedemptions} claims`} />
+                <VenueStat icon={CalendarCheck} label="Bookings completed" value={m.completed} hint={`of ${m.totalBookings} bookings`} />
+                <VenueStat icon={CalendarCheck} label="No-shows" value={m.noShow} />
+                <VenueStat icon={TrendingUp} label="Completion rate" value={m.totalBookings ? `${Math.round((m.completed / m.totalBookings) * 100)}%` : "—"} />
+              </div>
             </div>
 
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Creator Visits & Bookings</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <Stat icon={Ticket} label="Offers redeemed" value={m.redeemed} sub={`of ${m.totalRedemptions} claims`} />
-              <Stat icon={CalendarCheck} label="Bookings completed" value={m.completed} sub={`of ${m.totalBookings}`} />
-              <Stat icon={CalendarCheck} label="No-shows" value={m.noShow} />
-              <Stat icon={TrendingUp} label="Completion rate"
-                value={m.totalBookings ? `${Math.round((m.completed / m.totalBookings) * 100)}%` : "—"} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-              <div className="bg-white border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-semibold mb-3">Activity trend</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <VenuePanel title="Activity trend">
                 {trendData.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-8 text-center">No data</p>
+                  <p className="text-sm text-muted-foreground py-16 text-center">Nothing in this period yet.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={240}>
+                  <ResponsiveContainer width="100%" height={260}>
                     <LineChart data={trendData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip />
+                      <CartesianGrid strokeDasharray="4 4" stroke="hsl(30 12% 90%)" vertical={false} />
+                      <XAxis dataKey="date" tick={chartTick} axisLine={false} tickLine={false} />
+                      <YAxis tick={chartTick} allowDecimals={false} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid hsl(30 12% 88%)" }} />
                       <Legend />
-                      <Line type="monotone" dataKey="bookings" stroke="#CD9774" strokeWidth={2} />
-                      <Line type="monotone" dataKey="redemptions" stroke="#2a9d8f" strokeWidth={2} />
+                      <Line type="monotone" dataKey="bookings" stroke="hsl(0 100% 16%)" strokeWidth={3} dot={false} />
+                      <Line type="monotone" dataKey="redemptions" stroke="hsl(24 47% 63%)" strokeWidth={3} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
-              </div>
+              </VenuePanel>
 
-              <div className="bg-white border border-border rounded-2xl p-5">
-                <h3 className="text-sm font-semibold mb-3">Content mix</h3>
+              <VenuePanel title="Content mix">
                 {typeData.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-8 text-center">No content yet</p>
+                  <p className="text-sm text-muted-foreground py-16 text-center">No posts yet.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={240}>
+                  <ResponsiveContainer width="100%" height={260}>
                     <PieChart>
-                      <Pie data={typeData} dataKey="value" nameKey="name" outerRadius={90} label>
+                      <Pie data={typeData} dataKey="value" nameKey="name" innerRadius={62} outerRadius={100} paddingAngle={3}>
                         {typeData.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip contentStyle={{ borderRadius: 14 }} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
-              </div>
+              </VenuePanel>
             </div>
 
-            <div className="bg-white border border-border rounded-2xl p-5 mb-8">
-              <h3 className="text-sm font-semibold mb-3">Engagement breakdown</h3>
-              <ResponsiveContainer width="100%" height={240}>
+            <VenuePanel title="Engagement breakdown">
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={[
                   { metric: "Views", value: m.views },
                   { metric: "Likes", value: m.likes },
                   { metric: "Comments", value: m.comments },
                   { metric: "Shares", value: m.shares },
                 ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="metric" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#CD9774" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="4 4" stroke="hsl(30 12% 90%)" vertical={false} />
+                  <XAxis dataKey="metric" tick={chartTick} axisLine={false} tickLine={false} />
+                  <YAxis tick={chartTick} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "hsl(30 14% 94%)" }} contentStyle={{ borderRadius: 14 }} />
+                  <Bar dataKey="value" fill="hsl(0 100% 16%)" radius={[12, 12, 4, 4]} maxBarSize={72} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </VenuePanel>
 
-            <div className="bg-white border border-border rounded-2xl p-5 mb-8 overflow-x-auto">
-              <h3 className="text-sm font-semibold mb-3">Offer performance</h3>
+            <VenuePanel title="Offer performance" className="overflow-x-auto">
               {campaignRows.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-6 text-center">No offer activity yet</p>
+                <p className="text-sm text-muted-foreground py-10 text-center">No offer activity in this period.</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                      <th className="py-2 pr-4 font-medium">Offer</th>
-                      <th className="py-2 pr-4 font-medium">Bookings</th>
-                      <th className="py-2 pr-4 font-medium">Posts</th>
-                      <th className="py-2 pr-4 font-medium">Views</th>
-                      <th className="py-2 pr-4 font-medium">Likes</th>
-                      <th className="py-2 pr-4 font-medium">Comments</th>
-                      <th className="py-2 pr-4 font-medium">Engagement</th>
+                    <tr className="text-left text-muted-foreground border-b border-border">
+                      {["Offer", "Bookings", "Posts", "Views", "Likes", "Comments", "Engagement"].map((h) => (
+                        <th key={h} className="pb-3 pr-4 font-semibold">{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -278,26 +282,22 @@ const VenueReports = () => {
                       const er = r.views > 0 ? ((r.likes + r.comments + r.shares) / r.views) * 100 : 0;
                       return (
                         <tr key={r.key} className="border-b border-border/60 last:border-0">
-                          <td className="py-2 pr-4 font-medium text-foreground">{r.title}</td>
-                          <td className="py-2 pr-4">{r.bookings}</td>
-                          <td className="py-2 pr-4">{r.posts}</td>
-                          <td className="py-2 pr-4">{r.views.toLocaleString()}</td>
-                          <td className="py-2 pr-4">{r.likes.toLocaleString()}</td>
-                          <td className="py-2 pr-4">{r.comments.toLocaleString()}</td>
-                          <td className="py-2 pr-4">{er.toFixed(2)}%</td>
+                          <td className="py-4 pr-4 font-bold text-foreground">{r.title}</td>
+                          <td className="py-4 pr-4">{r.bookings}</td>
+                          <td className="py-4 pr-4">{r.posts}</td>
+                          <td className="py-4 pr-4">{r.views.toLocaleString()}</td>
+                          <td className="py-4 pr-4">{r.likes.toLocaleString()}</td>
+                          <td className="py-4 pr-4">{r.comments.toLocaleString()}</td>
+                          <td className="py-4 pr-4">
+                            <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{ background: "hsl(var(--primary) / .18)", color: "hsl(var(--venue-brand))" }}>{er.toFixed(2)}%</span>
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               )}
-            </div>
-
-            {deliverables.length === 0 && bookings.length === 0 && (
-              <div className="bg-white border border-border rounded-2xl py-12 text-center text-muted-foreground text-sm">
-                No activity in this date range yet. Once influencers redeem offers and post content, metrics will appear here.
-              </div>
-            )}
+            </VenuePanel>
           </>
         )}
       </div>

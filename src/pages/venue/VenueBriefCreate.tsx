@@ -36,8 +36,8 @@ const FORMATS: { v: Deliverable["format"]; label: string }[] = [
 ];
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-white border border-border rounded-2xl p-6 mb-5">
-    <h2 className="text-lg font-bold text-foreground border-b-2 pb-2 mb-5 inline-block" style={{ borderColor: PINK }}>{title}</h2>
+  <div className="venue-form-section">
+    <h2 className="text-foreground mb-6">{title}</h2>
     {children}
   </div>
 );
@@ -144,9 +144,14 @@ const VenueBriefCreate = () => {
   return (
     <DashboardLayout type="venue">
       <div className="max-w-3xl mx-auto pb-28 animate-fade-in">
-        <button onClick={() => navigate("/venue/briefs")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-5">
-          <ChevronLeft className="w-4 h-4" /> Back
+        <button type="button" onClick={() => navigate("/venue/briefs")} className="inline-flex items-center gap-1.5 h-10 pl-3 pr-5 rounded-full bg-card border border-border text-sm font-semibold text-foreground hover:border-primary transition mb-6">
+          <ChevronLeft className="w-4 h-4" /> Back to briefs
         </button>
+        <div className="mb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">Ad Studio</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">New brief</h1>
+          <p className="mt-3 text-muted-foreground">Tell us the content you need — we'll match and invite the right creators.</p>
+        </div>
 
         <Section title="Content Brief">
           <div className="space-y-5">

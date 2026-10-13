@@ -1,9 +1,11 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import CreatorPhoto from "@/components/CreatorPhoto";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star, Flag, BarChart3 } from "lucide-react";
+import { Film, ExternalLink, Download, Check, X, Heart, MessageCircle, Eye, Link2, Star, Flag, BarChart3, Plus } from "lucide-react";
+import { VenueHero, VenueTabs, VenueEmpty, BrandButton } from "@/components/venue/VenueUI";
 import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -159,53 +161,74 @@ const VenueContent = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <h1 className="text-[28px] font-bold text-foreground mb-2">Content</h1>
-        <p className="text-sm text-muted-foreground mb-6">Posts submitted by influencers from your offers and bookings.</p>
+      <div className="animate-fade-in space-y-8">
+        <VenueHero
+          eyebrow="Creator content"
+          title="Content"
+          subtitle="Every post creators publish from your offers lands here. Approve it, request changes, and keep the best for your own channels."
+          aside={
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: "Pending review", value: counts.submitted },
+                { label: "Approved", value: counts.approved },
+                { label: "Changes requested", value: counts.rejected },
+                { label: "Total posts", value: counts.all },
+              ].map((x) => (
+                <div key={x.label} className="rounded-2xl px-5 py-4" style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                  <p className="text-3xl font-extrabold leading-none">{x.value}</p>
+                  <p className="text-xs mt-2 opacity-70">{x.label}</p>
+                </div>
+              ))}
+            </div>
+          }
+        />
 
-        <div className="flex gap-1 border-b border-border mb-6">
-          {(["submitted","approved","rejected","all"] as Tab[]).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px capitalize ${tab===t?"border-foreground text-foreground":"border-transparent text-muted-foreground hover:text-foreground"}`}>
-              {t === "submitted" ? "Pending review" : t} ({counts[t]})
-            </button>
-          ))}
-        </div>
+        <VenueTabs<Tab>
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { key: "submitted", label: "Pending review", count: counts.submitted },
+            { key: "approved", label: "Approved", count: counts.approved },
+            { key: "rejected", label: "Changes requested", count: counts.rejected },
+            { key: "all", label: "All", count: counts.all },
+          ]}
+        />
 
         {loading ? (
-          <div className="bg-white border border-border rounded-2xl py-24 text-center text-muted-foreground">Loading…</div>
+          <div className="rounded-[2rem] bg-card border border-border py-24 text-center text-muted-foreground">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white border border-border rounded-2xl py-20 text-center">
-            <Film className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">No content here yet.</p>
-            <p className="text-xs text-muted-foreground mt-1">Influencers submit posts after completing their booking.</p>
-          </div>
+          <VenueEmpty
+            icon={Film}
+            title={tab === "submitted" ? "Nothing waiting for review" : "No content here yet"}
+            body="Creators submit their posts after visiting your venue. You'll be able to approve them, download the media and see their reach."
+            actions={<BrandButton to="/venue/campaigns/new"><Plus /> Create an offer</BrandButton>}
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
             {filtered.map(d => {
               const p = profiles[d.influencer_id];
               return (
-                <div key={d.id} className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col">
-                  <div className="aspect-square bg-muted relative overflow-hidden">
+                <div key={d.id} className="rounded-3xl bg-card border border-border p-3 flex flex-col shadow-[var(--venue-shadow)]">
+                  <div className="aspect-[4/5] rounded-2xl bg-muted relative overflow-hidden">
                     {(d.thumbnail_url || d.media_url) ? (
                       <img src={d.thumbnail_url || d.media_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground"><Film className="w-10 h-10" /></div>
                     )}
-                    <span className="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full bg-black/70 text-white uppercase">{d.platform || "—"} · {d.content_type}</span>
-                    <span className={`absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      d.status === "approved" ? "bg-green-100 text-green-700" :
-                      d.status === "rejected" ? "bg-red-100 text-red-700" :
-                      "bg-amber-100 text-amber-700"}`}>{d.status}</span>
+                    <span className="absolute top-3 left-3 text-[11px] font-bold px-3 py-1 rounded-full bg-black/45 backdrop-blur text-white uppercase tracking-wide">{d.platform || "—"} · {d.content_type}</span>
+                    <span className={`absolute top-3 right-3 text-[11px] px-3 py-1 rounded-full font-bold capitalize ${
+                      d.status === "approved" ? "bg-emerald-50 text-emerald-700" :
+                      d.status === "rejected" ? "bg-red-50 text-red-700" :
+                      "bg-amber-50 text-amber-800"}`}>{d.status === "rejected" ? "changes requested" : d.status}</span>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
+                  <div className="px-2 pt-4 pb-2 flex-1 flex flex-col">
                     <button
                       type="button"
                       onClick={() => setStatsFor({ id: d.influencer_id, name: p?.full_name })}
                       className="flex items-center gap-2 mb-2 text-left hover:opacity-80"
                     >
-                      {p?.avatar_url ? <img src={p.avatar_url} className="w-6 h-6 rounded-full object-cover" /> : <div className="w-6 h-6 rounded-full bg-muted" />}
-                      <span className="text-sm font-medium underline-offset-2 hover:underline">{p?.full_name || "Influencer"}</span>
+                      <CreatorPhoto src={p?.avatar_url} name={p?.full_name} className="w-9 h-9 rounded-full object-cover text-xs" />
+                      <span className="text-base font-extrabold text-foreground underline-offset-2 hover:underline">{p?.full_name || "Influencer"}</span>
                       <BarChart3 className="w-3 h-3 text-muted-foreground" />
                     </button>
                     {d.caption && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{d.caption}</p>}

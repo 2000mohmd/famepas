@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueHero, HeroButton, VenueEmpty, BrandButton } from "@/components/venue/VenueUI";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -146,48 +147,46 @@ const VenueLocations = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-[28px] font-bold text-foreground">Locations</h1>
-          <Button style={{ background: "hsl(24 47% 63%)" }} className="text-white hover:opacity-90" onClick={openAdd} disabled={!venue}>
-            <Plus className="w-4 h-4 mr-1.5" /> Add Location
-          </Button>
-        </div>
+      <div className="animate-fade-in space-y-8">
+        <VenueHero
+          eyebrow="Your venue"
+          title="Locations"
+          subtitle="Every branch creators can visit. Offers are tied to a location, so creators always know exactly where to go."
+          actions={<HeroButton onClick={() => venue && openAdd()}><Plus /> Add location</HeroButton>}
+        />
 
         {!venue ? (
-          <div className="bg-white border border-border rounded-2xl p-12 text-center">
-            <p className="text-muted-foreground">Create your venue profile first to add locations.</p>
-          </div>
+          <VenueEmpty icon={MapPin} title="Set up your venue profile first" body="Once your venue profile exists you can add each of its branches here."
+            actions={<BrandButton to="/venue/settings"><Pencil /> Complete profile</BrandButton>} />
         ) : locations.length === 0 ? (
-          <div className="bg-white border border-border rounded-2xl p-12 text-center">
-            <p className="text-muted-foreground">No locations yet</p>
-          </div>
+          <VenueEmpty icon={MapPin} title="Add your first location" body="Pin your venue on the map so creators can find you and offers show the right address."
+            actions={<BrandButton onClick={openAdd}><Plus /> Add location</BrandButton>} />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {locations.map(l => (
               <div
                 key={l.id}
-                className="bg-white border border-border rounded-2xl p-6 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                className="rounded-3xl bg-card border border-border p-6 flex items-center gap-5 cursor-pointer shadow-[var(--venue-shadow)] hover:border-primary transition"
                 onClick={() => openEdit(l)}
                 role="button"
               >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "#fce7eb" }}>
-                  <MapPin className="w-5 h-5" style={{ color: "hsl(24 47% 63%)" }} />
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}>
+                  <MapPin className="w-6 h-6" style={{ color: "hsl(var(--primary))" }} />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground">{l.name}</h3>
+                    <h3 className="text-lg font-extrabold text-foreground truncate">{l.name}</h3>
                     {l.is_primary && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Primary</span>
+                      <span className="text-[11px] font-bold px-3 py-1 rounded-full" style={{ background: "hsl(var(--primary) / .2)", color: "hsl(var(--venue-brand))" }}>Primary</span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{l.address || l.city || "No address"}</p>
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">{l.address || l.city || "No address"}</p>
                 </div>
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(l); }}>
+                <Button size="icon" variant="ghost" className="rounded-full" onClick={(e) => { e.stopPropagation(); openEdit(l); }} aria-label="Edit location">
                   <Pencil className="w-4 h-4 text-muted-foreground" />
                 </Button>
                 {!l.is_primary && (
-                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setConfirmDelete(l.id); }}>
+                  <Button size="icon" variant="ghost" className="rounded-full" onClick={(e) => { e.stopPropagation(); setConfirmDelete(l.id); }} aria-label="Remove location">
                     <Trash2 className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 )}
@@ -217,7 +216,7 @@ const VenueLocations = () => {
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={save} disabled={saving} style={{ background: "hsl(24 47% 63%)" }} className="text-white">
+              <Button onClick={save} disabled={saving} style={{ background: "hsl(var(--venue-brand))" }} className="text-white rounded-full px-6">
                 {saving ? "Saving…" : editingId ? "Save Changes" : "Add Location"}
               </Button>
             </DialogFooter>

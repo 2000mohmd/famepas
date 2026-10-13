@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { ClipboardList } from "lucide-react";
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -21,16 +22,23 @@ export const EmptyState = ({ icon, title, description, action, variant = "defaul
   }
 
   return (
-    <div className="bg-white border border-border rounded-2xl p-16 text-center">
-      {icon && <div className="mx-auto mb-5 flex items-center justify-center text-muted-foreground">{icon}</div>}
-      <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
-      {description && <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>}
-      {action}
+    <div className="rounded-[2rem] bg-card border border-border px-6 py-16 md:py-20 text-center shadow-[var(--venue-shadow)]">
+      {icon && <div className="mx-auto mb-6 flex items-center justify-center">{icon}</div>}
+      <h3 className="text-2xl font-extrabold text-foreground mb-2">{title}</h3>
+      {description && <p className="text-muted-foreground mb-7 max-w-md mx-auto leading-relaxed">{description}</p>}
+      {action && <div className="flex flex-wrap justify-center gap-3 [&_button]:rounded-full [&_button]:h-12 [&_button]:px-6 [&_button]:font-bold [&_a]:rounded-full">{action}</div>}
     </div>
   );
 };
 
 export const ClipboardIllustration = () => (
+  <span className="flex items-center justify-center w-20 h-20 rounded-full"
+    style={{ background: "radial-gradient(circle at 30% 30%, hsl(var(--gold-light)), hsl(var(--primary)))", boxShadow: "0 0 0 10px hsl(var(--primary) / .12)" }}>
+    <ClipboardList className="w-8 h-8" style={{ color: "hsl(var(--venue-brand))" }} />
+  </span>
+);
+
+export const LegacyClipboardIllustration = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
     <rect x="32" y="22" width="56" height="72" rx="6" fill="#fce7eb" stroke="#b8923a" strokeWidth="2"/>
     <rect x="46" y="14" width="28" height="14" rx="3" fill="#b8923a"/>

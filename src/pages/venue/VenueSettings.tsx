@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Trash2, Plus, Check, Upload, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Check, Upload, X, Store, Link2, Users, MessageSquare, CreditCard, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,16 +21,16 @@ import { TEMPLATE_TYPE_LABEL, TemplateType } from "@/lib/messageTemplates";
 
 type Tab = "integrations" | "team" | "profile" | "messaging" | "billing" | "compliance";
 
-const tabs: { key: Tab; label: string }[] = [
-  { key: "integrations", label: "Integrations" },
-  { key: "team", label: "Team" },
-  { key: "profile", label: "Profile" },
-  { key: "messaging", label: "Messaging" },
-  { key: "billing", label: "Billing" },
-  { key: "compliance", label: "Compliance" },
+const tabs: { key: Tab; label: string; hint: string; icon: any }[] = [
+  { key: "profile", label: "Venue profile", hint: "Name, logo, photos, hours", icon: Store },
+  { key: "integrations", label: "Integrations", hint: "Instagram & TikTok", icon: Link2 },
+  { key: "team", label: "Team", hint: "Who can manage this venue", icon: Users },
+  { key: "messaging", label: "Messaging", hint: "Reply templates", icon: MessageSquare },
+  { key: "billing", label: "Plan & billing", hint: "Your subscription", icon: CreditCard },
+  { key: "compliance", label: "Compliance", hint: "Disclosure rules", icon: ShieldCheck },
 ];
 
-const PINK = "#CD9774"; // Champagne Gold — kept the name to avoid touching every call site
+const PINK = "#510000"; // Brand burgundy for primary actions (name kept to avoid touching every call site)
 
 // Brand logos
 const IGLogo = () => (
@@ -420,26 +420,47 @@ const VenueSettings = () => {
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <h1 className="text-[28px] font-bold text-foreground mb-6">Settings</h1>
-
-        <div className="flex gap-6 border-b border-border mb-8 overflow-x-auto">
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`pb-3 px-1 text-sm font-medium whitespace-nowrap ${tab === t.key ? "border-b-2 text-foreground" : "text-muted-foreground"}`}
-              style={tab === t.key ? { borderColor: PINK } : undefined}
-            >
-              {t.label}
-            </button>
-          ))}
+      <div className="animate-fade-in space-y-8">
+        <div className="flex flex-wrap items-center gap-5">
+          {venue?.logo_url
+            ? <img src={venue.logo_url} alt="" className="w-16 h-16 rounded-2xl object-cover border border-border bg-white" />
+            : <span className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-extrabold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--primary))" }}>{(venue?.name || "V").slice(0, 2).toUpperCase()}</span>}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-1">Account</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Settings</h1>
+          </div>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-6 items-start">
+        <nav aria-label="Settings sections" className="rounded-[2rem] bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] lg:sticky lg:top-24">
+          {tabs.map(t => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${active ? "" : "hover:bg-muted"}`}
+                style={active ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}
+              >
+                <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={active ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" } : { background: "hsl(var(--primary) / .16)", color: "hsl(var(--venue-brand))" }}>
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-sm font-bold ${active ? "" : "text-foreground"}`}>{t.label}</span>
+                  <span className={`block text-xs truncate ${active ? "opacity-70" : "text-muted-foreground"}`}>{t.hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+        <div className="min-w-0">
+
         {tab === "integrations" && (
-          <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl">
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
             <div className="mb-4">
-              <h2 className="font-semibold text-foreground">Social Profiles</h2>
+              <h2 className="text-xl font-extrabold text-foreground">Social Profiles</h2>
               <p className="text-xs text-muted-foreground">Connect your social accounts for content tracking and analytics</p>
             </div>
             <InstagramConnectRow venue={venue} social={findSocial("instagram")} onChange={load} logo={<IGLogo />} />
@@ -448,8 +469,8 @@ const VenueSettings = () => {
         )}
 
         {tab === "team" && (
-          <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl">
-            <h2 className="font-semibold text-foreground mb-4">Manage Your Team</h2>
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
+            <h2 className="text-xl font-extrabold text-foreground mb-4">Manage Your Team</h2>
             <div className="flex gap-2 mb-6">
               <Input placeholder="Enter email address" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
               <Button onClick={sendInvite} style={{ background: PINK }} className="text-white">Invite User</Button>
@@ -484,7 +505,7 @@ const VenueSettings = () => {
         {tab === "team" && venue && <VenueStaffCard venueId={venue.id} />}
 
         {tab === "profile" && venue && (
-          <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-5">
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)] space-y-5">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
                 {pLogo ? (
@@ -668,9 +689,9 @@ const VenueSettings = () => {
         )}
 
         {tab === "messaging" && venue && (
-          <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl">
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
             <div className="mb-4">
-              <h2 className="font-semibold text-foreground">Custom Templates</h2>
+              <h2 className="text-xl font-extrabold text-foreground">Custom Templates</h2>
               <p className="text-xs text-muted-foreground">Saved replies for when you need to pass on an application</p>
             </div>
 
@@ -728,9 +749,9 @@ const VenueSettings = () => {
         )}
 
         {tab === "billing" && (
-          <div className="space-y-4 max-w-3xl">
+          <div className="space-y-4">
             {selectedTierId && (
-              <div className="bg-white border border-border rounded-2xl p-6 flex items-center justify-between flex-wrap gap-3">
+              <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)] flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <p className="text-sm text-muted-foreground">Payment status</p>
                   <p className="font-semibold text-foreground capitalize">{(venue as any)?.payment_status || "Not set up yet"}</p>
@@ -743,8 +764,8 @@ const VenueSettings = () => {
                 )}
               </div>
             )}
-            <div className="bg-white border border-border rounded-2xl p-6">
-              <h2 className="font-semibold text-foreground mb-4">Subscription Plans</h2>
+            <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
+              <h2 className="text-xl font-extrabold text-foreground mb-4">Subscription Plans</h2>
               <div className="grid md:grid-cols-3 gap-4 items-stretch">
                 {tiers.map(t => {
                   const isSelected = selectedTierId === t.id;
@@ -753,12 +774,12 @@ const VenueSettings = () => {
                   const quarterlySavings = quarterly ? Number(t.price) * 3 - quarterly : null;
                   const annualSavings = annual ? Number(t.price) * 12 - annual : null;
                   return (
-                    <div key={t.id} className={`border rounded-xl p-4 flex flex-col ${isSelected ? "border-primary ring-1 ring-primary" : "border-border"}`}>
+                    <div key={t.id} className={`border rounded-3xl p-6 flex flex-col ${isSelected ? "ring-2" : "border-border"}`} style={isSelected ? { borderColor: "hsl(var(--venue-brand))", boxShadow: "0 0 0 2px hsl(var(--venue-brand))" } : undefined}>
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-foreground">{t.name}</p>
+                        <p className="text-lg font-extrabold text-foreground">{t.name}</p>
                         {(t as any).is_recommended && <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style={{ background: `${PINK}1a`, color: PINK }}>Recommended</span>}
                       </div>
-                      <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
+                      <p className="text-4xl font-extrabold tracking-tight my-3" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
                       {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
                       {(quarterly || annual) && (
                         <div className="text-xs text-muted-foreground mb-3 space-y-0.5">
@@ -775,7 +796,7 @@ const VenueSettings = () => {
                         ))}
                       </ul>
                       <Button
-                        className="w-full"
+                        className="w-full rounded-full h-11 font-bold"
                         variant={isSelected ? "default" : "outline"}
                         onClick={() =>
                           isSelected
@@ -803,8 +824,8 @@ const VenueSettings = () => {
         )}
 
         {tab === "compliance" && (
-          <div className="bg-white border border-border rounded-2xl p-6 max-w-3xl space-y-4">
-            <h2 className="font-semibold text-foreground">Compliance</h2>
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)] space-y-4">
+            <h2 className="text-xl font-extrabold text-foreground">Compliance</h2>
             <p className="text-sm text-muted-foreground">
               Ensure influencer content meets your advertising disclosure requirements.
             </p>
@@ -824,6 +845,8 @@ const VenueSettings = () => {
             </div>
           </div>
         )}
+        </div>
+        </div>
       </div>
     </DashboardLayout>
   );

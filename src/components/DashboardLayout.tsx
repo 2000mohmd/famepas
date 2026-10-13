@@ -567,27 +567,25 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             at the top of every page, until setup is complete. */}
         {type === "venue" && location.pathname !== "/venue" && onboarding && onboarding.done < onboarding.total && (
           <div className="px-4 md:px-8 pt-4 md:pt-6">
-            <div className="venue-onboarding p-5 md:p-6">
-              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                <p className="font-display text-lg">
-                  You're {onboarding.total - onboarding.done} step{onboarding.total - onboarding.done > 1 ? "s" : ""} away from receiving creators
-                </p>
-                <p className="text-sm opacity-70">{onboarding.done}/{onboarding.total} done</p>
-              </div>
-              <div className="venue-onboarding-progress h-1 rounded-full mb-4 overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${(onboarding.done / onboarding.total) * 100}%`, background: "hsl(var(--gold))" }} />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {onboarding.steps.map((s) => (
-                  <div key={s.label} className="venue-onboarding-step flex items-center gap-2.5 rounded-md px-3 py-2">
-                    {s.done && <span className="text-sm opacity-60 line-through">{s.label}</span>}
-                    {!s.done && (
-                      <NavLink to={s.to} className="text-xs font-semibold px-3 py-1.5 rounded-lg text-primary-foreground" style={{ background: "hsl(var(--gold))" }}>
-                        {s.label}
-                      </NavLink>
-                    )}
-                    {s.done && <ChevronRight className="w-3.5 h-3.5 rotate-45" />}
-                  </div>
+            {/* Slim setup strip — the full stepper lives on the venue home page. */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl bg-card border border-border px-5 py-3.5 shadow-[var(--venue-shadow)]">
+              <span className="relative w-10 h-10 shrink-0">
+                <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeLinecap="round"
+                    strokeDasharray={`${(onboarding.done / onboarding.total) * 94.2} 94.2`} />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-foreground">{onboarding.done}/{onboarding.total}</span>
+              </span>
+              <p className="text-sm font-semibold text-foreground flex-1 min-w-[200px]">
+                You're {onboarding.total - onboarding.done} step{onboarding.total - onboarding.done > 1 ? "s" : ""} away from receiving creators
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {onboarding.steps.filter((st) => !st.done).map((st) => (
+                  <NavLink key={st.label} to={st.to} className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-xs font-bold transition hover:opacity-90"
+                    style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+                    {st.label} <ChevronRight className="w-3.5 h-3.5" />
+                  </NavLink>
                 ))}
               </div>
             </div>
