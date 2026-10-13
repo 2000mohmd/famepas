@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Heart, Instagram, Music2, Users, Send } from "lucide-react";
+import { Search, Heart, Instagram, Music2, Users, Send, ArrowUpRight, MapPin, BadgeCheck } from "lucide-react";
 
 /**
  * Adnan, "More dashboard info COLLABSTer" (E2): venues had no way to browse
@@ -65,7 +65,7 @@ const VenueDiscover = () => {
       .then(({ data }) => setNiches((data as any[]) ?? []));
   }, [user]);
 
-  const { data: creators } = useQuery({
+  const { data: creators, isLoading } = useQuery({
     queryKey: ["discoverable-creators"],
     queryFn: async () => {
       const { data } = await (supabase as any).rpc("get_discoverable_creators");
@@ -142,14 +142,18 @@ const VenueDiscover = () => {
   return (
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
-        <h1 className="text-2xl font-display font-bold text-foreground mb-1">Discover Creators</h1>
-        <p className="text-muted-foreground mb-6">Browse FamePass creators and shortlist the ones you want to work with.</p>
-
-        <div className="flex flex-wrap gap-3 mb-6">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search by name or handle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        <div className="venue-discover-header">
+          <p className="venue-eyebrow">FamePass / Creators</p>
+          <h1>Find your next collaboration.</h1>
+          <div className="relative venue-search">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input aria-label="Search creators" placeholder="Search creators by name or handle" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-12" />
           </div>
+        </div>
+        <div className="venue-discover-layout">
+        <aside className="venue-filters" aria-label="Creator filters">
+          <h2 className="text-base">Filters</h2>
+          <div><label>Content niche</label>
           <Select value={niche} onValueChange={setNiche}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Niche" /></SelectTrigger>
             <SelectContent>
@@ -157,6 +161,7 @@ const VenueDiscover = () => {
               {niches.map((n) => <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          </div><div><label>Platform</label>
           <Select value={platform} onValueChange={setPlatform}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Platform" /></SelectTrigger>
             <SelectContent>
@@ -165,13 +170,16 @@ const VenueDiscover = () => {
               <SelectItem value="tiktok">TikTok</SelectItem>
             </SelectContent>
           </Select>
+          </div><div><label>Audience size</label>
           <Select value={tier} onValueChange={setTier}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Follower tier" /></SelectTrigger>
             <SelectContent>
               {FOLLOWER_TIERS.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          </div>
           {cities.length > 0 && (
+            <div><label>Location</label>
             <Select value={city} onValueChange={setCity}>
               <SelectTrigger className="w-[140px]"><SelectValue placeholder="City" /></SelectTrigger>
               <SelectContent>
@@ -179,7 +187,12 @@ const VenueDiscover = () => {
                 {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
+            </div>
           )}
+        </aside>
+        <section aria-label="Creators">
+        <div className="venue-results-toolbar">
+          <h2 className="text-lg">Creators <span className="text-muted-foreground text-sm font-normal">{isLoading ? "" : `(${filtered.length})`}</span></h2>
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
             <SelectTrigger className="w-[150px]"><SelectValue placeholder="Sort" /></SelectTrigger>
             <SelectContent>
@@ -189,60 +202,50 @@ const VenueDiscover = () => {
           </Select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="venue-creator-grid">
+          {isLoading && <p className="col-span-full py-12 text-muted-foreground">Loading creators…</p>}
           {filtered.map((c) => {
             const isSaved = !!savedIds?.has(c.user_id);
             const maxFollowers = Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0);
             return (
-              <Card key={c.user_id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3 cursor-pointer" onClick={() => navigate(`/venue/creator/${c.user_id}`)}>
-                    {c.avatar_url ? (
-                      <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-border" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate hover:underline">{c.full_name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="w-3 h-3" /> {maxFollowers.toLocaleString()} followers
-                      </p>
-                    </div>
-                    {venueId && (
-                      <Button
-                        size="icon" variant="ghost" className="shrink-0"
-                        onClick={(e) => {
-                          // Keep the save click from bubbling to the card,
-                          // which would navigate away and lose the filters.
-                          e.stopPropagation();
-                          toggleSave.mutate({ influencerId: c.user_id, isSaved });
-                        }}
-                        aria-label={isSaved ? "Remove from shortlist" : "Save to shortlist"}
-                      >
-                        <Heart className={`w-4 h-4 ${isSaved ? "fill-gold text-gold" : "text-muted-foreground"}`} />
-                      </Button>
-                    )}
+              <Card key={c.user_id} className="venue-creator-card">
+                <div className="venue-creator-photo">
+                  <Link to={`/venue/creator/${c.user_id}`} aria-label={`View ${c.full_name}`}>
+                    {c.avatar_url ? <img src={c.avatar_url} alt={c.full_name} loading="lazy" /> : <div className="creator-initials">{(c.full_name || "FP").slice(0, 2).toUpperCase()}</div>}
+                  </Link>
+                  {venueId && <Button size="icon" variant="ghost" aria-label={isSaved ? "Remove from shortlist" : "Save to shortlist"} title={isSaved ? "Remove from shortlist" : "Save to shortlist"} onClick={(e) => { e.stopPropagation(); toggleSave.mutate({ influencerId: c.user_id, isSaved }); }}>
+                    <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                  </Button>}
+                </div>
+                <div className="venue-creator-detail">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link to={`/venue/creator/${c.user_id}`}><h3>{c.full_name}</h3></Link>
+                    {c.is_verified && <BadgeCheck className="w-4 h-4 shrink-0 text-primary" aria-label="Verified creator" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.city || c.country || "Location not added"}</p>
+                  <div className="flex items-center gap-1.5 mt-3 text-sm font-semibold"><Users className="w-4 h-4 text-muted-foreground" />{maxFollowers.toLocaleString()} <span className="font-normal text-xs text-muted-foreground">followers</span></div>
+                  <div className="flex flex-wrap gap-1.5 mt-3 min-h-5">
+                    {(c.niche ?? []).slice(0, 2).map((n) => <Badge key={n} variant="secondary" className="text-[10px] rounded-md">{n}</Badge>)}
+                  </div>
+                  <div className="venue-creator-socials">
+                    {c.instagram_handle && <span><Instagram /> @{c.instagram_handle}</span>}
+                    {c.tiktok_handle && <span><Music2 /> @{c.tiktok_handle}</span>}
                   </div>
                   {c.bio && <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{c.bio}</p>}
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {(c.niche ?? []).slice(0, 3).map((n) => <Badge key={n} variant="secondary" className="text-[10px]">{n}</Badge>)}
+                  <div className="venue-creator-actions">
+                    <Button size="sm" variant="outline" asChild><Link to={`/venue/creator/${c.user_id}`}>View <ArrowUpRight /></Link></Button>
+                    {venueId && <Button size="sm" onClick={() => openInvite(c)}><Send /> Invite</Button>}
                   </div>
-                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                    {c.instagram_handle && <span className="flex items-center gap-1"><Instagram className="w-3 h-3" /> @{c.instagram_handle}</span>}
-                    {c.tiktok_handle && <span className="flex items-center gap-1"><Music2 className="w-3 h-3" /> @{c.tiktok_handle}</span>}
-                  </div>
-                  {venueId && (
-                    <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => openInvite(c)}>
-                      <Send className="w-3.5 h-3.5 mr-1.5" /> Invite to offer
-                    </Button>
-                  )}
-                </CardContent>
+                </div>
               </Card>
             );
           })}
-          {filtered.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="col-span-full text-center py-12 text-muted-foreground">No creators match your filters.</div>
           )}
+        </div>
+
+        </section>
         </div>
 
         <Dialog open={!!inviteTarget} onOpenChange={(o) => !o && setInviteTarget(null)}>

@@ -129,7 +129,7 @@ const VenueCampaigns = () => {
   while (cells.length % 7 !== 0) cells.push(null);
 
   const Section = ({ title, items, open, setOpen, count }: any) => (
-    <div className="mb-6">
+    <div className="venue-campaign-section">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -148,7 +148,7 @@ const VenueCampaigns = () => {
               const cover = c.cover_image_url || (c.cover_images && c.cover_images[0]);
               const d = c.deliverables || {};
               return (
-                <div key={c.id} className="bg-white border border-border rounded-2xl overflow-hidden flex hover:shadow-md transition-shadow">
+                <div key={c.id} className="venue-campaign-row bg-card border border-border overflow-hidden flex hover:shadow-md transition-shadow">
                   <div className="w-40 h-32 bg-muted flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {c.cover_video_url ? <video src={c.cover_video_url} className="w-full h-full object-cover" muted /> : cover ? <img src={cover} alt={c.title} className="w-full h-full object-cover" /> : <Plus className="w-8 h-8 text-muted-foreground" />}
                   </div>
@@ -206,9 +206,9 @@ const VenueCampaigns = () => {
   return (
     <DashboardLayout type="venue">
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[28px] font-bold text-foreground">Offers</h1>
-          <Button onClick={() => openNew()} style={{ background: "hsl(24 47% 63%)" }} className="text-white hover:opacity-90">
+        <div className="venue-heading">
+          <div><p className="venue-eyebrow">Collaborations</p><h1>Offers</h1></div>
+          <Button onClick={() => openNew()}>
             <Plus className="w-4 h-4 mr-1.5" /> New Offer
           </Button>
         </div>
@@ -218,13 +218,12 @@ const VenueCampaigns = () => {
 
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-6">
-            <button onClick={() => setView("list")} className={`pb-3 px-1 text-sm font-medium ${view === "list" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "list" ? { borderColor: "hsl(24 47% 63%)" } : undefined}>
+            <Button variant="ghost" onClick={() => setView("list")} className={`pb-3 px-1 rounded-none text-sm font-medium ${view === "list" ? "border-b-2 border-primary text-foreground" : "text-muted-foreground"}`}>
               List
-            </button>
-            <button onClick={() => setView("calendar")} className={`pb-3 px-1 text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 text-foreground" : "text-muted-foreground"}`} style={view === "calendar" ? { borderColor: "hsl(24 47% 63%)" } : undefined}>
+            </Button>
+            <Button variant="ghost" onClick={() => setView("calendar")} className={`pb-3 px-1 rounded-none text-sm font-medium flex items-center gap-2 ${view === "calendar" ? "border-b-2 border-primary text-foreground" : "text-muted-foreground"}`}>
               Calendar
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: "hsl(24 47% 63%)" }}>NEW</span>
-            </button>
+            </Button>
           </div>
         </div>
 

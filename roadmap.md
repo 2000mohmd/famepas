@@ -1,4 +1,9 @@
 # Website upload
+# Venue-first design refresh
+- [x] Refresh venue navigation and workspace styling without affecting other roles.
+- [x] Polish venue Home, Discover, and campaign presentation.
+- [x] Verify signed-in venue navigation, discovery controls, and page layouts.
+
 - [x] Add the supplied three-page design and images.
 - [x] Connect navigation and signup to the existing app; retain live categories.
 - [x] Verify the pages and links in the preview.

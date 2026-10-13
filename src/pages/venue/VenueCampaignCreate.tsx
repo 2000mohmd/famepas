@@ -20,13 +20,13 @@ const DIETARY = ["Gluten-free", "Halal", "Vegan", "Vegetarian"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const SectionCard = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <div className="bg-white border border-border rounded-2xl p-6 mb-5">
+  <section className="venue-form-section">
     <div className="flex items-start justify-between mb-5">
       <h2 className="text-lg font-bold text-foreground">{title}</h2>
       {action}
     </div>
     {children}
-  </div>
+  </section>
 );
 
 
@@ -327,9 +327,10 @@ const VenueCampaignCreate = () => {
   return (
     <DashboardLayout type="venue">
       <div className="max-w-3xl mx-auto pb-28 animate-fade-in">
-        <button onClick={() => navigate("/venue/campaigns")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-5">
+        <Button variant="link" onClick={() => navigate("/venue/campaigns")} className="px-0 text-muted-foreground mb-5">
           <ChevronLeft className="w-4 h-4" /> Back to Campaigns
-        </button>
+        </Button>
+        <div className="mb-7"><p className="venue-eyebrow">Collaborations / Offers</p><h1>{editing ? "Edit offer" : "Create an offer"}</h1></div>
 
         {/* CAMPAIGN DETAILS */}
         <SectionCard title="Offer Details">
@@ -793,11 +794,11 @@ const VenueCampaignCreate = () => {
       </div>
 
       {/* Sticky footer */}
-      <div className="fixed bottom-0 left-64 right-0 bg-white border-t border-border px-8 py-3 flex items-center justify-between z-30">
+      <div className="venue-form-footer fixed bottom-0 left-0 md:left-[240px] right-0 bg-card border-t border-border px-4 md:px-8 py-3 flex items-center justify-between gap-2 z-30">
         <Button variant="outline" onClick={() => setPreviewOpen(true)}>Preview</Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save("draft")} disabled={saving}>Save to Drafts</Button>
-          <Button onClick={() => save("live")} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">▶ Set Live</Button>
+          <Button onClick={() => save("live")} disabled={saving}>Set Live</Button>
         </div>
       </div>
 
