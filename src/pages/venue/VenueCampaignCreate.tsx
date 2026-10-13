@@ -20,13 +20,13 @@ const DIETARY = ["Gluten-free", "Halal", "Vegan", "Vegetarian"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const SectionCard = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <div className="bg-white border border-border rounded-2xl p-6 mb-5">
+  <section className="venue-form-section">
     <div className="flex items-start justify-between mb-5">
       <h2 className="text-lg font-bold text-foreground">{title}</h2>
       {action}
     </div>
     {children}
-  </div>
+  </section>
 );
 
 
