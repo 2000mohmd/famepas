@@ -9,18 +9,38 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, DollarSign, Percent, CreditCard, EyeOff } from "lucide-react";
+import { Edit, DollarSign, Percent, CreditCard, EyeOff, Banknote } from "lucide-react";
 import StatCard from "@/components/StatCard";
 
 interface Tier {
   id: string;
   name: string;
   price: number;
+  price_quarterly: number | null;
+  price_annual: number | null;
   description: string | null;
   features: string[];
   commission_pct: number;
   is_active: boolean;
+}
+
+type BillingCycle = "monthly" | "quarterly" | "annual";
+const CYCLE_MONTHS: Record<BillingCycle, number> = { monthly: 1, quarterly: 3, annual: 12 };
+
+interface VenueOption { id: string; name: string; }
+interface PaymentRow {
+  id: string;
+  venue_id: string;
+  tier_id: string;
+  amount: number;
+  period_start: string;
+  period_end: string;
+  payment_date: string;
+  notes: string | null;
+  venues: { name: string } | null;
+  subscription_tiers: { name: string } | null;
 }
 
 const AdminBilling = () => {
@@ -34,13 +54,32 @@ const AdminBilling = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
+  // VP17 (Adnan, Oct 12): cash-only launch — record a payment against a
+  // venue; recording it is what activates/renews the plan (record_venue_payment RPC).
+  const [venues, setVenues] = useState<VenueOption[]>([]);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [venueSearch, setVenueSearch] = useState("");
+  const [payVenueId, setPayVenueId] = useState("");
+  const [payTierId, setPayTierId] = useState("");
+  const [payCycle, setPayCycle] = useState<BillingCycle>("monthly");
+  const [payAmount, setPayAmount] = useState("");
+  const [payStart, setPayStart] = useState(() => new Date().toISOString().slice(0, 10));
+  const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [payNotes, setPayNotes] = useState("");
+  const [recordingPayment, setRecordingPayment] = useState(false);
+
   const fetchAll = async () => {
-    const [tiersRes, earningsRes, withdrawalsRes, pendingRes, settingRes] = await Promise.all([
+    const [tiersRes, earningsRes, withdrawalsRes, pendingRes, settingRes, venuesRes, paymentsRes] = await Promise.all([
       supabase.from("subscription_tiers").select("*").order("price"),
       supabase.from("earnings").select("net_amount, commission"),
       supabase.from("withdrawal_requests").select("id, influencer_id, amount, status, created_at, payment_method").order("created_at", { ascending: false }).limit(20),
       supabase.from("withdrawal_requests").select("amount", { count: "exact" }).eq("status", "pending"),
       supabase.from("platform_settings").select("value").eq("key", "billing_numbers_hidden").maybeSingle(),
+      supabase.from("venues").select("id, name").order("name"),
+      (supabase.from("venue_payments" as any) as any)
+        .select("id, venue_id, tier_id, amount, period_start, period_end, payment_date, notes, venues(name), subscription_tiers(name)")
+        .order("payment_date", { ascending: false }).limit(20),
     ]);
     const hidden = settingRes.data?.value;
     setNumbersHidden(hidden === undefined || hidden === null ? true : hidden === true || hidden === "true");
@@ -49,10 +88,66 @@ const AdminBilling = () => {
     setTotalRevenue(revenue);
     setWithdrawals(withdrawalsRes.data ?? []);
     setPendingWithdrawals(pendingRes.count ?? 0);
+    setVenues((venuesRes.data as any) ?? []);
+    setPayments((paymentsRes.data as any) ?? []);
     setLoading(false);
   };
 
   useEffect(() => { fetchAll(); }, []);
+
+  const openPaymentDialog = () => {
+    setPayVenueId(""); setVenueSearch("");
+    setPayTierId(tiers.find(t2 => t2.is_active)?.id ?? "");
+    setPayCycle("monthly");
+    setPayStart(new Date().toISOString().slice(0, 10));
+    setPayDate(new Date().toISOString().slice(0, 10));
+    setPayNotes("");
+    setPaymentDialogOpen(true);
+  };
+
+  // Keep the amount in sync with tier + cycle unless the admin already typed
+  // a custom number (price overrides — e.g. a prorated or discounted amount).
+  const selectedTier = tiers.find(t2 => t2.id === payTierId);
+  useEffect(() => {
+    if (!selectedTier) return;
+    const suggested = payCycle === "annual" ? selectedTier.price_annual
+      : payCycle === "quarterly" ? selectedTier.price_quarterly
+      : selectedTier.price;
+    if (suggested != null) setPayAmount(String(suggested));
+  }, [payTierId, payCycle, selectedTier]);
+
+  const periodEnd = (() => {
+    const d = new Date(payStart);
+    if (isNaN(d.getTime())) return "";
+    d.setMonth(d.getMonth() + CYCLE_MONTHS[payCycle]);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const submitPayment = async () => {
+    if (!payVenueId || !payTierId || !payAmount || !payStart) return;
+    setRecordingPayment(true);
+    const { error } = await (supabase.rpc as any)("record_venue_payment", {
+      _venue_id: payVenueId,
+      _tier_id: payTierId,
+      _amount: Number(payAmount),
+      _period_start: payStart,
+      _period_end: periodEnd,
+      _payment_date: payDate,
+      _notes: payNotes || null,
+    });
+    setRecordingPayment(false);
+    if (error) {
+      toast({ title: t("admin.common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("admin.billing.paymentRecorded", { venue: venues.find(v => v.id === payVenueId)?.name ?? "" }) });
+    setPaymentDialogOpen(false);
+    fetchAll();
+  };
+
+  const filteredVenues = venueSearch.trim()
+    ? venues.filter(v => v.name.toLowerCase().includes(venueSearch.trim().toLowerCase()))
+    : venues;
 
   const handleSaveTier = async () => {
     if (!editTier) return;
@@ -124,10 +219,18 @@ const AdminBilling = () => {
     <DashboardLayout type="admin">
       <AdminPermissionGate permission="manage_billing">
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          {t("admin.billing.titlePrefix")} <span className="text-gold">{t("admin.billing.titleAccent")}</span>
-        </h1>
-        <p className="text-muted-foreground mb-8">{t("admin.billing.subtitle")}</p>
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-2">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+              {t("admin.billing.titlePrefix")} <span className="text-gold">{t("admin.billing.titleAccent")}</span>
+            </h1>
+            <p className="text-muted-foreground">{t("admin.billing.subtitle")}</p>
+          </div>
+          <Button onClick={openPaymentDialog} className="gradient-gold text-accent-foreground font-semibold gap-2">
+            <Banknote className="w-4 h-4" /> {t("admin.billing.recordPayment")}
+          </Button>
+        </div>
+        <div className="mb-6" />
 
         {numbersHidden ? (
           <div className="mb-8 flex items-center gap-3 p-4 rounded-lg border border-border bg-secondary/40">
@@ -228,6 +331,113 @@ const AdminBilling = () => {
             </table>
           </div>
         </div>
+
+        {/* Venue Payments */}
+        <div className="mt-8">
+          <h2 className="font-display text-xl font-bold text-foreground mb-4">{t("admin.billing.recentPayments")}</h2>
+          <div className="gradient-card rounded-xl border border-border overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.venues.name")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.billing.subscriptionTiers")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.billing.amount")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.billing.periodCovered")}</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("admin.events.date")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.length === 0 ? (
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t("admin.billing.noPayments")}</td></tr>
+                ) : (
+                  payments.map((p) => (
+                    <tr key={p.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="p-4 font-medium text-foreground">{p.venues?.name ?? "—"}</td>
+                      <td className="p-4 text-muted-foreground">{p.subscription_tiers?.name ?? "—"}</td>
+                      <td className="p-4 text-foreground">${Number(p.amount).toFixed(2)}</td>
+                      <td className="p-4 text-muted-foreground text-sm">{p.period_start} → {p.period_end}</td>
+                      <td className="p-4 text-muted-foreground text-sm">{new Date(p.payment_date).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Record Payment Dialog */}
+        <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="font-display text-foreground">{t("admin.billing.recordPayment")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">{t("admin.venues.name")}</Label>
+                <Input placeholder={t("admin.influencers.searchPlaceholder", "Search...")} value={venueSearch} onChange={e => setVenueSearch(e.target.value)} className="bg-secondary border-border mb-2" />
+                <Select value={payVenueId} onValueChange={setPayVenueId}>
+                  <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder={t("admin.venues.name")} /></SelectTrigger>
+                  <SelectContent>
+                    {filteredVenues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.billing.subscriptionTiers")}</Label>
+                  <Select value={payTierId} onValueChange={setPayTierId}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {tiers.filter(t2 => t2.is_active).map(t2 => <SelectItem key={t2.id} value={t2.id}>{t2.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.billing.billingCycle")}</Label>
+                  <Select value={payCycle} onValueChange={(v: any) => setPayCycle(v)}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">{t("admin.billing.monthly")}</SelectItem>
+                      <SelectItem value="quarterly">{t("admin.billing.quarterly")}</SelectItem>
+                      <SelectItem value="annual">{t("admin.billing.annual")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.billing.amount")}</Label>
+                  <Input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="bg-secondary border-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.events.date")}</Label>
+                  <Input type="date" value={payDate} onChange={e => setPayDate(e.target.value)} className="bg-secondary border-border" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.billing.periodStart")}</Label>
+                  <Input type="date" value={payStart} onChange={e => setPayStart(e.target.value)} className="bg-secondary border-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">{t("admin.billing.periodEnd")}</Label>
+                  <Input type="date" value={periodEnd} disabled className="bg-secondary border-border opacity-70" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">{t("admin.chatbot.content", "Notes")}</Label>
+                <Textarea value={payNotes} onChange={e => setPayNotes(e.target.value)} className="bg-secondary border-border" rows={2} />
+              </div>
+              <Button
+                onClick={submitPayment}
+                disabled={!payVenueId || !payTierId || !payAmount || recordingPayment}
+                className="w-full gradient-gold text-accent-foreground font-semibold"
+              >
+                {recordingPayment ? t("admin.influencers.loading", "...") : t("admin.billing.recordPayment")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Tier Dialog */}
         {editTier && (

@@ -768,7 +768,18 @@
       "reject": "رفض",
       "editTier": "تعديل الباقة",
       "monthlyPrice": "السعر الشهري ($)",
-      "commissionLabel": "العمولة (%)"
+      "commissionLabel": "العمولة (%)",
+      "recordPayment": "تسجيل دفعة",
+      "recentPayments": "الدفعات الأخيرة",
+      "noPayments": "لم يتم تسجيل أي دفعات بعد",
+      "periodCovered": "الفترة المغطاة",
+      "periodStart": "بداية الفترة",
+      "periodEnd": "نهاية الفترة",
+      "billingCycle": "دورة الفوترة",
+      "monthly": "شهري",
+      "quarterly": "ربع سنوي (3 أشهر)",
+      "annual": "سنوي",
+      "paymentRecorded": "تم تسجيل الدفعة لـ {{venue}}"
     },
     "messages": {
       "notSent": "لم تُرسل الرسالة",

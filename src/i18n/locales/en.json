@@ -717,7 +717,18 @@
       "reject": "Reject",
       "editTier": "Edit Tier",
       "monthlyPrice": "Monthly Price ($)",
-      "commissionLabel": "Commission (%)"
+      "commissionLabel": "Commission (%)",
+      "recordPayment": "Record Payment",
+      "recentPayments": "Recent Payments",
+      "noPayments": "No payments recorded yet",
+      "periodCovered": "Period Covered",
+      "periodStart": "Period Start",
+      "periodEnd": "Period End",
+      "billingCycle": "Billing Cycle",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly (3 months)",
+      "annual": "Annual",
+      "paymentRecorded": "Payment recorded for {{venue}}"
     },
     "messages": {
       "notSent": "Message not sent",

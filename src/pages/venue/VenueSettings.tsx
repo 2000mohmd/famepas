@@ -717,19 +717,51 @@ const VenueSettings = () => {
 
         {tab === "billing" && (
           <div className="space-y-4 max-w-3xl">
+            {selectedTierId && (
+              <div className="bg-white border border-border rounded-2xl p-6 flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment status</p>
+                  <p className="font-semibold text-foreground capitalize">{(venue as any)?.payment_status || "Not set up yet"}</p>
+                </div>
+                {(venue as any)?.subscription_renews_at && (
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Renews</p>
+                    <p className="font-semibold text-foreground">{new Date((venue as any).subscription_renews_at).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-semibold text-foreground mb-4">Subscription Plans</h2>
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-3 gap-4 items-stretch">
                 {tiers.map(t => {
                   const isSelected = selectedTierId === t.id;
+                  const quarterly = (t as any).price_quarterly as number | null;
+                  const annual = (t as any).price_annual as number | null;
+                  const quarterlySavings = quarterly ? Number(t.price) * 3 - quarterly : null;
+                  const annualSavings = annual ? Number(t.price) * 12 - annual : null;
                   return (
-                    <div key={t.id} className={`border rounded-xl p-4 ${isSelected ? "border-primary ring-1 ring-primary" : "border-border"}`}>
-                      <p className="font-semibold text-foreground">{t.name}</p>
+                    <div key={t.id} className={`border rounded-xl p-4 flex flex-col ${isSelected ? "border-primary ring-1 ring-primary" : "border-border"}`}>
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold text-foreground">{t.name}</p>
+                        {(t as any).is_recommended && <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style={{ background: `${PINK}1a`, color: PINK }}>Recommended</span>}
+                      </div>
                       <p className="text-2xl font-bold my-2" style={{ color: PINK }}>${Number(t.price).toFixed(0)}<span className="text-sm text-muted-foreground font-normal">/mo</span></p>
-                      {(() => {
-                        const desc = /pro/i.test(t.name) ? "For growing venues" : /premium/i.test(t.name) ? "For high-volume venue groups" : t.description;
-                        return desc ? <p className="text-xs text-muted-foreground mb-3">{desc}</p> : null;
-                      })()}
+                      {t.description && <p className="text-xs text-muted-foreground mb-3">{t.description}</p>}
+                      {(quarterly || annual) && (
+                        <div className="text-xs text-muted-foreground mb-3 space-y-0.5">
+                          {quarterly && <p>${quarterly} / 3 months{quarterlySavings ? ` — save $${quarterlySavings.toFixed(0)}` : ""}</p>}
+                          {annual && <p>${annual} / year{annualSavings ? ` — save $${annualSavings.toFixed(0)}` : ""}</p>}
+                        </div>
+                      )}
+                      <ul className="space-y-1 mb-4 flex-1">
+                        {(t.features ?? []).map((f: string, i: number) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                            <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: PINK }} />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
                       <Button
                         className="w-full"
                         variant={isSelected ? "default" : "outline"}
@@ -751,6 +783,9 @@ const VenueSettings = () => {
                 })}
                 {tiers.length === 0 && <p className="text-sm text-muted-foreground">No plans configured.</p>}
               </div>
+              {tiers.some(t => (t.features ?? []).some((f: string) => f.includes("*"))) && (
+                <p className="text-[11px] text-muted-foreground mt-4">*Unlimited visits are subject to creator availability.</p>
+              )}
             </div>
           </div>
         )}
