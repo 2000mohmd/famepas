@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Megaphone, CalendarDays, Film, ShieldCheck } from "lucide-react";
+import { Clock, Megaphone, CalendarDays, Film, ShieldCheck, Plus, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
 
 /** Adnan, Venue Portal items 3 & 4: a real landing page instead of redirecting
@@ -100,9 +100,17 @@ const VenueHome = () => {
   return (
     <DashboardLayout type="venue">
       <div className="space-y-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">{t("venueHome.welcomeBack")}{venue.name ? `, ${venue.name}` : ""}</h1>
+        <div className="venue-heading">
+          <div><p className="venue-eyebrow">Your workspace</p><h1>{t("venueHome.welcomeBack")}{venue.name ? `, ${venue.name}` : ""}</h1></div>
+          <Button asChild><Link to="/venue/campaigns/new"><Plus /> Create an offer</Link></Button>
+        </div>
+        <div className="venue-summary">
+          <Link to="/venue/campaigns"><Megaphone /><div><strong>{liveCampaigns.length}</strong><span>{t("venueHome.liveOffers")}</span></div></Link>
+          <Link to="/venue/bookings"><CalendarDays /><div><strong>{upcomingVisits.length}</strong><span>{t("venueHome.upcomingVisits")}</span></div></Link>
+          <Link to="/venue/content"><Film /><div><strong>{recentContent.length}</strong><span>{t("venueHome.contentReceived")}</span></div></Link>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="venue-home-panels grid grid-cols-1 lg:grid-cols-3 gap-5">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
@@ -173,26 +181,18 @@ const VenueHome = () => {
         </div>
 
         {topCreators.length > 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="font-semibold text-foreground mb-4">{t("venueHome.creatorsOnFamePass")}</h2>
-              <div className="flex flex-wrap gap-4">
-                {topCreators.map((c) => (
-                  <div key={c.user_id} className="flex flex-col items-center w-20 text-center">
-                    {c.avatar_url ? (
-                      <img src={c.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-border" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-muted" />
-                    )}
-                    <span className="text-xs font-medium text-foreground mt-1 truncate w-full">{c.full_name}</span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {t("venueHome.followersCount", { count: Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0).toLocaleString() })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <section className="pt-6">
+            <div className="flex items-center justify-between gap-4 mb-5"><h2 className="text-lg">{t("venueHome.creatorsOnFamePass")}</h2><Button variant="link" asChild><Link to="/venue/discover">Discover creators <ArrowUpRight /></Link></Button></div>
+            <div className="venue-creator-rail">
+              {topCreators.map((c) => (
+                <Link key={c.user_id} to={`/venue/creator/${c.user_id}`}>
+                  {c.avatar_url ? <img src={c.avatar_url} alt={c.full_name} loading="lazy" /> : <div className="creator-initials">{(c.full_name || "FP").slice(0, 2).toUpperCase()}</div>}
+                  <span className="text-xs font-semibold block truncate">{c.full_name}</span>
+                  <span className="text-[10px] text-muted-foreground">{Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0).toLocaleString()} followers</span>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </DashboardLayout>
