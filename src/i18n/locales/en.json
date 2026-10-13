@@ -53,7 +53,15 @@
     "brandName": "Name",
     "mediaTitle": "Show creators your venue",
     "mediaSub": "Your logo, at least 3 photos and your Instagram handle are required.",
-    "locationTitle": "Add your first location"
+    "locationTitle": "Add your first location",
+    "venuePanelTitle": "Turn creator visits into real customers.",
+    "venuePanelPoint1": "Post an offer in minutes — a meal, a treatment, a stay.",
+    "venuePanelPoint2": "Choose from verified Lebanese creators who apply to you.",
+    "venuePanelPoint3": "Get real content and see the reach it brings back.",
+    "creatorPanelTitle": "Your pass to the best spots in town.",
+    "creatorPanelPoint1": "Enjoy restaurants, spas and hotels as a FamePass creator.",
+    "creatorPanelPoint2": "Apply to offers you love — or get invited directly.",
+    "creatorPanelPoint3": "Build your reputation and unlock priority invitations."
   },
   "nav": {
     "home": "Home",

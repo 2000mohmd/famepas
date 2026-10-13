@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import BrandLogo from "@/components/BrandLogo";
 import { Input } from "@/components/ui/input";
 import { Camera, CheckCircle2, XCircle, LogOut } from "lucide-react";
 
@@ -113,76 +113,91 @@ const ScanCheckIn = () => {
     }
   };
 
+  const corner = "absolute w-10 h-10 border-[hsl(var(--primary))]";
+
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen px-4 py-6" style={{ background: "radial-gradient(120% 80% at 50% 0%, hsl(0 70% 22%), hsl(0 100% 12%))" }}>
       <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            Check in a <span className="text-gold">creator</span>
-          </h1>
+        <div className="flex items-center justify-between mb-8">
+          <BrandLogo tone="gold" size={20} />
           {role === "venue_staff" && (
-            <button onClick={() => void signOut()} className="text-sm text-muted-foreground flex items-center gap-1">
+            <button onClick={() => void signOut()} className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-sm font-semibold text-white/80 bg-white/10 hover:bg-white/15">
               <LogOut className="w-4 h-4" /> Log out
             </button>
           )}
         </div>
 
+        <p className="text-xs font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "hsl(var(--gold-light))" }}>Door check-in</p>
+        <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight mb-6">Check in a creator</h1>
+
         {result && (
-          <div className={`rounded-2xl border p-5 mb-5 ${result.ok ? "border-success/40 bg-success/10" : "border-destructive/40 bg-destructive/10"}`}>
-            {result.ok ? (
-              <div className="text-center">
-                {result.avatar_url ? (
-                  <img src={result.avatar_url} alt="" className="w-28 h-28 rounded-full object-cover mx-auto mb-3 border-4 border-success/40" />
-                ) : (
-                  <div className="w-28 h-28 rounded-full bg-secondary mx-auto mb-3 flex items-center justify-center text-3xl font-bold text-muted-foreground">
-                    {(result.creator_name || "?")[0]}
-                  </div>
-                )}
-                <p className="text-xl font-bold text-foreground">{result.creator_name || "Creator"}</p>
-                {result.instagram_handle && (
-                  <p className="text-muted-foreground">@{result.instagram_handle.replace(/^@/, "")}</p>
-                )}
-                <p className="flex items-center justify-center gap-1.5 text-success font-semibold text-lg mt-3">
-                  <CheckCircle2 className="w-5 h-5" /> Checked in
-                </p>
-                <div className="mt-4 rounded-xl bg-card border border-border p-3 text-left">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Their offer</p>
-                  <p className="font-medium text-foreground">{result.offer_title}</p>
-                  {result.offer_description && <p className="text-sm text-muted-foreground mt-0.5">{result.offer_description}</p>}
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Make sure the face matches the photo — a forwarded screenshot shows someone else.
-                </p>
+          result.ok ? (
+            <div className="rounded-[2rem] bg-white p-6 mb-5 text-center shadow-2xl">
+              <div className="relative w-32 h-32 mx-auto mb-4">
+                {result.avatar_url
+                  ? <img src={result.avatar_url} alt="" className="w-32 h-32 rounded-full object-cover border-4 border-emerald-400" />
+                  : <div className="w-32 h-32 rounded-full bg-neutral-100 border-4 border-emerald-400 flex items-center justify-center text-4xl font-extrabold text-neutral-400">{(result.creator_name || "?")[0]}</div>}
+                <span className="absolute -bottom-1 -right-1 w-11 h-11 rounded-full bg-emerald-500 border-4 border-white flex items-center justify-center"><CheckCircle2 className="w-6 h-6 text-white" /></span>
               </div>
-            ) : (
-              <p className="flex items-start gap-2 text-destructive font-medium">
-                <XCircle className="w-5 h-5 shrink-0 mt-0.5" /> {result.reason}
-              </p>
-            )}
-          </div>
+              <p className="text-2xl font-extrabold text-neutral-900">{result.creator_name || "Creator"}</p>
+              {result.instagram_handle && <p className="text-neutral-500">@{result.instagram_handle.replace(/^@/, "")}</p>}
+              <p className="inline-flex items-center gap-1.5 mt-3 px-4 h-9 rounded-full bg-emerald-50 text-emerald-700 font-bold">Checked in</p>
+              <div className="mt-5 rounded-2xl bg-neutral-50 border border-neutral-100 p-4 text-left">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-400 mb-1">Their offer</p>
+                <p className="font-bold text-neutral-900">{result.offer_title}</p>
+                {result.offer_description && <p className="text-sm text-neutral-500 mt-0.5">{result.offer_description}</p>}
+              </div>
+              <p className="text-xs text-neutral-500 mt-4">Make sure the face matches the photo — a forwarded screenshot shows someone else.</p>
+              <button type="button" onClick={() => setResult(null)} className="mt-5 w-full h-12 rounded-full font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>Check in the next creator</button>
+            </div>
+          ) : (
+            <div className="rounded-3xl bg-white p-5 mb-5 flex items-start gap-3 shadow-xl">
+              <span className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0"><XCircle className="w-5 h-5 text-red-600" /></span>
+              <div>
+                <p className="font-extrabold text-neutral-900">Couldn't check in</p>
+                <p className="text-sm text-neutral-600 mt-0.5">{result.reason}</p>
+              </div>
+            </div>
+          )
         )}
 
-        {scanning ? (
-          <div className="space-y-3">
-            <video ref={videoRef} playsInline muted className="w-full rounded-2xl bg-black aspect-square object-cover" />
-            <Button variant="outline" className="w-full" onClick={stopCamera}>Cancel</Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {canScanInPage ? (
-              <Button onClick={() => void startCamera()} disabled={busy} className="w-full h-14 text-base gradient-gold text-accent-foreground font-semibold">
-                <Camera className="w-5 h-5 mr-2" /> Scan creator
-              </Button>
-            ) : (
-              <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-                <Camera className="w-5 h-5 inline mr-1.5 -mt-0.5 text-gold" />
-                Point your phone's camera at the creator's QR code and tap the link that appears — it checks them in here.
+        {!result?.ok && (
+          scanning ? (
+            <div className="space-y-4">
+              <div className="relative rounded-[2rem] overflow-hidden bg-black aspect-square">
+                <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
+                <span className={`${corner} left-6 top-6 border-l-4 border-t-4 rounded-tl-2xl`} />
+                <span className={`${corner} right-6 top-6 border-r-4 border-t-4 rounded-tr-2xl`} />
+                <span className={`${corner} left-6 bottom-6 border-l-4 border-b-4 rounded-bl-2xl`} />
+                <span className={`${corner} right-6 bottom-6 border-r-4 border-b-4 rounded-br-2xl`} />
+                <p className="absolute inset-x-0 bottom-3 text-center text-sm font-semibold text-white/85">Point at the creator's QR code</p>
               </div>
-            )}
+              <button type="button" onClick={stopCamera} className="w-full h-12 rounded-full font-bold text-white bg-white/10 hover:bg-white/15">Cancel</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {canScanInPage ? (
+                <button type="button" onClick={() => void startCamera()} disabled={busy}
+                  className="w-full rounded-[2rem] p-6 flex items-center gap-5 text-left transition hover:brightness-105 disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--primary)))", color: "hsl(var(--venue-brand))" }}>
+                  <span className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}>
+                    <Camera className="w-7 h-7" style={{ color: "hsl(var(--primary))" }} />
+                  </span>
+                  <span>
+                    <span className="block text-2xl font-extrabold">Scan QR code</span>
+                    <span className="block text-sm opacity-80">Opens your camera</span>
+                  </span>
+                </button>
+              ) : (
+                <div className="rounded-[2rem] p-5 flex items-start gap-4 text-white bg-white/10 border border-white/15">
+                  <span className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary))" }}><Camera className="w-6 h-6" style={{ color: "hsl(var(--venue-brand))" }} /></span>
+                  <p className="text-sm leading-relaxed text-white/85">Point your phone's camera at the creator's QR code and tap the link that appears — it checks them in right here.</p>
+                </div>
+              )}
 
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground mb-2">Or type the 6-character code under their QR</p>
-              <div className="flex gap-2">
+              <div className="rounded-[2rem] bg-white p-5 shadow-xl">
+                <p className="text-sm font-bold text-neutral-900">Or type the code</p>
+                <p className="text-xs text-neutral-500 mb-3">The 6 characters under their QR code</p>
                 <Input
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -191,14 +206,15 @@ const ScanCheckIn = () => {
                   maxLength={8}
                   autoCapitalize="characters"
                   autoCorrect="off"
-                  className="text-center text-xl tracking-[0.3em] font-mono h-12"
+                  className="text-center text-2xl tracking-[0.4em] font-mono h-16 rounded-2xl bg-neutral-50 border-neutral-200 text-neutral-900 placeholder:text-neutral-300"
                 />
-                <Button onClick={() => void submit(code)} disabled={busy || code.trim().length < 6} className="h-12">
-                  {busy ? "…" : "Check in"}
-                </Button>
+                <button type="button" onClick={() => void submit(code)} disabled={busy || code.trim().length < 6}
+                  className="mt-3 w-full h-14 rounded-full font-bold text-base disabled:opacity-40" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+                  {busy ? "Checking…" : "Check in"}
+                </button>
               </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>

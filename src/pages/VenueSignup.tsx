@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import SignupShell from "@/components/SignupShell";
+import panelVenue from "@/assets/onboarding-hospitality.jpg";
 import BrandLogo from "@/components/BrandLogo";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -83,33 +85,28 @@ const createDefaultHours = (): OpeningHours =>
 
 /* ---------- shared light-mode UI primitives ---------- */
 
-const Page = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-background text-foreground">
-    <header className="px-8 py-6 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2">
-        <BrandLogo tone="gold" size={24} />
-      </Link>
-      <div className="flex items-center gap-4">
-        <LanguageSwitcher />
-        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
-          <UserCheck className="w-5 h-5" />
-        </div>
-      </div>
-    </header>
-    <main className="flex justify-center px-4 pb-16">{children}</main>
-  </div>
-);
+const Page = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useTranslation();
+  return (
+    <SignupShell
+      image={panelVenue}
+      title={t("signup.venuePanelTitle")}
+      points={[t("signup.venuePanelPoint1"), t("signup.venuePanelPoint2"), t("signup.venuePanelPoint3")]}
+    >
+      {children}
+    </SignupShell>
+  );
+};
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`w-full max-w-xl bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-8 ${className}`}>
+  <div className={`w-full bg-white text-slate-900 rounded-[2rem] shadow-[0_24px_60px_-40px_rgba(81,0,0,.45)] border border-[#EDE4DA] p-6 sm:p-10 ${className}`}>
     {children}
   </div>
 );
-
 const Heading = ({ title, sub }: { title: string; sub?: React.ReactNode }) => (
-  <div className="mb-6">
-    <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-    {sub && <p className="text-slate-500 mt-2 text-sm">{sub}</p>}
+  <div className="mb-8">
+    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#510000]">{title}</h1>
+    {sub && <p className="mt-2 text-slate-500 leading-relaxed">{sub}</p>}
   </div>
 );
 
@@ -124,14 +121,14 @@ const Field = ({ label, hint, children }: { label: string; hint?: string; childr
 const TextInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
-    className={`w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition ${props.className ?? ""}`}
+    className={`w-full h-[52px] px-4 rounded-2xl border border-[#E7DED4] bg-[#FBF8F5] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#CD9774] focus:ring-4 focus:ring-[#CD9774]/20 transition ${props.className ?? ""}`}
   />
 );
 
 const PrimaryButton = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     {...props}
-    className={`w-full h-12 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold transition ${props.className ?? ""}`}
+    className={`w-full h-14 rounded-full bg-[#510000] text-[#F5EBDD] font-bold text-base hover:bg-[#3d0000] disabled:opacity-40 disabled:cursor-not-allowed transition ${props.className ?? ""}`}
   >
     {children}
   </button>
@@ -143,13 +140,13 @@ const ChoicePill = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex items-center justify-between w-full h-12 px-4 rounded-lg border text-left text-sm font-medium transition
-      ${selected ? "border-primary bg-primary/10 text-primary" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"}`}
+    className={`flex items-center justify-between w-full h-[52px] px-5 rounded-2xl border-2 text-left text-sm font-semibold transition
+      ${selected ? "border-[#510000] bg-[#510000]/[.04] text-[#510000]" : "border-[#EDE4DA] bg-white text-slate-700 hover:border-[#CD9774]"}`}
   >
     <span>{children}</span>
     <span className={`w-5 h-5 rounded-full border flex items-center justify-center
-      ${selected ? "border-primary bg-primary" : "border-slate-300"}`}>
-      {selected && <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />}
+      ${selected ? "border-[#510000] bg-[#510000]" : "border-slate-300"}`}>
+      {selected && <Check className="w-3 h-3 text-[#F5EBDD]" strokeWidth={3} />}
     </span>
   </button>
 );
@@ -157,15 +154,16 @@ const ChoicePill = ({
 const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; total: number }) => {
   const { t } = useTranslation();
   return (
-  <div className="w-full max-w-xl mb-4 flex items-center justify-between">
-    <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+  <div className="w-full mb-6 flex items-center gap-4">
+    <button onClick={onBack} className="inline-flex items-center gap-1.5 h-10 pl-3 pr-4 rounded-full bg-white border border-[#EDE4DA] text-sm font-semibold text-slate-700 hover:border-[#CD9774] transition">
       <ArrowLeft className="w-4 h-4" /> {t("signup.back")}
     </button>
-    <div className="flex gap-1">
+    <div className="flex-1 flex gap-1.5">
       {Array.from({ length: total }).map((_, i) => (
-        <span key={i} className={`w-2 h-2 rounded-full ${i < step ? "bg-primary" : "bg-slate-200"}`} />
+        <span key={i} className={`h-1.5 flex-1 rounded-full transition ${i < step ? "bg-[#510000]" : "bg-[#E7DED4]"}`} />
       ))}
     </div>
+    <span className="text-xs font-semibold text-slate-500">{step}/{total}</span>
   </div>
   );
 };

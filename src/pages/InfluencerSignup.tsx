@@ -1,4 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
+import SignupShell from "@/components/SignupShell";
+import panelCreator from "@/assets/onboarding-creator.jpg";
 import BrandLogo from "@/components/BrandLogo";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -35,39 +37,34 @@ const isStrongPassword = (v: string) => Object.values(getPasswordChecks(v)).ever
 const isPasswordAllowed = (v: string) => v.length >= 6;
 
 /* ---------- light-mode primitives ---------- */
-const Page = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-background text-foreground">
-    <header className="px-6 sm:px-8 py-5 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2">
-        <BrandLogo tone="gold" size={24} />
-      </Link>
-      <div className="flex items-center gap-4">
-        <LanguageSwitcher />
-        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-foreground/60">
-          <UserCheck className="w-5 h-5" />
-        </div>
-      </div>
-    </header>
-    <main className="flex justify-center px-4 pb-16">{children}</main>
-  </div>
-);
+const Page = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useTranslation();
+  return (
+    <SignupShell
+      image={panelCreator}
+      title={t("signup.creatorPanelTitle")}
+      points={[t("signup.creatorPanelPoint1"), t("signup.creatorPanelPoint2"), t("signup.creatorPanelPoint3")]}
+    >
+      {children}
+    </SignupShell>
+  );
+};
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`w-full max-w-xl bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6 sm:p-8 ${className}`}>
+  <div className={`w-full bg-white text-slate-900 rounded-[2rem] shadow-[0_24px_60px_-40px_rgba(81,0,0,.45)] border border-[#EDE4DA] p-6 sm:p-10 ${className}`}>
     {children}
   </div>
 );
-
-const Heading = ({ title, sub }: { title: string; sub?: string }) => (
-  <div className="mb-6">
-    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
-    {sub && <p className="mt-2 text-slate-500">{sub}</p>}
+const Heading = ({ title, sub }: { title: string; sub?: React.ReactNode }) => (
+  <div className="mb-8">
+    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#510000]">{title}</h1>
+    {sub && <p className="mt-2 text-slate-500 leading-relaxed">{sub}</p>}
   </div>
 );
 
 const Field = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
   <div className="mb-4">
-    <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+    <label className="block text-sm font-semibold text-slate-800 mb-1.5">{label}</label>
     {children}
     {hint && <p className="text-xs text-slate-400 mt-1">{hint}</p>}
   </div>
@@ -76,14 +73,14 @@ const Field = ({ label, children, hint }: { label: string; children: React.React
 const TextInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
-    className={`w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${props.className ?? ""}`}
+    className={`w-full h-[52px] px-4 rounded-2xl border border-[#E7DED4] bg-[#FBF8F5] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#CD9774] focus:ring-4 focus:ring-[#CD9774]/20 transition ${props.className ?? ""}`}
   />
 );
 
 const TextArea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
   <textarea
     {...props}
-    className={`w-full min-h-[90px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${props.className ?? ""}`}
+    className={`w-full min-h-[110px] px-4 py-3 rounded-2xl border border-[#E7DED4] bg-[#FBF8F5] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#CD9774] focus:ring-4 focus:ring-[#CD9774]/20 transition ${props.className ?? ""}`}
   />
 );
 
@@ -91,21 +88,23 @@ const PrimaryButton = ({ children, disabled, ...rest }: React.ButtonHTMLAttribut
   <button
     {...rest}
     disabled={disabled}
-    className={`w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition`}
+    className={`w-full h-14 rounded-full bg-[#510000] text-[#F5EBDD] font-bold text-base hover:bg-[#3d0000] disabled:opacity-40 disabled:cursor-not-allowed transition`}
   >
     {children}
   </button>
 );
 
 const BackBar = ({ onBack, step, total }: { onBack: () => void; step: number; total: number }) => (
-  <div className="flex items-center gap-3 mb-4">
-    <button onClick={onBack} className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-primary">
+  <div className="flex items-center gap-4 mb-6">
+    <button onClick={onBack} aria-label="Back" className="w-10 h-10 rounded-full bg-white border border-[#EDE4DA] flex items-center justify-center text-slate-600 hover:border-[#CD9774] transition">
       <ArrowLeft className="w-4 h-4" />
     </button>
-    <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-      <div className="h-full bg-primary transition-all" style={{ width: `${(step / total) * 100}%` }} />
+    <div className="flex-1 flex gap-1.5">
+      {Array.from({ length: total }).map((_, i) => (
+        <span key={i} className={`h-1.5 flex-1 rounded-full transition ${i < step ? "bg-[#510000]" : "bg-[#E7DED4]"}`} />
+      ))}
     </div>
-    <span className="text-xs text-slate-500">{step}/{total}</span>
+    <span className="text-xs font-semibold text-slate-500">{step}/{total}</span>
   </div>
 );
 
@@ -360,7 +359,7 @@ const InfluencerSignup = () => {
               type="button"
               onClick={handleConnectInstagram}
               disabled={connectingInstagram}
-              className="w-full h-12 rounded-xl text-white font-semibold flex items-center justify-center gap-2 mb-3 disabled:opacity-60"
+              className="w-full h-14 rounded-full text-white font-bold text-base flex items-center justify-center gap-2 mb-3 disabled:opacity-60"
               style={{ background: "linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4)" }}
             >
               {connectingInstagram ? <Loader2 className="w-5 h-5 animate-spin" /> : <Instagram className="w-5 h-5" />}
@@ -476,7 +475,7 @@ const InfluencerSignup = () => {
                   type="button"
                   onClick={handleConnectInstagram}
                   disabled={connectingInstagram}
-                  className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm font-medium flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition disabled:opacity-60"
+                  className="w-full h-[52px] px-4 rounded-2xl border-2 border-dashed border-[#E7DED4] bg-[#FBF8F5] text-slate-700 text-sm font-semibold flex items-center justify-center gap-2 hover:border-[#CD9774] transition disabled:opacity-60"
                 >
                   {connectingInstagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
                   {t("influencerSignup.connectInstagramBtn")}
