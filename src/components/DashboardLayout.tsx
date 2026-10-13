@@ -178,6 +178,17 @@ const influencerGroups: NavGroup[] = [
   },
 ];
 
+// IP60: the 5 destinations a creator reaches for most, pinned to a bottom
+// tab bar on mobile instead of hidden behind the hamburger drawer. Everything
+// else (Invitations, Reviews, Earnings, Rewards, Settings) stays in the drawer.
+const influencerTabBarItems: NavItem[] = [
+  { to: "/influencer/home", icon: Home, label: "Home" },
+  { to: "/influencer/explore", icon: MapPin, label: "Explore" },
+  { to: "/influencer/bookings", icon: CalendarDays, label: "Bookings" },
+  { to: "/influencer/messages", icon: MessageCircle, label: "Messages" },
+  { to: "/influencer/profile", icon: Users, label: "My Profile" },
+];
+
 const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: "admin" | "venue" | "influencer" | "sales" }) => {
   const { signOut, user, role } = useAuth();
   const location = useLocation();
@@ -576,11 +587,32 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           </div>
         )}
 
-        <div className="p-4 md:p-8">
+        <div className={`p-4 md:p-8 ${isInfluencer ? "pb-24 md:pb-8" : ""}`}>
           {isInfluencer && !location.pathname.startsWith("/influencer/settings") && <ConnectAccountsGate />}
           {children}
         </div>
       </main>
+
+      {/* Bottom tab bar (influencer, mobile only) */}
+      {isInfluencer && (
+        <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch justify-between border-t border-border bg-card/95 backdrop-blur md:hidden pb-[env(safe-area-inset-bottom)]">
+          {influencerTabBarItems.map(({ to, icon: Icon, label }) => {
+            const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+                  isActive ? "text-primary" : "text-card-foreground/60"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{t(`navLabel.${label}`, label)}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 };
