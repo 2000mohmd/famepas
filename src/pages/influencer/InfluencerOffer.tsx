@@ -146,7 +146,7 @@ const InfluencerOffer = () => {
   if (isLoading) {
     return (
       <DashboardLayout type="influencer">
-        <div className="p-8 text-center text-muted-foreground">Loading offer...</div>
+        <div className="rounded-[2rem] bg-card border border-border py-24 text-center text-muted-foreground max-w-6xl mx-auto">Loading offer…</div>
       </DashboardLayout>
     );
   }
@@ -168,217 +168,172 @@ const InfluencerOffer = () => {
   const slotsLeft =
     offer.max_redemptions != null ? offer.max_redemptions - (offer.current_redemptions || 0) : null;
 
+  const facts = [
+    { icon: Users, label: "Min followers", value: offer.min_followers ? `${Number(offer.min_followers).toLocaleString()}+` : "Any" },
+    { icon: Tag, label: "Spots", value: slotsLeft != null ? `${slotsLeft} left` : "Open" },
+    ...((offer as any).expires_at ? [{ icon: Calendar, label: "Apply by", value: new Date((offer as any).expires_at).toLocaleDateString() }] : []),
+    ...((offer as any).deliverable_type ? [{ icon: Clock, label: "Deliverable", value: String((offer as any).deliverable_type) }] : []),
+  ];
+  const brand = { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" };
+
+  const applyCard = (
+    <div className="rounded-[2rem] bg-card border border-border p-6 shadow-[0_20px_50px_-30px_hsl(0_35%_16%/.5)]">
+      {offer.discount_value ? (
+        <p className="text-3xl font-extrabold text-foreground">${offer.discount_value} <span className="text-base font-semibold text-muted-foreground">value</span></p>
+      ) : (
+        <p className="text-2xl font-extrabold text-foreground capitalize">{offer.offer_type} collab</p>
+      )}
+      <div className="grid grid-cols-2 gap-3 mt-5">
+        {facts.map(({ icon: Icon, label, value }) => (
+          <div key={label} className="rounded-2xl bg-muted/70 p-4">
+            <Icon className="w-4 h-4 mb-2" style={{ color: "hsl(var(--venue-brand))" }} />
+            <p className="text-sm font-extrabold text-foreground capitalize">{value}</p>
+            <p className="text-[11px] text-muted-foreground">{label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5">
+        {myApplication ? (
+          <>
+            <div className="flex items-center gap-2 rounded-2xl px-4 py-3 mb-3 text-sm font-bold" style={{ background: "hsl(var(--primary) / .18)", color: "hsl(var(--venue-brand))" }}>
+              <CheckCircle className="w-4 h-4" /> <span className="capitalize">Application {myApplication.status}</span>
+            </div>
+            <button type="button" onClick={() => navigate("/influencer/bookings")} className="w-full h-14 rounded-full font-bold border-2 transition hover:bg-muted" style={{ borderColor: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand))" }}>
+              Go to my bookings
+            </button>
+          </>
+        ) : !hasInstagram || (slotsLeft != null && slotsLeft <= 0) ? (
+          <>
+            <button type="button" disabled className="w-full h-14 rounded-full font-bold opacity-50" style={brand}>
+              {!hasInstagram ? "Connect Instagram to apply" : "No spots left"}
+            </button>
+            {!hasInstagram && <button type="button" onClick={() => navigate("/influencer/settings")} className="w-full mt-3 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>Connect Instagram →</button>}
+          </>
+        ) : (
+          <Dialog open={applyOpen} onOpenChange={(o) => { setApplyOpen(o); if (!o) setRulesAccepted(false); }}>
+            <DialogTrigger asChild>
+              <button type="button" className="w-full h-14 rounded-full font-bold text-base transition hover:opacity-90" style={brand}>Apply for this offer</button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-extrabold">Apply to {offer.title}</DialogTitle>
+                <DialogDescription>Review the booking rules and confirm your application.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <BookingRulesNotice
+                  maxGuests={(offer as any).campaigns?.instagram_offers?.[0]?.max_guests ? parseInt((offer as any).campaigns.instagram_offers[0].max_guests) : null}
+                  requirements={(offer as any).requirements}
+                  accepted={rulesAccepted}
+                  onAcceptedChange={setRulesAccepted}
+                />
+                <button type="button" className="w-full h-12 rounded-full font-bold disabled:opacity-50" style={brand} onClick={() => apply.mutate()} disabled={apply.isPending || !rulesAccepted}>
+                  {apply.isPending ? "Submitting…" : "Confirm application"}
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        {!myApplication && <p className="text-xs text-muted-foreground text-center mt-3">The venue reviews every application. You'll be notified when they decide.</p>}
+      </div>
+    </div>
+  );
+
   return (
     <DashboardLayout type="influencer">
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Button>
-
-        {/* Cover */}
-        <div className="relative rounded-2xl overflow-hidden border border-border bg-card">
-          {cover ? (
-            <img src={cover} alt={offer.title} className="w-full h-64 md:h-80 object-cover" />
-          ) : (
-            <div className="w-full h-64 md:h-80 bg-secondary flex items-center justify-center">
-              <Tag className="w-16 h-16 text-muted-foreground" />
-            </div>
-          )}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Button size="icon" variant="secondary" onClick={shareOffer}>
-              <Share2 className="w-5 h-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={() => toggleSave.mutate()}
-            >
-              <Heart className={`w-5 h-5 ${isSaved ? "fill-gold text-gold" : ""}`} />
-            </Button>
-          </div>
-        </div>
-
-        {/* Title + venue header */}
-        <div className="flex items-start gap-4">
-          {v?.logo_url ? (
-            <img
-              src={v.logo_url}
-              alt={v.name}
-              className="w-16 h-16 rounded-full object-cover border border-border flex-shrink-0"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-7 h-7 text-gold" />
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <Badge variant="outline" className="capitalize">{offer.offer_type}</Badge>
-              {cat?.name && <Badge variant="secondary">{cat.name}</Badge>}
-              {offer.discount_value ? (
-                <Badge className="bg-gold text-background">${offer.discount_value} value</Badge>
-              ) : null}
-            </div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">{offer.title}</h1>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-              <button
-                onClick={() => navigate(`/influencer/explore?venue=${encodeURIComponent(v?.name || "")}`)}
-                className="text-muted-foreground hover:text-gold text-sm flex items-center gap-1"
-              >
-                <MapPin className="w-3 h-3" /> {v?.name} • {v?.address || v?.city}{v?.country ? `, ${v.country}` : ""}
+      <div className="space-y-8 max-w-6xl mx-auto">
+        {/* Cinematic cover */}
+        <section className="relative rounded-[2rem] overflow-hidden h-[380px] md:h-[460px]" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}>
+          {cover && <img src={cover} alt={offer.title} className="absolute inset-0 w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
+          <div className="absolute inset-x-0 top-0 p-5 flex items-center justify-between">
+            <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 h-11 pl-3 pr-5 rounded-full bg-white/15 backdrop-blur text-white text-sm font-semibold hover:bg-white/25 transition">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <div className="flex gap-2">
+              <button type="button" onClick={shareOffer} aria-label="Share offer" className="w-11 h-11 rounded-full bg-white/15 backdrop-blur text-white flex items-center justify-center hover:bg-white/25 transition"><Share2 className="w-5 h-5" /></button>
+              <button type="button" onClick={() => toggleSave.mutate()} aria-label={isSaved ? "Remove from saved" : "Save offer"} className="w-11 h-11 rounded-full bg-white/15 backdrop-blur text-white flex items-center justify-center hover:bg-white/25 transition">
+                <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
               </button>
-              {v?.latitude && v?.longitude && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}`}
-                  target="_blank" rel="noreferrer"
-                  className="text-xs text-gold hover:underline"
-                >
-                  View on map
-                </a>
-              )}
             </div>
           </div>
-        </div>
+          <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-white">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>{offer.offer_type}</span>
+              {cat?.name && <span className="rounded-full px-3 py-1 text-xs font-bold bg-white/15 backdrop-blur">{cat.name}</span>}
+            </div>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] text-white max-w-3xl">{offer.title}</h1>
+            <button type="button" onClick={() => navigate(`/influencer/explore?venue=${encodeURIComponent(v?.name || "")}`)} className="mt-5 inline-flex items-center gap-3 text-left group">
+              {v?.logo_url
+                ? <img src={v.logo_url} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white/80 bg-white" />
+                : <span className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center"><Building2 className="w-5 h-5" /></span>}
+              <span>
+                <span className="block font-bold group-hover:underline">{v?.name}</span>
+                <span className="block text-sm text-white/75 flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {v?.address || v?.city}{v?.country ? `, ${v.country}` : ""}</span>
+              </span>
+            </button>
+          </div>
+        </section>
 
-        {/* Quick facts */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <FactCard icon={<Users className="w-4 h-4" />} label="Min followers" value={offer.min_followers ? `${offer.min_followers}+` : "Any"} />
-          <FactCard
-            icon={<Tag className="w-4 h-4" />}
-            label="Slots"
-            value={slotsLeft != null ? `${slotsLeft} left` : "Unlimited"}
-          />
-          {(offer as any).expires_at && (
-            <FactCard
-              icon={<Calendar className="w-4 h-4" />}
-              label="Expires"
-              value={new Date((offer as any).expires_at).toLocaleDateString()}
-            />
-          )}
-          {(offer as any).deliverable_type && (
-            <FactCard icon={<Clock className="w-4 h-4" />} label="Deliverable" value={String((offer as any).deliverable_type)} />
-          )}
-        </div>
-
-        {/* Description */}
-        <Card>
-          <CardContent className="pt-6 space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">About this offer</h2>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {offer.description || "No description provided."}
-            </p>
-            {(offer as any).requirements && (
-              <>
-                <h3 className="text-sm font-semibold mt-4">Requirements</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {(offer as any).requirements}
-                </p>
-              </>
-            )}
-            {((offer as any).reel_min_duration_seconds || (offer as any).post_min_photo_count) && (
-              <>
-                <h3 className="text-sm font-semibold mt-4">Content spec</h3>
-                <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-                  {(offer as any).reel_min_duration_seconds && (
-                    <li>Reels must be at least {(offer as any).reel_min_duration_seconds} seconds long</li>
-                  )}
-                  {(offer as any).post_min_photo_count && (
-                    <li>Posts must include at least {(offer as any).post_min_photo_count} photo{(offer as any).post_min_photo_count > 1 ? "s" : ""}</li>
-                  )}
-                </ul>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Venue */}
-        {v && (
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">About the venue</h2>
-              <div className="flex items-center gap-3">
-                {v.logo_url ? (
-                  <img src={v.logo_url} alt={v.name} className="w-12 h-12 rounded-full object-cover border border-border" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-gold" />
-                  </div>
-                )}
-                <div>
-                  <p className="font-medium text-foreground">{v.name}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="w-3 h-3" /> {v.address || v.city}
-                  </p>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start">
+          <div className="space-y-6 min-w-0 order-2 lg:order-1">
+            <section className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
+              <h2 className="text-2xl font-extrabold text-foreground mb-4">About this offer</h2>
+              <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{offer.description || "No description provided."}</p>
+              {(offer as any).requirements && (
+                <div className="mt-6 rounded-2xl bg-muted/70 p-5">
+                  <h3 className="font-extrabold text-foreground mb-2">What the venue asks for</h3>
+                  <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{(offer as any).requirements}</p>
                 </div>
-              </div>
-              {v.description && (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{v.description}</p>
               )}
-            </CardContent>
-          </Card>
-        )}
+              {((offer as any).reel_min_duration_seconds || (offer as any).post_min_photo_count) && (
+                <div className="mt-6">
+                  <h3 className="font-extrabold text-foreground mb-3">Content spec</h3>
+                  <ul className="space-y-2">
+                    {(offer as any).reel_min_duration_seconds && (
+                      <li className="flex items-center gap-3 text-foreground/80"><CheckCircle className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--venue-brand))" }} /> Reels at least {(offer as any).reel_min_duration_seconds} seconds long</li>
+                    )}
+                    {(offer as any).post_min_photo_count && (
+                      <li className="flex items-center gap-3 text-foreground/80"><CheckCircle className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--venue-brand))" }} /> Posts with at least {(offer as any).post_min_photo_count} photo{(offer as any).post_min_photo_count > 1 ? "s" : ""}</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </section>
 
-        {/* Application progress (post-apply flow) */}
-        {myApplication && (
-          <ApplicationPanel
-            application={myApplication}
-            offerTitle={offer.title}
-            fulfilmentType={(offer as any).fulfilment_type ?? "visit"}
-            onPostUrlSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
-            onShippingSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
-          />
-        )}
-
-        {/* Apply CTA */}
-        <div className="sticky bottom-4 z-10">
-          <Card className="border-gold/30">
-            <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                {myApplication ? (
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-gold" />
-                    <span className="capitalize text-foreground font-medium">
-                      Application {myApplication.status}
-                    </span>
+            {v && (
+              <section className="rounded-[2rem] bg-card border border-border p-6 md:p-8 shadow-[var(--venue-shadow)]">
+                <h2 className="text-2xl font-extrabold text-foreground mb-5">About the venue</h2>
+                <div className="flex items-center gap-4">
+                  {v.logo_url
+                    ? <img src={v.logo_url} alt={v.name} className="w-16 h-16 rounded-2xl object-cover border border-border bg-white" />
+                    : <span className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "hsl(var(--venue-brand))" }}><Building2 className="w-6 h-6" style={{ color: "hsl(var(--primary))" }} /></span>}
+                  <div>
+                    <p className="text-lg font-extrabold text-foreground">{v.name}</p>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {v.address || v.city}</p>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Ready to collaborate with {v?.name}?</p>
+                </div>
+                {v.description && <p className="mt-5 text-foreground/80 leading-relaxed whitespace-pre-wrap">{v.description}</p>}
+                {v.latitude && v.longitude && (
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}`} target="_blank" rel="noreferrer"
+                    className="mt-5 inline-flex items-center gap-2 h-11 px-5 rounded-full bg-muted text-sm font-bold text-foreground hover:bg-secondary transition">
+                    <MapPin className="w-4 h-4" /> Open in Google Maps
+                  </a>
                 )}
-              </div>
-              {myApplication ? (
-                <Button size="lg" variant="outline" onClick={() => navigate("/influencer/bookings")}>
-                  Go to my bookings
-                </Button>
-              ) : !hasInstagram || (slotsLeft != null && slotsLeft <= 0) ? (
-                <Button size="lg" disabled>
-                  {!hasInstagram ? "Connect Instagram to apply" : "No slots left"}
-                </Button>
-              ) : (
-                <Dialog open={applyOpen} onOpenChange={(o) => { setApplyOpen(o); if (!o) setRulesAccepted(false); }}>
-                  <DialogTrigger asChild>
-                    <Button size="lg">Apply for this offer</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Apply to: {offer.title}</DialogTitle>
-                      <DialogDescription>Review the booking rules and confirm your application.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <BookingRulesNotice
-                        maxGuests={(offer as any).campaigns?.instagram_offers?.[0]?.max_guests ? parseInt((offer as any).campaigns.instagram_offers[0].max_guests) : null}
-                        requirements={(offer as any).requirements}
-                        accepted={rulesAccepted}
-                        onAcceptedChange={setRulesAccepted}
-                      />
-                      <Button className="w-full" onClick={() => apply.mutate()} disabled={apply.isPending || !rulesAccepted}>
-                        {apply.isPending ? "Submitting..." : "Confirm Application"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </CardContent>
-          </Card>
+              </section>
+            )}
+
+            {myApplication && (
+              <ApplicationPanel
+                application={myApplication}
+                offerTitle={offer.title}
+                fulfilmentType={(offer as any).fulfilment_type ?? "visit"}
+                onPostUrlSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
+                onShippingSaved={() => qc.invalidateQueries({ queryKey: ["my-application", id] })}
+              />
+            )}
+          </div>
+
+          <aside className="order-1 lg:order-2 lg:sticky lg:top-24">{applyCard}</aside>
         </div>
       </div>
     </DashboardLayout>
