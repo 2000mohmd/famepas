@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueEmpty, BrandButton } from "@/components/venue/VenueUI";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -327,9 +328,11 @@ const InfluencerBookings = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">My Bookings</h1>
-          <p className="text-muted-foreground">Manage your scheduled visits</p>
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Your visits</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Bookings</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Your upcoming visits and the content you've delivered. Show your QR code at the door to check in.</p>
+          </div>
         </div>
 
         <Tabs defaultValue="upcoming">
@@ -340,16 +343,13 @@ const InfluencerBookings = () => {
           <TabsContent value="upcoming" className="space-y-4 mt-4">
             {upcoming.map(renderBooking)}
             {upcoming.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="mb-4">No upcoming bookings</p>
-                <Button asChild><Link to="/influencer/explore">Browse offers</Link></Button>
-              </div>
+              <VenueEmpty icon={CalendarDays} title="No upcoming visits" body="Apply to an offer you love — once the venue accepts, your visit shows up here with your check-in QR code."
+                actions={<BrandButton to="/influencer/explore">Browse offers</BrandButton>} />
             )}
           </TabsContent>
           <TabsContent value="past" className="space-y-4 mt-4">
             {past.map(renderBooking)}
-            {past.length === 0 && <div className="text-center py-12 text-muted-foreground">No past bookings</div>}
+            {past.length === 0 && <VenueEmpty compact icon={CalendarDays} title="No past visits yet" body="Completed visits and the content you delivered will be listed here." />}
           </TabsContent>
         </Tabs>
       </div>

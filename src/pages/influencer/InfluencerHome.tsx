@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, MapPin, ChevronRight, Star, Tag } from "lucide-react";
+import { Building2, MapPin, ChevronRight, Search, Sparkles } from "lucide-react";
+import { VenueHero, HeroButton, BrandButton, VenueEmpty } from "@/components/venue/VenueUI";
+import OfferTile from "@/components/influencer/OfferTile";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 const InfluencerHome = () => {
@@ -92,203 +93,98 @@ const InfluencerHome = () => {
 
   return (
     <DashboardLayout type="influencer">
-      <div className="space-y-8">
-        {/* Hero */}
-        <div className="rounded-2xl bg-gradient-to-r from-primary/30 to-accent/20 border border-border p-8">
-          <h1 className="text-3xl font-display font-bold text-foreground">
-            {t("influencerHome.greeting")}, <span className="text-gold">{fullName}</span> 👋
-          </h1>
-          {handle && <p className="text-sm text-muted-foreground">@{handle}</p>}
-          <p className="text-muted-foreground mt-2">{t("influencerHome.subtitle")}</p>
-          <div className="flex gap-3 mt-4">
-            <Button onClick={() => navigate("/influencer/explore")} className="gap-2">
-              <MapPin className="w-4 h-4" /> {t("influencerHome.exploreMap")}
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/influencer/bookings")}>
-              {t("influencerHome.myBookings")}
-            </Button>
-          </div>
-        </div>
+      <div className="space-y-10">
+        <VenueHero
+          eyebrow="Discover"
+          title={<>{t("influencerHome.greeting")}, {fullName.split(" ")[0]} <span aria-hidden>👋</span></>}
+          subtitle={<>{handle && <span className="font-semibold">@{handle} · </span>}{t("influencerHome.subtitle")}</>}
+          actions={<>
+            <HeroButton to="/influencer/explore"><MapPin /> {t("influencerHome.exploreMap")}</HeroButton>
+            <HeroButton variant="ghost" to="/influencer/bookings">{t("influencerHome.myBookings")}</HeroButton>
+          </>}
+          aside={
+            <form onSubmit={(e) => { e.preventDefault(); const q = new FormData(e.currentTarget).get("q"); navigate(`/influencer/explore${q ? `?venue=${encodeURIComponent(String(q))}` : ""}`); }} className="relative max-w-2xl">
+              <input name="q" placeholder="Search venues, offers or cities" className="w-full h-16 rounded-2xl pl-6 pr-20 text-base border-0 outline-none placeholder:opacity-60"
+                style={{ background: "hsl(var(--venue-brand-foreground) / .12)", color: "hsl(var(--venue-brand-foreground))" }} />
+              <button type="submit" aria-label="Search" className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+                <Search className="w-5 h-5" />
+              </button>
+            </form>
+          }
+        />
 
         {/* Categories */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-display font-semibold text-foreground">{t("influencerHome.browseByCategory")}</h2>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <section>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-5">{t("influencerHome.browseByCategory")}</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {categories?.map((cat: any) => (
               <button
                 key={cat.id}
                 onClick={() => navigate(`/influencer/explore?category=${cat.name}`)}
-                className="flex-shrink-0 w-[160px] rounded-xl bg-card border border-border hover:border-gold/40 transition-all overflow-hidden text-left"
+                className="group relative flex-shrink-0 w-[180px] h-[220px] rounded-3xl overflow-hidden text-left"
+                style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}
               >
-                {cat.image_url ? (
-                  <img src={cat.image_url} alt={cat.name} className="w-full h-24 object-cover" />
-                ) : (
-                  <div
-                    className="w-full h-24 flex items-center justify-center text-3xl"
-                    style={{ background: cat.color ? `${cat.color}22` : undefined }}
-                  >
-                    {cat.icon || "🏢"}
-                  </div>
-                )}
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-foreground truncate">{cat.name}</p>
-                </div>
+                {cat.image_url
+                  ? <img src={cat.image_url} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.05] transition duration-500" />
+                  : <span className="absolute inset-0 flex items-center justify-center text-5xl opacity-90">{cat.icon || "✨"}</span>}
+                <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <span className="absolute left-4 right-4 bottom-4 text-white font-extrabold text-lg leading-tight">{cat.name}</span>
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Per-category carousels */}
         {categories?.map((cat: any) => {
           const catOffers = offersByCategory(cat);
           if (catOffers.length === 0) return null;
-
           return (
-            <div key={cat.id} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
-                  <span>{cat.icon || "🏢"}</span> {cat.name}
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gold"
-                  onClick={() => navigate(`/influencer/explore?category=${cat.name}`)}
-                >
-                  {t("influencerHome.viewAll")} <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+            <section key={cat.id}>
+              <div className="flex items-end justify-between mb-5">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{cat.name}</h2>
+                <button type="button" onClick={() => navigate(`/influencer/explore?category=${cat.name}`)} className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>
+                  {t("influencerHome.viewAll")} <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
-
-              <ScrollCarousel>
-                {catOffers.map((offer: any) => (
-                  <OfferCard key={offer.id} offer={offer} onClick={() => navigate(`/influencer/offers/${offer.id}`)} />
-                ))}
-              </ScrollCarousel>
-            </div>
+              <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
+                {catOffers.map((offer: any) => <OfferTile key={offer.id} offer={offer} className="flex-shrink-0 w-[270px]" />)}
+              </div>
+            </section>
           );
         })}
 
-        {/* Featured Venues */}
-        {featuredVenues.length > 0 && (
-        <div>
-          <h2 className="text-xl font-display font-semibold text-foreground mb-4">{t("influencerHome.featuredVenues")}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuredVenues.slice(0, 6).map((venue) => (
-              <Card
-                key={venue.id}
-                className="cursor-pointer hover:border-gold/30 transition-all overflow-hidden"
-                onClick={() => navigate(`/influencer/explore?venue=${venue.name}`)}
-              >
-                {venue.cover_image_url && (
-                  <img src={venue.cover_image_url} alt={venue.name} className="w-full h-36 object-cover" />
-                )}
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center gap-3">
-                    {venue.logo_url ? (
-                      <img src={venue.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-gold" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-foreground text-sm">{venue.name}</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {venue.city || t("influencerHome.na")}
-                      </p>
+        {/* Featured venues */}
+        {featuredVenues.length > 0 ? (
+          <section>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-5">{t("influencerHome.featuredVenues")}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {featuredVenues.slice(0, 6).map((venue) => (
+                <button key={venue.id} type="button" onClick={() => navigate(`/influencer/explore?venue=${venue.name}`)}
+                  className="group text-left rounded-3xl bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] hover:border-primary transition">
+                  <div className="relative rounded-[1.4rem] overflow-hidden aspect-[16/10] bg-muted">
+                    {venue.cover_image_url
+                      ? <img src={venue.cover_image_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500" />
+                      : <div className="w-full h-full" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }} />}
+                  </div>
+                  <div className="flex items-center gap-3 px-2 pt-4 pb-2">
+                    {venue.logo_url
+                      ? <img src={venue.logo_url} alt="" className="w-11 h-11 rounded-full object-cover border border-border bg-white" />
+                      : <span className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)" }}><Building2 className="w-5 h-5" style={{ color: "hsl(var(--venue-brand))" }} /></span>}
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-foreground truncate">{venue.name}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {venue.city || t("influencerHome.na")} · <span className="capitalize">{venue.category}</span></p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-xs capitalize">{venue.category}</Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="flex justify-center mt-6">
-            <Button variant="outline" onClick={() => navigate("/influencer/explore")}>
-              {t("influencerHome.viewAllVenuesOffers")}
-            </Button>
-          </div>
-        </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : (offers ?? []).length === 0 && (
+          <VenueEmpty compact icon={Sparkles} title="Offers are on their way" body="Venues are setting up their first offers. Browse by category above, and check back soon — new ones go live every week."
+            actions={<BrandButton to="/influencer/explore"><Search /> {t("influencerHome.viewAllVenuesOffers")}</BrandButton>} />
         )}
       </div>
     </DashboardLayout>
-  );
-};
-
-// Reusable horizontal scroll wrapper
-const ScrollCarousel = ({ children }: { children: React.ReactNode }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  return (
-    <div ref={ref} className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-      {children}
-    </div>
-  );
-};
-
-const VenueCard = ({ venue, offerCount, onClick }: { venue: any; offerCount: number; onClick: () => void }) => (
-  <div
-    onClick={onClick}
-    className="flex-shrink-0 w-[260px] rounded-xl bg-card border border-border hover:border-gold/30 transition-all cursor-pointer overflow-hidden"
-  >
-    {venue.cover_image_url ? (
-      <img src={venue.cover_image_url} alt={venue.name} className="w-full h-28 object-cover" />
-    ) : (
-      <div className="w-full h-28 bg-secondary flex items-center justify-center">
-        <Building2 className="w-8 h-8 text-muted-foreground" />
-      </div>
-    )}
-    <div className="p-3 space-y-1">
-      <div className="flex items-center gap-2">
-        {venue.logo_url && <img src={venue.logo_url} alt="" className="w-6 h-6 rounded-full object-cover" />}
-        <h4 className="font-medium text-foreground text-sm truncate">{venue.name}</h4>
-      </div>
-      <p className="text-xs text-muted-foreground flex items-center gap-1">
-        <MapPin className="w-3 h-3" /> {venue.city || "N/A"}
-      </p>
-      {offerCount > 0 && (
-        <p className="text-xs text-gold flex items-center gap-1">
-          <Tag className="w-3 h-3" /> {offerCount} offer{offerCount > 1 ? "s" : ""}
-        </p>
-      )}
-    </div>
-  </div>
-);
-
-const OfferCard = ({ offer, onClick }: { offer: any; onClick: () => void }) => {
-  const cover =
-    offer.image_url || offer.cover_image_url || offer.venues?.cover_image_url;
-  return (
-    <div
-      onClick={onClick}
-      className="flex-shrink-0 w-[240px] rounded-xl bg-card border border-border hover:border-gold/30 transition-all cursor-pointer overflow-hidden"
-    >
-      {cover ? (
-        <img src={cover} alt={offer.title} className="w-full h-24 object-cover" />
-      ) : (
-        <div className="w-full h-24 bg-secondary flex items-center justify-center">
-          <Tag className="w-6 h-6 text-muted-foreground" />
-        </div>
-      )}
-      <div className="p-3 space-y-1">
-        <h4 className="font-medium text-foreground text-sm truncate">{offer.title}</h4>
-        <div className="flex items-center gap-2">
-          {offer.venues?.logo_url ? (
-            <img src={offer.venues.logo_url} alt="" className="w-5 h-5 rounded-full object-cover border border-border" />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <Building2 className="w-3 h-3 text-gold" />
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground truncate">{offer.venues?.name}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs capitalize">{offer.offer_type}</Badge>
-          {offer.discount_value && <span className="text-xs text-gold font-medium">${offer.discount_value}</span>}
-        </div>
-      </div>
-    </div>
   );
 };
 

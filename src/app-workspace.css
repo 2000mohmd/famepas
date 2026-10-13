@@ -136,3 +136,20 @@
 .app-workspace main table thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
 .app-workspace main table tbody tr:hover { background: hsl(var(--muted) / .6); }
 .app-workspace main h1 .text-gold { color: hsl(var(--venue-brand)); }
+
+/* shadcn Card + Tabs inside the workspace: same premium language as the
+   redesigned pages (rounded, soft shadow, pill tabs, bold titles). */
+.app-workspace main .rounded-lg.border.bg-card.shadow-sm { border-radius: 1.75rem; box-shadow: var(--venue-shadow); }
+.app-workspace main .rounded-lg.border.bg-card.shadow-sm h3.text-2xl { font-size: 1.25rem; font-weight: 800; }
+.app-workspace main [role="tablist"].inline-flex.h-10 { height: auto; padding: 6px; border-radius: 999px; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); box-shadow: var(--venue-shadow); }
+.app-workspace main [role="tablist"].inline-flex.h-10 > [role="tab"] { height: 40px; padding: 0 20px; border-radius: 999px; font-weight: 600; }
+.app-workspace main [role="tablist"].inline-flex.h-10 > [role="tab"][data-state="active"] { background: hsl(var(--venue-brand)); color: hsl(var(--venue-brand-foreground)); box-shadow: none; }
+
+/* Hero band used by creator page headers (class-based so buttons inside keep working). */
+.app-workspace .creator-hero { background: hsl(var(--venue-brand)); color: hsl(var(--venue-brand-foreground)); }
+.app-workspace .creator-hero::before { content: ""; position: absolute; right: -7rem; top: -7rem; width: 24rem; height: 24rem; border-radius: 999px; border: 1px solid hsl(var(--primary) / .25); pointer-events: none; }
+.app-workspace .creator-hero::after { content: ""; position: absolute; right: -2rem; top: 6rem; width: 24rem; height: 24rem; border-radius: 999px; border: 1px solid hsl(var(--primary) / .18); pointer-events: none; }
+.app-workspace .creator-hero > * { position: relative; z-index: 1; }
+.app-workspace .creator-hero .creator-hero-title { color: hsl(var(--venue-brand-foreground)); }
+.app-workspace .creator-hero .creator-hero-eyebrow { color: hsl(var(--gold-light)); }
+.app-workspace .creator-hero button:not([role="tab"]) { border-radius: 999px; height: 48px; padding: 0 24px; font-weight: 700; }

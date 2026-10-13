@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Send, CalendarDays, CheckCircle, DollarSign, TrendingUp, Star, AlertTriangle } from "lucide-react";
+import { Send, CalendarDays, CheckCircle, DollarSign, Star, AlertTriangle, Search, ArrowRight, Award, Instagram, Sparkles } from "lucide-react";
+import { VenueHero, HeroButton, BrandButton, VenueEmpty } from "@/components/venue/VenueUI";
+import OfferTile from "@/components/influencer/OfferTile";
 import { useNavigate } from "react-router-dom";
 import { prettyLabel } from "@/lib/format";
 
@@ -109,202 +111,124 @@ const InfluencerDashboard = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-8">
-        {/* Welcome */}
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">
-            Welcome back, <span className="text-gold">{profile?.full_name || "Influencer"}</span>
-          </h1>
-          <p className="text-muted-foreground mt-1">Here's your activity summary</p>
-        </div>
+        <VenueHero
+          eyebrow="Creator dashboard"
+          title={<>Welcome back,<br />{profile?.full_name?.split(" ")[0] || "creator"} <span aria-hidden>✨</span></>}
+          subtitle="Your invitations, visits and earnings at a glance."
+          actions={<HeroButton to="/influencer/explore"><Search /> Find offers</HeroButton>}
+          aside={
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { icon: Send, label: "Pending invitations", value: stats?.pendingInvitations ?? 0, to: "/influencer/invitations" },
+                { icon: CalendarDays, label: "Upcoming visits", value: stats?.upcomingBookings ?? 0, to: "/influencer/bookings" },
+                { icon: CheckCircle, label: "Completed visits", value: stats?.completedVisits ?? 0, to: "/influencer/bookings" },
+                { icon: DollarSign, label: "Wallet balance", value: `$${Number(stats?.walletBalance ?? 0).toFixed(0)}`, to: "/influencer/earnings" },
+              ].map(({ icon: Icon, label, value, to }) => (
+                <button key={label} type="button" onClick={() => navigate(to)} className="text-left rounded-3xl p-5 transition hover:brightness-110"
+                  style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
+                  <Icon className="w-5 h-5 mb-5" style={{ color: "hsl(var(--primary))" }} />
+                  <p className="text-3xl md:text-4xl font-extrabold leading-none">{value}</p>
+                  <p className="text-xs mt-2 opacity-70">{label}</p>
+                </button>
+              ))}
+            </div>
+          }
+        />
 
-        {/* Rate your visit prompt */}
         {!!unreviewedCount && unreviewedCount > 0 && (
-          <Card className="border-gold/30 bg-gold/5">
-            <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <Star className="w-5 h-5 text-gold" />
-                <p className="text-sm text-foreground">
-                  You have {unreviewedCount} completed visit{unreviewedCount > 1 ? "s" : ""} to rate.
-                </p>
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-card border border-border p-5 shadow-[var(--venue-shadow)]">
+            <div className="flex items-center gap-4">
+              <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)" }}><Star className="w-5 h-5" style={{ color: "hsl(var(--venue-brand))" }} /></span>
+              <div>
+                <p className="font-extrabold text-foreground">Rate your visit{unreviewedCount > 1 ? "s" : ""}</p>
+                <p className="text-sm text-muted-foreground">You have {unreviewedCount} completed visit{unreviewedCount > 1 ? "s" : ""} waiting for a review.</p>
               </div>
-              <Button size="sm" onClick={() => navigate("/influencer/reviews")} className="gradient-gold text-accent-foreground">
-                Rate now
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <BrandButton to="/influencer/reviews">Rate now</BrandButton>
+          </div>
         )}
 
-        {/* Warnings */}
         {warnings && warnings.length > 0 && (
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                <h3 className="font-semibold text-destructive">Warnings</h3>
-              </div>
-              <div className="space-y-2">
-                {warnings.map((w: any) => (
-                  <div key={w.id} className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <p className="text-sm text-foreground">{w.warning_message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{new Date(w.created_at).toLocaleDateString()}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Connect Instagram nudge — offers can't be applied to until this is done (see InfluencerOffer.tsx) */}
-        {profile && !profile.instagram_verified && (
-          <Card className="border-[#b8923a]/40 bg-[#b8923a]/5">
-            <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <h3 className="font-semibold text-foreground">Connect your Instagram</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Venues need your real follower count to review applications — connect Instagram to start applying for offers.
-                </p>
-              </div>
-              <Button onClick={() => navigate("/influencer/settings")}>Connect Instagram</Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Profile Strength */}
-        <Card className="border-gold/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Profile Strength</span>
-              <span className="text-sm text-gold font-bold">{profileStrength}%</span>
+          <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h3 className="font-extrabold text-red-700">Warnings from the FamePass team</h3>
             </div>
-            <div className="w-full bg-muted rounded-full h-2.5">
-              <div className="bg-gold h-2.5 rounded-full transition-all" style={{ width: `${profileStrength}%` }} />
-            </div>
-            {profileStrength < 100 && (
-              <Button variant="link" className="text-gold p-0 mt-2 h-auto" onClick={() => navigate("/influencer/profile")}>
-                Complete your profile →
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="cursor-pointer hover:border-gold/30 transition-colors" onClick={() => navigate("/influencer/invitations")}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10"><Send className="w-5 h-5 text-gold" /></div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.pendingInvitations ?? 0}</p>
-                <p className="text-sm text-muted-foreground">Pending Invitations</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:border-gold/30 transition-colors" onClick={() => navigate("/influencer/bookings")}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10"><CalendarDays className="w-5 h-5 text-gold" /></div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.upcomingBookings ?? 0}</p>
-                <p className="text-sm text-muted-foreground">Upcoming Bookings</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10"><CheckCircle className="w-5 h-5 text-gold" /></div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.completedVisits ?? 0}</p>
-                <p className="text-sm text-muted-foreground">Completed Visits</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:border-gold/30 transition-colors" onClick={() => navigate("/influencer/earnings")}>
-            <CardContent className="pt-6 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10"><DollarSign className="w-5 h-5 text-gold" /></div>
-              <div>
-                <p className="text-2xl font-bold">$ {Number(stats?.walletBalance ?? 0).toFixed(0)}</p>
-                <p className="text-sm text-muted-foreground">Wallet Balance</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Rewards Tier */}
-        {rewardPoints && (
-          <Card className="border-gold/20">
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Star className="w-6 h-6 text-gold" />
-                <div>
-                  <p className="font-semibold">{prettyLabel(rewardPoints.tier)} Tier</p>
-                  <p className="text-sm text-muted-foreground">{rewardPoints.points} points earned</p>
+            <div className="space-y-2">
+              {warnings.map((w: any) => (
+                <div key={w.id} className="p-4 rounded-2xl bg-white border border-red-100">
+                  <p className="text-sm text-neutral-800">{w.warning_message}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{new Date(w.created_at).toLocaleDateString()}</p>
                 </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => navigate("/influencer/rewards")}>View Rewards</Button>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Recent Offers */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-display font-semibold">New Offers Near You</h2>
-            <Button variant="link" className="text-gold" onClick={() => navigate("/influencer/explore")}>View All →</Button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Profile strength ring */}
+          <div className="rounded-[2rem] bg-card border border-border p-6 md:p-7 shadow-[var(--venue-shadow)] flex items-center gap-6">
+            <span className="relative w-24 h-24 shrink-0">
+              <svg viewBox="0 0 36 36" className="w-24 h-24 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--muted))" strokeWidth="3.5" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--venue-brand))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray={`${profileStrength * 0.974} 97.4`} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-foreground">{profileStrength}%</span>
+            </span>
+            <div>
+              <p className="text-lg font-extrabold text-foreground">Profile strength</p>
+              <p className="text-sm text-muted-foreground mt-1">{profileStrength < 100 ? "Complete profiles get picked by venues far more often." : "Your profile is complete — nice."}</p>
+              {profileStrength < 100 && <button type="button" onClick={() => navigate("/influencer/profile")} className="mt-3 inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>Complete profile <ArrowRight className="w-4 h-4" /></button>}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentOffers?.map((offer: any) => {
-              const cover = offer.image_url || offer.venues?.cover_image_url || offer.venues?.image_url;
-              return (
-              <Card
-                key={offer.id}
-                role="link"
-                tabIndex={0}
-                onClick={() => navigate(`/influencer/offers/${offer.id}`)}
-                onKeyDown={(e) => { if (e.key === "Enter") navigate(`/influencer/offers/${offer.id}`); }}
-                className="cursor-pointer hover:border-gold/30 hover:shadow-md transition-all overflow-hidden"
-              >
-                {cover ? (
-                  <img src={cover} alt={offer.title} className="w-full h-32 object-cover" />
-                ) : (
-                  <div className="w-full h-32 bg-secondary flex items-center justify-center">
-                    <Send className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                )}
-                <CardHeader className="pb-2">
-                  <div className="flex items-start gap-3">
-                    {offer.venues?.logo_url ? (
-                      <img src={offer.venues.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        <Star className="w-5 h-5 text-gold" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <CardTitle className="text-base truncate">{offer.title}</CardTitle>
-                        <Badge variant="outline" className="flex-shrink-0">{prettyLabel(offer.offer_type)}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate">{offer.venues?.name} • {offer.venues?.city}</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{offer.description}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {offer.min_followers > 0 && <span>{offer.min_followers}+ followers</span>}
-                    {offer.max_redemptions && <span>• {offer.max_redemptions - offer.current_redemptions} slots left</span>}
-                  </div>
-                </CardContent>
-              </Card>
-              );
-            })}
-            {recentOffers && recentOffers.length === 0 && (
-              <Card className="md:col-span-2 lg:col-span-3">
-                <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                  No live offers right now — check back soon.
-                </CardContent>
-              </Card>
-            )}
-          </div>
+
+          {/* Rewards tier */}
+          <button type="button" onClick={() => navigate("/influencer/rewards")} className="text-left rounded-[2rem] p-6 md:p-7 flex items-center gap-5 transition hover:brightness-105"
+            style={{ background: "linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--primary)))", color: "hsl(var(--venue-brand))" }}>
+            <span className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}><Award className="w-8 h-8" style={{ color: "hsl(var(--primary))" }} /></span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-70">Your tier</p>
+              <p className="text-2xl font-extrabold">{prettyLabel(rewardPoints?.tier ?? "bronze")}</p>
+              <p className="text-sm opacity-80">{rewardPoints?.points ?? 0} points · view rewards</p>
+            </div>
+          </button>
+
+          {/* Instagram / next action */}
+          {profile && !profile.instagram_verified ? (
+            <div className="rounded-[2rem] p-6 md:p-7 text-white flex flex-col justify-between gap-4" style={{ background: "linear-gradient(135deg,#f09433,#dc2743 55%,#bc1888)" }}>
+              <div>
+                <Instagram className="w-7 h-7 mb-3" />
+                <p className="text-lg font-extrabold">Connect your Instagram</p>
+                <p className="text-sm text-white/85 mt-1">Venues need your real followers before you can apply.</p>
+              </div>
+              <button type="button" onClick={() => navigate("/influencer/settings")} className="self-start h-11 px-5 rounded-full bg-white text-neutral-900 text-sm font-bold">Connect now</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => navigate("/influencer/invitations")} className="text-left rounded-[2rem] bg-card border border-border p-6 md:p-7 shadow-[var(--venue-shadow)] hover:border-primary transition">
+              <Send className="w-7 h-7 mb-3" style={{ color: "hsl(var(--venue-brand))" }} />
+              <p className="text-lg font-extrabold text-foreground">Invitations</p>
+              <p className="text-sm text-muted-foreground mt-1">Venues can invite you directly — check your inbox.</p>
+            </button>
+          )}
         </div>
+
+        <section>
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">New offers</h2>
+              <p className="text-muted-foreground text-sm mt-1">Fresh experiences from venues on FamePass.</p>
+            </div>
+            <button type="button" onClick={() => navigate("/influencer/explore")} className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>View all <ArrowRight className="w-4 h-4" /></button>
+          </div>
+          {recentOffers && recentOffers.length === 0 ? (
+            <VenueEmpty compact icon={Sparkles} title="No live offers right now" body="New venues join every week — we'll show their offers here the moment they go live."
+              actions={<BrandButton to="/influencer/explore"><Search /> Explore venues</BrandButton>} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {recentOffers?.map((offer: any) => <OfferTile key={offer.id} offer={offer} />)}
+            </div>
+          )}
+        </section>
       </div>
     </DashboardLayout>
   );

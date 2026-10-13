@@ -81,39 +81,63 @@ const InfluencerMessages = () => {
 
   return (
     <DashboardLayout type="influencer">
-      <div className="animate-fade-in flex flex-col" style={{ height: "75vh" }}>
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-          <span className="text-gold">Messages</span>
-        </h1>
-        <p className="text-muted-foreground mb-6">Chat directly with the FamePass team.</p>
+      <div className="animate-fade-in space-y-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">Support</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Messages</h1>
+          <p className="mt-2 text-muted-foreground">Chat directly with the FamePass team — questions, bookings, anything.</p>
+        </div>
 
-        <div className="gradient-card rounded-xl border border-border flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="rounded-[2rem] bg-card border border-border flex flex-col overflow-hidden shadow-[var(--venue-shadow)]" style={{ height: "68vh" }}>
+          <div className="flex items-center gap-4 px-6 py-4 border-b border-border">
+            <span className="relative w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}>
+              <img src="/website/images/emblem-gold.webp" alt="" className="h-7 w-auto" />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card" />
+            </span>
+            <div>
+              <p className="font-extrabold text-foreground">FamePass team</p>
+              <p className="text-xs text-muted-foreground">Usually replies within a few hours</p>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3" style={{ background: "hsl(var(--background))" }}>
             {loading ? (
               <p className="text-muted-foreground text-sm text-center mt-8">Loading…</p>
             ) : thread.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center mt-8">No messages yet. Say hello!</p>
+              <div className="h-full flex flex-col items-center justify-center text-center gap-4">
+                <span className="flex items-center justify-center w-20 h-20 rounded-full"
+                  style={{ background: "radial-gradient(circle at 30% 30%, hsl(var(--gold-light)), hsl(var(--primary)))", boxShadow: "0 0 0 10px hsl(var(--primary) / .12)" }}>
+                  <Send className="w-8 h-8" style={{ color: "hsl(var(--venue-brand))" }} />
+                </span>
+                <p className="text-2xl font-extrabold text-foreground">Say hello 👋</p>
+                <p className="text-muted-foreground max-w-sm">Questions about an offer or a visit? Message the FamePass team and we'll reply right here.</p>
+              </div>
             ) : (
-              thread.map((m) => (
-                <div key={m.id} className={`flex ${m.sender_id === user?.id ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${m.sender_id === user?.id ? "bg-gold text-background" : "bg-secondary text-foreground"}`}>
-                    {m.content}
+              thread.map((m) => {
+                const mine = m.sender_id === user?.id;
+                return (
+                  <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[75%] px-4 py-3 text-sm leading-relaxed shadow-sm ${mine ? "rounded-3xl rounded-br-lg" : "rounded-3xl rounded-bl-lg bg-card border border-border text-foreground"}`}
+                      style={mine ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}>
+                      {m.content}
+                      {(m as any).created_at && <span className="block text-[10px] mt-1 opacity-60">{new Date((m as any).created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={bottomRef} />
           </div>
-          <div className="p-3 border-t border-border flex gap-2">
+          <div className="p-4 border-t border-border flex gap-3 items-center">
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Type a message..."
-              className="bg-secondary border-border"
+              placeholder="Write a message…"
+              className="h-12 rounded-full px-5 bg-muted border-0"
             />
-            <Button onClick={sendMessage} disabled={sending || !draft.trim()} size="icon" className="bg-gold text-background hover:bg-gold/90 shrink-0">
-              <Send className="w-4 h-4" />
+            <Button onClick={sendMessage} disabled={sending || !draft.trim()} size="icon" aria-label="Send message"
+              className="w-12 h-12 rounded-full shrink-0" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>

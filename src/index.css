@@ -326,3 +326,18 @@
     color: hsl(0 100% 16%);
   }
 }
+
+/* Dialogs portal outside the dashboard shell, so bg-background resolves to
+   the site-wide burgundy while the rule above makes their text burgundy too —
+   every dialog was burgundy-on-burgundy. Give dialogs a light surface. */
+@layer components {
+  [role="dialog"], [role="alertdialog"] {
+    --background: 35 40% 98%;
+    --card: 0 0% 100%;
+    --muted: 30 14% 94%;
+    --secondary: 30 22% 94%;
+    --border: 30 12% 86%;
+    --input: 30 12% 84%;
+    --primary-foreground: 0 100% 16%;
+  }
+}

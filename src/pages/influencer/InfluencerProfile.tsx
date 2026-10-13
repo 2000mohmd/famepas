@@ -156,11 +156,11 @@ const InfluencerProfile = () => {
 
   return (
     <DashboardLayout type="influencer">
-      <div className="space-y-6 max-w-2xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">My Profile</h1>
-            <p className="text-muted-foreground">Manage your influencer profile</p>
+      <div className="space-y-6 max-w-4xl">
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Your public profile</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">My profile</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">This is what venues see when you apply. A great photo, bio and niches get you picked more often.</p>
           </div>
           <div className="flex items-center gap-2">
             {profile?.is_verified && <Badge className="bg-green-500/10 text-green-500"><Shield className="w-3 h-3 mr-1" /> Verified</Badge>}

@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueEmpty } from "@/components/venue/VenueUI";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,10 +72,10 @@ const InfluencerEarnings = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Earnings</h1>
-            <p className="text-muted-foreground">Track your income and request withdrawals</p>
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Wallet</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Earnings</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">What you've earned from paid collaborations, and withdrawals to your account.</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -144,7 +145,7 @@ const InfluencerEarnings = () => {
                 </div>
               </div>
             ))}
-            {earnings?.length === 0 && <p className="text-center text-muted-foreground py-4">No earnings yet</p>}
+            {earnings?.length === 0 && <div className="text-center py-10"><p className="text-xl font-extrabold text-foreground">No earnings yet</p><p className="text-sm text-muted-foreground mt-1">Paid collaborations you complete will appear here.</p></div>}
           </CardContent>
         </Card>
 

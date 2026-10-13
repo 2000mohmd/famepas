@@ -263,10 +263,12 @@ const InfluencerSettings = () => {
 
   return (
     <DashboardLayout type="influencer">
-      <div className="space-y-6 max-w-2xl">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage your preferences</p>
+      <div className="space-y-6 max-w-4xl">
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Account</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Settings</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Connected accounts, notifications and security.</p>
+          </div>
         </div>
 
         <Card>

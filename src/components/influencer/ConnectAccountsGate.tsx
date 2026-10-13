@@ -47,10 +47,13 @@ const ConnectAccountsGate = () => {
   return (
     <>
       {!bannerDismissed && (
-        <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/30 text-sm text-foreground px-4 py-2.5 rounded-lg mb-4">
-          <span>Connect Instagram or TikTok so venues can see your real followers.</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card border border-border px-5 py-3.5 mb-6 shadow-[var(--venue-shadow)]">
+          <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
+            <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}><Instagram className="w-5 h-5" /></span>
+            Connect Instagram or TikTok so venues can see your real followers.
+          </span>
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="sm" onClick={() => setOpen(true)}>Connect</Button>
+            <button type="button" onClick={() => setOpen(true)} className="h-9 px-5 rounded-full text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>Connect</button>
             <button onClick={() => setBannerDismissed(true)} aria-label="Dismiss" className="text-foreground/50 hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
@@ -60,17 +63,17 @@ const ConnectAccountsGate = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Connect your accounts</DialogTitle>
+            <DialogTitle className="text-2xl font-extrabold">Connect your accounts</DialogTitle>
             <DialogDescription>
               Link your Instagram or TikTok to start using FamePass. Venues see your real followers and the results of the videos you deliver.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
-            <Button className="w-full" onClick={() => connect("instagram")} disabled={!!busy}>
+            <Button className="w-full h-12 rounded-full font-bold text-white border-0" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }} onClick={() => connect("instagram")} disabled={!!busy}>
               {busy === "instagram" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Instagram className="w-4 h-4 mr-2" />}
               Connect Instagram
             </Button>
-            <Button className="w-full" variant="outline" onClick={() => connect("tiktok")} disabled={!!busy}>
+            <Button className="w-full h-12 rounded-full font-bold text-white border-0 bg-black hover:bg-black/85" onClick={() => connect("tiktok")} disabled={!!busy}>
               {busy === "tiktok" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Music2 className="w-4 h-4 mr-2" />}
               Connect TikTok
             </Button>

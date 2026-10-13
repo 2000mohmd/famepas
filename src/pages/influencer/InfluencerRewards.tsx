@@ -67,18 +67,20 @@ const InfluencerRewards = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Rewards & Status</h1>
-          <p className="text-muted-foreground">Earn points and climb the ranks</p>
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">FamePass rewards</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Rewards & status</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Every visit and every great post earns points. Climb the tiers to unlock priority invites and featured placement.</p>
+          </div>
         </div>
 
         {/* Current Tier */}
-        <Card className="border-gold/20">
+        <Card className="border-0" style={{ background: "linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--primary)))", color: "hsl(var(--venue-brand))" }}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
               <TierIcon className={`w-10 h-10 ${config.color}`} />
               <div>
-                <h2 className="text-2xl font-bold">{prettyLabel(tier)} Tier</h2>
+                <h2 className="text-3xl md:text-4xl font-extrabold">{prettyLabel(tier)} tier</h2>
                 <p className="text-sm text-muted-foreground">{points} points earned</p>
               </div>
             </div>

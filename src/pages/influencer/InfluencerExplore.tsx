@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueHero } from "@/components/venue/VenueUI";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -231,47 +232,47 @@ const InfluencerExplore = () => {
 
   return (
     <DashboardLayout type="influencer">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Explore Opportunities</h1>
-            <p className="text-muted-foreground">Find campaigns and collaborations from top venues</p>
-          </div>
-          {/* Adnan, "Creator Page fixes" #6: --primary and --accent are both
-              Champagne Gold in the brand, so the ghost button's hover state
-              (bg-accent) looked identical to the selected button's permanent
-              bg-primary. Override the unselected button's hover so only the
-              actually-selected one ever shows gold. */}
-          <div className="flex gap-2 bg-card border border-border rounded-lg p-1">
-            <Button size="sm" variant={viewMode === "list" ? "default" : "ghost"} onClick={() => setViewMode("list")} className={`gap-1 ${viewMode !== "list" ? "hover:bg-muted hover:text-foreground" : ""}`}>
-              <List className="w-4 h-4" /> List
-            </Button>
-            <Button size="sm" variant={viewMode === "map" ? "default" : "ghost"} onClick={() => setViewMode("map")} className={`gap-1 ${viewMode !== "map" ? "hover:bg-muted hover:text-foreground" : ""}`}>
-              <Map className="w-4 h-4" /> Map
-            </Button>
-          </div>
-        </div>
+      <div className="space-y-8">
+        <VenueHero
+          eyebrow="Explore"
+          title={<>Find your next<br />experience</>}
+          subtitle="Restaurants, spas, hotels and more — apply to the offers you love and get invited back."
+          actions={
+            <div className="inline-flex gap-1 p-1.5 rounded-full" style={{ background: "hsl(var(--venue-brand-foreground) / .1)" }}>
+              {([["list", "List", List], ["map", "Map", Map]] as const).map(([v, l, Icon]) => (
+                <button key={v} type="button" onClick={() => setViewMode(v)} className="inline-flex items-center gap-2 h-10 px-5 rounded-full text-sm font-semibold transition"
+                  style={viewMode === v ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" } : { color: "hsl(var(--venue-brand-foreground) / .8)" }}>
+                  <Icon className="w-4 h-4" /> {l}
+                </button>
+              ))}
+            </div>
+          }
+          aside={
+            <div className="relative max-w-2xl">
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by venue, offer or location"
+                className="w-full h-16 rounded-2xl pl-6 pr-20 text-base border-0 outline-none placeholder:opacity-60"
+                style={{ background: "hsl(var(--venue-brand-foreground) / .12)", color: "hsl(var(--venue-brand-foreground))" }} />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+                <Search className="w-5 h-5" />
+              </span>
+            </div>
+          }
+        />
 
-        <div className="flex">
-          <Button size="sm" variant={savedOnly ? "default" : "outline"} onClick={() => setSavedOnly((v) => !v)} className="gap-1.5">
-            <Heart className={`w-3.5 h-3.5 ${savedOnly ? "fill-current" : ""}`} /> Saved
-          </Button>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search by venue name, offer, or location..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-          </div>
+        <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-card border border-border p-3 shadow-[var(--venue-shadow)]">
+          <button type="button" onClick={() => setSavedOnly((v) => !v)} className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-sm font-bold transition"
+            style={savedOnly ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : { background: "hsl(var(--muted))" }}>
+            <Heart className={`w-4 h-4 ${savedOnly ? "fill-current" : ""}`} /> Saved
+          </button>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="free">Barter</SelectItem>
@@ -280,14 +281,14 @@ const InfluencerExplore = () => {
             </SelectContent>
           </Select>
           <Select value={countryFilter} onValueChange={(v: any) => setCountryFilter(v)}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="my" disabled={!myCountry}>My country{myCountry ? ` (${myCountry})` : " — set in profile"}</SelectItem>
               <SelectItem value="all">All countries</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Sort by" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Newest first</SelectItem>
               <SelectItem value="oldest">Oldest first</SelectItem>
@@ -334,7 +335,7 @@ const InfluencerExplore = () => {
         )}
 
         {viewMode === "list" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {displayedOffers?.map((offer: any) => (
               <OfferCard
                 key={offer.id}
@@ -349,8 +350,10 @@ const InfluencerExplore = () => {
               />
             ))}
             {displayedOffers?.length === 0 && (
-              <div className="col-span-full text-center py-12 text-muted-foreground space-y-4">
-                <p>No offers found matching your criteria.</p>
+              <div className="col-span-full rounded-[2rem] bg-card border border-border text-center px-6 py-16 space-y-4">
+                <span className="mx-auto flex items-center justify-center w-20 h-20 rounded-full" style={{ background: "radial-gradient(circle at 30% 30%, hsl(var(--gold-light)), hsl(var(--primary)))", boxShadow: "0 0 0 10px hsl(var(--primary) / .12)" }}><Search className="w-8 h-8" style={{ color: "hsl(var(--venue-brand))" }} /></span>
+                <p className="text-2xl font-extrabold text-foreground">No offers match right now</p>
+                <p className="text-muted-foreground max-w-md mx-auto">Try another category or clear your filters — new offers go live every week.</p>
                 <Button
                   variant="outline"
                   onClick={() => { setSearch(""); setCategoryFilter("all"); setTypeFilter("all"); setCountryFilter("all"); setNearbyOnly(false); setSavedOnly(false); }}
@@ -450,20 +453,24 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
     : null;
 
   return (
-    <Card className="hover:border-gold/30 transition-colors overflow-hidden relative">
+    <Card className="rounded-3xl p-2.5 overflow-hidden relative shadow-[var(--venue-shadow)] hover:shadow-[0_16px_40px_-20px_hsl(0_35%_16%/.45)] transition">
       <Button
         size="icon"
         variant="secondary"
-        className="absolute top-2 right-2 z-10 w-8 h-8"
+        className="absolute top-5 right-5 z-10 w-10 h-10 rounded-full bg-black/35 backdrop-blur text-white hover:bg-black/50 border-0"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave?.(); }}
       >
-        <Heart className={`w-4 h-4 ${isSaved ? "fill-gold text-gold" : ""}`} />
+        <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
       </Button>
       <Link to={`/influencer/offers/${offer.id}`} className="block">
-        {(offer.cover_image_url || offer.image_url) && <img src={offer.cover_image_url || offer.image_url} alt={offer.title} className="w-full h-40 object-cover" />}
+        <div className="rounded-[1.4rem] overflow-hidden aspect-[16/11] bg-muted">
+          {(offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url)
+            ? <img src={offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url} alt={offer.title} className="w-full h-full object-cover hover:scale-[1.04] transition duration-500" />
+            : <div className="w-full h-full" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }} />}
+        </div>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base hover:text-gold transition-colors">{offer.title}</CardTitle>
+            <CardTitle className="text-lg font-extrabold">{offer.title}</CardTitle>
             <Badge variant="outline">{prettyLabel(offer.offer_type)}</Badge>
           </div>
         </CardHeader>
@@ -519,7 +526,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
           ) : (
             <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => { if (!o) { setSelectedOffer(null); setAccepted(false); } }}>
               <DialogTrigger asChild>
-                <Button size="sm" onClick={() => setSelectedOffer(offer)}>Apply</Button>
+                <Button size="sm" className="rounded-full h-10 px-6 font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} onClick={() => setSelectedOffer(offer)}>Apply</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>

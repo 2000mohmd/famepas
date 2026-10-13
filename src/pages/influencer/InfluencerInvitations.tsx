@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { VenueEmpty, BrandButton } from "@/components/venue/VenueUI";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,9 +99,11 @@ const InfluencerInvitations = () => {
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">My Invitations</h1>
-          <p className="text-muted-foreground">Direct invites from venues</p>
+        <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Inbox</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Invitations</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Venues that picked you personally. Accept to lock in your visit.</p>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -135,11 +138,8 @@ const InfluencerInvitations = () => {
             </Card>
           ))}
           {invitations?.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Send className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="mb-4">No invitations yet. Complete your profile to attract venues!</p>
-              <Button onClick={() => navigate("/influencer/profile")}>Complete profile</Button>
-            </div>
+            <VenueEmpty icon={Send} title="No invitations yet" body="Venues invite creators whose profiles stand out. Add a great photo, a bio and your niches to get noticed."
+              actions={<BrandButton to="/influencer/profile">Complete profile</BrandButton>} />
           )}
         </div>
 
