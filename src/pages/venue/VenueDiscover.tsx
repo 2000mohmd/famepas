@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -50,8 +50,10 @@ const VenueDiscover = () => {
   const [inviteMessage, setInviteMessage] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
   const [search, setSearch] = useState("");
-  const [niche, setNiche] = useState("all");
-  const [platform, setPlatform] = useState("all");
+  const [selNiches, setSelNiches] = useState<string[]>([]);
+  const [selPlatforms, setSelPlatforms] = useState<string[]>([]);
+  const [showAllNiches, setShowAllNiches] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
   const [tier, setTier] = useState("all");
   const [city, setCity] = useState("all");
   const [sortBy, setSortBy] = useState<"followers" | "newest" | "name">("followers");
@@ -126,9 +128,9 @@ const VenueDiscover = () => {
     let rows = (creators ?? []).filter((c) => {
       const maxFollowers = Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0);
       if (q && !c.full_name?.toLowerCase().includes(q) && !c.instagram_handle?.toLowerCase().includes(q) && !c.tiktok_handle?.toLowerCase().includes(q)) return false;
-      if (niche !== "all" && !(c.niche ?? []).includes(niche)) return false;
-      if (platform === "instagram" && !c.instagram_handle) return false;
-      if (platform === "tiktok" && !c.tiktok_handle) return false;
+      if (selNiches.length && !(c.niche ?? []).some((n) => selNiches.includes(n))) return false;
+      if (selPlatforms.length && !selPlatforms.some((p) => (p === "instagram" ? c.instagram_handle : c.tiktok_handle))) return false;
+      if (savedOnly && !savedIds?.has(c.user_id)) return false;
       if (city !== "all" && c.city !== city) return false;
       const tierDef = FOLLOWER_TIERS.find((t) => t.key === tier);
       if (tierDef && tierDef.min > 0 && maxFollowers < tierDef.min) return false;
@@ -137,116 +139,222 @@ const VenueDiscover = () => {
     if (sortBy === "followers") rows = [...rows].sort((a, b) => Math.max(b.followers_count ?? 0, b.tiktok_followers ?? 0) - Math.max(a.followers_count ?? 0, a.tiktok_followers ?? 0));
     else if (sortBy === "name") rows = [...rows].sort((a, b) => (a.full_name ?? "").localeCompare(b.full_name ?? ""));
     return rows;
-  }, [creators, search, niche, platform, tier, city, sortBy]);
+  }, [creators, search, selNiches, selPlatforms, savedOnly, savedIds, tier, city, sortBy]);
+
+  const topCreators = useMemo(
+    () => [...(creators ?? [])].filter((c) => c.avatar_url)
+      .sort((a, b) => Math.max(b.followers_count ?? 0, b.tiktok_followers ?? 0) - Math.max(a.followers_count ?? 0, a.tiktok_followers ?? 0))
+      .slice(0, 12),
+    [creators],
+  );
+  const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const tierLabel = (f: number) => (f >= 250000 ? "Macro" : f >= 50000 ? "Mid" : f >= 10000 ? "Micro" : f >= 1000 ? "Nano" : "Rising");
+  const compact = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : String(n));
 
   return (
     <DashboardLayout type="venue">
-      <div className="animate-fade-in">
-        <div className="venue-discover-header">
-          <p className="venue-eyebrow">FamePass / Creators</p>
-          <h1>Find your next collaboration.</h1>
-          <div className="relative venue-search">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input aria-label="Search creators" placeholder="Search creators by name or handle" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-12" />
-          </div>
-        </div>
-        <div className="venue-discover-layout">
-        <aside className="venue-filters" aria-label="Creator filters">
-          <h2 className="text-base">Filters</h2>
-          <div><label>Content niche</label>
-          <Select value={niche} onValueChange={setNiche}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Niche" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All niches</SelectItem>
-              {niches.map((n) => <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          </div><div><label>Platform</label>
-          <Select value={platform} onValueChange={setPlatform}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Platform" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any platform</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-            </SelectContent>
-          </Select>
-          </div><div><label>Audience size</label>
-          <Select value={tier} onValueChange={setTier}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Follower tier" /></SelectTrigger>
-            <SelectContent>
-              {FOLLOWER_TIERS.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          </div>
-          {cities.length > 0 && (
-            <div><label>Location</label>
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="City" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any city</SelectItem>
-                {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+      <div className="animate-fade-in space-y-10">
+        {/* Hero */}
+        <section className="rounded-[2rem] p-6 md:p-10 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-8 overflow-hidden" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+          <div className="min-w-0">
+            <h1 className="font-extrabold tracking-tight leading-[0.95] text-5xl md:text-7xl" style={{ color: "hsl(var(--venue-brand-foreground))" }}>
+              <span className="inline-flex items-center gap-4 flex-wrap">
+                Find
+                <span className="inline-flex items-center justify-center rounded-full border-2 h-14 md:h-20 px-8 md:px-10" style={{ borderColor: "hsl(var(--primary))" }}>
+                  <Search className="w-6 h-6 md:w-8 md:h-8" />
+                </span>
+                Creators
+              </span>
+              {topCreators.length > 0 && (
+                <span className="flex my-4">
+                  {topCreators.slice(0, 3).map((c, i) => (
+                    <img key={c.user_id} src={c.avatar_url!} alt="" className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-4" style={{ marginLeft: i ? -14 : 0, borderColor: "hsl(var(--venue-brand))" }} />
+                  ))}
+                </span>
+              )}
+              <span className="block">to collaborate with</span>
+            </h1>
+            <div className="relative mt-8 max-w-2xl">
+              <Input
+                aria-label="Search creators"
+                placeholder="Search by name or handle"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-16 rounded-2xl pl-6 pr-20 text-base border-0"
+                style={{ background: "hsl(var(--venue-brand-foreground) / .12)", color: "hsl(var(--venue-brand-foreground))" }}
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+                <Search className="w-5 h-5" />
+              </span>
             </div>
-          )}
-        </aside>
-        <section aria-label="Creators">
-        <div className="venue-results-toolbar">
-          <h2 className="text-lg">Creators <span className="text-muted-foreground text-sm font-normal">{isLoading ? "" : `(${filtered.length})`}</span></h2>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Sort" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="followers">Top followers</SelectItem>
-              <SelectItem value="name">Name A-Z</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="venue-creator-grid">
-          {isLoading && <p className="col-span-full py-12 text-muted-foreground">Loading creators…</p>}
-          {filtered.map((c) => {
-            const isSaved = !!savedIds?.has(c.user_id);
-            const maxFollowers = Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0);
-            return (
-              <Card key={c.user_id} className="venue-creator-card">
-                <div className="venue-creator-photo">
-                  <Link to={`/venue/creator/${c.user_id}`} aria-label={`View ${c.full_name}`}>
-                    {c.avatar_url ? <img src={c.avatar_url} alt={c.full_name} loading="lazy" /> : <div className="creator-initials">{(c.full_name || "FP").slice(0, 2).toUpperCase()}</div>}
-                  </Link>
-                  {venueId && <Button size="icon" variant="ghost" aria-label={isSaved ? "Remove from shortlist" : "Save to shortlist"} title={isSaved ? "Remove from shortlist" : "Save to shortlist"} onClick={(e) => { e.stopPropagation(); toggleSave.mutate({ influencerId: c.user_id, isSaved }); }}>
-                    <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
-                  </Button>}
-                </div>
-                <div className="venue-creator-detail">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link to={`/venue/creator/${c.user_id}`}><h3>{c.full_name}</h3></Link>
-                    {c.is_verified && <BadgeCheck className="w-4 h-4 shrink-0 text-primary" aria-label="Verified creator" />}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.city || c.country || "Location not added"}</p>
-                  <div className="flex items-center gap-1.5 mt-3 text-sm font-semibold"><Users className="w-4 h-4 text-muted-foreground" />{maxFollowers.toLocaleString()} <span className="font-normal text-xs text-muted-foreground">followers</span></div>
-                  <div className="flex flex-wrap gap-1.5 mt-3 min-h-5">
-                    {(c.niche ?? []).slice(0, 2).map((n) => <Badge key={n} variant="secondary" className="text-[10px] rounded-md">{n}</Badge>)}
-                  </div>
-                  <div className="venue-creator-socials">
-                    {c.instagram_handle && <span><Instagram /> @{c.instagram_handle}</span>}
-                    {c.tiktok_handle && <span><Music2 /> @{c.tiktok_handle}</span>}
-                  </div>
-                  {c.bio && <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{c.bio}</p>}
-                  <div className="venue-creator-actions">
-                    <Button size="sm" variant="outline" asChild><Link to={`/venue/creator/${c.user_id}`}>View <ArrowUpRight /></Link></Button>
-                    {venueId && <Button size="sm" onClick={() => openInvite(c)}><Send /> Invite</Button>}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-          {!isLoading && filtered.length === 0 && (
-            <div className="col-span-full text-center py-12 text-muted-foreground">No creators match your filters.</div>
-          )}
-        </div>
-
+          </div>
+          <div className="hidden xl:flex relative rounded-[1.75rem] p-8 flex-col justify-between overflow-hidden" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+            <span aria-hidden className="absolute -right-24 -top-24 w-80 h-80 rounded-full border" style={{ borderColor: "hsl(var(--venue-brand) / .3)" }} />
+            <span aria-hidden className="absolute -right-10 top-32 w-80 h-80 rounded-full border" style={{ borderColor: "hsl(var(--venue-brand) / .3)" }} />
+            <span className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--primary))" }}>
+              <Send className="w-6 h-6" />
+            </span>
+            <p className="relative text-4xl font-extrabold leading-tight">Invite creators directly</p>
+          </div>
         </section>
-        </div>
+
+        {/* Top creators */}
+        {topCreators.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-foreground mb-4">Top creators</h2>
+            <div className="flex gap-6 overflow-x-auto pb-2">
+              {topCreators.map((c) => (
+                <Link key={c.user_id} to={`/venue/creator/${c.user_id}`} className="shrink-0 w-24 text-center group">
+                  <span className="block w-24 h-24 rounded-full p-[3px] mx-auto" style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--venue-brand)))" }}>
+                    <img src={c.avatar_url!} alt={c.full_name} loading="lazy" className="w-full h-full rounded-full object-cover border-[3px] border-background group-hover:scale-[1.03] transition" />
+                  </span>
+                  <span className="block mt-2 text-sm text-foreground truncate">{c.full_name.split(" ")[0]}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Filters + results */}
+        <section className="rounded-[2rem] bg-card border border-border p-5 md:p-10 grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-10">
+          <aside aria-label="Creator filters" className="space-y-8">
+            <h2 className="text-2xl font-extrabold text-foreground">Filters</h2>
+            {niches.length > 0 && (
+              <fieldset>
+                <legend className="text-base font-bold text-foreground mb-3">Content niche</legend>
+                <div className="space-y-3">
+                  {(showAllNiches ? niches : niches.slice(0, 6)).map((n) => (
+                    <label key={n.id} className="flex items-center gap-3 text-[15px] text-foreground cursor-pointer">
+                      <Checkbox checked={selNiches.includes(n.name)} onCheckedChange={() => toggle(selNiches, setSelNiches, n.name)} />
+                      {n.name}
+                    </label>
+                  ))}
+                </div>
+                {niches.length > 6 && (
+                  <button type="button" onClick={() => setShowAllNiches((v) => !v)} className="mt-3 text-sm font-semibold" style={{ color: "hsl(var(--venue-brand))" }}>
+                    {showAllNiches ? "Show less" : "Show all"}
+                  </button>
+                )}
+              </fieldset>
+            )}
+            <fieldset className="border-t border-border pt-6">
+              <legend className="text-base font-bold text-foreground mb-3">Platform</legend>
+              <div className="space-y-3">
+                {[["instagram", "Instagram"], ["tiktok", "TikTok"]].map(([v, l]) => (
+                  <label key={v} className="flex items-center gap-3 text-[15px] text-foreground cursor-pointer">
+                    <Checkbox checked={selPlatforms.includes(v)} onCheckedChange={() => toggle(selPlatforms, setSelPlatforms, v)} />
+                    {l}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="border-t border-border pt-6 space-y-3">
+              <legend className="text-base font-bold text-foreground mb-3">Audience size</legend>
+              <Select value={tier} onValueChange={setTier}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {FOLLOWER_TIERS.map((t) => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </fieldset>
+            {cities.length > 0 && (
+              <fieldset className="border-t border-border pt-6">
+                <legend className="text-base font-bold text-foreground mb-3">Location</legend>
+                <Select value={city} onValueChange={setCity}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any city</SelectItem>
+                    {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </fieldset>
+            )}
+            {venueId && (
+              <label className="flex items-center gap-3 text-[15px] text-foreground cursor-pointer border-t border-border pt-6">
+                <Checkbox checked={savedOnly} onCheckedChange={(v) => setSavedOnly(!!v)} />
+                <Heart className="w-4 h-4" /> Saved only
+              </label>
+            )}
+          </aside>
+
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
+                Creators <span className="text-base font-medium text-muted-foreground">{isLoading ? "" : filtered.length}</span>
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Sort by:</span>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-[170px] h-11 rounded-xl font-semibold"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="followers">Top followers</SelectItem>
+                    <SelectItem value="name">Name A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-5">
+              {isLoading && <p className="col-span-full py-12 text-muted-foreground">Loading creators…</p>}
+              {filtered.map((c) => {
+                const isSaved = !!savedIds?.has(c.user_id);
+                const f = Math.max(c.followers_count ?? 0, c.tiktok_followers ?? 0);
+                return (
+                  <article key={c.user_id} className="rounded-3xl border border-border bg-card p-3 hover:shadow-[0_12px_32px_-16px_hsl(0_35%_16%/.35)] transition">
+                    <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-muted">
+                      <Link to={`/venue/creator/${c.user_id}`} aria-label={`View ${c.full_name}`} className="block w-full h-full">
+                        {c.avatar_url
+                          ? <img src={c.avatar_url} alt={c.full_name} loading="lazy" className="w-full h-full object-cover hover:scale-[1.03] transition duration-300" style={{ objectPosition: "center 25%" }} />
+                          : <span className="w-full h-full flex items-center justify-center text-5xl font-bold text-muted-foreground">{(c.full_name || "FP").slice(0, 2).toUpperCase()}</span>}
+                      </Link>
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+                        {c.is_verified ? <><BadgeCheck className="w-3.5 h-3.5" /> Verified</> : tierLabel(f)}
+                      </span>
+                      {venueId && (
+                        <button
+                          type="button"
+                          aria-label={isSaved ? "Remove from saved" : "Save creator"}
+                          onClick={() => toggleSave.mutate({ influencerId: c.user_id, isSaved })}
+                          className="absolute right-3 top-3 w-10 h-10 rounded-full flex items-center justify-center bg-black/35 backdrop-blur text-white hover:bg-black/50 transition"
+                        >
+                          <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="px-2 pt-4 pb-2">
+                      <Link to={`/venue/creator/${c.user_id}`} className="block text-lg font-extrabold text-foreground truncate">{c.full_name}</Link>
+                      <p className="text-sm text-muted-foreground truncate mt-0.5">
+                        {[c.city || c.country, (c.niche ?? [])[0]].filter(Boolean).join(" · ") || "FamePass creator"}
+                      </p>
+                      <div className="flex items-end justify-between gap-3 mt-4">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            {c.instagram_handle && <Instagram className="w-4 h-4" />}
+                            {c.tiktok_handle && <Music2 className="w-4 h-4" />}
+                          </div>
+                          <p className="text-2xl font-extrabold text-foreground leading-tight">{compact(f)} <span className="text-xs font-medium text-muted-foreground">followers</span></p>
+                        </div>
+                        <div className="flex gap-2">
+                          {venueId && (
+                            <Button size="icon" variant="outline" className="rounded-full h-11 w-11" aria-label={`Invite ${c.full_name}`} onClick={() => openInvite(c)}>
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button asChild className="rounded-full h-11 px-6 font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
+                            <Link to={`/venue/creator/${c.user_id}`}>View</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+              {!isLoading && filtered.length === 0 && (
+                <div className="col-span-full text-center py-16 text-muted-foreground">No creators match your filters.</div>
+              )}
+            </div>
+          </div>
+        </section>
 
         <Dialog open={!!inviteTarget} onOpenChange={(o) => !o && setInviteTarget(null)}>
           <DialogContent>

@@ -98,7 +98,6 @@
     "Rewards": "المكافآت",
     "Account": "الحساب",
     "My Profile": "ملفي الشخصي",
-    "Dashboard": "لوحة التحكم",
     "Analytics": "التحليلات",
     "My day": "يومي",
     "Sales": "المبيعات",
@@ -123,8 +122,7 @@
     "Sales Scoring": "تقييم المبيعات",
     "Train Chatbot": "تدريب روبوت الدردشة",
     "Sales dashboard": "لوحة مبيعات",
-    "Scoring & targets": "التقييم والأهداف",
-    "Offer Attendance": "حضور العروض"
+    "Scoring & targets": "التقييم والأهداف"
   },
   "venueHome": {
     "welcomeBack": "مرحبًا بعودتك",
@@ -143,7 +141,25 @@
     "creatorFallback": "صانع محتوى",
     "tbd": "لم يُحدد",
     "creatorsOnFamePass": "صناع المحتوى على FamePass",
-    "followersCount": "{{count}} متابع"
+    "followersCount": "{{count}} متابع",
+    "welcome": "أهلاً",
+    "subtitleSetup": "لنبدأ الإعداد. أكمل هذه الخطوات لتبدأ باستقبال صناع المحتوى.",
+    "subtitleReady": "إليك ما يحدث في مكانك.",
+    "createOffer": "إنشاء عرض",
+    "setupTitle": "جهّز مكانك",
+    "setupSub": "أكمل الإعداد لتبدأ التعاون مع صناع المحتوى.",
+    "stepsDone": "{{done}} من {{total}} مكتملة",
+    "stepProfile": "أكمل ملف مكانك",
+    "stepProfileSub": "أضف شعارك ووصفاً — هذا أول ما يراه صناع المحتوى.",
+    "stepInstagram": "اربط حساب إنستغرام",
+    "stepInstagramSub": "وثّق حسابك ليتمكن صناع المحتوى من الإشارة إليك والعثور عليك.",
+    "stepOffer": "انشر عرضك الأول",
+    "stepOfferSub": "أخبر صناع المحتوى بما تقدّمه وما تحتاجه في المقابل.",
+    "stepApplications": "راجع المتقدّمين",
+    "stepApplicationsSub": "يتقدّم صناع المحتوى، وأنت تختار من تعمل معه.",
+    "proofTitle": "صناع المحتوى يعملون بالفعل مع أماكن مثل مكانك",
+    "proofSub": "انشر عرضاً، اختر من المتقدّمين، واحصل على محتوى حقيقي من زيارات حقيقية.",
+    "discoverCreators": "اكتشف صناع المحتوى"
   },
   "influencerHome": {
     "greeting": "مرحبًا بعودتك",

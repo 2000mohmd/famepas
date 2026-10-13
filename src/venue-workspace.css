@@ -23,9 +23,9 @@
   background: hsl(var(--background));
   color: hsl(var(--foreground));
 }
-.venue-workspace * { letter-spacing: 0; }
-.venue-workspace h1 { font-size: 32px; line-height: 1.2; font-weight: 800; }
-.venue-workspace h2 { font-weight: 700; }
+:where(.venue-workspace) * { letter-spacing: 0; }
+:where(.venue-workspace) h1 { font-size: 32px; line-height: 1.2; font-weight: 800; }
+:where(.venue-workspace) h2 { font-weight: 700; }
 .venue-workspace > aside {
   --card: var(--venue-brand);
   --card-foreground: var(--venue-brand-foreground);
@@ -98,7 +98,7 @@
 @media(max-width:767px) {
   .venue-workspace > main { margin-left:0; }
   .venue-workspace .venue-heading { align-items:flex-start; flex-direction:column; gap:16px; }
-  .venue-workspace h1, .venue-workspace .venue-discover-header h1 { font-size:28px; }
+  :where(.venue-workspace) h1 { font-size:28px; }
   .venue-workspace .venue-summary > a { padding:20px 8px; flex-direction:column; align-items:flex-start; gap:10px; }
   .venue-workspace .venue-summary strong { font-size:24px; }
   .venue-workspace .venue-discover-layout { grid-template-columns:minmax(0,1fr); }

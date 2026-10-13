@@ -566,7 +566,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
 
         {/* Onboarding banner (venue): Adnan, Venue Portal item 24 — full-width,
             at the top of every page, until setup is complete. */}
-        {type === "venue" && onboarding && onboarding.done < onboarding.total && (
+        {type === "venue" && location.pathname !== "/venue" && onboarding && onboarding.done < onboarding.total && (
           <div className="px-4 md:px-8 pt-4 md:pt-6">
             <div className="venue-onboarding p-5 md:p-6">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -594,7 +594,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             </div>
           </div>
         )}
-        {type === "venue" && onboarding && onboarding.done === onboarding.total && !onboardingDismissed && (
+        {type === "venue" && location.pathname !== "/venue" && onboarding && onboarding.done === onboarding.total && !onboardingDismissed && (
           <div className="px-4 md:px-8 pt-4 md:pt-6">
             <div className="rounded-2xl p-4 flex items-center justify-between gap-3 border" style={{ background: "hsl(140 40% 96%)", borderColor: "hsl(140 40% 85%)" }}>
               <p className="text-sm font-medium" style={{ color: "hsl(140 50% 25%)" }}>🎉 You're live — ready to receive creators.</p>
