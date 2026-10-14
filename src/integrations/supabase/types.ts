@@ -1416,6 +1416,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          ai_generated: boolean
           booking_id: string | null
           content: string
           created_at: string
@@ -1423,11 +1424,13 @@ export type Database = {
           is_read: boolean
           media_url: string | null
           message_type: string
+          needs_human: boolean
           receiver_id: string
           sender_id: string
           venue_id: string | null
         }
         Insert: {
+          ai_generated?: boolean
           booking_id?: string | null
           content: string
           created_at?: string
@@ -1435,11 +1438,13 @@ export type Database = {
           is_read?: boolean
           media_url?: string | null
           message_type?: string
+          needs_human?: boolean
           receiver_id: string
           sender_id: string
           venue_id?: string | null
         }
         Update: {
+          ai_generated?: boolean
           booking_id?: string | null
           content?: string
           created_at?: string
@@ -1447,6 +1452,7 @@ export type Database = {
           is_read?: boolean
           media_url?: string | null
           message_type?: string
+          needs_human?: boolean
           receiver_id?: string
           sender_id?: string
           venue_id?: string | null
