@@ -143,10 +143,12 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
       `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
+    // Log unconditionally while we're chasing why photo/handle keep coming
+    // back empty — a 200 with fields just missing wouldn't trip an error
+    // check, and that silent gap is exactly how the last connections ended
+    // up with no photo and nobody able to tell why.
+    console.log("instagram /me profile fetch", profRes.status, JSON.stringify(prof));
     if (!profRes.ok || prof?.error) {
-      // Non-fatal — the creator is still connected and authenticated with the
-      // token we already have. But log it: a silent null here is exactly how
-      // the last two Instagram connections quietly ended up with no photo.
       console.error("instagram /me profile fetch failed", profRes.status, prof);
     } else {
       username = prof?.username ?? null;
