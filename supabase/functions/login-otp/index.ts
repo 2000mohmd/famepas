@@ -67,13 +67,11 @@ serve(async (req) => {
       });
     }
 
-    // Check 2FA enabled. Adnan, recap D1: required for admin/sales_manager/
-    // sales_rep regardless of their personal toggle, not just opt-in.
+    // 2FA is opt-in only (profiles.two_factor_enabled). Admin and sales staff
+    // sign in with email + password — forcing the emailed code on them locked
+    // admins out whenever email delivery broke (Oct 14, 2026).
     const { data: profile } = await supabase.from("profiles").select("two_factor_enabled, full_name").eq("user_id", user.id).maybeSingle();
-    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = new Set((roleRows ?? []).map((r: any) => r.role));
-    const requiresTwoFA = roles.has("admin") || roles.has("sales_manager") || roles.has("sales_rep");
-    const twoFA = requiresTwoFA || !!profile?.two_factor_enabled;
+    const twoFA = !!profile?.two_factor_enabled;
 
     if (action === "send") {
       if (!twoFA) {
