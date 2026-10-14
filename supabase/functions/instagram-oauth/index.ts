@@ -45,11 +45,11 @@ const SITE_URL = Deno.env.get("PUBLIC_SITE_URL") ?? "https://famepass.app";
 const REDIRECT_URI = `${SITE_URL}/instagram/callback`;
 
 // https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login
+// Only what the platform reads: profile/followers/media (basic) and post +
+// account insights for campaign tracking. Every extra scope is another
+// screencast and justification in Meta App Review, so don't add unused ones.
 const SCOPES = [
   "instagram_business_basic",
-  "instagram_business_manage_messages",
-  "instagram_business_manage_comments",
-  "instagram_business_content_publish",
   "instagram_business_manage_insights",
 ].join(",");
 
