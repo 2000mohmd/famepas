@@ -112,17 +112,19 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     client_secret: CLIENT_SECRET,
     access_token: shortTok.access_token,
   };
-  const longUrl = new URL("https://graph.instagram.com/access_token");
-  for (const [k, v] of Object.entries(longParams)) longUrl.searchParams.set(k, v);
-
-  let longTok = await safeJson(await fetch(longUrl.toString()));
-  if (!longTok?.access_token) {
-    console.error("instagram long-lived token error (GET), retrying with POST", longTok);
-    longTok = await safeJson(await fetch("https://graph.instagram.com/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(longParams),
-    }));
+  // The unversioned path is answered with "Unsupported request" for Business
+  // Login apps; the versioned path works. Try versioned first, then legacy.
+  let longTok: any = null;
+  for (const base of [
+    "https://graph.instagram.com/v23.0/access_token",
+    "https://graph.instagram.com/v21.0/access_token",
+    "https://graph.instagram.com/access_token",
+  ]) {
+    const u = new URL(base);
+    for (const [k, v] of Object.entries(longParams)) u.searchParams.set(k, v);
+    longTok = await safeJson(await fetch(u.toString()));
+    if (longTok?.access_token) break;
+    console.error(`instagram long-lived token error at ${base}`, longTok);
   }
 
   const accessToken: string = longTok?.access_token ?? shortTok.access_token;
