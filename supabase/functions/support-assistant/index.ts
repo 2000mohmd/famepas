@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     if (result.error) return json({ error: result.error }, result.status);
 
     let parsed: { reply?: string; escalate?: boolean; reason?: string } = {};
-    try { parsed = JSON.parse(result.content); } catch { parsed = { reply: result.content, escalate: true, reason: "unparseable" }; }
+    try { parsed = JSON.parse(result.content ?? ""); } catch { parsed = { reply: result.content, escalate: true, reason: "unparseable" }; }
     const reply = (parsed.reply ?? "").trim() || "Thanks — I've passed this to the FamePass team and they'll reply here.";
     const escalate = parsed.escalate !== false;
 
