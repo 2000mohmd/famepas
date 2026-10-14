@@ -142,11 +142,18 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
       `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
-    username = prof?.username ?? null;
-    accountType = prof?.account_type ?? null;
-    pictureUrl = prof?.profile_picture_url ?? null;
-    followersCount = typeof prof?.followers_count === "number" ? prof.followers_count : null;
-  } catch (_e) { /* non-fatal — we still have the token */ }
+    if (!profRes.ok || prof?.error) {
+      // Non-fatal — the creator is still connected and authenticated with the
+      // token we already have. But log it: a silent null here is exactly how
+      // the last two Instagram connections quietly ended up with no photo.
+      console.error("instagram /me profile fetch failed", profRes.status, prof);
+    } else {
+      username = prof?.username ?? null;
+      accountType = prof?.account_type ?? null;
+      pictureUrl = prof?.profile_picture_url ?? null;
+      followersCount = typeof prof?.followers_count === "number" ? prof.followers_count : null;
+    }
+  } catch (e) { console.error("instagram /me profile fetch threw", e); }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
 
