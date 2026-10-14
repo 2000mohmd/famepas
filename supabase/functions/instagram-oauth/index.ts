@@ -34,6 +34,7 @@
 //                                                     |  { mode: "new", link_token, username, account_type } [public]
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { mirrorAvatar, applyProfileAvatar } from "../_shared/avatar.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;

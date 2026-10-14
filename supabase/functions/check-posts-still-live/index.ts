@@ -19,9 +19,9 @@ async function instagramPostStillLive(accessToken: string, postUrl: string): Pro
   if (!code) return null; // not a recognizable IG post URL -- leave for manual review
   let next: string | null = `https://graph.instagram.com/v21.0/me/media?fields=id,permalink&limit=50&access_token=${accessToken}`;
   for (let i = 0; i < 6 && next; i++) {
-    const r = await fetch(next);
+    const r: Response = await fetch(next);
     if (!r.ok) return null; // token expired/revoked etc -- leave for manual review, don't strike on an API error
-    const j = await r.json();
+    const j: any = await r.json();
     if ((j.data || []).some((m: any) => (m.permalink || "").includes(`/${code}`))) return true;
     next = j.paging?.next ?? null;
   }
