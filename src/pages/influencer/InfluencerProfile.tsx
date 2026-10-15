@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import CreatorPortfolio, { usePortfolio } from "@/components/CreatorPortfolio";
 import CreatorPhoto from "@/components/CreatorPhoto";
+import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
 import { VenuePanel } from "@/components/venue/VenueUI";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -251,6 +252,13 @@ const InfluencerProfile = () => {
               </div>
               <p className="text-xs text-muted-foreground mt-4">Venues see "Verified" only for connected accounts. Typed-in follower counts show as self-reported.</p>
             </VenuePanel>
+
+            {/* The same live metrics venues see on your applications, once an account is linked. */}
+            {user && (profile?.instagram_verified || tiktokConnected) && (
+              <VenuePanel title="Your insights">
+                <CreatorInsightsPanel influencerId={user.id} fallback={{ followers_count: form.followers_count, tiktok_followers: form.tiktok_followers }} />
+              </VenuePanel>
+            )}
 
             <VenuePanel title="Portfolio" action={<span className="text-sm text-muted-foreground">Up to 9 photos</span>}>
               <div id="portfolio" className="scroll-mt-24">

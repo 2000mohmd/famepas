@@ -43,6 +43,8 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
 
   const ig = data?.instagram ?? {};
   const tk = data?.tiktok ?? {};
+  // Show the platform's own reason (e.g. Meta's App Review refusal) instead of a generic line.
+  const why = (e: unknown) => (typeof e === "string" && e.length < 300 ? e : "the creator may need to relink the account");
 
   return (
     <div className="space-y-4">
@@ -53,6 +55,11 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
         </Button>
       </div>
 
+      {data?.error === true && (
+        <p className="rounded-xl border border-border p-4 text-sm text-muted-foreground">Couldn't load metrics right now. Try Refresh in a moment.</p>
+      )}
+      {loading && !data && <div className="h-28 rounded-xl bg-muted animate-pulse" />}
+
       <div className="rounded-xl border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
           <Instagram className="w-4 h-4 text-gold" />
@@ -61,7 +68,7 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
           {!ig.connected && <span className="text-[11px] text-muted-foreground ml-auto">Not linked</span>}
         </div>
         {ig.error ? (
-          <p className="text-xs text-muted-foreground">Metrics unavailable right now — the creator may need to relink the account.</p>
+          <p className="text-xs text-muted-foreground">Instagram metrics unavailable: {why(ig.error)}.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Metric icon={Users} label="Followers" value={fmt(ig.followers ?? fallback?.followers_count)} />
@@ -80,7 +87,7 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
           {!tk.connected && <span className="text-[11px] text-muted-foreground ml-auto">Not linked</span>}
         </div>
         {tk.error ? (
-          <p className="text-xs text-muted-foreground">Metrics unavailable right now — the creator may need to relink the account.</p>
+          <p className="text-xs text-muted-foreground">TikTok metrics unavailable: {why(tk.error)}.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Metric icon={Users} label="Followers" value={fmt(tk.followers ?? fallback?.tiktok_followers)} />
