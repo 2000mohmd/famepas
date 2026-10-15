@@ -103,62 +103,55 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
   }
 
   // Step 2: exchange for a long-lived token (~60 days).
-  // Instagram's docs say GET, but some app configurations answer GET with
-  // IGApiException "Unsupported request - method type: get" — so fall back to
-  // POST, and if both fail keep the short-lived token rather than failing the
-  // whole sign-in (the creator is still authenticated; we just re-link sooner).
+  // Per Meta's 2025 docs, POST to unversioned /access_token with ig_exchange_token.
+  // If that fails, fall back to short-lived token (creator still signs in; re-link in 1 hour).
   const longParams = {
     grant_type: "ig_exchange_token",
     client_secret: CLIENT_SECRET,
     access_token: shortTok.access_token,
   };
-  // The unversioned path is answered with "Unsupported request" for Business
-  // Login apps; the versioned path works. Try versioned first, then legacy.
+
   let longTok: any = null;
-  for (const base of [
-    "https://graph.instagram.com/v23.0/access_token",
-    "https://graph.instagram.com/v21.0/access_token",
-    "https://graph.instagram.com/access_token",
-  ]) {
-    const u = new URL(base);
-    for (const [k, v] of Object.entries(longParams)) u.searchParams.set(k, v);
-    longTok = await safeJson(await fetch(u.toString()));
-    if (longTok?.access_token) break;
-    console.error(`instagram long-lived token error at ${base}`, longTok);
+  try {
+    const res = await fetch("https://graph.instagram.com/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(longParams),
+    });
+    longTok = await safeJson(res);
+    if (!longTok?.access_token) {
+      console.error("instagram long-lived token POST failed", { status: res.status, error_code: longTok?.error?.code, error_type: longTok?.error?.type });
+    }
+  } catch (e) {
+    console.error("instagram long-lived token POST threw", { error: (e as Error).message });
   }
 
   const accessToken: string = longTok?.access_token ?? shortTok.access_token;
-  const expiresInSec: number = longTok?.access_token
-    ? (longTok.expires_in ?? 5184000)
-    : 3600;
-  if (!longTok?.access_token) {
-    console.error("instagram long-lived token error (POST too) — using short-lived token", longTok);
+  const expiresInSec: number = longTok?.access_token ? (longTok.expires_in ?? 5184000) : 3600;
+  if (!longTok?.access_token && accessToken === shortTok.access_token) {
+    console.warn("instagram long-lived token failed; creator will reconnect in ~1 hour when short-lived token expires");
   }
 
-  // Step 3: basic profile
+  // Step 3: basic profile — use v26.0 (Meta's current default) not unversioned
   let username: string | null = null;
   let accountType: string | null = null;
   let pictureUrl: string | null = null;
   let followersCount: number | null = null;
   try {
     const profRes = await fetch(
-      `https://graph.instagram.com/me?fields=user_id,username,account_type,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
+      `https://graph.instagram.com/v26.0/me?fields=user_id,username,account_type,profile_picture_url,followers_count&access_token=${encodeURIComponent(accessToken)}`,
     );
     const prof = await safeJson(profRes);
-    // Log unconditionally while we're chasing why photo/handle keep coming
-    // back empty — a 200 with fields just missing wouldn't trip an error
-    // check, and that silent gap is exactly how the last connections ended
-    // up with no photo and nobody able to tell why.
-    console.log("instagram /me profile fetch", profRes.status, JSON.stringify(prof));
     if (!profRes.ok || prof?.error) {
-      console.error("instagram /me profile fetch failed", profRes.status, prof);
+      console.error("instagram /me profile fetch failed", { status: profRes.status, error_code: prof?.error?.code, error_type: prof?.error?.type });
     } else {
       username = prof?.username ?? null;
       accountType = prof?.account_type ?? null;
       pictureUrl = prof?.profile_picture_url ?? null;
       followersCount = typeof prof?.followers_count === "number" ? prof.followers_count : null;
+      console.log("instagram profile fetched", { username, account_type: accountType, followers: followersCount, has_picture: !!pictureUrl });
     }
-  } catch (e) { console.error("instagram /me profile fetch threw", e); }
+  } catch (e) { console.error("instagram /me profile fetch threw", { error: (e as Error).message }); }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
 
