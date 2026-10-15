@@ -33,7 +33,7 @@ interface Venue {
   approval_status: string;
   created_at: string;
   logo_url: string | null;
-  contact_person_name: string | null;
+  contact_person_name?: string | null; // column is locked for admins at the DB level — read contacts through get_venue_contact()
 }
 
 // Single-word, obviously-placeholder business names — flagged for admin review,
@@ -74,7 +74,7 @@ const AdminVenues = () => {
   const fetchVenues = async () => {
     setLoading(true);
     const [{ data }, { data: act }] = await Promise.all([
-      supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url, contact_person_name").order("created_at", { ascending: false }),
+      supabase.from("venues").select("id, name, category, city, is_active, approval_status, created_at, logo_url").order("created_at", { ascending: false }),
       (supabase as any).from("venue_activation").select("venue_id, lead_stage, rep_id, profile_complete, photos_uploaded, first_offer_posted, first_creator_visit, first_content_published"),
     ]);
     setVenues((data as any) ?? []);
