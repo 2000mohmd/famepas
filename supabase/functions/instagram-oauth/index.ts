@@ -98,7 +98,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
   });
   const shortTok = await safeJson(shortRes);
   if (!shortRes.ok || !shortTok.access_token) {
-    console.error("instagram short-lived token error", shortTok);
+    console.error("instagram short-lived token error", { status: shortRes.status, error_type: shortTok?.error_type, error_message: shortTok?.error_message });
     return { ok: false, error: shortTok?.error_message || "Could not exchange the authorization code" };
   }
 
@@ -111,19 +111,19 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     access_token: shortTok.access_token,
   };
 
+  // Meta's reference documents GET; some app configurations only answer POST.
   let longTok: any = null;
-  try {
-    const res = await fetch("https://graph.instagram.com/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(longParams),
-    });
-    longTok = await safeJson(res);
-    if (!longTok?.access_token) {
-      console.error("instagram long-lived token POST failed", { status: res.status, error_code: longTok?.error?.code, error_type: longTok?.error?.type });
+  const longUrl = `https://graph.instagram.com/access_token?${new URLSearchParams(longParams)}`;
+  for (const init of [{ method: "GET" }, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(longParams) }] as RequestInit[]) {
+    try {
+      const res = await fetch(init.method === "GET" ? longUrl : "https://graph.instagram.com/access_token", init);
+      longTok = await safeJson(res);
+      if (longTok?.access_token) break;
+      // Status and Meta's error code/message only — never the request or a token.
+      console.error("instagram long-lived token failed", { method: init.method, status: res.status, error_code: longTok?.error?.code ?? longTok?.code, error_message: longTok?.error?.message ?? longTok?.error_message });
+    } catch (e) {
+      console.error("instagram long-lived token threw", { method: init.method, error: (e as Error).message });
     }
-  } catch (e) {
-    console.error("instagram long-lived token POST threw", { error: (e as Error).message });
   }
 
   const accessToken: string = longTok?.access_token ?? shortTok.access_token;

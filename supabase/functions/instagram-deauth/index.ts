@@ -1,119 +1,77 @@
-// Instagram deauthorization and data deletion callback.
-// Meta calls this when a creator removes FamePass from their Instagram app settings,
-// or requests data deletion. We verify the request, then revoke the token and clear data.
+// Instagram deauthorization + data deletion callbacks (Meta App Dashboard ->
+// Instagram -> API setup with Instagram login -> Business login settings).
 //
-// Required secrets: META_APP_SECRET (or falls back to INSTAGRAM_CLIENT_SECRET)
-// No Authorization check — Meta's servers call this directly with a signed request.
-
+// Meta POSTs application/x-www-form-urlencoded with one field, `signed_request`
+// = "<base64url HMAC-SHA256 sig>.<base64url JSON payload>", signed with the
+// Instagram app secret. The payload's user_id is the Instagram user id we store
+// as social_integrations.open_id.
+//
+// Register the same function twice:
+//   Deauthorize callback URL:   <SUPABASE_URL>/functions/v1/instagram-deauth
+//   Data deletion request URL:  <SUPABASE_URL>/functions/v1/instagram-deauth?type=deletion
+// Deletion must answer { url, confirmation_code } per Meta's spec.
+//
+// What gets removed (Privacy Policy section 8): the Instagram connection (token,
+// handle, ids) and any half-finished Instagram signup. The FamePass account,
+// bookings, venues and other data are untouched.
+//
+// Secrets: INSTAGRAM_CLIENT_SECRET (or META_APP_SECRET), SUPABASE_URL,
+// SUPABASE_SERVICE_ROLE_KEY. verify_jwt = false — Meta never sends a user JWT.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type",
-};
+const SECRET = Deno.env.get("INSTAGRAM_CLIENT_SECRET") || Deno.env.get("META_APP_SECRET") || "";
+const SITE_URL = Deno.env.get("PUBLIC_SITE_URL") ?? "https://famepass.app";
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
-async function verifyMetaSignature(body: string, xHubSignature: string): Promise<boolean> {
-  const appSecret = Deno.env.get("META_APP_SECRET") ?? Deno.env.get("INSTAGRAM_CLIENT_SECRET") ?? "";
-  if (!appSecret) {
-    console.error("Missing app secret for Meta signature verification");
-    return false;
-  }
+const b64urlToBytes = (s: string) =>
+  Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(s.length / 4) * 4, "=")), (c) => c.charCodeAt(0));
 
+/** Returns the payload when the HMAC checks out, otherwise null. */
+export async function parseSignedRequest(signed: string, secret: string): Promise<Record<string, unknown> | null> {
+  const [sigPart, payloadPart] = signed.split(".");
+  if (!sigPart || !payloadPart || !secret) return null;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  // crypto.subtle.verify is constant-time.
+  const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(sigPart), new TextEncoder().encode(payloadPart));
+  if (!ok) return null;
   try {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey("raw", encoder.encode(appSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
-    const computed = "sha256=" + Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
-    return computed === xHubSignature;
-  } catch (e) {
-    console.error("Signature verification failed", { error: (e as Error).message });
-    return false;
-  }
+    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(payloadPart)));
+    return payload?.algorithm && String(payload.algorithm).toUpperCase() !== "HMAC-SHA256" ? null : payload;
+  } catch { return null; }
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+if (import.meta.main) Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  const isDeletion = new URL(req.url).searchParams.get("type") === "deletion";
 
-  try {
-    const body = await req.text();
-    const xHubSignature = req.headers.get("x-hub-signature-256") ?? "";
+  const form = await req.formData().catch(() => null);
+  const signed = form?.get("signed_request");
+  if (typeof signed !== "string") return json({ error: "signed_request required" }, 400);
 
-    if (!await verifyMetaSignature(body, xHubSignature)) {
-      console.warn("instagram-deauth: signature verification failed");
-      return json({ error: "Signature verification failed" }, 403);
-    }
-
-    const payload = JSON.parse(body);
-    const { signed_request, object } = payload;
-
-    // Deauthorization: when user removes the app from their Instagram settings.
-    // signed_request contains encoded user ID and auth token info.
-    if (object === "instagram" && signed_request) {
-      try {
-        const [encodedSig, encodedPayload] = signed_request.split(".");
-        const appSecret = Deno.env.get("META_APP_SECRET") ?? Deno.env.get("INSTAGRAM_CLIENT_SECRET") ?? "";
-        const decoder = new TextDecoder();
-        const payloadStr = decoder.decode(Uint8Array.from(atob(encodedPayload.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)));
-        const decoded = JSON.parse(payloadStr);
-        const igUserId = decoded.user_id;
-
-        if (igUserId) {
-          const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-          // Find and delete the Instagram social integration for this user.
-          // This revokes the token from our side (Meta also invalidates it).
-          const { error: delErr } = await admin
-            .from("social_integrations")
-            .delete()
-            .eq("platform", "instagram")
-            .eq("open_id", String(igUserId));
-
-          if (delErr) {
-            console.error("deauth: failed to delete integration", delErr.message);
-            return json({ error: delErr.message }, 500);
-          }
-
-          console.log("instagram deauth: integration deleted", { ig_user_id: igUserId });
-        }
-      } catch (e) {
-        console.error("deauth: signed_request decode failed", { error: (e as Error).message });
-        return json({ error: "Could not decode request" }, 400);
-      }
-
-      return json({ data: "deauth acked" });
-    }
-
-    // Data deletion: when user requests deletion via Instagram settings or a consent flow.
-    // The request body should contain a user ID or email to delete associated data.
-    // Per the Privacy Policy, we delete the linked Instagram social_integrations row
-    // and keep the FamePass account itself (user can delete that via FamePass settings).
-    if (object === "user" && payload.uid) {
-      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-      // payload.uid is the Instagram user ID for this request.
-      // Delete only the Instagram integration, not the whole user account.
-      const { error: delErr } = await admin
-        .from("social_integrations")
-        .delete()
-        .eq("platform", "instagram")
-        .eq("open_id", String(payload.uid));
-
-      if (delErr) {
-        console.error("deletion: failed to delete integration", delErr.message);
-        return json({ error: delErr.message }, 500);
-      }
-
-      console.log("instagram data deletion: integration deleted", { ig_user_id: payload.uid });
-      return json({ data: "deletion acked" });
-    }
-
-    return json({ error: "Unknown object type" }, 400);
-  } catch (e) {
-    console.error("instagram-deauth error", { error: (e as Error).message });
-    return json({ error: (e as Error).message }, 500);
+  const payload = await parseSignedRequest(signed, SECRET);
+  const igUserId = payload?.user_id != null ? String(payload.user_id) : "";
+  if (!igUserId) {
+    console.warn("instagram-deauth: rejected request (bad signature or no user_id)");
+    return json({ error: "Invalid signed_request" }, 403);
   }
+
+  const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: rows, error } = await admin.from("social_integrations")
+    .delete().eq("platform", "instagram").eq("open_id", igUserId).select("influencer_id");
+  if (error) {
+    console.error("instagram-deauth: delete failed", error.code);
+    return json({ error: "Could not process request" }, 500);
+  }
+  const creatorIds = (rows ?? []).map((r: { influencer_id: string | null }) => r.influencer_id).filter(Boolean) as string[];
+  if (creatorIds.length) {
+    await admin.from("profiles").update({ instagram_verified: false, instagram_verified_at: null }).in("user_id", creatorIds);
+  }
+  await admin.from("pending_instagram_signups").delete().eq("ig_user_id", igUserId);
+  console.log("instagram-deauth: processed", { type: isDeletion ? "deletion" : "deauthorize", connections_removed: rows?.length ?? 0 });
+
+  if (!isDeletion) return json({ success: true });
+  const confirmation_code = crypto.randomUUID();
+  return json({ url: `${SITE_URL}/privacy?deletion=${confirmation_code}`, confirmation_code });
 });

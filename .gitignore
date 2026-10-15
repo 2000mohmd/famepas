@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local tooling — never commit (pushed by mistake in badefab)
+.claude/
+graphify-out/
+supabase/.temp/
+/1
+/CLAUDE.md
