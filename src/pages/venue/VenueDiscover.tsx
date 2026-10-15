@@ -76,6 +76,21 @@ const VenueDiscover = () => {
     },
   });
 
+  // Portfolio photos for every listed creator in one query: thumbnails on the
+  // cards, and the first one stands in when a creator has no profile photo.
+  const { data: portfolios } = useQuery({
+    queryKey: ["discover-portfolios", (creators ?? []).map((c) => c.user_id).join(",")],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("creator_portfolio").select("user_id, image_url")
+        .in("user_id", (creators ?? []).map((c) => c.user_id)).order("position");
+      const byCreator = new Map<string, string[]>();
+      for (const r of (data ?? []) as { user_id: string; image_url: string }[]) byCreator.set(r.user_id, [...(byCreator.get(r.user_id) ?? []), r.image_url]);
+      return byCreator;
+    },
+    enabled: !!creators?.length,
+  });
+  const photoOf = (c: Creator) => c.avatar_url || portfolios?.get(c.user_id)?.[0] || null;
+
   const { data: savedIds } = useQuery({
     queryKey: ["saved-creators", venueId],
     queryFn: async () => {
@@ -141,14 +156,16 @@ const VenueDiscover = () => {
     else if (sortBy === "name") rows = [...rows].sort((a, b) => (a.full_name ?? "").localeCompare(b.full_name ?? ""));
     // Creators with a photo first (keeping the chosen order within each group): a grid that
     // opens on initials looks empty, and venues pick creators by their photo.
-    return [...rows.filter((c) => c.avatar_url), ...rows.filter((c) => !c.avatar_url)];
-  }, [creators, search, selNiches, selPlatforms, savedOnly, savedIds, tier, city, sortBy]);
+    return [...rows.filter((c) => photoOf(c)), ...rows.filter((c) => !photoOf(c))];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creators, portfolios, search, selNiches, selPlatforms, savedOnly, savedIds, tier, city, sortBy]);
 
   const topCreators = useMemo(
-    () => [...(creators ?? [])].filter((c) => c.avatar_url)
+    () => [...(creators ?? [])].filter((c) => photoOf(c))
       .sort((a, b) => Math.max(b.followers_count ?? 0, b.tiktok_followers ?? 0) - Math.max(a.followers_count ?? 0, a.tiktok_followers ?? 0))
       .slice(0, 12),
-    [creators],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [creators, portfolios],
   );
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const tierLabel = (f: number) => (f >= 250000 ? "Macro" : f >= 50000 ? "Mid" : f >= 10000 ? "Micro" : f >= 1000 ? "Nano" : "Rising");
@@ -171,7 +188,7 @@ const VenueDiscover = () => {
               {topCreators.length > 0 && (
                 <span className="flex my-4">
                   {topCreators.slice(0, 3).map((c, i) => (
-                    <CreatorPhoto key={c.user_id} src={c.avatar_url} name={c.full_name} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-4 text-lg" style={{ marginLeft: i ? -14 : 0, borderColor: "hsl(var(--venue-brand))" }} />
+                    <CreatorPhoto key={c.user_id} src={photoOf(c)} name={c.full_name} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-4 text-lg" style={{ marginLeft: i ? -14 : 0, borderColor: "hsl(var(--venue-brand))" }} />
                   ))}
                 </span>
               )}
@@ -209,7 +226,7 @@ const VenueDiscover = () => {
               {topCreators.map((c) => (
                 <Link key={c.user_id} to={`/venue/creator/${c.user_id}`} className="shrink-0 w-24 text-center group">
                   <span className="block w-24 h-24 rounded-full p-[3px] mx-auto" style={{ background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--venue-brand)))" }}>
-                    <CreatorPhoto src={c.avatar_url} name={c.full_name} className="w-full h-full rounded-full object-cover border-[3px] border-background group-hover:scale-[1.03] transition" />
+                    <CreatorPhoto src={photoOf(c)} name={c.full_name} className="w-full h-full rounded-full object-cover border-[3px] border-background group-hover:scale-[1.03] transition" />
                   </span>
                   <span className="block mt-2 text-sm text-foreground truncate">{c.full_name.split(" ")[0]}</span>
                 </Link>
@@ -306,8 +323,19 @@ const VenueDiscover = () => {
                   <article key={c.user_id} className="rounded-3xl border border-border bg-card p-3 hover:shadow-[0_12px_32px_-16px_hsl(0_35%_16%/.35)] transition">
                     <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-muted">
                       <Link to={`/venue/creator/${c.user_id}`} aria-label={`View ${c.full_name}`} className="block w-full h-full">
-                        <CreatorPhoto src={c.avatar_url} name={c.full_name} className="w-full h-full object-cover hover:scale-[1.03] transition duration-300" initialsClassName="text-5xl" style={{ objectPosition: "center 25%" }} />
+                        <CreatorPhoto src={photoOf(c)} name={c.full_name} className="w-full h-full object-cover hover:scale-[1.03] transition duration-300" initialsClassName="text-5xl" style={{ objectPosition: "center 25%" }} />
                       </Link>
+                      {(() => {
+                        const all = portfolios?.get(c.user_id) ?? [];
+                        const thumbs = (c.avatar_url ? all : all.slice(1));
+                        if (!thumbs.length) return null;
+                        return (
+                          <Link to={`/venue/creator/${c.user_id}`} aria-label={`See ${c.full_name}'s portfolio`} className="absolute left-3 bottom-3 flex items-center gap-1.5">
+                            {thumbs.slice(0, 3).map((u) => <img key={u} src={u} alt="" loading="lazy" className="w-11 h-11 rounded-xl object-cover border-2 border-white shadow" />)}
+                            {thumbs.length > 3 && <span className="h-11 min-w-[2.75rem] px-2 rounded-xl bg-black/55 backdrop-blur text-white text-xs font-bold flex items-center justify-center border-2 border-white">+{thumbs.length - 3}</span>}
+                          </Link>
+                        );
+                      })()}
                       <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
                         {c.is_verified ? <><BadgeCheck className="w-3.5 h-3.5" /> Verified</> : tierLabel(f)}
                       </span>

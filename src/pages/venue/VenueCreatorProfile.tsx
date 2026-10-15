@@ -124,7 +124,7 @@ const VenueCreatorProfile = () => {
             {/* Identity card */}
             <aside className="rounded-[2rem] bg-card border border-border p-3 shadow-[var(--venue-shadow)] xl:sticky xl:top-24">
               <div className="relative rounded-[1.6rem] overflow-hidden aspect-[4/5] bg-muted">
-                <CreatorPhoto src={profile.avatar_url} name={profile.full_name} className="w-full h-full object-cover text-6xl" style={{ objectPosition: "center 25%" }} />
+                <CreatorPhoto src={profile.avatar_url || portfolio[0]?.image_url || null} name={profile.full_name} className="w-full h-full object-cover text-6xl" style={{ objectPosition: "center 25%" }} />
                 {profile.is_verified && (
                   <span className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
                     <BadgeCheck className="w-3.5 h-3.5" /> Verified

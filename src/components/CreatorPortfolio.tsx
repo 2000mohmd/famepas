@@ -24,7 +24,8 @@ export const usePortfolio = (userId: string | undefined) =>
     enabled: !!userId,
   });
 
-const CreatorPortfolio = ({ userId, editable = false }: { userId: string; editable?: boolean }) => {
+/** editable: the creator's own page (upload + remove). moderate: admin view (remove only). */
+const CreatorPortfolio = ({ userId, editable = false, moderate = false }: { userId: string; editable?: boolean; moderate?: boolean }) => {
   const { data: items = [], isLoading } = usePortfolio(userId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -65,7 +66,7 @@ const CreatorPortfolio = ({ userId, editable = false }: { userId: string; editab
   };
 
   if (isLoading) return <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <div key={i} className="aspect-square rounded-2xl bg-muted animate-pulse" />)}</div>;
-  if (!editable && items.length === 0) return null;
+  if (!editable && items.length === 0) return moderate ? <p className="text-sm text-muted-foreground">No portfolio photos.</p> : null;
 
   return (
     <>
@@ -75,7 +76,7 @@ const CreatorPortfolio = ({ userId, editable = false }: { userId: string; editab
             <button type="button" onClick={() => setOpen(item.image_url)} className="block w-full h-full" aria-label="Open photo">
               <img src={item.image_url} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300" />
             </button>
-            {editable && (
+            {(editable || moderate) && (
               <button type="button" onClick={() => remove(item)} aria-label="Remove photo"
                 className="absolute right-2 top-2 w-9 h-9 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center opacity-90 hover:bg-black/70 transition">
                 <Trash2 className="w-4 h-4" />

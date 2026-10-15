@@ -10,6 +10,7 @@ import { formatLabel } from "@/pages/admin/_format";
 import { creatorTier, tierBadgeClass } from "@/pages/admin/_creatorTier";
 import { useToast } from "@/hooks/use-toast";
 import CreatorInsightsPanel from "@/components/CreatorInsightsPanel";
+import CreatorPortfolio from "@/components/CreatorPortfolio";
 
 /** Suspended/pending/rejected/verified are independent flags — show one priority pill. */
 const statusBadge = (p: any) => {
@@ -205,6 +206,12 @@ export default function InfluencerDetailDialog({ userId, open, onOpenChange, onA
                 </ul>
               </div>
             )}
+
+            {/* Moderation: what venues see in this creator's portfolio; remove anything off-brand. */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Portfolio</p>
+              <CreatorPortfolio userId={userId} moderate />
+            </div>
 
             <div className="border-t border-border pt-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Admin Notes</p>

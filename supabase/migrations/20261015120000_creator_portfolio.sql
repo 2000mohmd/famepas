@@ -34,3 +34,9 @@ CREATE POLICY "Creators edit their own portfolio" ON public.creator_portfolio
 CREATE POLICY "Creators remove from their own portfolio" ON public.creator_portfolio
   FOR DELETE TO authenticated
   USING (user_id = auth.uid() OR public.is_admin());
+
+-- Moderation: admins can remove portfolio files, and only portfolio files
+-- (avatars/<user_id>/portfolio/...), not profile photos or covers.
+CREATE POLICY "Admins can delete portfolio photos" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[2] = 'portfolio' AND public.is_admin());
