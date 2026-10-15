@@ -3,6 +3,7 @@
 // with that creator (booking or invitation).
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { accountInsights, redact } from "./insights.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -36,7 +37,7 @@ async function instagramStats(token: string) {
   );
   const me = await safeJson(meRes);
   if (!meRes.ok) {
-    return { error: me?.error?.message || "Instagram rejected the stored access token" };
+    return { error: redact(String(me?.error?.message || "Instagram rejected the stored access token")) };
   }
   out.username = me?.username ?? null;
   out.account_type = me?.account_type ?? null;
@@ -44,31 +45,9 @@ async function instagramStats(token: string) {
   out.following = num(me?.follows_count);
   out.media_count = num(me?.media_count);
 
-  // Account-level insights for the last 28 days. Meta documents these as
-  // period=day + metric_type=total_value summed over an explicit since/until
-  // window (max 30 days); without the window they cover only the last 24h.
-  // Failures are reported (not swallowed) so the panel shows Meta's reason
-  // instead of blank numbers.
-  try {
-    const igId = me?.user_id ?? "me";
-    const until = Math.floor(Date.now() / 1000);
-    const since = until - 28 * 86400;
-    const insRes = await fetch(
-      `https://graph.instagram.com/v21.0/${igId}/insights?metric=reach,accounts_engaged,total_interactions&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${encodeURIComponent(token)}`,
-    );
-    const ins = await safeJson(insRes);
-    if (insRes.ok && Array.isArray(ins?.data)) {
-      for (const m of ins.data) {
-        out[m?.name] = num(m?.total_value?.value);
-      }
-    } else {
-      out.insights_error = ins?.error?.message || `Insights request failed (${insRes.status})`;
-      console.error("creator-insights: account insights failed", { status: insRes.status, error_code: ins?.error?.code, error_message: ins?.error?.message });
-    }
-  } catch (e) {
-    out.insights_error = "Insights request failed";
-    console.error("creator-insights: account insights threw", { error: (e as Error).message });
-  }
+  // Account insights (last 28 days): reach + total_interactions, one request
+  // each, null + a reason on failure, never 0. See ./insights.ts.
+  Object.assign(out, await accountInsights(fetch, String(me?.user_id ?? "me"), token));
 
   return out;
 }
@@ -159,7 +138,7 @@ serve(async (req) => {
           : await tiktokStats(row.access_token);
         result[platform] = { ...base, ...stats };
       } catch (e) {
-        result[platform] = { ...base, error: String(e) };
+        result[platform] = { ...base, error: redact(String(e)) };
       }
     }
 
@@ -173,7 +152,7 @@ serve(async (req) => {
 
     return json(result);
   } catch (e) {
-    console.error("creator-insights error", e);
-    return json({ error: String(e), code: "INTERNAL" }, 500);
+    console.error("creator-insights error", redact(String(e)));
+    return json({ error: "Couldn't load metrics", code: "INTERNAL" }, 500);
   }
 });
