@@ -43,6 +43,8 @@ export async function parseSignedRequest(signed: string, secret: string): Promis
 }
 
 if (import.meta.main) Deno.serve(async (req) => {
+  // Meta never sends preflight, but browsers and tests may; answer it like the other functions.
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type" } });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
   const isDeletion = new URL(req.url).searchParams.get("type") === "deletion";
 
