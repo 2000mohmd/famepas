@@ -142,6 +142,12 @@ const InstagramCallback = () => {
           return;
         }
         setHandle(data.handle ?? null);
+        if (Array.isArray(data.notes) && data.notes.length) {
+          // Account saved, but Instagram refused part of the setup: show its reason on screen.
+          setStatus("error");
+          setMessage("Instagram connected, but setup was incomplete: " + data.notes.join(" • "));
+          return;
+        }
         setStatus("success");
         setTimeout(() => navigate(`${settingsPath}${settingsPath.includes("?") ? "&" : "?"}instagram=connected`, { replace: true }), 1800);
       })

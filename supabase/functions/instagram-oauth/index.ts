@@ -75,7 +75,7 @@ function buildAuthUrl(state: string) {
 }
 
 type ExchangeResult =
-  | { ok: true; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null; pictureUrl: string | null; followersCount: number | null }
+  | { ok: true; notes: string[]; accessToken: string; expiresAt: string; igUserId: string | null; scope: string; username: string | null; accountType: string | null; pictureUrl: string | null; followersCount: number | null }
   | { ok: false; error: string };
 
 /** Shared by "exchange" (logged-in connect) and "identify" (logged-out login/signup): code -> long-lived token + basic profile. */
@@ -113,6 +113,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
 
   // Meta's reference documents GET; some app configurations only answer POST.
   let longTok: any = null;
+  const notes: string[] = []; // Meta's own error text, returned to the callback page so failures show without logs
   const longUrl = `https://graph.instagram.com/access_token?${new URLSearchParams(longParams)}`;
   for (const init of [{ method: "GET" }, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(longParams) }] as RequestInit[]) {
     try {
@@ -121,6 +122,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
       if (longTok?.access_token) break;
       // Status and Meta's error code/message only — never the request or a token.
       console.error("instagram long-lived token failed", { method: init.method, status: res.status, error_code: longTok?.error?.code ?? longTok?.code, error_message: longTok?.error?.message ?? longTok?.error_message });
+      notes.push(`Long-lived token (${init.method}): ${res.status} ${longTok?.error?.message ?? longTok?.error_message ?? "no message"}`);
     } catch (e) {
       console.error("instagram long-lived token threw", { method: init.method, error: (e as Error).message });
     }
@@ -144,6 +146,7 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
     const prof = await safeJson(profRes);
     if (!profRes.ok || prof?.error) {
       console.error("instagram /me profile fetch failed", { status: profRes.status, error_code: prof?.error?.code, error_type: prof?.error?.type });
+      notes.push(`Profile: ${profRes.status} ${prof?.error?.message ?? "no message"}`);
     } else {
       username = prof?.username ?? null;
       accountType = prof?.account_type ?? null;
@@ -151,12 +154,13 @@ async function exchangeCode(rawCode: string): Promise<ExchangeResult> {
       followersCount = typeof prof?.followers_count === "number" ? prof.followers_count : null;
       console.log("instagram profile fetched", { username, account_type: accountType, followers: followersCount, has_picture: !!pictureUrl });
     }
-  } catch (e) { console.error("instagram /me profile fetch threw", { error: (e as Error).message }); }
+  } catch (e) { console.error("instagram /me profile fetch threw", { error: (e as Error).message }); notes.push("Profile: request failed"); }
 
   const expiresAt = new Date(Date.now() + expiresInSec * 1000).toISOString();
 
   return {
     ok: true,
+    notes,
     accessToken,
     expiresAt,
     igUserId: shortTok.user_id ? String(shortTok.user_id) : null,
@@ -313,7 +317,7 @@ Deno.serve(async (req) => {
           console.error("venue social_integrations save failed", vErr);
           return json({ error: vErr.message, code: "DB_UPDATE_FAILED" }, 200);
         }
-        return json({ success: true, handle: result.username, venue: true });
+        return json({ success: true, handle: result.username, venue: true, notes: result.notes });
       }
 
       // The (influencer_id, platform) unique index is partial, so PostgREST
@@ -362,7 +366,7 @@ Deno.serve(async (req) => {
 
       await applyProfileAvatar(admin, user.id, await mirrorAvatar(admin, user.id, "instagram", result.pictureUrl));
 
-      return json({ success: true, handle: result.username });
+      return json({ success: true, handle: result.username, notes: result.notes, token_days: Math.round((new Date(result.expiresAt).getTime() - Date.now()) / 86400000) });
     }
 
     return json({ error: "Unknown action", code: "BAD_REQUEST" }, 400);
