@@ -196,6 +196,16 @@ const SalesLeads = () => {
       setDialogOpen(true);
       return;
     }
+    // "Approved" on a lead with a linked venue is set automatically when an admin approves
+    // the venue (leads_sync_venue_approved). Setting it by hand left leads showing Approved
+    // while the venue was still pending, so the owner kept seeing "pending approval".
+    if (stage === "approved" && lead.venue_id) {
+      const { data: approved } = await supabase.from("venues").select("id").eq("id", lead.venue_id).eq("approval_status", "approved").maybeSingle();
+      if (!approved) {
+        toast({ title: "Venue not approved yet", description: "An admin must approve this venue in Admin → Venues first. The stage updates to Approved automatically after that.", variant: "destructive" });
+        return;
+      }
+    }
     const patch: Record<string, unknown> = { stage };
     if (!isOpenStage(stage)) {
       patch.next_action = null;
