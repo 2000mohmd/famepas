@@ -134,7 +134,12 @@ const AdminVenues = () => {
   };
 
   const setApprovalStatus = async (id: string, status: string) => {
-    await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id);
+    // .select() so a blocked/no-op update is detected instead of toasting "approved" anyway.
+    const { data: saved, error: saveErr } = await supabase.from("venues").update({ approval_status: status, is_active: status === "approved" } as any).eq("id", id).select("id");
+    if (saveErr || !saved?.length) {
+      toast({ title: "Not saved", description: saveErr?.message || "The change was not applied. Please try again.", variant: "destructive" });
+      return;
+    }
     // CRM review, rule 2: every approval is logged with who and when.
     void (supabase as any).rpc("log_staff_action", { _action: status === "approved" ? "approve" : "reject", _table: "venues", _target: id });
     if (status === "approved") {
