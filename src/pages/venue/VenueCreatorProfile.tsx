@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Instagram, Music2, Star, Users, Briefcase, Send, BadgeCheck, MapPin, Sparkles } from "lucide-react";
+import { ChevronLeft, Instagram, Music2, Star, Briefcase, Send, BadgeCheck, MapPin, Sparkles } from "lucide-react";
 import CreatorPhoto from "@/components/CreatorPhoto";
+import CreatorPortfolio, { usePortfolio } from "@/components/CreatorPortfolio";
 import { VenuePanel, VenueEmpty } from "@/components/venue/VenueUI";
 
 /**
@@ -26,7 +27,7 @@ type Profile = {
   city: string | null; country: string | null; niche: string[] | null;
   instagram_handle: string | null; tiktok_handle: string | null;
   followers_count: number | null; tiktok_followers: number | null;
-  is_verified: boolean | null; collab_count: number; avg_rating: number | null; review_count: number;
+  is_verified: boolean | null; instagram_verified: boolean | null; collab_count: number; avg_rating: number | null; review_count: number;
 };
 type Work = { post_url: string; posted_at: string; venue_name: string };
 type Venue = { venue_id: string; venue_name: string; logo_url: string | null };
@@ -42,6 +43,8 @@ const VenueCreatorProfile = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cover, setCover] = useState<string | null>(null);
+  const { data: portfolio = [] } = usePortfolio(id);
   const [venueId, setVenueId] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteOfferId, setInviteOfferId] = useState("");
@@ -82,12 +85,14 @@ const VenueCreatorProfile = () => {
     if (!id) return;
     (async () => {
       setLoading(true);
-      const [{ data: p }, { data: w }, { data: v }, { data: r }] = await Promise.all([
+      const [{ data: p }, { data: w }, { data: v }, { data: r }, { data: d }] = await Promise.all([
         (supabase as any).rpc("get_creator_profile", { _user_id: id }),
         (supabase as any).rpc("get_creator_recent_work", { _user_id: id }),
         (supabase as any).rpc("get_creator_venues_worked_with", { _user_id: id }),
         (supabase as any).rpc("get_creator_reviews", { _user_id: id }),
+        (supabase as any).rpc("get_public_profiles_detailed", { _user_ids: [id] }),
       ]);
+      setCover((d ?? [])[0]?.cover_image_url ?? null);
       setProfile((p ?? [])[0] ?? null);
       setWork(w ?? []);
       setVenues(v ?? []);
@@ -95,8 +100,6 @@ const VenueCreatorProfile = () => {
       setLoading(false);
     })();
   }, [id]);
-
-  const maxFollowers = Math.max(profile?.followers_count ?? 0, profile?.tiktok_followers ?? 0);
 
   return (
     <DashboardLayout type="venue">
@@ -110,6 +113,13 @@ const VenueCreatorProfile = () => {
         ) : !profile ? (
           <div className="rounded-[2rem] bg-card border border-border py-24 text-center text-muted-foreground">Creator not found.</div>
         ) : (
+          <>
+          {cover && (
+            <div className="relative h-40 md:h-64 rounded-[2rem] overflow-hidden bg-muted">
+              <img src={cover} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <span aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(0 0% 0% / .35), transparent 60%)" }} />
+            </div>
+          )}
           <div className="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-6 items-start">
             {/* Identity card */}
             <aside className="rounded-[2rem] bg-card border border-border p-3 shadow-[var(--venue-shadow)] xl:sticky xl:top-24">
@@ -140,10 +150,10 @@ const VenueCreatorProfile = () => {
             <div className="space-y-6 min-w-0">
               <section className="rounded-[2rem] p-6 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-4" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
                 {[
-                  { icon: Users, label: "Followers", value: maxFollowers.toLocaleString() },
-                  { icon: Briefcase, label: "Collabs", value: profile.collab_count },
+                  { icon: Instagram, label: profile.instagram_handle ? (profile.instagram_verified ? "Instagram · verified" : "Instagram · self-reported") : "Instagram · not added", value: profile.instagram_handle ? (profile.followers_count ?? 0).toLocaleString() : "—" },
+                  { icon: Music2, label: profile.tiktok_handle ? "TikTok followers" : "TikTok · not added", value: profile.tiktok_handle ? (profile.tiktok_followers ?? 0).toLocaleString() : "—" },
+                  { icon: Briefcase, label: `Collabs · ${venues.length} venue${venues.length === 1 ? "" : "s"}`, value: profile.collab_count },
                   { icon: Star, label: `${profile.review_count} review${profile.review_count === 1 ? "" : "s"}`, value: profile.avg_rating != null ? profile.avg_rating : "—" },
-                  { icon: MapPin, label: "Venues worked with", value: venues.length },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="rounded-3xl p-5" style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
                     <Icon className="w-5 h-5 mb-5" style={{ color: "hsl(var(--primary))" }} />
@@ -163,6 +173,12 @@ const VenueCreatorProfile = () => {
                       ))}
                     </div>
                   )}
+                </VenuePanel>
+              )}
+
+              {portfolio.length > 0 && (
+                <VenuePanel title="Portfolio" action={<span className="text-sm text-muted-foreground">{portfolio.length} photo{portfolio.length === 1 ? "" : "s"}</span>}>
+                  <CreatorPortfolio userId={profile.user_id} />
                 </VenuePanel>
               )}
 
@@ -208,11 +224,12 @@ const VenueCreatorProfile = () => {
                 </VenuePanel>
               )}
 
-              {!profile.bio && venues.length === 0 && work.length === 0 && reviews.length === 0 && (
+              {!profile.bio && portfolio.length === 0 && venues.length === 0 && work.length === 0 && reviews.length === 0 && (
                 <VenueEmpty compact icon={Sparkles} title="New on FamePass" body="This creator hasn't completed a collab yet — invite them to be among the first venues they work with." />
               )}
             </div>
           </div>
+          </>
         )}
 
         <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>

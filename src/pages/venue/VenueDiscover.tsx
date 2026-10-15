@@ -57,7 +57,7 @@ const VenueDiscover = () => {
   const [savedOnly, setSavedOnly] = useState(false);
   const [tier, setTier] = useState("all");
   const [city, setCity] = useState("all");
-  const [sortBy, setSortBy] = useState<"followers" | "newest" | "name">("followers");
+  const [sortBy, setSortBy] = useState<"followers" | "name">("followers");
   const [niches, setNiches] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
@@ -139,7 +139,9 @@ const VenueDiscover = () => {
     });
     if (sortBy === "followers") rows = [...rows].sort((a, b) => Math.max(b.followers_count ?? 0, b.tiktok_followers ?? 0) - Math.max(a.followers_count ?? 0, a.tiktok_followers ?? 0));
     else if (sortBy === "name") rows = [...rows].sort((a, b) => (a.full_name ?? "").localeCompare(b.full_name ?? ""));
-    return rows;
+    // Creators with a photo first (keeping the chosen order within each group): a grid that
+    // opens on initials looks empty, and venues pick creators by their photo.
+    return [...rows.filter((c) => c.avatar_url), ...rows.filter((c) => !c.avatar_url)];
   }, [creators, search, selNiches, selPlatforms, savedOnly, savedIds, tier, city, sortBy]);
 
   const topCreators = useMemo(
