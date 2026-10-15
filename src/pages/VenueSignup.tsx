@@ -381,6 +381,17 @@ const VenueSignup = () => {
         navigate("/login");
         return;
       }
+      if (/weak|easy to guess|known to be|pwned|leaked|at least d+ char/i.test(parsed?.error || "")) {
+        toast({
+          title: "Choose a stronger password",
+          description: "That password was rejected as too common or easy to guess. Use 8+ characters with letters and numbers that are not a common word.",
+          variant: "destructive",
+        });
+        setPassword("");
+        setConfirmPassword("");
+        setStep("account");
+        return;
+      }
       if (error || parsed?.error) {
         toast({
           title: "Signup failed",
@@ -451,9 +462,6 @@ const VenueSignup = () => {
                 </div>
               ))}
             </div>
-            {password.length >= 6 && !passwordReady && (
-              <p className="text-xs text-amber-600 mb-4">{t("venueSignup.weakPasswordHint")}</p>
-            )}
             <Field label={t("venueSignup.confirmPassword")}>
               <div className="relative">
                 <TextInput type={showConfirmPwd ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t("venueSignup.reenterPassword")} className="pr-16" />
@@ -466,7 +474,7 @@ const VenueSignup = () => {
               )}
             </Field>
             <PrimaryButton
-              disabled={!email || password.length < 6 || !passwordsMatch}
+              disabled={!email || !passwordReady || !passwordsMatch}
               onClick={() => setStep("check-inbox")}
             >
               {t("venueSignup.createAccountBtn")}
