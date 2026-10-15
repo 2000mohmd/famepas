@@ -30,16 +30,16 @@ const b64urlToBytes = (s: string) =>
 
 /** Returns the payload when the HMAC checks out, otherwise null. */
 export async function parseSignedRequest(signed: string, secret: string): Promise<Record<string, unknown> | null> {
-  const [sigPart, payloadPart] = signed.split(".");
-  if (!sigPart || !payloadPart || !secret) return null;
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-  // crypto.subtle.verify is constant-time.
-  const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(sigPart), new TextEncoder().encode(payloadPart));
-  if (!ok) return null;
   try {
+    const [sigPart, payloadPart] = signed.split(".");
+    if (!sigPart || !payloadPart || !secret) return null;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    // crypto.subtle.verify is constant-time.
+    const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(sigPart), new TextEncoder().encode(payloadPart));
+    if (!ok) return null;
     const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(payloadPart)));
     return payload?.algorithm && String(payload.algorithm).toUpperCase() !== "HMAC-SHA256" ? null : payload;
-  } catch { return null; }
+  } catch { return null; } // malformed base64/JSON is a bad request, not a crash
 }
 
 if (import.meta.main) Deno.serve(async (req) => {

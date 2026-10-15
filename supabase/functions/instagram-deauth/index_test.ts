@@ -19,7 +19,7 @@ Deno.test("rejects a wrong secret, tampering, and junk", async () => {
   const good = await sign({ algorithm: "HMAC-SHA256", user_id: "TEST-IG-1" }, "s3cret");
   const [sig] = good.split(".");
   const forged = `${sig}.${b64url(new TextEncoder().encode(JSON.stringify({ algorithm: "HMAC-SHA256", user_id: "OTHER" })))}`;
-  for (const s of [await sign({ user_id: "TEST-IG-1" }, "wrong"), forged, "junk", ""]) {
+  for (const s of [await sign({ user_id: "TEST-IG-1" }, "wrong"), forged, "junk", "", "a.b", "!!!.@@@"]) {
     if (await parseSignedRequest(s, "s3cret")) throw new Error(`accepted: ${s.slice(0, 20)}`);
   }
 });
