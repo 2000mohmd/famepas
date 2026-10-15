@@ -44,20 +44,31 @@ async function instagramStats(token: string) {
   out.following = num(me?.follows_count);
   out.media_count = num(me?.media_count);
 
-  // Account-level insights (last 28 days). Only available for business/creator
-  // accounts with the insights permission — treat failures as "not available".
+  // Account-level insights for the last 28 days. Meta documents these as
+  // period=day + metric_type=total_value summed over an explicit since/until
+  // window (max 30 days); without the window they cover only the last 24h.
+  // Failures are reported (not swallowed) so the panel shows Meta's reason
+  // instead of blank numbers.
   try {
     const igId = me?.user_id ?? "me";
+    const until = Math.floor(Date.now() / 1000);
+    const since = until - 28 * 86400;
     const insRes = await fetch(
-      `https://graph.instagram.com/v21.0/${igId}/insights?metric=reach,accounts_engaged,total_interactions&period=days_28&metric_type=total_value&access_token=${encodeURIComponent(token)}`,
+      `https://graph.instagram.com/v21.0/${igId}/insights?metric=reach,accounts_engaged,total_interactions&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${encodeURIComponent(token)}`,
     );
     const ins = await safeJson(insRes);
     if (insRes.ok && Array.isArray(ins?.data)) {
       for (const m of ins.data) {
         out[m?.name] = num(m?.total_value?.value);
       }
+    } else {
+      out.insights_error = ins?.error?.message || `Insights request failed (${insRes.status})`;
+      console.error("creator-insights: account insights failed", { status: insRes.status, error_code: ins?.error?.code, error_message: ins?.error?.message });
     }
-  } catch (_) { /* insights are best-effort */ }
+  } catch (e) {
+    out.insights_error = "Insights request failed";
+    console.error("creator-insights: account insights threw", { error: (e as Error).message });
+  }
 
   return out;
 }

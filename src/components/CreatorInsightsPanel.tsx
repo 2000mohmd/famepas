@@ -77,6 +77,9 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
             <Metric icon={Heart} label="Interactions (28d)" value={fmt(ig.total_interactions)} />
           </div>
         )}
+        {!ig.error && ig.insights_error && (
+          <p className="text-xs text-muted-foreground mt-2">28-day insights unavailable: {why(ig.insights_error)}.</p>
+        )}
       </div>
 
       <div className="rounded-xl border border-border p-4">
