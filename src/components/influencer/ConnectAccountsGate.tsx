@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Instagram, Music2, Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { connectWithPhyllo, phylloEnabled } from "@/lib/phylloConnect";
 
 const SHOWN_KEY = "connectAccountsPromptShown";
 
@@ -22,6 +23,7 @@ const ConnectAccountsGate = () => {
   const [open, setOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [busy, setBusy] = useState<"instagram" | "tiktok" | null>(null);
+  const [justLinked, setJustLinked] = useState(false);
 
   useEffect(() => {
     if (linked !== false) return;
@@ -33,6 +35,20 @@ const ConnectAccountsGate = () => {
 
   const connect = async (platform: "instagram" | "tiktok") => {
     setBusy(platform);
+    if (phylloEnabled()) {
+      // Phyllo opens its own window over this page; no redirect.
+      try {
+        const { handle } = await connectWithPhyllo(platform);
+        toast({ title: `${platform === "instagram" ? "Instagram" : "TikTok"} connected ✓`, description: handle ? `@${handle} is now linked.` : "Your account is now linked." });
+        setOpen(false);
+        setJustLinked(true);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        if (msg !== "CANCELLED") toast({ title: "Couldn't connect", description: msg || "Try again later.", variant: "destructive" });
+      }
+      setBusy(null);
+      return;
+    }
     const { data, error } = await supabase.functions.invoke(`${platform}-oauth`, { body: { action: "initiate" } });
     setBusy(null);
     if (error || !(data as any)?.url) {
@@ -42,7 +58,7 @@ const ConnectAccountsGate = () => {
     window.location.href = (data as any).url;
   };
 
-  if (linked !== false || !user) return null;
+  if (linked !== false || !user || justLinked) return null;
 
   return (
     <>

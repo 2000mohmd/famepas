@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { phylloEnabled } from "@/lib/phylloConnect";
 import SignupShell from "@/components/SignupShell";
 import panelCreator from "@/assets/onboarding-creator.jpg";
 import BrandLogo from "@/components/BrandLogo";
@@ -366,6 +367,9 @@ const InfluencerSignup = () => {
           <Card>
             <Heading title={t("signup.creatorTitle")} sub={t("influencerSignup.joinAndCollaborate")} />
 
+            {/* Phyllo connects accounts but can't sign people in, so with Phyllo on,
+                creators sign up with email and connect Instagram/TikTok afterwards. */}
+            {!phylloEnabled() && (<>
             <button
               type="button"
               onClick={handleConnectInstagram}
@@ -383,6 +387,7 @@ const InfluencerSignup = () => {
               <span className="text-xs text-slate-400">{t("influencerSignup.orSignUpWithEmail")}</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
+            </>)}
 
             <Field label={t("login.email")}>
               <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
