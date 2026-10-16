@@ -374,6 +374,18 @@ const VenueSignup = () => {
         } catch { /* ignore */ }
       }
       if (parsed?.code === "email_exists" || /already registered|already been registered/i.test(parsed?.error || "")) {
+        // Usually an earlier attempt already created the account and venue on the server
+        // (everything is sent in that one request) but its reply never reached the browser.
+        // If this password signs in and the venue is still pending, show the finished screen.
+        const { data: retry, error: retryErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (!retryErr && retry.user) {
+          const { data: own } = await supabase.from("venues").select("approval_status").eq("owner_id", retry.user.id);
+          await supabase.auth.signOut();
+          if ((own ?? []).some((v: any) => v.approval_status === "pending")) {
+            setStep("done");
+            return;
+          }
+        }
         toast({
           title: "Email already registered",
           description: "Please sign in with this email instead.",
