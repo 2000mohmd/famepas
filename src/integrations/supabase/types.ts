@@ -1951,6 +1951,7 @@ export type Database = {
           is_verified: boolean
           niche: string[] | null
           phone: string | null
+          phyllo_user_id: string | null
           referred_by: string | null
           social_links: Json | null
           suspended_until: string | null
@@ -1984,6 +1985,7 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          phyllo_user_id?: string | null
           referred_by?: string | null
           social_links?: Json | null
           suspended_until?: string | null
@@ -2017,6 +2019,7 @@ export type Database = {
           is_verified?: boolean
           niche?: string[] | null
           phone?: string | null
+          phyllo_user_id?: string | null
           referred_by?: string | null
           social_links?: Json | null
           suspended_until?: string | null
