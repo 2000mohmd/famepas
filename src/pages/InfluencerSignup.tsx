@@ -224,6 +224,35 @@ const InfluencerSignup = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
 
+  // After a session exists: upload the photo, sign the pending account back out,
+  // show the "application submitted" screen.
+  const completeSignup = async () => {
+    if (avatarFile) {
+      try {
+        const { data: ures } = await supabase.auth.getUser();
+        const uid = ures.user?.id;
+        if (uid) {
+          const ext = avatarFile.name.split(".").pop() || "jpg";
+          const path = `${uid}/avatar.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("avatars")
+            .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+          if (!upErr) {
+            const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+            await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid);
+          }
+        }
+      } catch (e) {
+        console.warn("Avatar upload skipped:", e);
+      }
+    }
+    // New influencers start as "pending" — sign the temporary session out and
+    // show a review confirmation instead of routing into the dashboard.
+    await supabase.auth.signOut();
+    setStep("done");
+    toast({ title: t("influencerSignup.applicationSubmitted"), description: t("influencerSignup.accountUnderReview") });
+  };
+
   const handleFinalize = async () => {
     setSubmitting(true);
     try {
@@ -276,43 +305,25 @@ const InfluencerSignup = () => {
         if (signInError) throw signInError;
       }
 
-      // Optional avatar upload (best-effort, non-blocking on failure)
-      if (avatarFile) {
-        try {
-          const { data: ures } = await supabase.auth.getUser();
-          const uid = ures.user?.id;
-          if (uid) {
-            const ext = avatarFile.name.split(".").pop() || "jpg";
-            const path = `${uid}/avatar.${ext}`;
-            const { error: upErr } = await supabase.storage
-              .from("avatars")
-              .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-            if (!upErr) {
-              const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-              await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid);
-            }
-          }
-        } catch (e) {
-          console.warn("Avatar upload skipped:", e);
-        }
-      }
-
-      // Social follower counts are no longer self-reported at signup — they
-      // come from the official Instagram / TikTok integrations once the
-      // creator links their accounts from Settings.
-
-
-
-      // New influencers start as "pending" — sign the temporary session out and
-      // show a review confirmation instead of routing into the dashboard.
-      await supabase.auth.signOut();
-
-      setStep("done");
-      toast({ title: t("influencerSignup.applicationSubmitted"), description: t("influencerSignup.accountUnderReview") });
+      await completeSignup();
 
     } catch (e) {
       const message = e instanceof Error ? e.message : t("influencerSignup.pleaseTryAgain");
       const isDuplicate = /already (been )?registered|email_exists|already exists/i.test(message);
+      // The account usually exists because an earlier attempt succeeded on the server but
+      // the reply never reached the phone (common in Instagram's in-app browser). If the
+      // password they just typed signs in, finish their signup instead of a dead end.
+      if (isDuplicate && !igLinkToken && password) {
+        const { data: retry, error: retryErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (!retryErr && retry.user) {
+          // Only a still-pending application is "unfinished"; an approved account just signs in normally.
+          const { data: prof } = await supabase.from("profiles").select("approval_status").eq("user_id", retry.user.id).maybeSingle();
+          if (prof?.approval_status === "pending") {
+            try { await completeSignup(); return; } catch { /* fall through to the sign-in redirect */ }
+          }
+          await supabase.auth.signOut();
+        }
+      }
       toast({
         title: isDuplicate ? t("influencerSignup.emailAlreadyRegistered") : t("influencerSignup.signupFailed"),
         description: isDuplicate
