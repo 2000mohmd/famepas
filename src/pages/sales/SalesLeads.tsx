@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, LayoutGrid, List as ListIcon, AlertCircle, Download, Upload, Users as UsersIcon, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import LeadDialog from "./LeadDialog";
+import LeadDialog, { leadDraftKey, readLeadDraft } from "./LeadDialog";
 import LeadImportDialog from "./LeadImportDialog";
 import {
   STAGES, STAGE_TONE, STAGE_COLUMN_TONE, DEFAULT_SCORE_CONFIG, DEFAULT_NEXT_ACTION, daysFromNowISO, isOpenStage, isOverdue, leadScore, lostReasonLabel,
@@ -129,6 +129,8 @@ const SalesLeads = () => {
   }, [leads, search, stageFilter, ownerFilter, countryFilter, sortBy, scoreConfig]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
+  // A new-lead draft left by a reloaded tab (e.g. after switching to WhatsApp).
+  const hasNewDraft = !dialogOpen && !!readLeadDraft(leadDraftKey(user?.id, null));
   const openLead = (lead: Lead) => { setEditing(lead); setDialogOpen(true); };
 
   const toggleSelected = (id: string) =>
@@ -301,6 +303,13 @@ const SalesLeads = () => {
             </Button>
           </div>
         </div>
+
+        {hasNewDraft && (
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+            <span className="text-sm font-semibold text-amber-900">You have an unsaved new lead.</span>
+            <Button size="sm" onClick={openNew} className="btn-sales-primary font-semibold">Continue</Button>
+          </div>
+        )}
 
         <div className="mb-5 rounded-xl border border-border bg-card p-3">
           <div className="flex gap-2">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,21 @@ const emptyForm = (ownerId: string) => ({
   next_action: "", next_action_date: daysFromNowISO(3), lost_reason: "", notes: "",
 });
 
+// Autosave: a rep who switches to WhatsApp mid-form on a phone often comes back to
+// a reloaded tab. Every edit is kept in this browser per user and per lead
+// ("new" for an unsaved lead) until the lead is saved or the rep clicks Cancel.
+const DRAFT_TTL_MS = 7 * 86400_000;
+export const leadDraftKey = (userId: string | undefined, leadId: string | null | undefined) => `leadDraft:${userId ?? "anon"}:${leadId ?? "new"}`;
+export const readLeadDraft = (key: string): Record<string, string> | null => {
+  try {
+    const d = JSON.parse(localStorage.getItem(key) ?? "null");
+    if (!d?.form || Date.now() - (d.savedAt ?? 0) > DRAFT_TTL_MS) return null;
+    return d.form;
+  } catch { return null; }
+};
+const writeLeadDraft = (key: string, form: unknown) => { try { localStorage.setItem(key, JSON.stringify({ form, savedAt: Date.now() })); } catch { /* storage blocked */ } };
+export const clearLeadDraft = (key: string) => { try { localStorage.removeItem(key); } catch { /* storage blocked */ } };
+
 /** "" means "not captured" for these — 0 is a real rating, so don't coerce. */
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 
@@ -63,6 +78,8 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
   const [waPick, setWaPick] = useState("");
   const [waParams, setWaParams] = useState<string[]>([]);
   const [waSending, setWaSending] = useState(false);
+  const draftKey = leadDraftKey(user?.id, lead?.id);
+  const baseline = useRef<string>(""); // form as loaded; only differences from it are worth keeping
 
   useEffect(() => {
     supabase.from("subscription_tiers").select("id, name").eq("is_active", true).order("price")
@@ -97,8 +114,9 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
     if (!open) return;
     setDuplicates([]);
     setOverrideDuplicate(false);
+    let base: ReturnType<typeof emptyForm>;
     if (lead) {
-      setForm({
+      base = {
         venue_name: lead.venue_name, category: lead.category ?? "", area: lead.area ?? "",
         city: lead.city ?? "", country: lead.country ?? "",
         address: lead.address ?? "", maps_place_id: lead.maps_place_id ?? "",
@@ -112,14 +130,30 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         source: lead.source, stage: lead.stage, owner_id: lead.owner_id,
         next_action: lead.next_action ?? "", next_action_date: lead.next_action_date ?? daysFromNowISO(3),
         lost_reason: lead.lost_reason ?? "", notes: lead.notes ?? "",
-      });
+      };
       db.from("lead_activities").select("*").eq("lead_id", lead.id).order("happened_at", { ascending: false })
         .then(({ data }: any) => setActivities(data ?? []));
     } else {
-      setForm(emptyForm(user?.id ?? ""));
+      base = emptyForm(user?.id ?? "");
       setActivities([]);
     }
+    baseline.current = JSON.stringify(base);
+    const draft = readLeadDraft(draftKey);
+    if (draft && JSON.stringify({ ...base, ...draft }) !== baseline.current) {
+      setForm({ ...base, ...draft });
+      toast({ title: "Restored your unsaved changes", description: "Picked up where you left off." });
+    } else {
+      setForm(base);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lead, user]);
+
+  // Keep the draft in step with the form while the dialog is open.
+  useEffect(() => {
+    if (!open || !baseline.current) return;
+    if (JSON.stringify(form) === baseline.current) clearLeadDraft(draftKey);
+    else writeLeadDraft(draftKey, form);
+  }, [form, open, draftKey]);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -166,6 +200,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         : await db.from("leads").insert(payload);
       if (error) throw error;
       toast({ title: lead ? "Lead updated" : "Lead added" });
+      clearLeadDraft(draftKey);
       onSaved();
       onOpenChange(false);
     } catch (e: any) {
@@ -565,7 +600,7 @@ const LeadDialog = ({ lead, open, onOpenChange, onSaved, owners, canReassign, ca
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => { clearLeadDraft(draftKey); onOpenChange(false); }}>Cancel</Button>
           <Button onClick={() => void save()} disabled={saving} className="btn-sales-primary font-semibold">
             {saving ? "Saving…" : overrideDuplicate ? "Save anyway" : lead ? "Save changes" : "Add lead"}
           </Button>
