@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { ACTIVITY_TYPES, stageLabel } from "@/pages/sales/leadMeta";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminPermissions, hasAdminPermission } from "@/hooks/useAdminPermissions";
@@ -239,6 +240,62 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   // new notifications table with its own read/unread tracking.
   const [notifItems, setNotifItems] = useState<{ id: string; label: string; to: string; at: string }[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  // Sarah, 2026-10-16: sales-rep activity in the bell for admins and sales
+  // managers (the email version is the sales-activity-digest function).
+  // Unread = newer than when this person last opened the bell, kept per user
+  // in this browser.
+  const showSalesBell = !!user && (type === "admin" || (type === "sales" && role === "sales_manager"));
+  const seenKey = user ? `salesBellSeenAt:${user.id}` : "";
+  const [salesSeenAt, setSalesSeenAt] = useState<number>(() => {
+    try { return Number(localStorage.getItem(seenKey)) || 0; } catch { return 0; }
+  });
+  useEffect(() => {
+    if (!showSalesBell || !user) return;
+    (async () => {
+      const since = new Date(Date.now() - 7 * 86400_000).toISOString();
+      const [{ data: acts }, { data: newLeads }] = await Promise.all([
+        (supabase as any).from("lead_activities").select("id, lead_id, user_id, type, outcome, created_at")
+          .gte("created_at", since).neq("user_id", user.id).neq("type", "owner_change").order("created_at", { ascending: false }).limit(30),
+        (supabase as any).from("leads").select("id, venue_name, owner_id, source, created_at")
+          .gte("created_at", since).order("created_at", { ascending: false }).limit(20),
+      ]);
+      const leadIds = [...new Set((acts ?? []).map((a: any) => a.lead_id))] as string[];
+      const people = [...new Set([...(acts ?? []).map((a: any) => a.user_id), ...(newLeads ?? []).map((l: any) => l.owner_id)].filter(Boolean))] as string[];
+      const [{ data: leadRows }, { data: profs }] = await Promise.all([
+        leadIds.length ? (supabase as any).from("leads").select("id, venue_name").in("id", leadIds) : { data: [] },
+        people.length ? supabase.from("profiles").select("user_id, full_name").in("user_id", people) : { data: [] },
+      ]);
+      const leadName = new Map((leadRows ?? []).map((l: any) => [l.id, l.venue_name]));
+      const who = (id: string | null) => (id && (profs ?? []).find((p: any) => p.user_id === id)?.full_name) || "Automatic";
+      const typeLabel = (k: string) => ACTIVITY_TYPES.find((t) => t.key === k)?.label ?? k;
+      const items = [
+        ...(acts ?? []).map((a: any) => {
+          const lead = leadName.get(a.lead_id) ?? "a lead";
+          const [from, to] = String(a.outcome ?? "").split("->").map((x: string) => x.trim());
+          const what = a.type === "stage_change"
+            ? (to === "lost" ? `marked ${lead} as Lost` : `moved ${lead} to ${stageLabel(to || from || "")}`)
+            : `${typeLabel(a.type)} with ${lead}`;
+          return { id: `act-${a.id}`, label: `${who(a.user_id)} ${what}`, to: "/sales/leads", at: a.created_at };
+        }),
+        ...(newLeads ?? []).filter((l: any) => l.owner_id !== user.id).map((l: any) => ({
+          id: `lead-${l.id}`,
+          label: l.source === "inbound_signup" ? `New sign-up lead: ${l.venue_name}` : `${who(l.owner_id)} added ${l.venue_name}`,
+          to: "/sales/leads", at: l.created_at,
+        })),
+      ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 25);
+      setNotifItems(items);
+    })();
+  }, [showSalesBell, user, location.pathname]);
+  const unread = showSalesBell ? notifItems.filter((n) => new Date(n.at).getTime() > salesSeenAt).length : notifItems.length;
+  const onBellOpenChange = (open: boolean) => {
+    setNotifOpen(open);
+    if (open && showSalesBell) {
+      const now = Date.now();
+      setSalesSeenAt(now);
+      try { localStorage.setItem(seenKey, String(now)); } catch { /* private mode: badge just won't persist */ }
+    }
+  };
   useEffect(() => {
     if (type !== "venue" || !user) return;
     (async () => {
@@ -278,12 +335,11 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
   useEffect(() => {
     if (type !== "venue" || !user) return;
     (async () => {
-      const { data: venue } = await supabase.from("venues").select("id, name, logo_url").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      const { data: venue } = await supabase.from("venues").select("id, name, logo_url, instagram_handle").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (!venue) return;
       setVenueName(venue.name);
       setVenueLogo((venue as any).logo_url ?? null);
-      const [ig, camp, liveOffers] = await Promise.all([
-        supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("platform", "instagram").eq("status", "connected").not("open_id", "is", null),
+      const [camp, liveOffers] = await Promise.all([
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id),
         supabase.from("offers").select("id", { head: true, count: "exact" }).eq("venue_id", venue.id).eq("is_active", true),
       ]);
@@ -293,7 +349,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
         // flow that doesn't exist — the Settings page itself already labels
         // this "Instagram (Manual)". Relabeled to match; it's otherwise the
         // same step (saving a handle there does satisfy it).
-        { label: "Connect your Instagram", done: (ig.count ?? 0) > 0, to: "/venue/settings?tab=integrations" },
+        { label: "Add your Instagram handle", done: !!(venue as any).instagram_handle, to: "/venue/settings?tab=integrations" },
         { label: "Create your first offer", done: (camp.count ?? 0) > 0, to: "/venue/campaigns/new" },
       ];
       const done = steps.filter(s => s.done).length;
@@ -516,29 +572,32 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
           <div className="hidden md:block text-sm font-semibold text-foreground">
             {type === "venue" ? venueName || "Venue workspace" : ""}
           </div>
-          {type === "venue" && (
-            <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
+          {(type === "venue" || showSalesBell) && (
+            <DropdownMenu open={notifOpen} onOpenChange={onBellOpenChange}>
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label="Notifications"
                   className="relative ml-auto mr-2 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-card-foreground hover:border-primary hover:text-primary transition-all"
                 >
                   <Bell className="w-4 h-4" />
-                  {notifItems.length > 0 && (
+                  {unread > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
-                      {notifItems.length > 9 ? "9+" : notifItems.length}
+                      {unread > 9 ? "9+" : unread}
                     </span>
                   )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuLabel>{showSalesBell ? "Sales activity · last 7 days" : "Notifications"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifItems.length === 0 ? (
                   <p className="px-2 py-4 text-sm text-muted-foreground text-center">Nothing new</p>
                 ) : notifItems.map((n) => (
                   <DropdownMenuItem key={n.id} asChild>
-                    <NavLink to={n.to} onClick={() => setNotifOpen(false)}>{n.label}</NavLink>
+                    <NavLink to={n.to} onClick={() => setNotifOpen(false)} className="flex flex-col items-start gap-0.5">
+                      <span>{n.label}</span>
+                      {showSalesBell && <span className="text-[11px] text-muted-foreground">{new Date(n.at).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+                    </NavLink>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -550,7 +609,7 @@ const DashboardLayout = ({ children, type }: { children: React.ReactNode; type: 
             <button
               onClick={signOut}
               data-allow-without-link
-              className={`inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground hover:border-primary hover:text-primary transition-all ${type === "venue" ? "" : "ml-auto"}`}
+              className={`inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground hover:border-primary hover:text-primary transition-all ${type === "venue" || showSalesBell ? "" : "ml-auto"}`}
             >
               <LogOut className="w-4 h-4" />
               Logout

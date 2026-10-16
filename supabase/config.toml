@@ -13,6 +13,8 @@ project_id = "dvauueqtqrveqcckfrjx"
     verify_jwt = true # both actions are POSTed by the app itself, see index.ts
   [functions.instagram-webhook]
     verify_jwt = false # Meta's servers call this directly — no Supabase JWT
+  [functions.sales-activity-digest]
+    verify_jwt = false # called every 15 min by pg_cron; the DB claim makes repeat calls harmless
   [functions.phyllo]
     verify_jwt = true # signed-in creators only; identity comes from the session
   [functions.instagram-deauth]
