@@ -12,7 +12,7 @@ const PrivacyPolicy = () => (
     <div className="pt-12 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-display font-bold text-foreground mb-2">FamePass Privacy Policy</h1>
-        <p className="text-muted-foreground mb-10">Last Updated: September 2026</p>
+        <p className="text-muted-foreground mb-10">Last Updated: October 2026</p>
 
         <div className="max-w-none space-y-8 text-muted-foreground">
           <p>
@@ -76,14 +76,34 @@ const PrivacyPolicy = () => (
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-display font-semibold text-foreground">5. Instagram and Meta Data</h2>
+            <h2 className="text-xl font-display font-semibold text-foreground">5. Connected Social Accounts (Instagram, TikTok) and Phyllo</h2>
             <p>
-              Where FamePass integrates with Instagram or other Meta services, information received through those
-              services is processed in accordance with this Privacy Policy and applicable Meta platform
-              requirements.
+              Creators can connect an Instagram (Business or Creator) or TikTok account to FamePass. This connection
+              is provided through Phyllo (getphyllo.com), a service provider that connects creator accounts on
+              FamePass's behalf. You sign in to the social platform inside Phyllo's connection window: FamePass never
+              sees your social-media password, and the platform access credentials are held by Phyllo, not by FamePass.
             </p>
-            <p>FamePass uses such information only for legitimate functionality related to the services requested by the user.</p>
-            <p>Access tokens, user identifiers and other platform information are protected and are not sold to third parties.</p>
+            <p>
+              With your permission, Phyllo provides FamePass with your account's username and display name, profile
+              photo, follower, following and post counts, and your posts with their performance metrics such as likes,
+              comments, views, saves, shares and reach.
+            </p>
+            <p>
+              FamePass uses this information to show your verified statistics to venues on FamePass, to evaluate
+              creator applications, to measure posts you deliver for a collaboration, and to check that those posts
+              remain published. Phyllo processes this information as our service provider and under its own privacy
+              policy.
+            </p>
+            <p>
+              You can disconnect an account at any time from Settings → Connected Accounts. FamePass then stops
+              collecting data from that account, asks Phyllo to disconnect it, and removes the connection from your
+              profile. You can also revoke access in the social platform's own settings.
+            </p>
+            <p>
+              Information received from Instagram or other Meta services is processed in accordance with this Privacy
+              Policy and applicable Meta platform requirements, and only for functionality you have requested.
+              Account identifiers and platform information are protected and are not sold to third parties.
+            </p>
           </section>
 
           <section className="space-y-3">
@@ -136,7 +156,7 @@ const PrivacyPolicy = () => (
 
           <section className="space-y-3">
             <h2 className="text-xl font-display font-semibold text-foreground">10. Third-Party Services</h2>
-            <p>FamePass may contain integrations or links to third-party services, including Instagram and Meta services.</p>
+            <p>FamePass may contain integrations or links to third-party services, including Instagram, TikTok, Meta services and Phyllo.</p>
             <p>Those services operate according to their own privacy policies and terms. FamePass is not responsible for the privacy practices of independent third-party services.</p>
           </section>
 

@@ -97,7 +97,7 @@ const App = () => (
             <Route path="/about" element={<MarketingPage path="about" />} />
             <Route path="/pricing" element={<MarketingPage path="pricing" />} />
             <Route path="/contact" element={<MarketingPage path="contact" />} />
-            <Route path="/legal/privacy-policy" element={<MarketingPage path="legal/privacy-policy" />} />
+            <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/legal/terms-condition" element={<MarketingPage path="legal/terms-condition" />} />
             <Route path="/casestudy" element={<MarketingPage path="casestudy" />} />
             <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
