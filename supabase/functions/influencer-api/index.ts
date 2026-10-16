@@ -39,10 +39,14 @@ const pick = (src: any, keys: string[]) => {
   return out;
 };
 const PROFILE_FIELDS = ["full_name", "avatar_url", "phone", "bio", "city", "country", "cover_image_url", "niche"];
-const BOOKING_FIELDS = ["venue_id", "offer_id", "scheduled_date", "preferred_date", "notes"];
 const DELIVERABLE_FIELDS = ["booking_id", "content_type", "content_url", "post_url", "platform", "caption", "media_url", "thumbnail_url", "posted_at"];
 const MESSAGE_FIELDS = ["receiver_id", "venue_id", "booking_id", "content", "media_url"];
 const REVIEW_FIELDS = ["reviewed_id", "venue_id", "booking_id", "rating", "review_text", "is_public"];
+// Venue columns creators may read (contact details etc. are column-locked).
+const VENUE_PUBLIC = "id, name, description, category, categories, address, city, country, latitude, longitude, website, logo_url, cover_image_url";
+// Offers still running: no end date, or not ended yet (same rule as the web).
+const notExpired = () => `ends_at.is.null,ends_at.gte.${new Date().toISOString()}`;
+
 const MEDIA_KIT_FIELDS = ["title", "tagline", "portfolio_urls", "audience_demographics", "engagement_rate", "avg_views", "avg_likes", "brands_worked_with", "pdf_url"];
 
 serve(async (req) => {
@@ -135,6 +139,40 @@ serve(async (req) => {
     if (!user) return errorResponse("Unauthorized", 401);
     const userId = user.id;
 
+    // Only approved, non-suspended creators may use the API. Login still issues
+    // tokens so the app can read GET /profile and show the right approval screen.
+    const [{ data: gateRole }, { data: gate }] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "influencer").maybeSingle(),
+      supabaseAdmin.from("profiles").select("approval_status, is_suspended, suspended_until").eq("user_id", userId).maybeSingle(),
+    ]);
+    if (!gateRole) return errorResponse("Not an influencer account", 403);
+    const suspended = !!gate?.is_suspended && (!gate.suspended_until || new Date(gate.suspended_until) > new Date());
+    const accountState = suspended ? "suspended" : (gate?.approval_status ?? "pending");
+    if (accountState !== "approved" && !(path === "/profile" && method === "GET")) {
+      const why = accountState === "suspended" ? "Your account is suspended." : accountState === "rejected" ? "Your application wasn't approved." : "Your account is waiting for approval.";
+      return jsonResponse({ error: why, code: accountState.toUpperCase() }, 403);
+    }
+
+    // Calls the shared email function as this creator (same as the web's notifyEmail).
+    const notify = (payload: Record<string, unknown>) =>
+      fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+        method: "POST", headers: { Authorization: authHeader, apikey: supabaseAnonKey, "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      }).then(() => true).catch(() => false);
+
+    // Apply to an offer exactly like the web: a pending application the venue reviews.
+    const applyToOffer = async (offerId: string) => {
+      if (!offerId) return errorResponse("offer_id required");
+      const { data: offer } = await supabase.from("offers").select("id").eq("id", offerId).eq("is_active", true).or(notExpired()).maybeSingle();
+      if (!offer) return errorResponse("Offer not found, inactive or expired", 404);
+      const { data: existing } = await supabase.from("offer_redemptions").select("id").eq("offer_id", offerId).eq("influencer_id", userId).maybeSingle();
+      if (existing) return errorResponse("You have already applied to this offer");
+      const { data: redemption, error } = await supabase.from("offer_redemptions")
+        .insert({ offer_id: offerId, influencer_id: userId, status: "pending" }).select().single();
+      if (error) return errorResponse(error.message);
+      await notify({ event: "application_submitted", redemption_id: redemption.id });
+      return jsonResponse({ redemption, message: "Application submitted. The venue will review it." });
+    };
+
     // ==========================================
     // PROFILE
     // ==========================================
@@ -159,6 +197,7 @@ serve(async (req) => {
         supabase.from("offers")
           .select("*, venues(id, name, city, logo_url, cover_image_url, latitude, longitude), categories!category_id(id, name, icon, color)")
           .eq("is_active", true)
+          .or(notExpired())
           .limit(60)
           .order("created_at", { ascending: false }),
         supabase.from("venues")
@@ -246,7 +285,8 @@ serve(async (req) => {
     // ==========================================
     if (path === "/offers" && method === "GET") {
       let query = supabase.from("offers").select("*, venues(id, name, city, address, latitude, longitude, logo_url, cover_image_url), categories!category_id(id, name, color)")
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .or(notExpired());
 
       const category = url.searchParams.get("category");
       const city = url.searchParams.get("city");
@@ -254,8 +294,8 @@ serve(async (req) => {
       const min_followers = url.searchParams.get("min_followers");
       const search = url.searchParams.get("search");
 
-      if (category) query = query.eq("venues.category", category);
-      if (city) query = query.ilike("venues.city", `%${city}%`);
+      // category = category id. Filtering on the joined venue didn't narrow the list.
+      if (category) query = query.eq("category_id", category);
       if (offer_type) query = query.eq("offer_type", offer_type);
       if (min_followers) query = query.lte("min_followers", parseInt(min_followers));
 
@@ -269,6 +309,11 @@ serve(async (req) => {
       // creators can search "by location or venue name" (not just offer title).
       // Done in JS because the match spans the joined `venues` table.
       let searched = data || [];
+      // City matches the venue's city; done here because it lives on the joined table.
+      if (city) {
+        const c = city.toLowerCase().trim();
+        searched = searched.filter((o: any) => (o.venues?.city || "").toLowerCase().includes(c));
+      }
       if (safeSearch) {
         const q = safeSearch.toLowerCase();
         searched = searched.filter((o: any) => {
@@ -324,57 +369,11 @@ serve(async (req) => {
     }
 
 
-    // Accept an offer directly (generates QR code)
+    // Kept for older app builds: now the same as POST /redeem. It used to create an
+    // "upcoming" booking at once (skipping the venue's review) and return a random
+    // QR code venues couldn't scan; real codes come from GET /bookings.
     if (path.match(/^\/offers\/[^/]+\/accept$/) && method === "POST") {
-      const offerId = path.split("/")[2];
-
-      // Optional visit date/time chosen by the creator on the offer page.
-      let scheduledDate = new Date().toISOString();
-      try {
-        const body = await req.json();
-        if (body?.scheduled_date) {
-          const parsed = new Date(body.scheduled_date);
-          if (!isNaN(parsed.getTime())) scheduledDate = parsed.toISOString();
-        }
-      } catch {
-        // No body / invalid JSON — fall back to "now"
-      }
-
-      // Get the offer details
-      const { data: offer, error: offerErr } = await supabase.from("offers")
-        .select("*, venues(id, name)").eq("id", offerId).eq("is_active", true).single();
-      if (offerErr || !offer) return errorResponse("Offer not found or inactive", 404);
-
-      // Check if already redeemed
-      const { data: existing } = await supabase.from("offer_redemptions")
-        .select("id").eq("offer_id", offerId).eq("influencer_id", userId).maybeSingle();
-      if (existing) return errorResponse("You have already accepted this offer");
-
-      // Create redemption with QR code
-      const qrCode = crypto.randomUUID().replace(/-/g, "").substring(0, 12).toUpperCase();
-      const { data: redemption, error: redErr } = await supabase.from("offer_redemptions").insert({
-        offer_id: offerId,
-        influencer_id: userId,
-        status: "pending",
-      }).select().single();
-      if (redErr) return errorResponse(redErr.message);
-
-      // Also create a booking for the creator's chosen visit time.
-      const { data: booking } = await supabase.from("bookings").insert({
-        influencer_id: userId,
-        venue_id: offer.venue_id,
-        offer_id: offerId,
-        scheduled_date: scheduledDate,
-        status: "upcoming",
-      }).select().single();
-
-      // Store QR code on the invitation or return it
-      return jsonResponse({
-        redemption,
-        booking,
-        qr_code: qrCode,
-        message: "Offer accepted! Show this QR code at the venue to claim.",
-      });
+      return await applyToOffer(path.split("/")[2]);
     }
 
     // ==========================================
@@ -427,27 +426,24 @@ serve(async (req) => {
       if (status) query = query.eq("status", status);
       const { data, error } = await query.order("scheduled_date", { ascending: true });
       if (error) return errorResponse(error.message);
-      return jsonResponse({ bookings: data });
+      // The code the venue scans at check-in (booking_checkin_codes, per application).
+      const rIds = (data || []).map((b: any) => b.redemption_id).filter(Boolean);
+      const { data: codes } = rIds.length
+        ? await supabase.from("booking_checkin_codes").select("redemption_id, code").in("redemption_id", rIds)
+        : { data: [] as any[] };
+      const codeOf = new Map((codes || []).map((c: any) => [c.redemption_id, c.code]));
+      const bookings = (data || []).map((b: any) => {
+        const code = codeOf.get(b.redemption_id) ?? null;
+        return { ...b, checkin_code: code, checkin_url: code ? `https://famepass.app/scan?code=${code}` : null };
+      });
+      return jsonResponse({ bookings });
     }
 
-    if (path === "/bookings" && method === "POST") {
-      const body = await req.json();
-      const { data, error } = await supabase.from("bookings").insert({
-        ...pick(body, BOOKING_FIELDS),
-        status: "upcoming",
-        influencer_id: userId,
-      }).select().single();
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ booking: data });
-    }
-
-    if (path.match(/^\/bookings\/[^/]+\/checkin$/) && method === "POST") {
-      const bookingId = path.split("/")[2];
-      const { data, error } = await supabase.from("bookings")
-        .update({ status: "checked_in", checked_in_at: new Date().toISOString() })
-        .eq("id", bookingId).eq("influencer_id", userId).select().single();
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ booking: data });
+    // Bookings come from a venue approving an application (or an accepted
+    // invitation), and check-in happens when the venue scans the creator's code.
+    // Creators can't create bookings or check themselves in.
+    if ((path === "/bookings" && method === "POST") || (path.match(/^\/bookings\/[^/]+\/checkin$/) && method === "POST")) {
+      return errorResponse("Not available: apply to an offer instead, and the venue scans your code at check-in.", 410);
     }
 
     // ==========================================
@@ -464,14 +460,36 @@ serve(async (req) => {
 
     if (path === "/deliverables" && method === "POST") {
       const body = await req.json();
+      const fields = pick(body, DELIVERABLE_FIELDS) as Record<string, any>;
+      const { data: booking } = await supabase.from("bookings").select("id, redemption_id")
+        .eq("id", fields.booking_id ?? "").eq("influencer_id", userId).maybeSingle();
+      if (!booking) return errorResponse("Booking not found", 404);
+      const postUrl = String(fields.post_url || fields.content_url || "").trim() || null;
       const { data, error } = await supabase.from("deliverables").insert({
-        ...pick(body, DELIVERABLE_FIELDS),
+        ...fields,
+        post_url: postUrl, content_url: fields.content_url ?? postUrl,
         influencer_id: userId,
         submitted_at: new Date().toISOString(),
         status: "submitted",
       }).select().single();
       if (error) return errorResponse(error.message);
-      return jsonResponse({ deliverable: data });
+      // Same as the web: the link is the delivery proof that stops the post
+      // deadline from marking the visit Missed; then the email and post metrics.
+      let delivery: any = null;
+      if (postUrl && booking.redemption_id) {
+        const { data: res } = await supabase.rpc("submit_booking_post", { _redemption_id: booking.redemption_id, _url: postUrl });
+        delivery = res ?? null;
+      }
+      await Promise.allSettled([
+        notify({ event: "content_submitted", deliverable_id: data.id }),
+        postUrl && /instagram\.com|tiktok\.com/.test(postUrl)
+          ? fetch(`${supabaseUrl}/functions/v1/fetch-post-metrics`, {
+              method: "POST", headers: { Authorization: authHeader, apikey: supabaseAnonKey, "Content-Type": "application/json" },
+              body: JSON.stringify({ deliverable_id: data.id, post_url: postUrl }),
+            })
+          : Promise.resolve(),
+      ]);
+      return jsonResponse({ deliverable: data, delivery });
     }
 
     // ==========================================
@@ -706,7 +724,7 @@ serve(async (req) => {
     // VENUES (for browsing)
     // ==========================================
     if (path === "/venues" && method === "GET") {
-      let query = supabase.from("venues").select("*").eq("is_active", true);
+      let query = supabase.from("venues").select(VENUE_PUBLIC).eq("is_active", true).eq("approval_status", "approved");
       const category = url.searchParams.get("category");
       const city = url.searchParams.get("city");
       if (category) query = query.eq("category", category);
@@ -718,11 +736,12 @@ serve(async (req) => {
 
     if (path.match(/^\/venues\/[^/]+$/) && method === "GET") {
       const venueId = path.split("/")[2];
-      const { data, error } = await supabase.from("venues").select("*").eq("id", venueId).single();
+      const { data, error } = await supabase.from("venues").select(VENUE_PUBLIC).eq("id", venueId).eq("is_active", true).eq("approval_status", "approved").maybeSingle();
       if (error) return errorResponse(error.message);
+      if (!data) return errorResponse("Venue not found", 404);
       
       // Get venue's active offers
-      const { data: offers } = await supabase.from("offers").select("*").eq("venue_id", venueId).eq("is_active", true);
+      const { data: offers } = await supabase.from("offers").select("*").eq("venue_id", venueId).eq("is_active", true).or(notExpired());
       // Get venue's upcoming events
       const { data: events } = await supabase.from("events").select("*").eq("venue_id", venueId).eq("is_active", true);
       // Get venue reviews
@@ -747,12 +766,8 @@ serve(async (req) => {
     // OFFER REDEMPTIONS
     // ==========================================
     if (path === "/redeem" && method === "POST") {
-      const { offer_id } = await req.json();
-      const { data, error } = await supabase.from("offer_redemptions").insert({
-        offer_id, influencer_id: userId,
-      }).select().single();
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ redemption: data });
+      const { offer_id } = await req.json().catch(() => ({}));
+      return await applyToOffer(typeof offer_id === "string" ? offer_id : "");
     }
 
     if (path === "/redemptions" && method === "GET") {
@@ -761,13 +776,18 @@ serve(async (req) => {
         .eq("influencer_id", userId)
         .order("created_at", { ascending: false });
       if (error) return errorResponse(error.message);
-      return jsonResponse({ redemptions: data });
+      const ids = (data || []).map((r: any) => r.id);
+      const { data: codes } = ids.length
+        ? await supabase.from("booking_checkin_codes").select("redemption_id, code").in("redemption_id", ids)
+        : { data: [] as any[] };
+      const codeOf = new Map((codes || []).map((c: any) => [c.redemption_id, c.code]));
+      return jsonResponse({ redemptions: (data || []).map((r: any) => ({ ...r, checkin_code: codeOf.get(r.id) ?? null })) });
     }
 
     return errorResponse("Not found", 404);
 
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return errorResponse(message, 500);
+    console.error("influencer-api error", err instanceof Error ? err.message : String(err));
+    return errorResponse("Something went wrong. Please try again.", 500);
   }
 });
