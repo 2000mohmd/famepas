@@ -1,6 +1,21 @@
 // Subscribe to: instagram-scraper-api2 and tiktok-scraper7
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { listPosts, PHYLLO_SCOPE, postKey } from "../_shared/phyllo.ts";
+
+/** The campaign post's metrics from Phyllo (creator connected through Phyllo Connect). */
+async function fetchViaPhyllo(accountId: string, url: string) {
+  const key = postKey(url);
+  if (!key) return null;
+  const posts = await listPosts(accountId, Date.now() - 180 * 86400_000);
+  if (!posts.ok) return null;
+  const p = posts.body.find((x) => postKey(x.url) === key);
+  if (!p) return null;
+  return {
+    likes: p.likes ?? 0, comments: p.comments ?? 0, views: p.views ?? 0, shares: p.shares ?? 0,
+    saves: p.saves ?? 0, reach: p.reach ?? 0, thumbnail_url: p.thumbnail_url, external_post_id: p.id,
+  };
+}
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -27,9 +42,10 @@ function pickNumber(...vals: any[]): number {
 
 async function fetchOfficial(sb: any, influencerId: string | undefined, url: string, isIg: boolean) {
   if (!influencerId) return null;
-  const { data: integ } = await sb.from("social_integrations").select("access_token")
+  const { data: integ } = await sb.from("social_integrations").select("access_token, open_id, scope")
     .eq("influencer_id", influencerId).eq("platform", isIg ? "instagram" : "tiktok")
     .eq("status", "connected").maybeSingle();
+  if (integ?.scope === PHYLLO_SCOPE && integ.open_id) return await fetchViaPhyllo(integ.open_id, url);
   const token = integ?.access_token;
   if (!token) return null;
   try {
@@ -39,7 +55,7 @@ async function fetchOfficial(sb: any, influencerId: string | undefined, url: str
       let next: string | null = `https://graph.instagram.com/v21.0/me/media?fields=id,permalink,like_count,comments_count,media_type,thumbnail_url,media_url&limit=50&access_token=${token}`;
       let media: any = null;
       for (let i = 0; i < 4 && next && !media; i++) {
-        const r = await fetch(next); const j = await r.json();
+        const r: Response = await fetch(next); const j: any = await r.json();
         media = (j.data || []).find((m: any) => (m.permalink || "").includes(`/${code}`));
         next = j.paging?.next ?? null;
       }

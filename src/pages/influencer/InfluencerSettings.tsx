@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { connectWithPhyllo, disconnectPhyllo, phylloEnabled, type PhylloPlatform } from "@/lib/phylloConnect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -103,6 +104,71 @@ const TikTokLogo = () => (
     <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.84-2.48V9.77a5.68 5.68 0 1 0 4.93 5.63V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3a4.29 4.29 0 0 1-3.24-1.48z" />
   </svg>
 );
+
+// Phyllo Connect: one row per platform. Replaces the two native rows below when
+// Phyllo is switched on (see src/lib/phylloConnect.ts).
+const PhylloConnectRow = ({ platform }: { platform: PhylloPlatform }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const name = platform === "instagram" ? "Instagram" : "TikTok";
+
+  const { data: social } = useQuery({
+    queryKey: ["phyllo-integration", platform, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("social_integrations").select("id, handle, status")
+        .eq("influencer_id", user!.id).eq("platform", platform).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const refresh = () => ["phyllo-integration", "instagram-integration", "tiktok-connected", "my-profile"]
+    .forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
+
+  const connect = async () => {
+    setBusy(true);
+    try {
+      const { handle } = await connectWithPhyllo(platform);
+      toast({ title: `${name} connected ✓`, description: handle ? `@${handle} is now linked.` : "Your account is now linked." });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Try again in a moment.";
+      if (msg !== "CANCELLED") toast({ title: `${name} not connected`, description: msg, variant: "destructive" });
+    }
+    setBusy(false);
+    refresh();
+  };
+
+  const disconnect = async () => {
+    try { await disconnectPhyllo(platform); toast({ title: "Disconnected" }); }
+    catch (e) { toast({ title: "Couldn't disconnect", description: e instanceof Error ? e.message : "", variant: "destructive" }); }
+    refresh();
+  };
+
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+          style={{ background: platform === "instagram" ? "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" : "#000" }}>
+          {platform === "instagram" ? <IGLogo /> : <TikTokLogo />}
+        </div>
+        <div>
+          <p className="font-medium text-foreground">{name}</p>
+          <p className="text-xs text-muted-foreground">
+            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : "Connected") : platform === "instagram" ? "Business or Creator account required" : "Not connected"}
+          </p>
+        </div>
+      </div>
+      {social?.status === "connected" ? (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+        </div>
+      ) : (
+        <Button size="sm" onClick={connect} disabled={busy}>{busy ? "Connecting…" : `Connect ${name}`}</Button>
+      )}
+    </div>
+  );
+};
 
 // Creator-side TikTok Login Kit connection (per-creator OAuth), separate from
 // the venue-side TikTok link in VenueSettings.tsx.
@@ -274,8 +340,17 @@ const InfluencerSettings = () => {
         <Card>
           <CardHeader><CardTitle>Connected Accounts</CardTitle></CardHeader>
           <CardContent className="divide-y divide-border">
-            <InstagramConnectRow />
-            <TikTokConnectRow />
+            {phylloEnabled() ? (
+              <>
+                <PhylloConnectRow platform="instagram" />
+                <PhylloConnectRow platform="tiktok" />
+              </>
+            ) : (
+              <>
+                <InstagramConnectRow />
+                <TikTokConnectRow />
+              </>
+            )}
           </CardContent>
         </Card>
 

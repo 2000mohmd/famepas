@@ -4,6 +4,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { accountInsights, redact } from "./insights.ts";
+import { getProfile, listPosts, NO_PHYLLO_DATA, PHYLLO_SCOPE, sum28 } from "../_shared/phyllo.ts";
+
+// Same response shape as instagramStats, from Phyllo. Phyllo has no account-level
+// 28-day reach, so reach / interactions are summed over posts from the last 28 days.
+async function phylloStats(accountId: string) {
+  const now = Date.now();
+  const [prof, posts] = await Promise.all([getProfile(accountId), listPosts(accountId, now - 28 * 86400_000)]);
+  const totals = posts.ok ? sum28(posts.body, now) : null;
+  const available = !!totals && (totals.reach !== null || totals.total_interactions !== null);
+  return {
+    username: prof?.handle ?? null,
+    followers: prof?.followers ?? null,
+    following: prof?.following ?? null,
+    media_count: prof?.content_count ?? null,
+    reach: totals?.reach ?? null,
+    total_interactions: totals?.total_interactions ?? null,
+    insights_available: available,
+    insights_error: available ? null : (posts.ok ? NO_PHYLLO_DATA : redact(posts.error)),
+    source: "phyllo",
+  };
+}
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -111,7 +132,7 @@ serve(async (req) => {
 
     const [{ data: integrations }, { data: profile }] = await Promise.all([
       admin.from("social_integrations")
-        .select("platform,handle,display_name,access_token,status,connected_at,token_expires_at")
+        .select("platform,handle,display_name,access_token,status,connected_at,token_expires_at,open_id,scope")
         .eq("influencer_id", influencer_id),
       admin.from("profiles")
         .select("full_name,avatar_url,instagram_handle,tiktok_handle,followers_count,tiktok_followers,engagement_rate,influencer_score")
@@ -126,16 +147,19 @@ serve(async (req) => {
 
     for (const row of integrations ?? []) {
       const platform = row.platform === "instagram" ? "instagram" : row.platform === "tiktok" ? "tiktok" : null;
-      if (!platform || !row.access_token) continue;
+      const viaPhyllo = row.scope === PHYLLO_SCOPE && !!row.open_id;
+      if (!platform || (!row.access_token && !viaPhyllo)) continue;
       const base = {
         connected: row.status === "connected",
         handle: row.handle ?? row.display_name ?? null,
         connected_at: row.connected_at ?? null,
       };
       try {
-        const stats = platform === "instagram"
-          ? await instagramStats(row.access_token)
-          : await tiktokStats(row.access_token);
+        const stats = viaPhyllo
+          ? await phylloStats(row.open_id)
+          : platform === "instagram"
+            ? await instagramStats(row.access_token)
+            : await tiktokStats(row.access_token);
         result[platform] = { ...base, ...stats };
       } catch (e) {
         result[platform] = { ...base, error: redact(String(e)) };

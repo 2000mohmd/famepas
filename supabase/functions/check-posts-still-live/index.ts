@@ -6,6 +6,16 @@
 // approved -- same gap as the rest of the TikTok integration.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { listPosts, PHYLLO_SCOPE, postKey } from "../_shared/phyllo.ts";
+
+/** Via Phyllo: is the post among the creator's last 180 days of posts? null = can't tell (skip, never strike). */
+async function phylloPostStillLive(accountId: string, postUrl: string): Promise<boolean | null> {
+  const key = postKey(postUrl);
+  if (!key) return null;
+  const posts = await listPosts(accountId, Date.now() - 180 * 86400_000);
+  if (!posts.ok) return null;
+  return posts.body.some((p) => postKey(p.url) === key);
+}
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -43,12 +53,18 @@ serve(async (req) => {
 
   let checked = 0, confirmedLive = 0, struck = 0, skipped = 0;
   for (const r of due ?? []) {
-    if (!r.post_url?.includes("instagram.com")) { skipped++; continue; }
-    const { data: integ } = await sb.from("social_integrations").select("access_token")
-      .eq("influencer_id", r.influencer_id).eq("platform", "instagram").eq("status", "connected").maybeSingle();
-    if (!integ?.access_token) { skipped++; continue; }
+    const isIg = !!r.post_url?.includes("instagram.com");
+    const isTt = !!r.post_url?.includes("tiktok.com");
+    if (!isIg && !isTt) { skipped++; continue; }
+    const { data: integ } = await sb.from("social_integrations").select("access_token, open_id, scope")
+      .eq("influencer_id", r.influencer_id).eq("platform", isIg ? "instagram" : "tiktok").eq("status", "connected").maybeSingle();
+    const viaPhyllo = integ?.scope === PHYLLO_SCOPE && !!integ.open_id;
+    // TikTok is only checkable through Phyllo; native TikTok stays manual review.
+    if (!viaPhyllo && (!isIg || !integ?.access_token)) { skipped++; continue; }
 
-    const stillLive = await instagramPostStillLive(integ.access_token, r.post_url);
+    const stillLive = viaPhyllo
+      ? await phylloPostStillLive(integ!.open_id!, r.post_url)
+      : await instagramPostStillLive(integ!.access_token!, r.post_url);
     if (stillLive === null) { skipped++; continue; }
     checked++;
     await sb.rpc("auto_check_post_still_live", { _redemption_id: r.id, _still_live: stillLive });
