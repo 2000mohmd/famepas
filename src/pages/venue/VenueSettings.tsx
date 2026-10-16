@@ -108,65 +108,41 @@ const TikTokConnectRow = ({ venue, social, onChange, logo }: any) => {
   );
 };
 
-// Native Instagram Business Login for venues — same instagram-oauth function
-// creators use; the venue id travels in the OAuth state.
-const InstagramConnectRow = ({ venue, social, onChange, logo }: any) => {
+// Venues give their Instagram handle (also asked at sign-up). The Meta OAuth
+// connect it replaced could never complete without Meta App Review, and no
+// feature used a venue's connected account; creators connect via Phyllo.
+const InstagramHandleRow = ({ venue, onChange, logo }: any) => {
   const { toast } = useToast();
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("instagram") !== "connected") return;
-    toast({ title: "Instagram connected", description: "Your Instagram account is now linked." });
-    window.history.replaceState({}, "", `${window.location.pathname}?tab=integrations`);
-    onChange?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const connect = async () => {
+  const [value, setValue] = useState<string>(venue?.instagram_handle ?? "");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setValue(venue?.instagram_handle ?? ""); }, [venue?.instagram_handle]);
+  // Accept "@name", "name" or a profile URL; store the bare handle.
+  const clean = (v: string) => v.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@+/, "").replace(/[/?#].*$/, "");
+  const save = async () => {
     if (!venue) return;
-    setBusy(true);
-    const { data, error } = await supabase.functions.invoke("instagram-oauth", {
-      body: { action: "initiate", venue_id: venue.id },
-    });
-    if (error || !data?.url) {
-      setBusy(false);
-      toast({ title: "Instagram not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
-      return;
-    }
-    window.location.href = data.url;
-  };
-
-  const disconnect = async () => {
-    if (!venue) return;
-    await supabase.from("social_integrations").delete().eq("venue_id", venue.id).eq("platform", "instagram");
-    toast({ title: "Disconnected" });
+    setSaving(true);
+    const handle = clean(value) || null;
+    const { error } = await supabase.from("venues").update({ instagram_handle: handle } as any).eq("id", venue.id);
+    setSaving(false);
+    if (error) { toast({ title: "Couldn't save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: handle ? `Saved @${handle}` : "Instagram handle removed" });
     onChange?.();
   };
-
-  // A row saved by the old manual flow has no access token — treat it as not connected.
-  const connected = social?.status === "connected" && !!social?.open_id;
-
+  const dirty = clean(value) !== (venue?.instagram_handle ?? "");
   return (
-    <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
+    <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-b border-border last:border-0">
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" }}>{logo}</div>
         <div>
           <p className="font-medium text-foreground">Instagram</p>
-          <p className="text-xs text-muted-foreground">
-            {connected ? `@${social.display_name || social.handle}` : social?.handle ? `@${social.handle} — not verified, reconnect` : "Not connected"}
-          </p>
+          <p className="text-xs text-muted-foreground">{venue?.instagram_handle ? `@${venue.instagram_handle}` : "Add your venue's Instagram handle"}</p>
         </div>
       </div>
-      {connected ? (
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
-          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
-        </div>
-      ) : (
-        <Button size="sm" onClick={connect} disabled={busy} className="text-white" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}>
-          {busy ? "Redirecting…" : "Connect Instagram"}
-        </Button>
-      )}
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <input value={value} onChange={(e) => setValue(e.target.value)} placeholder="@yourvenue" aria-label="Instagram handle"
+          className="h-9 w-full sm:w-56 rounded-lg border border-border bg-background px-3 text-sm text-foreground" />
+        <Button size="sm" onClick={save} disabled={saving || !dirty}>{saving ? "Saving…" : "Save"}</Button>
+      </div>
     </div>
   );
 };
@@ -463,7 +439,7 @@ const VenueSettings = () => {
               <h2 className="text-xl font-extrabold text-foreground">Social Profiles</h2>
               <p className="text-xs text-muted-foreground">Connect your social accounts for content tracking and analytics</p>
             </div>
-            <InstagramConnectRow venue={venue} social={findSocial("instagram")} onChange={load} logo={<IGLogo />} />
+            <InstagramHandleRow venue={venue} onChange={load} logo={<IGLogo />} />
             <TikTokConnectRow venue={venue} social={findSocial("tiktok")} onChange={load} logo={<TikTokLogo />} />
           </div>
         )}

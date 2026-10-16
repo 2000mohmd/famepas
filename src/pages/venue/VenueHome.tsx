@@ -33,19 +33,17 @@ const VenueHome = () => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data: v } = await supabase.from("venues").select("id, name, approval_status, logo_url, description").eq("owner_id", user.id)
+      const { data: v } = await supabase.from("venues").select("id, name, approval_status, logo_url, description, instagram_handle").eq("owner_id", user.id)
         .order("created_at", { ascending: true }).limit(1).maybeSingle();
       setVenue(v);
       if (!v || v.approval_status !== "approved") { setLoading(false); return; }
 
-      const [campaigns, bookings, deliverables, ig, anyCampaign, offerRows] = await Promise.all([
+      const [campaigns, bookings, deliverables, anyCampaign, offerRows] = await Promise.all([
         supabase.from("campaigns").select("id, title, status, cover_image_url").eq("venue_id", v.id).eq("status", "active").limit(5),
         supabase.from("bookings").select("id, influencer_id, scheduled_date, offers(title)").eq("venue_id", v.id)
           .eq("status", "upcoming").order("scheduled_date", { ascending: true }).limit(5),
         supabase.from("deliverables").select("id, platform, submitted_at, post_url, bookings!inner(venue_id, influencer_id)")
           .eq("bookings.venue_id", v.id).order("submitted_at", { ascending: false, nullsFirst: false }).limit(5),
-        supabase.from("social_integrations").select("id", { head: true, count: "exact" }).eq("venue_id", v.id)
-          .eq("platform", "instagram").eq("status", "connected").not("open_id", "is", null),
         supabase.from("campaigns").select("id", { head: true, count: "exact" }).eq("venue_id", v.id),
         supabase.from("offers").select("id").eq("venue_id", v.id),
       ]);
@@ -57,7 +55,7 @@ const VenueHome = () => {
         : { count: 0 };
       setSetup({
         profile: !!(v as any).logo_url && !!(v as any).description,
-        instagram: (ig.count ?? 0) > 0,
+        instagram: !!(v as any).instagram_handle,
         offer: (anyCampaign.count ?? 0) > 0 || offerIds.length > 0,
         applications: (apps.count ?? 0) > 0,
       });
