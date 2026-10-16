@@ -3338,6 +3338,7 @@ export type Database = {
           owner_name: string
         }[]
       }
+      claim_sales_activity_digest: { Args: never; Returns: Json }
       confirm_booking_received: {
         Args: { _redemption_id: string }
         Returns: Json
