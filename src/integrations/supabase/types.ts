@@ -605,6 +605,33 @@ export type Database = {
           },
         ]
       }
+      creator_portfolio: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       creator_prospects: {
         Row: {
           area: string | null
