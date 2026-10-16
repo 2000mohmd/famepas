@@ -1,6 +1,7 @@
 // Shared FamePass email helpers (Resend via Lovable connector gateway).
 
-export const FAMEPASS_FROM = "FamePass <notify@notify.famepass.app>";
+// Must be on a domain verified in Resend (famepass.app). Every Resend sender imports this.
+export const FAMEPASS_FROM = "FamePass <notify@famepass.app>";
 
 export function firstName(fullName?: string | null): string {
   const n = (fullName ?? "").trim();

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { FAMEPASS_FROM } from "../_shared/email.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -96,7 +97,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "FamePass <notify@notify.famepass.app>",
+        from: FAMEPASS_FROM,
         to: [email],
         subject: "Welcome to FamePass",
         html,

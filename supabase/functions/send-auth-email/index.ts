@@ -4,6 +4,7 @@
 //   2) URL: https://<your-project-ref>.functions.supabase.co/send-auth-email
 //   3) Generate the secret and save it as edge function secret SEND_EMAIL_HOOK_SECRET
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { FAMEPASS_FROM } from "../_shared/email.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const corsHeaders = {
@@ -13,7 +14,7 @@ const corsHeaders = {
 
 const RESEND_URL = "https://api.resend.com";
 
-const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? "FamePass <notify@notify.famepass.app>";
+const FROM_EMAIL = Deno.env.get("AUTH_EMAIL_FROM") ?? FAMEPASS_FROM;
 const APP_NAME = "FamePass";
 
 function buildEmail(actionType: string, confirmationUrl: string, token: string): { subject: string; html: string } {
