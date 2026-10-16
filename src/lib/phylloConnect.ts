@@ -50,17 +50,23 @@ export async function connectWithPhyllo(platform: PhylloPlatform): Promise<{ han
       token: start.sdk_token,
       workPlatformId: start.work_platforms?.[platform] ?? null,
     });
-    connect.on("accountConnected", async (accountId: string) => {
+    // Phyllo's SDK rejects a handler whose declared parameter count differs from its
+    // documented signature ("Please add the required number of parameters in callback"),
+    // so every handler lists all of them even when unused.
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    connect.on("accountConnected", async (accountId: string, _workPlatformId: string, _userId: string) => {
       saving = true;
       const { data, error: saveErr } = await supabase.functions.invoke("phyllo", { body: { action: "account_connected", account_id: accountId } });
       if (saveErr || !data?.success) done(() => reject(new Error((data as any)?.error || "Connected, but we couldn't save it. Try again.")));
       else done(() => resolve({ handle: data.handle ?? null }));
     });
-    connect.on("connectionFailure", (reason: string) => done(() => reject(new Error(reason ? `Connection failed: ${reason}` : "Connection failed."))));
-    connect.on("tokenExpired", () => done(() => reject(new Error("The connection window expired. Please try again."))));
+    connect.on("connectionFailure", (reason: string, _workPlatformId: string, _userId: string) =>
+      done(() => reject(new Error(reason ? `Connection failed: ${reason}` : "Connection failed."))));
+    connect.on("tokenExpired", (_userId: string) => done(() => reject(new Error("The connection window expired. Please try again."))));
     // Closing the window without connecting is not an error.
-    connect.on("exit", () => { if (!saving) done(() => reject(new Error("CANCELLED"))); });
-    connect.on("accountDisconnected", () => { /* handled from our own Disconnect button */ });
+    connect.on("exit", (_reason: string, _userId: string) => { if (!saving) done(() => reject(new Error("CANCELLED"))); });
+    connect.on("accountDisconnected", (_accountId: string, _workPlatformId: string, _userId: string) => { /* handled from our own Disconnect button */ });
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     connect.open();
   });
 }
