@@ -108,7 +108,8 @@ const InfluencerProfile = () => {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update(form as any).eq("user_id", user!.id);
+      const { followers_count, tiktok_followers, ...editable } = form;
+      const { error } = await supabase.from("profiles").update(editable as any).eq("user_id", user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -245,12 +246,12 @@ const InfluencerProfile = () => {
                     </div>
                     <Input className={fieldCls} placeholder="@handle" value={form[handleKey]} readOnly={connected} disabled={connected}
                       onChange={(e) => setForm({ ...form, [handleKey]: e.target.value })} aria-label={`${name} handle`} />
-                    <Input className={fieldCls} type="number" min={0} value={form[countKey]} readOnly={connected} disabled={connected}
-                      onChange={(e) => setForm({ ...form, [countKey]: parseInt(e.target.value) || 0 })} aria-label={`${name} followers`} />
+                    {/* Follower counts come only from a connected account (Phyllo); they can't be typed in. */}
+                    <Input className={fieldCls} value={form[countKey] ? `${form[countKey].toLocaleString()} followers` : "—"} readOnly disabled aria-label={`${name} followers`} />
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-4">Venues see "Verified" only for connected accounts. Typed-in follower counts show as self-reported.</p>
+              <p className="text-xs text-muted-foreground mt-4">Venues see "Verified" only for connected accounts. Follower counts update automatically once you connect an account.</p>
             </VenuePanel>
 
             {/* The same live metrics venues see on your applications, once an account is linked. */}
