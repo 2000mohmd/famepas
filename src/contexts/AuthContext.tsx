@@ -18,6 +18,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Sign-up signs a still-pending account in for a moment (to upload the photo),
+ * then signs it out itself. While that runs, the SIGNED_IN listener below must
+ * not enforce approval, or it signs the account out mid-upload and the photo
+ * never reaches the profile (130 creators lost theirs this way).
+ */
+export const signupSession = { active: false };
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
@@ -128,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          if (event === "SIGNED_IN" && !passwordFlowInFlight.current) {
+          if (event === "SIGNED_IN" && !passwordFlowInFlight.current && !signupSession.active) {
             // OAuth / magic-link sign-in: signIn() didn't run, so enforce here.
             // Deferred to avoid deadlocking the auth callback.
             setTimeout(async () => {

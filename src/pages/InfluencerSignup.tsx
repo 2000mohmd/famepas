@@ -6,6 +6,7 @@ import BrandLogo from "@/components/BrandLogo";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { signupSession } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Check, ChevronRight, Instagram, Loader2, ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import LocationAutocomplete from "@/components/venue/LocationAutocomplete";
@@ -240,7 +241,8 @@ const InfluencerSignup = () => {
             .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
           if (!upErr) {
             const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-            await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid);
+            const { data: saved, error: saveErr } = await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("user_id", uid).select("user_id");
+            if (saveErr || !saved?.length) console.warn("Profile photo not saved:", saveErr?.message ?? "no row updated");
           }
         }
       } catch (e) {
@@ -256,6 +258,7 @@ const InfluencerSignup = () => {
 
   const handleFinalize = async () => {
     setSubmitting(true);
+    signupSession.active = true;
     try {
       const social_links: Record<string, string> = {};
       if (username) social_links.username = normalizeHandle(username);
@@ -336,6 +339,7 @@ const InfluencerSignup = () => {
         setTimeout(() => navigate("/login", { replace: true }), 1500);
       }
     } finally {
+      signupSession.active = false;
       setSubmitting(false);
     }
   };

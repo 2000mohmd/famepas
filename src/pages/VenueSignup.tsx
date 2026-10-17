@@ -5,6 +5,7 @@ import BrandLogo from "@/components/BrandLogo";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { signupSession } from "@/contexts/AuthContext";
 import { useGoogleMaps } from "@/contexts/GoogleMapsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Store, UserCheck, ChevronRight, Check, ArrowLeft, MapPin, Pencil, Mail } from "lucide-react";
@@ -377,6 +378,7 @@ const VenueSignup = () => {
         // Usually an earlier attempt already created the account and venue on the server
         // (everything is sent in that one request) but its reply never reached the browser.
         // If this password signs in and the venue is still pending, show the finished screen.
+        signupSession.active = true;
         const { data: retry, error: retryErr } = await supabase.auth.signInWithPassword({ email, password });
         if (!retryErr && retry.user) {
           const { data: own } = await supabase.from("venues").select("approval_status").eq("owner_id", retry.user.id);
@@ -418,6 +420,7 @@ const VenueSignup = () => {
     } catch (e) {
       toast({ title: "Signup failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
+      signupSession.active = false;
       setSubmitting(false);
     }
   };
