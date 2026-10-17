@@ -3351,6 +3351,7 @@ export type Database = {
         Args: { _redemption_id: string; _still_live: boolean }
         Returns: Json
       }
+      creator_is_active: { Args: { _uid: string }; Returns: boolean }
       delivery_send_reminders: { Args: never; Returns: number }
       delivery_sweep: { Args: never; Returns: Json }
       disable_staff_login: {
