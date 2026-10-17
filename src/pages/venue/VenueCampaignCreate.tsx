@@ -268,7 +268,7 @@ const VenueCampaignCreate = () => {
         discount_value: Number.isFinite(discountNum as number) ? discountNum : null,
         min_followers: firstIg?.min_followers ? parseInt(firstIg.min_followers) : null,
         starts_at: (availabilityType === "event" ? eventDate : startDate) || new Date().toISOString(),
-        ends_at: (availabilityType === "event" ? eventDate : endDate) || null,
+        ends_at: endOfDayBeirut((availabilityType === "event" ? eventDate : endDate) || null),
         event_date: availabilityType === "event" ? (eventDate || null) : null,
         event_time: availabilityType === "event" ? (eventTime || null) : null,
         available_days: availabilityType === "anytime" ? DAYS : availableDays,
@@ -279,10 +279,13 @@ const VenueCampaignCreate = () => {
         fulfilment_type: deliveryEnabled ? "delivery" : "visit",
       };
       const { data: existingOffer } = await sb.from("offers").select("id").eq("campaign_id", campaignId).maybeSingle();
-      if (existingOffer?.id) {
-        await sb.from("offers").update(offerPayload).eq("id", existingOffer.id);
-      } else {
-        await sb.from("offers").insert(offerPayload);
+      const { error: offerErr } = existingOffer?.id
+        ? await sb.from("offers").update(offerPayload).eq("id", existingOffer.id)
+        : await sb.from("offers").insert(offerPayload);
+      if (offerErr) {
+        setSaving(false);
+        toast({ title: "Offer not published", description: offerErr.message, variant: "destructive" });
+        return;
       }
     }
 
@@ -868,6 +871,15 @@ const VenueCampaignCreate = () => {
       </Dialog>
     </DashboardLayout>
   );
+};
+
+// A "YYYY-MM-DD" last day means the offer runs until 23:59:59 Beirut time.
+// Saving the bare date stored midnight UTC, so offers vanished at ~3 AM on their last day.
+const endOfDayBeirut = (day: string | null) => {
+  if (!day) return null;
+  const t = Date.parse(`${day}T23:59:59Z`);
+  const wall = Date.parse(new Date(t).toLocaleString("sv-SE", { timeZone: "Asia/Beirut" }).replace(" ", "T") + "Z");
+  return new Date(t - (wall - t)).toISOString();
 };
 
 export default VenueCampaignCreate;

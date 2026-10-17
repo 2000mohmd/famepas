@@ -51,7 +51,7 @@ const InfluencerInvitations = () => {
       if (status === "accepted") {
         const inv = invitations?.find((i: any) => i.id === id);
         if (inv) {
-          await supabase.from("bookings").insert({
+          const { error: bookErr } = await supabase.from("bookings").insert({
             influencer_id: user!.id,
             venue_id: inv.venue_id,
             offer_id: inv.offer_id,
@@ -59,6 +59,11 @@ const InfluencerInvitations = () => {
             scheduled_date: inv.scheduled_at || new Date().toISOString(),
             status: "upcoming",
           });
+          // An accepted invitation with no booking is a visit the venue never sees: undo and say so.
+          if (bookErr) {
+            await supabase.from("invitations").update({ status: inv.status ?? "pending" }).eq("id", id);
+            throw bookErr;
+          }
         }
       }
       if (status === "cancelled") {

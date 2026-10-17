@@ -495,7 +495,8 @@ const VenueSignup = () => {
               {t("venueSignup.createAccountBtn")}
             </PrimaryButton>
             <p className="mt-4 text-center text-xs text-slate-500">
-              {t("venueSignup.agreeToPrivacy")} <Link to="/privacy-policy" className="text-primary hover:underline">{t("venueSignup.privacyPolicy")}</Link> {t("venueSignup.andTerms")}
+              {t("venueSignup.agreeToPrivacy")} <Link to="/legal/privacy-policy" className="text-primary hover:underline">{t("venueSignup.privacyPolicy")}</Link>{" "}
+              {t("venueSignup.and")} <Link to="/legal/terms-condition" className="text-primary hover:underline">{t("venueSignup.termsOfService")}</Link>
             </p>
           </Card>
           <p className="mt-5 text-center text-sm text-slate-500">

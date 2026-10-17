@@ -12,6 +12,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const VenueSignup = lazy(() => import("./pages/VenueSignup"));
 const InfluencerSignup = lazy(() => import("./pages/InfluencerSignup"));
 const Welcome = lazy(() => import("./pages/Welcome"));
@@ -94,13 +95,13 @@ const App = () => (
             <Route path="/" element={<UploadedWebsite />} />
             <Route path="/creators" element={<UploadedWebsite page="creators" />} />
             <Route path="/venues" element={<UploadedWebsite page="venues" />} />
-            <Route path="/about" element={<MarketingPage path="about" />} />
-            <Route path="/pricing" element={<MarketingPage path="pricing" />} />
+            <Route path="/about" element={<Navigate to="/" replace />} />
+            <Route path="/pricing" element={<Navigate to="/" replace />} />
             <Route path="/contact" element={<MarketingPage path="contact" />} />
             <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/legal/terms-condition" element={<MarketingPage path="legal/terms-condition" />} />
-            <Route path="/casestudy" element={<MarketingPage path="casestudy" />} />
-            <Route path="/casestudy/:slug" element={<MarketingPage dynamicSegment="casestudy" />} />
+            <Route path="/legal/terms-condition" element={<TermsOfService />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/casestudy/*" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* The custom domain doesn't proxy this to Lovable's OAuth broker

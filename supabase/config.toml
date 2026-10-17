@@ -13,6 +13,8 @@ project_id = "dvauueqtqrveqcckfrjx"
     verify_jwt = true # both actions are POSTed by the app itself, see index.ts
   [functions.instagram-webhook]
     verify_jwt = false # Meta's servers call this directly — no Supabase JWT
+  [functions.recalc-influencer-scores]
+    verify_jwt = false # nightly pg_cron call; throttled to once per 20h unless an admin calls it
   [functions.sales-activity-digest]
     verify_jwt = false # called every 15 min by pg_cron; the DB claim makes repeat calls harmless
   [functions.phyllo]

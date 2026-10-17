@@ -200,6 +200,7 @@ const InfluencerSignup = () => {
   const emailError = !igLinkToken ? "" : !email.trim() ? "" : !isValidEmail(email) ? t("influencerSignup.invalidEmail") : "";
   const profileReady =
     isValidFullName(fullName) && country.trim().length > 0 && !usernameError && !bioError &&
+    (!!igLinkToken || normalizeHandle(username).length > 0) &&
     (!igLinkToken || (email.trim().length > 0 && !emailError));
 
 
@@ -229,6 +230,11 @@ const InfluencerSignup = () => {
   // After a session exists: upload the photo, sign the pending account back out,
   // show the "application submitted" screen.
   const completeSignup = async () => {
+    const handle = normalizeHandle(username);
+    if (handle && !igLinkToken) {
+      const { data: ures } = await supabase.auth.getUser();
+      if (ures.user) await supabase.from("profiles").update({ instagram_handle: handle }).eq("user_id", ures.user.id);
+    }
     if (avatarFile) {
       try {
         const { data: ures } = await supabase.auth.getUser();
@@ -490,16 +496,9 @@ const InfluencerSignup = () => {
                 </div>
               </Field>
             ) : (
-              <Field label={t("influencerSignup.usernameLabel")} hint={t("influencerSignup.connectToVerifyHint")}>
-                <button
-                  type="button"
-                  onClick={handleConnectInstagram}
-                  disabled={connectingInstagram}
-                  className="w-full h-[52px] px-4 rounded-2xl border-2 border-dashed border-[#E7DED4] bg-[#FBF8F5] text-slate-700 text-sm font-semibold flex items-center justify-center gap-2 hover:border-[#CD9774] transition disabled:opacity-60"
-                >
-                  {connectingInstagram ? <Loader2 className="w-4 h-4 animate-spin" /> : <Instagram className="w-4 h-4" />}
-                  {t("influencerSignup.connectInstagramBtn")}
-                </button>
+              <Field label={t("influencerSignup.instagramHandleLabel")} hint={t("influencerSignup.instagramHandleHint")}>
+                <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@yourhandle" autoCapitalize="none" autoCorrect="off" />
+                {usernameError && <p className="text-xs text-red-600 mt-1">{usernameError}</p>}
               </Field>
             )}
 
@@ -635,6 +634,10 @@ const InfluencerSignup = () => {
             <PrimaryButton disabled={submitting || selectedNiches.length === 0} onClick={handleFinalize}>
               {submitting ? t("influencerSignup.creatingYourAccount") : t("influencerSignup.finishAndEnter")}
             </PrimaryButton>
+            <p className="mt-4 text-center text-xs text-slate-500">
+              {t("venueSignup.agreeToPrivacy")} <Link to="/legal/privacy-policy" className="text-primary hover:underline">{t("venueSignup.privacyPolicy")}</Link>{" "}
+              {t("venueSignup.and")} <Link to="/legal/terms-condition" className="text-primary hover:underline">{t("venueSignup.termsOfService")}</Link>
+            </p>
           </Card>
         </div>
       </Page>
