@@ -1375,7 +1375,8 @@
       "security": "Security",
       "twoFA": "Two-factor login (email code)",
       "twoFAHint": "Require a 6-digit code sent to your email on every sign-in.",
-      "save": "Save settings"
+      "save": "Save settings",
+      "couldNotComplete": "Could not complete the connection."
     },
     "explore": {
       "applied": "Application submitted!",
@@ -1528,6 +1529,34 @@
       "dismiss": "Dismiss",
       "dialogTitle": "Connect your accounts",
       "dialogBody": "Link your Instagram or TikTok to start using FamePass. Venues see your real followers and the results of the videos you deliver."
+    },
+    "portfolio": {
+      "tooLarge": "Photo too large",
+      "tooLargeBody": "{{name}} is over 8 MB.",
+      "addFailed": "Couldn't add photo",
+      "removeFailed": "Couldn't remove photo",
+      "none": "No portfolio photos.",
+      "open": "Open photo",
+      "remove": "Remove photo",
+      "add": "Add photos",
+      "photo": "Photo",
+      "close": "Close"
+    },
+    "insights": {
+      "relink": "the creator may need to relink the account",
+      "title": "Social account metrics",
+      "refresh": "Refresh",
+      "loadFailed": "Couldn't load metrics right now. Try Refresh in a moment.",
+      "notLinked": "Not linked",
+      "unavailable": "{{platform}} metrics unavailable: {{why}}.",
+      "insightsUnavailable": "28-day insights unavailable: {{why}}.",
+      "followers": "Followers",
+      "posts": "Posts",
+      "reach": "Reach (28d)",
+      "interactions": "Interactions (28d)",
+      "videos": "Videos",
+      "likes": "Total likes",
+      "following": "Following"
     }
   }
 }

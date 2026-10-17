@@ -23,6 +23,7 @@ const IGLogo = () => (
 // Real Instagram Business Login (OAuth), separate from the venue side's
 // manual-handle-only "Instagram" field in VenueSettings.tsx.
 const InstagramConnectRow = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -46,8 +47,8 @@ const InstagramConnectRow = () => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get("instagram");
     if (!v) return;
-    if (v === "connected") toast({ title: "Instagram connected ✓", description: "Your Instagram account is now linked." });
-    else toast({ title: "Instagram error", description: "Could not complete connection.", variant: "destructive" });
+    if (v === "connected") toast({ title: t("creator.settings.connectedToast", { name: "Instagram" }), description: t("creator.settings.accountLinked") });
+    else toast({ title: t("creator.settings.notConnectedToast", { name: "Instagram" }), description: t("creator.settings.couldNotComplete"), variant: "destructive" });
     window.history.replaceState({}, "", window.location.pathname);
     queryClient.invalidateQueries({ queryKey: ["instagram-integration"] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,7 +59,7 @@ const InstagramConnectRow = () => {
     const { data, error } = await supabase.functions.invoke("instagram-oauth", { body: { action: "initiate" } });
     setBusy(false);
     if (error || !data?.url) {
-      toast({ title: "Instagram not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
+      toast({ title: t("creator.settings.notConnectedToast", { name: "Instagram" }), description: (data as any)?.error || error?.message || t("creator.shared.tryLater"), variant: "destructive" });
       return;
     }
     window.location.href = data.url;
@@ -67,7 +68,7 @@ const InstagramConnectRow = () => {
   const disconnect = async () => {
     if (!user) return;
     await supabase.from("social_integrations").delete().eq("influencer_id", user.id).eq("platform", "instagram");
-    toast({ title: "Disconnected" });
+    toast({ title: t("creator.settings.disconnected") });
     queryClient.invalidateQueries({ queryKey: ["instagram-integration"] });
   };
 
@@ -83,18 +84,18 @@ const InstagramConnectRow = () => {
         <div>
           <p className="font-medium text-foreground">Instagram</p>
           <p className="text-xs text-muted-foreground">
-            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : "Connected") : "Not connected"}
+            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : t("creator.settings.connected")) : t("creator.settings.notConnected")}
           </p>
         </div>
       </div>
       {social?.status === "connected" ? (
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
-          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> {t("creator.settings.connected")}</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>{t("creator.settings.disconnect")}</Button>
         </div>
       ) : (
         <Button size="sm" onClick={connect} disabled={busy}>
-          {busy ? "Redirecting…" : "Connect Instagram"}
+          {busy ? t("creator.settings.connecting") : t("creator.settings.connectName", { name: "Instagram" })}
         </Button>
       )}
     </div>
@@ -176,6 +177,7 @@ const PhylloConnectRow = ({ platform }: { platform: PhylloPlatform }) => {
 // Creator-side TikTok Login Kit connection (per-creator OAuth), separate from
 // the venue-side TikTok link in VenueSettings.tsx.
 const TikTokConnectRow = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -198,8 +200,8 @@ const TikTokConnectRow = () => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get("tiktok");
     if (!v) return;
-    if (v === "connected") toast({ title: "TikTok connected ✓", description: "Your TikTok account is now linked." });
-    else toast({ title: "TikTok error", description: "Could not complete connection.", variant: "destructive" });
+    if (v === "connected") toast({ title: t("creator.settings.connectedToast", { name: "TikTok" }), description: t("creator.settings.accountLinked") });
+    else toast({ title: t("creator.settings.notConnectedToast", { name: "TikTok" }), description: t("creator.settings.couldNotComplete"), variant: "destructive" });
     window.history.replaceState({}, "", window.location.pathname);
     queryClient.invalidateQueries({ queryKey: ["tiktok-integration"] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,7 +212,7 @@ const TikTokConnectRow = () => {
     const { data, error } = await supabase.functions.invoke("tiktok-oauth", { body: { action: "initiate" } });
     setBusy(false);
     if (error || !(data as any)?.url) {
-      toast({ title: "TikTok not ready", description: (data as any)?.error || error?.message || "Try again later.", variant: "destructive" });
+      toast({ title: t("creator.settings.notConnectedToast", { name: "TikTok" }), description: (data as any)?.error || error?.message || t("creator.shared.tryLater"), variant: "destructive" });
       return;
     }
     window.location.href = (data as any).url;
@@ -219,7 +221,7 @@ const TikTokConnectRow = () => {
   const disconnect = async () => {
     if (!user) return;
     await supabase.from("social_integrations").delete().eq("influencer_id", user.id).eq("platform", "tiktok");
-    toast({ title: "Disconnected" });
+    toast({ title: t("creator.settings.disconnected") });
     queryClient.invalidateQueries({ queryKey: ["tiktok-integration"] });
   };
 
@@ -232,18 +234,18 @@ const TikTokConnectRow = () => {
         <div>
           <p className="font-medium text-foreground">TikTok</p>
           <p className="text-xs text-muted-foreground">
-            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : "Connected") : "Not connected"}
+            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : t("creator.settings.connected")) : t("creator.settings.notConnected")}
           </p>
         </div>
       </div>
       {social?.status === "connected" ? (
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
-          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> {t("creator.settings.connected")}</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>{t("creator.settings.disconnect")}</Button>
         </div>
       ) : (
         <Button size="sm" onClick={connect} disabled={busy}>
-          {busy ? "Redirecting…" : "Connect TikTok"}
+          {busy ? t("creator.settings.connecting") : t("creator.settings.connectName", { name: "TikTok" })}
         </Button>
       )}
     </div>

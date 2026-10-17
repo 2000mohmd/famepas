@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Instagram, Music2, RefreshCw, Users, Eye, Heart, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   influencerId: string;
@@ -21,6 +22,7 @@ const Metric = ({ icon: Icon, label, value }: any) => (
 );
 
 export default function CreatorInsightsPanel({ influencerId, fallback }: Props) {
+  const { t } = useTranslation();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,19 +46,19 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
   const ig = data?.instagram ?? {};
   const tk = data?.tiktok ?? {};
   // Show the platform's own reason (e.g. Meta's App Review refusal) instead of a generic line.
-  const why = (e: unknown) => (typeof e === "string" && e.length < 300 ? e : "the creator may need to relink the account");
+  const why = (e: unknown) => (typeof e === "string" && e.length < 300 ? e : t("creator.insights.relink"));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">Social account metrics</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("creator.insights.title")}</p>
         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={load} disabled={loading}>
-          <RefreshCw className={`w-3 h-3 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
+          <RefreshCw className={`w-3 h-3 me-1 ${loading ? "animate-spin" : ""}`} /> {t("creator.insights.refresh")}
         </Button>
       </div>
 
       {data?.error === true && (
-        <p className="rounded-xl border border-border p-4 text-sm text-muted-foreground">Couldn't load metrics right now. Try Refresh in a moment.</p>
+        <p className="rounded-xl border border-border p-4 text-sm text-muted-foreground">{t("creator.insights.loadFailed")}</p>
       )}
       {loading && !data && <div className="h-28 rounded-xl bg-muted animate-pulse" />}
 
@@ -65,20 +67,20 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
           <Instagram className="w-4 h-4 text-gold" />
           <span className="text-sm font-medium">Instagram</span>
           {ig.handle && <span className="text-xs text-muted-foreground">@{String(ig.handle).replace(/^@+/, "")}</span>}
-          {!ig.connected && <span className="text-[11px] text-muted-foreground ml-auto">Not linked</span>}
+          {!ig.connected && <span className="text-[11px] text-muted-foreground ms-auto">{t("creator.insights.notLinked")}</span>}
         </div>
         {ig.error ? (
-          <p className="text-xs text-muted-foreground">Instagram metrics unavailable: {why(ig.error)}.</p>
+          <p className="text-xs text-muted-foreground">{t("creator.insights.unavailable", { platform: "Instagram", why: why(ig.error) })}</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Metric icon={Users} label="Followers" value={fmt(ig.followers ?? fallback?.followers_count)} />
-            <Metric icon={Film} label="Posts" value={fmt(ig.media_count)} />
-            <Metric icon={Eye} label="Reach (28d)" value={fmt(ig.reach)} />
-            <Metric icon={Heart} label="Interactions (28d)" value={fmt(ig.total_interactions)} />
+            <Metric icon={Users} label={t("creator.insights.followers")} value={fmt(ig.followers ?? fallback?.followers_count)} />
+            <Metric icon={Film} label={t("creator.insights.posts")} value={fmt(ig.media_count)} />
+            <Metric icon={Eye} label={t("creator.insights.reach")} value={fmt(ig.reach)} />
+            <Metric icon={Heart} label={t("creator.insights.interactions")} value={fmt(ig.total_interactions)} />
           </div>
         )}
         {!ig.error && ig.insights_error && (
-          <p className="text-xs text-muted-foreground mt-2">28-day insights unavailable: {why(ig.insights_error)}.</p>
+          <p className="text-xs text-muted-foreground mt-2">{t("creator.insights.insightsUnavailable", { why: why(ig.insights_error) })}</p>
         )}
       </div>
 
@@ -87,16 +89,16 @@ export default function CreatorInsightsPanel({ influencerId, fallback }: Props) 
           <Music2 className="w-4 h-4 text-gold" />
           <span className="text-sm font-medium">TikTok</span>
           {tk.handle && <span className="text-xs text-muted-foreground">@{String(tk.handle).replace(/^@+/, "")}</span>}
-          {!tk.connected && <span className="text-[11px] text-muted-foreground ml-auto">Not linked</span>}
+          {!tk.connected && <span className="text-[11px] text-muted-foreground ms-auto">{t("creator.insights.notLinked")}</span>}
         </div>
         {tk.error ? (
-          <p className="text-xs text-muted-foreground">TikTok metrics unavailable: {why(tk.error)}.</p>
+          <p className="text-xs text-muted-foreground">{t("creator.insights.unavailable", { platform: "TikTok", why: why(tk.error) })}</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Metric icon={Users} label="Followers" value={fmt(tk.followers ?? fallback?.tiktok_followers)} />
-            <Metric icon={Film} label="Videos" value={fmt(tk.media_count)} />
-            <Metric icon={Heart} label="Total likes" value={fmt(tk.likes)} />
-            <Metric icon={Users} label="Following" value={fmt(tk.following)} />
+            <Metric icon={Users} label={t("creator.insights.followers")} value={fmt(tk.followers ?? fallback?.tiktok_followers)} />
+            <Metric icon={Film} label={t("creator.insights.videos")} value={fmt(tk.media_count)} />
+            <Metric icon={Heart} label={t("creator.insights.likes")} value={fmt(tk.likes)} />
+            <Metric icon={Users} label={t("creator.insights.following")} value={fmt(tk.following)} />
           </div>
         )}
       </div>
