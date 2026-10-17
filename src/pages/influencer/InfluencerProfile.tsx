@@ -12,6 +12,7 @@ import { BadgeCheck, Camera, Check, Instagram, Lock, MapPin, Music2, Save, Shiel
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const BIO_MIN = 40;
 const BIO_MAX = 300;
@@ -30,6 +31,7 @@ const Field = ({ label, hint, children }: { label: string; hint?: React.ReactNod
 const fieldCls = "h-12 rounded-2xl bg-muted/50 border-border focus-visible:bg-card";
 
 const InfluencerProfile = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -93,7 +95,7 @@ const InfluencerProfile = () => {
     const filePath = `${user.id}/${kind}.${file.name.split(".").pop()}`;
     const { error } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
     if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      toast({ title: t("creator.bookings.uploadFailed"), description: error.message, variant: "destructive" });
     } else {
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
       const url = `${publicUrl}?t=${Date.now()}`;
@@ -101,7 +103,7 @@ const InfluencerProfile = () => {
       setForm((f) => ({ ...f, [column]: url }));
       await supabase.from("profiles").update({ [column]: url } as any).eq("user_id", user.id);
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
-      toast({ title: kind === "avatar" ? "Profile photo updated" : "Cover updated" });
+      toast({ title: kind === "avatar" ? t("creator.profile.photoUpdated") : t("creator.profile.coverUpdated") });
     }
     setBusy(false);
   };
@@ -113,12 +115,12 @@ const InfluencerProfile = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Profile saved" });
+      toast({ title: t("creator.profile.saved") });
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       const redirect = searchParams.get("redirect");
       if (redirect) navigate(redirect);
     },
-    onError: (e: any) => toast({ title: "Couldn't save", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("creator.profile.saveFailed"), description: e.message, variant: "destructive" }),
   });
 
   const toggleNiche = (n: string) =>
@@ -126,14 +128,14 @@ const InfluencerProfile = () => {
 
   // What makes a profile venues pick: each item links to the section that fixes it.
   const checklist = useMemo(() => [
-    { key: "photo", label: "Profile photo", done: !!form.avatar_url, href: "#identity" },
-    { key: "cover", label: "Cover photo", done: !!form.cover_image_url, href: "#identity" },
-    { key: "bio", label: `Bio of ${BIO_MIN}+ characters`, done: form.bio.trim().length >= BIO_MIN, href: "#about" },
-    { key: "city", label: "City", done: !!form.city, href: "#about" },
-    { key: "niche", label: "At least one niche", done: form.niche.length > 0, href: "#niches" },
-    { key: "social", label: "A social account", done: !!(form.instagram_handle || form.tiktok_handle), href: "#socials" },
-    { key: "portfolio", label: "3+ portfolio photos", done: portfolio.length >= 3, href: "#portfolio" },
-  ], [form, portfolio.length]);
+    { key: "photo", label: t("creator.profile.check.photo"), done: !!form.avatar_url, href: "#identity" },
+    { key: "cover", label: t("creator.profile.check.cover"), done: !!form.cover_image_url, href: "#identity" },
+    { key: "bio", label: t("creator.profile.check.bio", { n: BIO_MIN }), done: form.bio.trim().length >= BIO_MIN, href: "#about" },
+    { key: "city", label: t("creator.profile.city"), done: !!form.city, href: "#about" },
+    { key: "niche", label: t("creator.profile.check.niche"), done: form.niche.length > 0, href: "#niches" },
+    { key: "social", label: t("creator.profile.check.social"), done: !!(form.instagram_handle || form.tiktok_handle), href: "#socials" },
+    { key: "portfolio", label: t("creator.profile.check.portfolio"), done: portfolio.length >= 3, href: "#portfolio" },
+  ], [form, portfolio.length, t]);
   const doneCount = checklist.filter((c) => c.done).length;
   const pct = Math.round((doneCount / checklist.length) * 100);
   const followers = Math.max(form.followers_count || 0, form.tiktok_followers || 0);
@@ -143,13 +145,13 @@ const InfluencerProfile = () => {
       <div className="space-y-6 pb-28">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] mb-2 text-muted-foreground">Your public profile</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">My profile</h1>
-            <p className="mt-2 text-muted-foreground max-w-2xl">This is what venues see before they invite you or accept your application.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] mb-2 text-muted-foreground">{t("creator.profile.eyebrow")}</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{t("nav.profile")}</h1>
+            <p className="mt-2 text-muted-foreground max-w-2xl">{t("creator.profile.subtitle")}</p>
           </div>
           {profile?.is_verified && (
             <span className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-sm font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
-              <Shield className="w-4 h-4" /> Verified creator
+              <Shield className="w-4 h-4" /> {t("creator.profile.verifiedCreator")}
             </span>
           )}
         </div>
@@ -160,8 +162,8 @@ const InfluencerProfile = () => {
             <section id="identity" className="rounded-[2rem] bg-card border border-border overflow-hidden shadow-[var(--venue-shadow)] scroll-mt-24">
               <div className="relative h-44 md:h-60" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}>
                 {form.cover_image_url && <img src={form.cover_image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                <label className="absolute right-4 top-4 inline-flex items-center gap-2 h-10 px-4 rounded-full bg-black/45 backdrop-blur text-white text-sm font-semibold cursor-pointer hover:bg-black/60 transition">
-                  <Camera className="w-4 h-4" /> {coverUploading ? "Uploading…" : form.cover_image_url ? "Change cover" : "Add cover"}
+                <label className="absolute end-4 top-4 inline-flex items-center gap-2 h-10 px-4 rounded-full bg-black/45 backdrop-blur text-white text-sm font-semibold cursor-pointer hover:bg-black/60 transition">
+                  <Camera className="w-4 h-4" /> {coverUploading ? t("creator.profile.uploading") : form.cover_image_url ? t("creator.profile.changeCover") : t("creator.profile.addCover")}
                   <input type="file" accept="image/*" className="hidden" disabled={coverUploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "cover"); }} />
                 </label>
               </div>
@@ -171,51 +173,51 @@ const InfluencerProfile = () => {
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-card bg-muted shadow-lg">
                       <CreatorPhoto key={form.avatar_url} src={form.avatar_url || null} name={form.full_name || "?"} className="w-full h-full object-cover text-4xl" />
                     </div>
-                    <label className="absolute bottom-1 right-1 w-9 h-9 rounded-full flex items-center justify-center cursor-pointer border-2 border-card hover:opacity-90 transition"
-                      style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} aria-label="Change profile photo">
+                    <label className="absolute bottom-1 end-1 w-9 h-9 rounded-full flex items-center justify-center cursor-pointer border-2 border-card hover:opacity-90 transition"
+                      style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }} aria-label={t("creator.profile.changePhoto")}>
                       <Camera className="w-4 h-4" />
                       <input type="file" accept="image/*" className="hidden" disabled={avatarUploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "avatar"); }} />
                     </label>
                   </div>
                   <div className="pb-1 min-w-0">
-                    <p className="text-2xl font-extrabold text-foreground truncate">{form.full_name || "Your name"}</p>
+                    <p className="text-2xl font-extrabold text-foreground truncate">{form.full_name || t("creator.profile.yourName")}</p>
                     <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                      {avatarUploading ? "Uploading photo…" : <><MapPin className="w-3.5 h-3.5" /> {[form.city, form.country].filter(Boolean).join(", ") || "Add your city"}</>}
+                      {avatarUploading ? t("creator.profile.uploadingPhoto") : <><MapPin className="w-3.5 h-3.5" /> {[form.city, form.country].filter(Boolean).join(", ") || t("creator.profile.addCity")}</>}
                     </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <VenuePanel title="About you" className="scroll-mt-24">
+            <VenuePanel title={t("creator.profile.about")} className="scroll-mt-24">
               <div id="about" className="space-y-5 scroll-mt-24">
-                <Field label="Display name">
+                <Field label={t("creator.profile.displayName")}>
                   <Input className={fieldCls} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
                 </Field>
-                <Field label="Bio" hint={<span className={form.bio.trim().length < BIO_MIN ? "text-amber-700" : ""}>{form.bio.length}/{BIO_MAX}</span>}>
+                <Field label={t("creator.profile.bio")} hint={<span className={form.bio.trim().length < BIO_MIN ? "text-amber-700" : ""}>{form.bio.length}/{BIO_MAX}</span>}>
                   <Textarea className="rounded-2xl bg-muted/50 border-border focus-visible:bg-card min-h-[120px]" maxLength={BIO_MAX} value={form.bio}
                     onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    placeholder="What you create, who follows you, and the kind of places you love to feature." />
+                    placeholder={t("creator.profile.bioPlaceholder")} />
                 </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="City">
+                  <Field label={t("creator.profile.city")}>
                     <select value={form.city}
                       onChange={(e) => { const city = e.target.value; const loc = locations.find((l) => l.city === city); setForm({ ...form, city, country: loc?.country || form.country }); }}
                       className={`w-full px-3 text-sm text-foreground border ${fieldCls}`}>
-                      <option value="">Select city</option>
+                      <option value="">{t("creator.profile.selectCity")}</option>
                       {locations.map((l) => <option key={l.id} value={l.city}>{l.city}{l.country ? ` (${l.country})` : ""}</option>)}
                     </select>
                   </Field>
-                  <Field label="Country">
-                    <Input className={fieldCls} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="Your country" />
+                  <Field label={t("creator.profile.country")}>
+                    <Input className={fieldCls} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder={t("creator.profile.yourCountry")} />
                   </Field>
                 </div>
               </div>
             </VenuePanel>
 
-            <VenuePanel title="Niches">
+            <VenuePanel title={t("creator.profile.niches")}>
               <div id="niches" className="scroll-mt-24">
-                <p className="text-sm text-muted-foreground mb-4">Pick what you create. Venues filter creators by these.</p>
+                <p className="text-sm text-muted-foreground mb-4">{t("creator.profile.nichesHint")}</p>
                 <div className="flex flex-wrap gap-2">
                   {nicheOptions.map((n) => {
                     const on = form.niche.includes(n.name);
@@ -231,7 +233,7 @@ const InfluencerProfile = () => {
               </div>
             </VenuePanel>
 
-            <VenuePanel title="Social accounts" action={<Link to="/influencer/settings" className="text-sm font-semibold underline-offset-4 hover:underline" style={{ color: "hsl(var(--venue-brand))" }}>Connect accounts</Link>}>
+            <VenuePanel title={t("creator.profile.socials")} action={<Link to="/influencer/settings" className="text-sm font-semibold underline-offset-4 hover:underline" style={{ color: "hsl(var(--venue-brand))" }}>{t("creator.profile.connectAccounts")}</Link>}>
               <div id="socials" className="grid grid-cols-1 md:grid-cols-2 gap-4 scroll-mt-24">
                 {([
                   { icon: Instagram, name: "Instagram", connected: instagramConnected, handleKey: "instagram_handle", countKey: "followers_count" },
@@ -241,35 +243,35 @@ const InfluencerProfile = () => {
                     <div className="flex items-center justify-between gap-3">
                       <span className="inline-flex items-center gap-2 font-bold text-foreground"><Icon className="w-5 h-5" /> {name}</span>
                       {connected
-                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700"><BadgeCheck className="w-4 h-4" /> Verified</span>
-                        : <span className="text-xs font-semibold text-muted-foreground">Self-reported</span>}
+                        ? <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700"><BadgeCheck className="w-4 h-4" /> {t("creator.profile.verified")}</span>
+                        : <span className="text-xs font-semibold text-muted-foreground">{t("creator.profile.selfReported")}</span>}
                     </div>
                     <Input className={fieldCls} placeholder="@handle" value={form[handleKey]} readOnly={connected} disabled={connected}
-                      onChange={(e) => setForm({ ...form, [handleKey]: e.target.value })} aria-label={`${name} handle`} />
+                      onChange={(e) => setForm({ ...form, [handleKey]: e.target.value })} aria-label={t("creator.profile.handleOf", { name })} />
                     {/* Follower counts come only from a connected account (Phyllo); they can't be typed in. */}
-                    <Input className={fieldCls} value={form[countKey] ? `${form[countKey].toLocaleString()} followers` : "—"} readOnly disabled aria-label={`${name} followers`} />
+                    <Input className={fieldCls} value={form[countKey] ? t("creator.profile.followersN", { n: form[countKey].toLocaleString() }) : "—"} readOnly disabled aria-label={t("creator.profile.followersOf", { name })} />
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-4">Venues see "Verified" only for connected accounts. Follower counts update automatically once you connect an account.</p>
+              <p className="text-xs text-muted-foreground mt-4">{t("creator.profile.socialsHint")}</p>
             </VenuePanel>
 
             {/* The same live metrics venues see on your applications, once an account is linked. */}
             {user && (profile?.instagram_verified || tiktokConnected) && (
-              <VenuePanel title="Your insights">
+              <VenuePanel title={t("creator.profile.insights")}>
                 <CreatorInsightsPanel influencerId={user.id} fallback={{ followers_count: form.followers_count, tiktok_followers: form.tiktok_followers }} />
               </VenuePanel>
             )}
 
-            <VenuePanel title="Portfolio" action={<span className="text-sm text-muted-foreground">Up to 9 photos</span>}>
+            <VenuePanel title={t("creator.profile.portfolio")} action={<span className="text-sm text-muted-foreground">{t("creator.profile.upTo9")}</span>}>
               <div id="portfolio" className="scroll-mt-24">
-                <p className="text-sm text-muted-foreground mb-4">Your best shots: food, places, stays. This is the first thing venues look at after your photo.</p>
+                <p className="text-sm text-muted-foreground mb-4">{t("creator.profile.portfolioHint")}</p>
                 {user && <CreatorPortfolio userId={user.id} editable />}
               </div>
             </VenuePanel>
 
-            <VenuePanel title={<span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> Private details</span>}>
-              <Field label="Phone" hint="Only the FamePass team sees this">
+            <VenuePanel title={<span className="inline-flex items-center gap-2"><Lock className="w-4 h-4" /> {t("creator.profile.private")}</span>}>
+              <Field label={t("creator.profile.phone")} hint={t("creator.profile.phoneHint")}>
                 <Input className={fieldCls} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" />
               </Field>
             </VenuePanel>
@@ -279,7 +281,7 @@ const InfluencerProfile = () => {
           <aside className="space-y-6 xl:sticky xl:top-24">
             <section className="rounded-[2rem] p-6" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
               <div className="flex items-end justify-between">
-                <p className="text-sm font-semibold opacity-80">Profile strength</p>
+                <p className="text-sm font-semibold opacity-80">{t("creator.home.profileStrength")}</p>
                 <p className="text-4xl font-extrabold leading-none">{pct}%</p>
               </div>
               <div className="h-2 rounded-full mt-4 overflow-hidden" style={{ background: "hsl(var(--venue-brand-foreground) / .15)" }}>
@@ -300,15 +302,15 @@ const InfluencerProfile = () => {
             </section>
 
             <section>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-3">How venues see your card</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-3">{t("creator.profile.cardPreview")}</p>
               <article className="rounded-3xl border border-border bg-card p-3 shadow-[var(--venue-shadow)]">
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-muted">
                   <CreatorPhoto key={form.avatar_url} src={form.avatar_url || null} name={form.full_name || "?"} className="w-full h-full object-cover" initialsClassName="text-5xl" style={{ objectPosition: "center 25%" }} />
                 </div>
                 <div className="px-2 pt-4 pb-2">
-                  <p className="text-lg font-extrabold text-foreground truncate">{form.full_name || "Your name"}</p>
-                  <p className="text-sm text-muted-foreground truncate mt-0.5">{[form.city || form.country, form.niche[0]].filter(Boolean).join(" · ") || "FamePass creator"}</p>
-                  <p className="text-2xl font-extrabold text-foreground mt-3">{compact(followers)} <span className="text-xs font-medium text-muted-foreground">followers</span></p>
+                  <p className="text-lg font-extrabold text-foreground truncate">{form.full_name || t("creator.profile.yourName")}</p>
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">{[form.city || form.country, form.niche[0]].filter(Boolean).join(" · ") || t("creator.profile.famepassCreator")}</p>
+                  <p className="text-2xl font-extrabold text-foreground mt-3">{compact(followers)} <span className="text-xs font-medium text-muted-foreground">{t("creator.profile.followers")}</span></p>
                 </div>
               </article>
             </section>
@@ -320,7 +322,7 @@ const InfluencerProfile = () => {
           <button type="button" onClick={() => updateProfile.mutate()} disabled={updateProfile.isPending}
             className="w-full inline-flex items-center justify-center gap-2 h-14 rounded-full font-bold shadow-[0_18px_40px_-16px_hsl(0_100%_16%/.6)] transition hover:opacity-95 disabled:opacity-60"
             style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
-            <Save className="w-4 h-4" /> {updateProfile.isPending ? "Saving…" : "Save profile"}
+            <Save className="w-4 h-4" /> {updateProfile.isPending ? t("creator.profile.saving") : t("creator.profile.save")}
           </button>
         </div>
       </div>

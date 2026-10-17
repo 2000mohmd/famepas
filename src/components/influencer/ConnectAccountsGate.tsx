@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Instagram, Music2, Loader2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { connectWithPhyllo, phylloEnabled } from "@/lib/phylloConnect";
+import { useTranslation } from "react-i18next";
 
 const SHOWN_KEY = "connectAccountsPromptShown";
 
@@ -17,6 +18,7 @@ const SHOWN_KEY = "connectAccountsPromptShown";
  * account (e.g. Apply) gate on useSocialLinked() themselves.
  */
 const ConnectAccountsGate = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const linked = useSocialLinked();
@@ -39,12 +41,12 @@ const ConnectAccountsGate = () => {
       // Phyllo opens its own window over this page; no redirect.
       try {
         const { handle } = await connectWithPhyllo(platform);
-        toast({ title: `${platform === "instagram" ? "Instagram" : "TikTok"} connected ✓`, description: handle ? `@${handle} is now linked.` : "Your account is now linked." });
+        toast({ title: t("creator.settings.connectedToast", { name: platform === "instagram" ? "Instagram" : "TikTok" }), description: handle ? t("creator.settings.handleLinked", { handle }) : t("creator.settings.accountLinked") });
         setOpen(false);
         setJustLinked(true);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "";
-        if (msg !== "CANCELLED") toast({ title: "Couldn't connect", description: msg || "Try again later.", variant: "destructive" });
+        if (msg !== "CANCELLED") toast({ title: t("creator.shared.connectFailed"), description: msg || t("creator.shared.tryLater"), variant: "destructive" });
       }
       setBusy(null);
       return;
@@ -52,7 +54,7 @@ const ConnectAccountsGate = () => {
     const { data, error } = await supabase.functions.invoke(`${platform}-oauth`, { body: { action: "initiate" } });
     setBusy(null);
     if (error || !(data as any)?.url) {
-      toast({ title: "Couldn't start connection", description: (data as any)?.error || "Try again later.", variant: "destructive" });
+      toast({ title: t("creator.shared.connectFailed"), description: (data as any)?.error || t("creator.shared.tryLater"), variant: "destructive" });
       return;
     }
     window.location.href = (data as any).url;
@@ -66,11 +68,11 @@ const ConnectAccountsGate = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card border border-border px-5 py-3.5 mb-6 shadow-[var(--venue-shadow)]">
           <span className="flex items-center gap-3 text-sm font-semibold text-foreground">
             <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }}><Instagram className="w-5 h-5" /></span>
-            Connect Instagram or TikTok so venues can see your real followers.
+            {t("creator.shared.bannerText")}
           </span>
           <div className="flex items-center gap-2 shrink-0">
-            <button type="button" onClick={() => setOpen(true)} className="h-9 px-5 rounded-full text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>Connect</button>
-            <button onClick={() => setBannerDismissed(true)} aria-label="Dismiss" className="text-foreground/50 hover:text-foreground">
+            <button type="button" onClick={() => setOpen(true)} className="h-9 px-5 rounded-full text-xs font-bold" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>{t("creator.shared.connect")}</button>
+            <button onClick={() => setBannerDismissed(true)} aria-label={t("creator.shared.dismiss")} className="text-foreground/50 hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -79,19 +81,19 @@ const ConnectAccountsGate = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-extrabold">Connect your accounts</DialogTitle>
+            <DialogTitle className="text-2xl font-extrabold">{t("creator.shared.dialogTitle")}</DialogTitle>
             <DialogDescription>
-              Link your Instagram or TikTok to start using FamePass. Venues see your real followers and the results of the videos you deliver.
+              {t("creator.shared.dialogBody")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <Button className="w-full h-12 rounded-full font-bold text-white border-0" style={{ background: "linear-gradient(45deg,#f09433,#dc2743,#bc1888)" }} onClick={() => connect("instagram")} disabled={!!busy}>
-              {busy === "instagram" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Instagram className="w-4 h-4 mr-2" />}
-              Connect Instagram
+              {busy === "instagram" ? <Loader2 className="w-4 h-4 me-2 animate-spin" /> : <Instagram className="w-4 h-4 me-2" />}
+              {t("creator.settings.connectName", { name: "Instagram" })}
             </Button>
             <Button className="w-full h-12 rounded-full font-bold text-white border-0 bg-black hover:bg-black/85" onClick={() => connect("tiktok")} disabled={!!busy}>
-              {busy === "tiktok" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Music2 className="w-4 h-4 mr-2" />}
-              Connect TikTok
+              {busy === "tiktok" ? <Loader2 className="w-4 h-4 me-2 animate-spin" /> : <Music2 className="w-4 h-4 me-2" />}
+              {t("creator.settings.connectName", { name: "TikTok" })}
             </Button>
           </div>
         </DialogContent>

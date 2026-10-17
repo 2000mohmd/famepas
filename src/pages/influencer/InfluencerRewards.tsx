@@ -8,25 +8,27 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy, Crown, Award, Gift, Share2 } from "lucide-react";
 import { prettyLabel } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const tierConfig: Record<string, { icon: any; color: string; next: string; pointsNeeded: number }> = {
-  bronze: { icon: Award, color: "text-orange-400", next: "Silver", pointsNeeded: 500 },
-  silver: { icon: Award, color: "text-gray-400", next: "Gold", pointsNeeded: 1500 },
-  gold: { icon: Crown, color: "text-yellow-500", next: "Platinum", pointsNeeded: 5000 },
-  platinum: { icon: Crown, color: "text-cyan-400", next: "Elite", pointsNeeded: 15000 },
+  bronze: { icon: Award, color: "text-orange-400", next: "silver", pointsNeeded: 500 },
+  silver: { icon: Award, color: "text-gray-400", next: "gold", pointsNeeded: 1500 },
+  gold: { icon: Crown, color: "text-yellow-500", next: "platinum", pointsNeeded: 5000 },
+  platinum: { icon: Crown, color: "text-cyan-400", next: "elite", pointsNeeded: 15000 },
   elite: { icon: Trophy, color: "text-purple-500", next: "", pointsNeeded: 0 },
 };
 
 /** Kept in sync with tierConfig so the benefits table never contradicts the progress bar. */
 const TIER_BENEFITS = [
-  { tier: "Bronze", points: "0 – 499", perks: ["Basic profile", "Standard invitations", "1x point multiplier"] },
-  { tier: "Silver", points: "500 – 1,499", perks: ["Silver badge", "Earlier access to new offers", "1.5x point multiplier"] },
-  { tier: "Gold", points: "1,500 – 4,999", perks: ["Priority invitations", "Gold badge", "2x point multiplier"] },
-  { tier: "Platinum", points: "5,000 – 14,999", perks: ["Featured in venue search", "Platinum badge", "3x point multiplier"] },
-  { tier: "Elite", points: "15,000+", perks: ["VIP events access", "Elite badge", "5x point multiplier", "Dedicated support"] },
+  { tier: "bronze", points: "0 – 499", perks: ["basicProfile", "standardInvites", "mult1"] },
+  { tier: "silver", points: "500 – 1,499", perks: ["silverBadge", "earlyAccess", "mult15"] },
+  { tier: "gold", points: "1,500 – 4,999", perks: ["priorityInvites", "goldBadge", "mult2"] },
+  { tier: "platinum", points: "5,000 – 14,999", perks: ["featured", "platinumBadge", "mult3"] },
+  { tier: "elite", points: "15,000+", perks: ["vipEvents", "eliteBadge", "mult5", "dedicatedSupport"] },
 ];
 
 const InfluencerRewards = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -55,12 +57,12 @@ const InfluencerRewards = () => {
 
   const referralLink = user ? `${window.location.origin}/signup/influencer?ref=${user.id}` : "";
   const shareReferral = async () => {
-    const text = "Join me on FamePass and start collaborating with venues!";
+    const text = t("creator.rewards.shareText");
     if (navigator.share) {
       try { await navigator.share({ title: text, url: referralLink }); } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(referralLink);
-      toast({ title: "Referral link copied" });
+      toast({ title: t("creator.rewards.linkCopied") });
     }
   };
 
@@ -68,9 +70,9 @@ const InfluencerRewards = () => {
     <DashboardLayout type="influencer">
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">FamePass rewards</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Rewards & status</h1>
-            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Every visit and every great post earns points. Climb the tiers to unlock priority invites and featured placement.</p>
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">{t("creator.rewards.eyebrow")}</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">{t("creator.rewards.title")}</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">{t("creator.rewards.subtitle")}</p>
           </div>
         </div>
 
@@ -80,14 +82,14 @@ const InfluencerRewards = () => {
             <div className="flex items-center gap-4 mb-4">
               <TierIcon className={`w-10 h-10 ${config.color}`} />
               <div>
-                <h2 className="text-3xl md:text-4xl font-extrabold">{prettyLabel(tier)} tier</h2>
-                <p className="text-sm text-muted-foreground">{points} points earned</p>
+                <h2 className="text-3xl md:text-4xl font-extrabold">{t("creator.rewards.tierName", { tier: t(`creator.rewards.tiers.${tier}`, { defaultValue: prettyLabel(tier) }) })}</h2>
+                <p className="text-sm text-muted-foreground">{t("creator.rewards.pointsEarned", { n: points })}</p>
               </div>
             </div>
             {config.next && (
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Progress to {config.next}</span>
+                  <span className="text-muted-foreground">{t("creator.rewards.progressTo", { tier: t(`creator.rewards.tiers.${config.next}`) })}</span>
                   <span className="text-gold">{points} / {config.pointsNeeded}</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2.5">
@@ -104,33 +106,33 @@ const InfluencerRewards = () => {
             <div className="flex items-center gap-3">
               <span className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary) / .2)" }}><Gift className="w-6 h-6" style={{ color: "hsl(var(--venue-brand))" }} /></span>
               <div>
-                <p className="text-lg font-extrabold">Refer a creator, earn 100 points</p>
-                <p className="text-sm text-muted-foreground">Once your friend's account is approved, you get the points.</p>
+                <p className="text-lg font-extrabold">{t("creator.rewards.referTitle")}</p>
+                <p className="text-sm text-muted-foreground">{t("creator.rewards.referBody")}</p>
               </div>
             </div>
             <button type="button" onClick={shareReferral} className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-sm font-bold"
               style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
-              <Share2 className="w-4 h-4" /> Share invite link
+              <Share2 className="w-4 h-4" /> {t("creator.rewards.shareLink")}
             </button>
           </CardContent>
         </Card>
 
         {/* Tier Benefits */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {TIER_BENEFITS.map((t) => {
-            const current = tier === t.tier.toLowerCase();
+          {TIER_BENEFITS.map((b) => {
+            const current = tier === b.tier;
             return (
-              <div key={t.tier} className="relative rounded-[1.75rem] p-6 border shadow-[var(--venue-shadow)]"
+              <div key={b.tier} className="relative rounded-[1.75rem] p-6 border shadow-[var(--venue-shadow)]"
                 style={current
                   ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))", borderColor: "hsl(var(--venue-brand))" }
                   : { background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}>
-                {current && <span className="absolute right-5 top-5 rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>You're here</span>}
-                <p className={`text-xl font-extrabold ${current ? "" : "text-foreground"}`}>{t.tier}</p>
-                <p className={`text-xs mt-1 mb-4 ${current ? "opacity-70" : "text-muted-foreground"}`}>{t.points} points</p>
+                {current && <span className="absolute end-5 top-5 rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>{t("creator.rewards.youreHere")}</span>}
+                <p className={`text-xl font-extrabold ${current ? "" : "text-foreground"}`}>{t(`creator.rewards.tiers.${b.tier}`)}</p>
+                <p className={`text-xs mt-1 mb-4 ${current ? "opacity-70" : "text-muted-foreground"}`}>{t("creator.rewards.pointsRange", { range: b.points })}</p>
                 <ul className="space-y-2">
-                  {t.perks.map((perk) => (
+                  {b.perks.map((perk) => (
                     <li key={perk} className={`flex items-center gap-2 text-sm ${current ? "" : "text-foreground/80"}`}>
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "hsl(var(--primary))" }} /> {perk}
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "hsl(var(--primary))" }} /> {t(`creator.rewards.perks.${perk}`)}
                     </li>
                   ))}
                 </ul>
@@ -141,7 +143,7 @@ const InfluencerRewards = () => {
 
         {/* Leaderboard */}
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-gold" /> Top Influencers</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-gold" /> {t("creator.rewards.leaderboard")}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {leaderboard?.map((entry: any, idx: number) => (
@@ -153,15 +155,15 @@ const InfluencerRewards = () => {
                         : idx === 2 ? { background: "linear-gradient(135deg,#E9B98F,#B87B4E)", color: "#3A1E0A" }
                         : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{idx + 1}</span>
                     <div>
-                      <p className="font-bold text-foreground">{entry.full_name || "Anonymous"}</p>
+                      <p className="font-bold text-foreground">{entry.full_name || t("creator.rewards.anonymous")}</p>
                       <p className="text-xs text-muted-foreground">
-                        {[entry.badge ? prettyLabel(entry.badge) : null, (entry.influencer_score ?? 0) > 0 ? `Score: ${entry.influencer_score}` : null]
+                        {[entry.badge ? t(`creator.badges.${entry.badge}`, { defaultValue: prettyLabel(entry.badge) }) : null, (entry.influencer_score ?? 0) > 0 ? t("creator.rewards.score", { n: entry.influencer_score }) : null]
                           .filter(Boolean)
-                          .join(" • ") || "New creator"}
+                          .join(" • ") || t("creator.rewards.newCreator")}
                       </p>
                     </div>
                   </div>
-                  <span className="text-sm font-extrabold text-foreground">{entry.points} <span className="font-medium text-muted-foreground">pts</span></span>
+                  <span className="text-sm font-extrabold text-foreground">{entry.points} <span className="font-medium text-muted-foreground">{t("creator.rewards.pts")}</span></span>
                 </div>
               ))}
             </div>

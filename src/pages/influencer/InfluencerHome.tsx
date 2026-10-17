@@ -14,7 +14,7 @@ import { prettyLabel } from "@/lib/format";
 const InfluencerHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data: profile } = useQuery({
     queryKey: ["influencer-profile", user?.id],
@@ -135,7 +135,7 @@ const InfluencerHome = () => {
   })();
 
   // Adnan, "Creator Page fixes" #7: full name everywhere, with the handle underneath.
-  const firstName = (profile?.full_name || "there").split(" ")[0];
+  const firstName = (profile?.full_name || t("creator.home.there")).split(" ")[0];
   const handle = (profile?.social_links as any)?.username as string | undefined;
 
   // Adnan, "Creator Page fixes" #2: a venue with no live offer shouldn't show as Featured.
@@ -147,7 +147,7 @@ const InfluencerHome = () => {
     <DashboardLayout type="influencer">
       <div className="space-y-10">
         <VenueHero
-          eyebrow={handle ? `@${handle}` : "Your FamePass"}
+          eyebrow={handle ? `@${handle}` : t("creator.home.yourFamePass")}
           title={<>{t("influencerHome.greeting")}, {firstName} <span aria-hidden>👋</span></>}
           subtitle={t("influencerHome.subtitle")}
           actions={<>
@@ -157,19 +157,19 @@ const InfluencerHome = () => {
           aside={
             <div className="space-y-5">
               <form onSubmit={(e) => { e.preventDefault(); const q = new FormData(e.currentTarget).get("q"); navigate(`/influencer/explore${q ? `?venue=${encodeURIComponent(String(q))}` : ""}`); }} className="relative max-w-2xl">
-                <input name="q" placeholder="Search venues, offers or cities" className="w-full h-16 rounded-2xl pl-6 pr-20 text-base border-0 outline-none placeholder:opacity-60"
+                <input name="q" placeholder={t("creator.home.searchPlaceholder")} className="w-full h-16 rounded-2xl ps-6 pe-20 text-base border-0 outline-none placeholder:opacity-60"
                   style={{ background: "hsl(var(--venue-brand-foreground) / .12)", color: "hsl(var(--venue-brand-foreground))" }} />
-                <button type="submit" aria-label="Search" className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+                <button type="submit" aria-label={t("common.search")} className="absolute end-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
                   <Search className="w-5 h-5" />
                 </button>
               </form>
               <div className="grid grid-cols-3 gap-3 max-w-3xl">
                 {[
-                  { icon: Send, label: "Invitations", value: stats?.pendingInvitations ?? 0, to: "/influencer/invitations" },
-                  { icon: CalendarDays, label: "Upcoming visits", value: stats?.upcomingBookings ?? 0, to: "/influencer/bookings" },
-                  { icon: CheckCircle, label: "Completed", value: stats?.completedVisits ?? 0, to: "/influencer/bookings" },
+                  { icon: Send, label: t("nav.invitations"), value: stats?.pendingInvitations ?? 0, to: "/influencer/invitations" },
+                  { icon: CalendarDays, label: t("creator.home.upcomingVisits"), value: stats?.upcomingBookings ?? 0, to: "/influencer/bookings" },
+                  { icon: CheckCircle, label: t("creator.status.completed"), value: stats?.completedVisits ?? 0, to: "/influencer/bookings" },
                 ].map(({ icon: Icon, label, value, to }) => (
-                  <button key={label} type="button" onClick={() => navigate(to)} className="text-left rounded-2xl px-4 py-3.5 flex items-center gap-3 transition hover:brightness-110"
+                  <button key={label} type="button" onClick={() => navigate(to)} className="text-start rounded-2xl px-4 py-3.5 flex items-center gap-3 transition hover:brightness-110"
                     style={{ background: "hsl(var(--venue-brand-foreground) / .07)", border: "1px solid hsl(var(--venue-brand-foreground) / .12)" }}>
                     <Icon className="w-5 h-5 shrink-0" style={{ color: "hsl(var(--primary))" }} />
                     <span className="min-w-0">
@@ -188,11 +188,11 @@ const InfluencerHome = () => {
             <div className="flex items-center gap-4">
               <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)" }}><Camera className="w-5 h-5" style={{ color: "hsl(var(--venue-brand))" }} /></span>
               <div>
-                <p className="font-extrabold text-foreground">Add your profile photo</p>
-                <p className="text-sm text-muted-foreground">Venues choose creators by their photo — profiles without one rarely get invited.</p>
+                <p className="font-extrabold text-foreground">{t("creator.home.addPhotoTitle")}</p>
+                <p className="text-sm text-muted-foreground">{t("creator.home.addPhotoBody")}</p>
               </div>
             </div>
-            <BrandButton to="/influencer/profile"><Camera /> Add photo</BrandButton>
+            <BrandButton to="/influencer/profile"><Camera /> {t("creator.home.addPhoto")}</BrandButton>
           </div>
         )}
 
@@ -201,11 +201,11 @@ const InfluencerHome = () => {
             <div className="flex items-center gap-4">
               <span className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "hsl(var(--primary) / .2)" }}><Star className="w-5 h-5" style={{ color: "hsl(var(--venue-brand))" }} /></span>
               <div>
-                <p className="font-extrabold text-foreground">Rate your visit{unreviewedCount > 1 ? "s" : ""}</p>
-                <p className="text-sm text-muted-foreground">You have {unreviewedCount} completed visit{unreviewedCount > 1 ? "s" : ""} waiting for a review.</p>
+                <p className="font-extrabold text-foreground">{t("creator.home.rateTitle")}</p>
+                <p className="text-sm text-muted-foreground">{t("creator.home.rateBody", { n: unreviewedCount })}</p>
               </div>
             </div>
-            <BrandButton to="/influencer/reviews">Rate now</BrandButton>
+            <BrandButton to="/influencer/reviews">{t("creator.home.rateNow")}</BrandButton>
           </div>
         )}
 
@@ -213,13 +213,13 @@ const InfluencerHome = () => {
           <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-red-600" />
-              <h3 className="font-extrabold text-red-700">Warnings from the FamePass team</h3>
+              <h3 className="font-extrabold text-red-700">{t("creator.home.warnings")}</h3>
             </div>
             <div className="space-y-2">
               {warnings.map((w: any) => (
                 <div key={w.id} className="p-4 rounded-2xl bg-white border border-red-100">
                   <p className="text-sm text-neutral-800">{w.warning_message}</p>
-                  <p className="text-xs text-neutral-500 mt-1">{new Date(w.created_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{new Date(w.created_at).toLocaleDateString(i18n.language)}</p>
                 </div>
               ))}
             </div>
@@ -236,19 +236,19 @@ const InfluencerHome = () => {
               <span className="absolute inset-0 flex items-center justify-center text-xl font-extrabold text-foreground">{profileStrength}%</span>
             </span>
             <div>
-              <p className="text-lg font-extrabold text-foreground">Profile strength</p>
-              <p className="text-sm text-muted-foreground mt-1">{profileStrength < 100 ? "Complete profiles get picked by venues far more often." : "Your profile is complete — nice."}</p>
-              {profileStrength < 100 && <button type="button" onClick={() => navigate("/influencer/profile")} className="mt-3 inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>Complete profile <ArrowRight className="w-4 h-4" /></button>}
+              <p className="text-lg font-extrabold text-foreground">{t("creator.home.profileStrength")}</p>
+              <p className="text-sm text-muted-foreground mt-1">{profileStrength < 100 ? t("creator.home.strengthLow") : t("creator.home.strengthFull")}</p>
+              {profileStrength < 100 && <button type="button" onClick={() => navigate("/influencer/profile")} className="mt-3 inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>{t("creator.common.completeProfile")} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></button>}
             </div>
           </div>
 
-          <button type="button" onClick={() => navigate("/influencer/rewards")} className="text-left rounded-[2rem] p-6 md:p-7 flex items-center gap-5 transition hover:brightness-105"
+          <button type="button" onClick={() => navigate("/influencer/rewards")} className="text-start rounded-[2rem] p-6 md:p-7 flex items-center gap-5 transition hover:brightness-105"
             style={{ background: "linear-gradient(135deg, hsl(var(--gold-light)), hsl(var(--primary)))", color: "hsl(var(--venue-brand))" }}>
             <span className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}><Award className="w-8 h-8" style={{ color: "hsl(var(--primary))" }} /></span>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-70">Your tier</p>
-              <p className="text-2xl font-extrabold">{prettyLabel(rewardPoints?.tier ?? "bronze")}</p>
-              <p className="text-sm opacity-80">{rewardPoints?.points ?? 0} points · view rewards</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-70">{t("creator.home.yourTier")}</p>
+              <p className="text-2xl font-extrabold">{t(`creator.rewards.tiers.${rewardPoints?.tier ?? "bronze"}`, { defaultValue: prettyLabel(rewardPoints?.tier ?? "bronze") })}</p>
+              <p className="text-sm opacity-80">{t("creator.home.pointsView", { n: rewardPoints?.points ?? 0 })}</p>
             </div>
           </button>
 
@@ -256,16 +256,16 @@ const InfluencerHome = () => {
             <div className="rounded-[2rem] p-6 md:p-7 text-white flex flex-col justify-between gap-4" style={{ background: "linear-gradient(135deg,#f09433,#dc2743 55%,#bc1888)" }}>
               <div>
                 <Instagram className="w-7 h-7 mb-3" />
-                <p className="text-lg font-extrabold">Connect your Instagram</p>
-                <p className="text-sm text-white/85 mt-1">Venues need your real followers before you can apply.</p>
+                <p className="text-lg font-extrabold">{t("creator.home.connectTitle")}</p>
+                <p className="text-sm text-white/85 mt-1">{t("creator.home.connectBody")}</p>
               </div>
-              <button type="button" onClick={() => navigate("/influencer/settings")} className="self-start h-11 px-5 rounded-full bg-white text-neutral-900 text-sm font-bold">Connect now</button>
+              <button type="button" onClick={() => navigate("/influencer/settings")} className="self-start h-11 px-5 rounded-full bg-white text-neutral-900 text-sm font-bold">{t("creator.home.connectNow")}</button>
             </div>
           ) : (
-            <button type="button" onClick={() => navigate("/influencer/invitations")} className="text-left rounded-[2rem] bg-card border border-border p-6 md:p-7 shadow-[var(--venue-shadow)] hover:border-primary transition">
+            <button type="button" onClick={() => navigate("/influencer/invitations")} className="text-start rounded-[2rem] bg-card border border-border p-6 md:p-7 shadow-[var(--venue-shadow)] hover:border-primary transition">
               <Send className="w-7 h-7 mb-3" style={{ color: "hsl(var(--venue-brand))" }} />
-              <p className="text-lg font-extrabold text-foreground">Invitations</p>
-              <p className="text-sm text-muted-foreground mt-1">Venues can invite you directly — check your inbox.</p>
+              <p className="text-lg font-extrabold text-foreground">{t("nav.invitations")}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t("creator.home.invitesBody")}</p>
             </button>
           )}
         </div>
@@ -278,7 +278,7 @@ const InfluencerHome = () => {
               <button
                 key={cat.id}
                 onClick={() => navigate(`/influencer/explore?category=${cat.name}`)}
-                className="group relative flex-shrink-0 w-[180px] h-[220px] rounded-3xl overflow-hidden text-left"
+                className="group relative flex-shrink-0 w-[180px] h-[220px] rounded-3xl overflow-hidden text-start"
                 style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}
               >
                 {cat.image_url
@@ -296,7 +296,7 @@ const InfluencerHome = () => {
             <div className="flex items-end justify-between mb-5">
               <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{cat.name}</h2>
               <button type="button" onClick={() => navigate(`/influencer/explore?category=${cat.name}`)} className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: "hsl(var(--venue-brand))" }}>
-                {t("influencerHome.viewAll")} <ChevronRight className="w-4 h-4" />
+                {t("influencerHome.viewAll")} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
               </button>
             </div>
             <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
@@ -308,7 +308,7 @@ const InfluencerHome = () => {
         {/* Offers that didn't match any category still deserve a place. */}
         {categoryRows.length === 0 && (offers ?? []).length > 0 && (
           <section>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-5">New offers</h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-5">{t("creator.home.newOffers")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {(offers ?? []).slice(0, 6).map((offer: any) => <OfferTile key={offer.id} offer={offer} />)}
             </div>
@@ -321,7 +321,7 @@ const InfluencerHome = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {featuredVenues.slice(0, 6).map((venue) => (
                 <button key={venue.id} type="button" onClick={() => navigate(`/influencer/explore?venue=${venue.name}`)}
-                  className="group text-left rounded-3xl bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] hover:border-primary transition">
+                  className="group text-start rounded-3xl bg-card border border-border p-2.5 shadow-[var(--venue-shadow)] hover:border-primary transition">
                   <div className="relative rounded-[1.4rem] overflow-hidden aspect-[16/10] bg-muted">
                     {venue.cover_image_url
                       ? <img src={venue.cover_image_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500" />
@@ -343,7 +343,7 @@ const InfluencerHome = () => {
         )}
 
         {(offers ?? []).length === 0 && (
-          <VenueEmpty compact icon={Sparkles} title="Offers are on their way" body="Venues are setting up their first offers. Browse by category above, and check back soon — new ones go live every week."
+          <VenueEmpty compact icon={Sparkles} title={t("creator.home.emptyTitle")} body={t("creator.home.emptyBody")}
             actions={<BrandButton to="/influencer/explore"><Search /> {t("influencerHome.viewAllVenuesOffers")}</BrandButton>} />
         )}
       </div>

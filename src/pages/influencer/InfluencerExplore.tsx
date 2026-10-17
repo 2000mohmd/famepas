@@ -19,13 +19,16 @@ import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import { GoogleMap, MarkerF, InfoWindowF } from "@react-google-maps/api";
 import { notifyEmail } from "@/lib/notify";
+import { dateOpts } from "@/lib/dateLocale";
 import { prettyLabel } from "@/lib/format";
 import BookingRulesNotice from "@/components/influencer/BookingRulesNotice";
+import { useTranslation } from "react-i18next";
 
 const mapContainerStyle = { width: "100%", height: "500px", borderRadius: "0.75rem" };
-const defaultCenter = { lat: 25.2048, lng: 55.2708 };
+const defaultCenter = { lat: 33.8938, lng: 35.5018 }; // Beirut
 
 const InfluencerExplore = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -186,12 +189,12 @@ const InfluencerExplore = () => {
       if (inserted?.id) notifyEmail({ event: "application_submitted", redemption_id: inserted.id });
     },
     onSuccess: () => {
-      toast({ title: "Application submitted!", description: "The venue will review your application." });
+      toast({ title: t("creator.explore.applied"), description: t("creator.explore.appliedBody") });
       queryClient.invalidateQueries({ queryKey: ["explore-offers"] });
       queryClient.invalidateQueries({ queryKey: ["my-applications"] });
       setSelectedOffer(null);
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("creator.common.error"), description: e.message, variant: "destructive" }),
   });
 
   const getApplicationStatus = (offerId: string) => myApplications?.find((a) => a.offer_id === offerId);
@@ -235,12 +238,12 @@ const InfluencerExplore = () => {
     <DashboardLayout type="influencer">
       <div className="space-y-8">
         <VenueHero
-          eyebrow="Explore"
-          title={<>Find your next<br />experience</>}
-          subtitle="Restaurants, spas, hotels and more — apply to the offers you love and get invited back."
+          eyebrow={t("creator.explore.eyebrow")}
+          title={<>{t("creator.explore.titleA")}<br />{t("creator.explore.titleB")}</>}
+          subtitle={t("creator.explore.subtitle")}
           actions={
             <div className="inline-flex gap-1 p-1.5 rounded-full" style={{ background: "hsl(var(--venue-brand-foreground) / .1)" }}>
-              {([["list", "List", List], ["map", "Map", Map]] as const).map(([v, l, Icon]) => (
+              {([["list", t("creator.explore.list"), List], ["map", t("creator.explore.map"), Map]] as const).map(([v, l, Icon]) => (
                 <button key={v} type="button" onClick={() => setViewMode(v)} className="inline-flex items-center gap-2 h-10 px-5 rounded-full text-sm font-semibold transition"
                   style={viewMode === v ? { background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" } : { color: "hsl(var(--venue-brand-foreground) / .8)" }}>
                   <Icon className="w-4 h-4" /> {l}
@@ -250,10 +253,10 @@ const InfluencerExplore = () => {
           }
           aside={
             <div className="relative max-w-2xl">
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by venue, offer or location"
-                className="w-full h-16 rounded-2xl pl-6 pr-20 text-base border-0 outline-none placeholder:opacity-60"
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("creator.explore.searchPlaceholder")}
+                className="w-full h-16 rounded-2xl ps-6 pe-20 text-base border-0 outline-none placeholder:opacity-60"
                 style={{ background: "hsl(var(--venue-brand-foreground) / .12)", color: "hsl(var(--venue-brand-foreground))" }} />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+              <span className="absolute end-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
                 <Search className="w-5 h-5" />
               </span>
             </div>
@@ -263,41 +266,41 @@ const InfluencerExplore = () => {
         <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-card border border-border p-3 shadow-[var(--venue-shadow)]">
           <button type="button" onClick={() => setSavedOnly((v) => !v)} className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-sm font-bold transition"
             style={savedOnly ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : { background: "hsl(var(--muted))" }}>
-            <Heart className={`w-4 h-4 ${savedOnly ? "fill-current" : ""}`} /> Saved
+            <Heart className={`w-4 h-4 ${savedOnly ? "fill-current" : ""}`} /> {t("creator.explore.saved")}
           </button>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder={t("creator.explore.category")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t("creator.explore.allCategories")}</SelectItem>
               {categories?.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder={t("creator.explore.type")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="free">Barter</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="event">Event</SelectItem>
+              <SelectItem value="all">{t("creator.explore.allTypes")}</SelectItem>
+              <SelectItem value="free">{t("creator.explore.barter")}</SelectItem>
+              <SelectItem value="paid">{t("creator.explore.paid")}</SelectItem>
+              <SelectItem value="event">{t("creator.explore.event")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={countryFilter} onValueChange={(v: any) => setCountryFilter(v)}>
             <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="my" disabled={!myCountry}>My country{myCountry ? ` (${myCountry})` : " — set in profile"}</SelectItem>
-              <SelectItem value="all">All countries</SelectItem>
+              <SelectItem value="my" disabled={!myCountry}>{t("creator.explore.myCountry")}{myCountry ? ` (${myCountry})` : ` — ${t("creator.explore.setInProfile")}`}</SelectItem>
+              <SelectItem value="all">{t("creator.explore.allCountries")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder="Sort by" /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto rounded-full min-w-[160px] px-5 gap-3 bg-muted border-0 font-semibold"><SelectValue placeholder={t("creator.explore.sortBy")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="title_asc">Title (A–Z)</SelectItem>
-              <SelectItem value="title_desc">Title (Z–A)</SelectItem>
-              <SelectItem value="slots_desc">Most slots left</SelectItem>
-              <SelectItem value="followers_asc">Min followers (low)</SelectItem>
-              <SelectItem value="followers_desc">Min followers (high)</SelectItem>
+              <SelectItem value="newest">{t("creator.explore.sort.newest")}</SelectItem>
+              <SelectItem value="oldest">{t("creator.explore.sort.oldest")}</SelectItem>
+              <SelectItem value="title_asc">{t("creator.explore.sort.titleAsc")}</SelectItem>
+              <SelectItem value="title_desc">{t("creator.explore.sort.titleDesc")}</SelectItem>
+              <SelectItem value="slots_desc">{t("creator.explore.sort.slots")}</SelectItem>
+              <SelectItem value="followers_asc">{t("creator.explore.sort.followersAsc")}</SelectItem>
+              <SelectItem value="followers_desc">{t("creator.explore.sort.followersDesc")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -306,20 +309,20 @@ const InfluencerExplore = () => {
             <div className="flex items-center gap-2">
               <Navigation className="w-4 h-4 text-gold" />
               <span>
-                {nearbyOnly ? "Closest offers first, based on your current location" : "Location detected — turn on “Near me” to sort by distance"}
+                {nearbyOnly ? t("creator.explore.nearOn") : t("creator.explore.nearOff")}
                 {nearbyOnly && hiddenNoGeoCount > 0 && (
-                  <span className="text-muted-foreground"> · {hiddenNoGeoCount} offer{hiddenNoGeoCount > 1 ? "s" : ""} without map coordinates listed last</span>
+                  <span className="text-muted-foreground"> · {t("creator.explore.noGeo", { n: hiddenNoGeoCount })}</span>
                 )}
               </span>
             </div>
             <Button size="sm" variant={nearbyOnly ? "default" : "outline"} onClick={() => setNearbyOnly(v => !v)}>
-              {nearbyOnly ? "Near me: ON" : "Near me: OFF"}
+              {nearbyOnly ? t("creator.explore.nearMeOn") : t("creator.explore.nearMeOff")}
             </Button>
           </div>
         )}
         {!myCountry && countryFilter === "my" && (
           <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-sm text-foreground">
-            Set your country in <a href="/influencer/profile" className="underline text-gold">your profile</a> or allow location access to see offers near you.
+            {t("creator.explore.setCountryA")} <a href="/influencer/profile" className="underline text-gold">{t("creator.explore.setCountryLink")}</a> {t("creator.explore.setCountryB")}
           </div>
         )}
 
@@ -353,13 +356,13 @@ const InfluencerExplore = () => {
             {displayedOffers?.length === 0 && (
               <div className="col-span-full rounded-[2rem] bg-card border border-border text-center px-6 py-16 space-y-4">
                 <span className="mx-auto flex items-center justify-center w-20 h-20 rounded-full" style={{ background: "radial-gradient(circle at 30% 30%, hsl(var(--gold-light)), hsl(var(--primary)))", boxShadow: "0 0 0 10px hsl(var(--primary) / .12)" }}><Search className="w-8 h-8" style={{ color: "hsl(var(--venue-brand))" }} /></span>
-                <p className="text-2xl font-extrabold text-foreground">No offers match right now</p>
-                <p className="text-muted-foreground max-w-md mx-auto">Try another category or clear your filters — new offers go live every week.</p>
+                <p className="text-2xl font-extrabold text-foreground">{t("creator.explore.emptyTitle")}</p>
+                <p className="text-muted-foreground max-w-md mx-auto">{t("creator.explore.emptyBody")}</p>
                 <Button
                   variant="outline"
                   onClick={() => { setSearch(""); setCategoryFilter("all"); setTypeFilter("all"); setCountryFilter("all"); setNearbyOnly(false); setSavedOnly(false); }}
                 >
-                  Clear filters
+                  {t("creator.explore.clearFilters")}
                 </Button>
               </div>
             )}
@@ -371,12 +374,13 @@ const InfluencerExplore = () => {
 };
 
 const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply, getApplicationStatus, userLocation }: any) => {
+  const { t } = useTranslation();
   const { isLoaded } = useGoogleMaps();
 
   if (!isLoaded) {
     return (
       <div className="rounded-xl bg-card border border-border p-12 text-center text-muted-foreground">
-        Loading map...
+        {t("creator.explore.loadingMap")}
       </div>
     );
   }
@@ -391,14 +395,14 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
     <div className="rounded-xl overflow-hidden border border-border relative">
       {venues.length === 0 && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-card border border-border rounded-lg px-4 py-2 shadow-md text-sm text-muted-foreground">
-          No venues with location data found in this area yet.
+          {t("creator.explore.noMapVenues")}
         </div>
       )}
       <GoogleMap mapContainerStyle={mapContainerStyle} center={center} zoom={12}>
         {userLocation && (
           <MarkerF
             position={userLocation}
-            title="You are here"
+            title={t("creator.explore.youAreHere")}
             icon={{
               path: (window as any).google?.maps?.SymbolPath?.CIRCLE,
               scale: 8,
@@ -420,23 +424,23 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
               <p className="text-xs mb-2" style={{ color: "#888" }}>{selectedVenue.category}</p>
               {offersForVenue(selectedVenue.id).length > 0 ? (
                 <div className="space-y-1">
-                  <p className="text-xs font-medium" style={{ color: "#333" }}>{offersForVenue(selectedVenue.id).length} offer(s):</p>
+                  <p className="text-xs font-medium" style={{ color: "#333" }}>{t("creator.explore.offersCount", { n: offersForVenue(selectedVenue.id).length })}</p>
                   {offersForVenue(selectedVenue.id).slice(0, 3).map((o: any) => {
                     const app = getApplicationStatus(o.id);
                     return (
                       <div key={o.id} className="flex items-center justify-between gap-2">
                         <span className="text-xs truncate" style={{ color: "#333" }}>{o.title}</span>
                         {app ? (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">{prettyLabel(app.status)}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">{t(`creator.status.${app.status}`, { defaultValue: prettyLabel(app.status) })}</span>
                         ) : (
-                          <button onClick={() => onApply(o.id)} className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700">Apply</button>
+                          <button onClick={() => onApply(o.id)} className="text-xs px-2 py-0.5 rounded bg-purple-600 text-white hover:bg-purple-700">{t("creator.explore.apply")}</button>
                         )}
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="text-xs" style={{ color: "#999" }}>No active offers</p>
+                <p className="text-xs" style={{ color: "#999" }}>{t("creator.explore.noActiveOffers")}</p>
               )}
             </div>
           </InfoWindowF>
@@ -447,6 +451,7 @@ const MapView = ({ venues, selectedVenue, onSelectVenue, offersForVenue, onApply
 };
 
 const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onApply, isPending, isSaved, onToggleSave }: any) => {
+  const { t } = useTranslation();
   const hasApplied = !!application;
   const [accepted, setAccepted] = useState(false);
   const maxGuests = offer.campaigns?.instagram_offers?.[0]?.max_guests
@@ -459,7 +464,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
     <OfferTile
       offer={offer}
       corner={
-        <button type="button" aria-label={isSaved ? "Remove from saved" : "Save offer"} onClick={() => onToggleSave?.()}
+        <button type="button" aria-label={isSaved ? t("creator.explore.unsave") : t("creator.explore.save")} onClick={() => onToggleSave?.()}
           className="w-10 h-10 rounded-full bg-black/35 backdrop-blur text-white flex items-center justify-center hover:bg-black/50 transition">
           <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
         </button>
@@ -467,37 +472,37 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
       footer={
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-muted-foreground">
-            {offer.discount_value ? <span className="font-extrabold text-foreground">${offer.discount_value} value</span> : slots != null ? `${slots} spots left` : "Open to apply"}
+            {offer.discount_value ? <span className="font-extrabold text-foreground">{t("creator.explore.value", { v: offer.discount_value })}</span> : slots != null ? t("creator.explore.spotsLeft", { n: slots }) : t("creator.explore.openToApply")}
           </span>
           {hasApplied ? (
             <span className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-bold capitalize" style={{ background: "hsl(var(--primary) / .2)", color: "hsl(var(--venue-brand))" }}>
               <CheckCircle className="w-4 h-4" />
-              {application.status === "pending" ? "Applied" : application.status}
+              {application.status === "pending" ? t("creator.explore.appliedBadge") : t(`creator.status.${application.status}`, { defaultValue: application.status })}
             </span>
           ) : (
             <Dialog open={selectedOffer?.id === offer.id} onOpenChange={(o) => { if (!o) { setSelectedOffer(null); setAccepted(false); } }}>
               <DialogTrigger asChild>
-                <button type="button" className="h-10 px-6 rounded-full text-sm font-bold transition hover:opacity-90" style={brand} onClick={() => setSelectedOffer(offer)}>Apply</button>
+                <button type="button" className="h-10 px-6 rounded-full text-sm font-bold transition hover:opacity-90" style={brand} onClick={() => setSelectedOffer(offer)}>{t("creator.explore.apply")}</button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-extrabold">Apply to {offer.title}</DialogTitle>
-                  <DialogDescription>Review the offer details and confirm your application.</DialogDescription>
+                  <DialogTitle className="text-2xl font-extrabold">{t("creator.explore.applyTo", { title: offer.title })}</DialogTitle>
+                  <DialogDescription>{t("creator.explore.reviewDetails")}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">{offer.description}</p>
                   {offer.requirements && (
                     <div className="rounded-2xl bg-muted/70 p-4">
-                      <h4 className="text-sm font-extrabold mb-1">What the venue asks for</h4>
+                      <h4 className="text-sm font-extrabold mb-1">{t("creator.explore.venueAsks")}</h4>
                       <p className="text-sm text-muted-foreground">{offer.requirements}</p>
                     </div>
                   )}
-                  <p className="text-sm"><strong>Venue:</strong> {offer.venues?.name}{offer.venues?.city ? `, ${offer.venues.city}` : ""}</p>
+                  <p className="text-sm"><strong>{t("creator.common.venue")}:</strong> {offer.venues?.name}{offer.venues?.city ? `, ${offer.venues.city}` : ""}</p>
                   <p className="text-sm">
-                    <strong>Dates:</strong> {format(new Date(offer.starts_at), "MMM d, yyyy")}
-                    {offer.ends_at && ` — ${format(new Date(offer.ends_at), "MMM d, yyyy")}`}
+                    <strong>{t("creator.explore.dates")}:</strong> {format(new Date(offer.starts_at), "PP", dateOpts())}
+                    {offer.ends_at && ` — ${format(new Date(offer.ends_at), "PP", dateOpts())}`}
                   </p>
-                  {offer.discount_value && <p className="text-sm"><strong>Value:</strong> ${offer.discount_value}</p>}
+                  {offer.discount_value && <p className="text-sm"><strong>{t("creator.explore.valueLabel")}:</strong> ${offer.discount_value}</p>}
                   <BookingRulesNotice
                     maxGuests={maxGuests}
                     requirements={offer.requirements}
@@ -505,7 +510,7 @@ const OfferCard = ({ offer, application, selectedOffer, setSelectedOffer, onAppl
                     onAcceptedChange={setAccepted}
                   />
                   <button type="button" className="w-full h-12 rounded-full font-bold disabled:opacity-50" style={brand} onClick={onApply} disabled={isPending || !accepted}>
-                    {isPending ? "Submitting…" : "Confirm application"}
+                    {isPending ? t("creator.reviews.submitting") : t("creator.explore.confirm")}
                   </button>
                 </div>
               </DialogContent>

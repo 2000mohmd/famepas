@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { useTranslation } from "react-i18next";
 
 const CACHE_KEY = "fp_checkin_qr";
 
@@ -13,6 +14,7 @@ const readCache = (): Record<string, string> => {
  * the creator has no signal at the venue.
  */
 const CheckInCode = ({ code }: { code: string }) => {
+  const { t } = useTranslation();
   const [src, setSrc] = useState<string | null>(() => readCache()[code] ?? null);
 
   useEffect(() => {
@@ -27,14 +29,14 @@ const CheckInCode = ({ code }: { code: string }) => {
 
   return (
     <div className="mt-3 inline-flex flex-col items-center rounded-xl border border-gold/30 bg-white p-3">
-      <p className="text-[11px] font-medium text-neutral-600 mb-2">Show this at the venue</p>
+      <p className="text-[11px] font-medium text-neutral-600 mb-2">{t("creator.shared.showAtVenue")}</p>
       {src ? (
-        <img src={src} alt={`Check-in QR code ${code}`} className="w-40 h-40" />
+        <img src={src} alt={t("creator.shared.qrAlt", { code })} className="w-40 h-40" />
       ) : (
-        <div className="w-40 h-40 flex items-center justify-center text-xs text-neutral-400">QR unavailable</div>
+        <div className="w-40 h-40 flex items-center justify-center text-xs text-neutral-400">{t("creator.shared.qrUnavailable")}</div>
       )}
       <p className="font-mono text-lg font-bold tracking-[0.3em] text-neutral-900 mt-2">{code}</p>
-      <p className="text-[10px] text-neutral-500">Backup code if the scan fails</p>
+      <p className="text-[10px] text-neutral-500">{t("creator.shared.backupCode")}</p>
     </div>
   );
 };

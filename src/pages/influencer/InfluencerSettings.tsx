@@ -11,6 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { setLanguage } from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 const IGLogo = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
@@ -108,6 +110,7 @@ const TikTokLogo = () => (
 // Phyllo Connect: one row per platform. Replaces the two native rows below when
 // Phyllo is switched on (see src/lib/phylloConnect.ts).
 const PhylloConnectRow = ({ platform }: { platform: PhylloPlatform }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -129,18 +132,18 @@ const PhylloConnectRow = ({ platform }: { platform: PhylloPlatform }) => {
     setBusy(true);
     try {
       const { handle } = await connectWithPhyllo(platform);
-      toast({ title: `${name} connected ✓`, description: handle ? `@${handle} is now linked.` : "Your account is now linked." });
+      toast({ title: t("creator.settings.connectedToast", { name }), description: handle ? t("creator.settings.handleLinked", { handle }) : t("creator.settings.accountLinked") });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Try again in a moment.";
-      if (msg !== "CANCELLED") toast({ title: `${name} not connected`, description: msg, variant: "destructive" });
+      const msg = e instanceof Error ? e.message : t("creator.messages.tryAgain");
+      if (msg !== "CANCELLED") toast({ title: t("creator.settings.notConnectedToast", { name }), description: msg, variant: "destructive" });
     }
     setBusy(false);
     refresh();
   };
 
   const disconnect = async () => {
-    try { await disconnectPhyllo(platform); toast({ title: "Disconnected" }); }
-    catch (e) { toast({ title: "Couldn't disconnect", description: e instanceof Error ? e.message : "", variant: "destructive" }); }
+    try { await disconnectPhyllo(platform); toast({ title: t("creator.settings.disconnected") }); }
+    catch (e) { toast({ title: t("creator.settings.disconnectFailed"), description: e instanceof Error ? e.message : "", variant: "destructive" }); }
     refresh();
   };
 
@@ -154,17 +157,17 @@ const PhylloConnectRow = ({ platform }: { platform: PhylloPlatform }) => {
         <div>
           <p className="font-medium text-foreground">{name}</p>
           <p className="text-xs text-muted-foreground">
-            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : "Connected") : platform === "instagram" ? "Business or Creator account required" : "Not connected"}
+            {social?.status === "connected" ? (social.handle ? `@${social.handle}` : t("creator.settings.connected")) : platform === "instagram" ? t("creator.settings.igRequirement") : t("creator.settings.notConnected")}
           </p>
         </div>
       </div>
       {social?.status === "connected" ? (
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> Connected</span>
-          <Button size="sm" variant="ghost" onClick={disconnect}>Disconnect</Button>
+          <span className="inline-flex items-center gap-1.5 text-sm text-green-600"><Check className="w-4 h-4" /> {t("creator.settings.connected")}</span>
+          <Button size="sm" variant="ghost" onClick={disconnect}>{t("creator.settings.disconnect")}</Button>
         </div>
       ) : (
-        <Button size="sm" onClick={connect} disabled={busy}>{busy ? "Connecting…" : `Connect ${name}`}</Button>
+        <Button size="sm" onClick={connect} disabled={busy}>{busy ? t("creator.settings.connecting") : t("creator.settings.connectName", { name })}</Button>
       )}
     </div>
   );
@@ -248,6 +251,7 @@ const TikTokConnectRow = () => {
 };
 
 const InfluencerSettings = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -275,8 +279,8 @@ const InfluencerSettings = () => {
   const toggle2FA = async (v: boolean) => {
     setTwoFA(v);
     const { error } = await supabase.from("profiles").update({ two_factor_enabled: v }).eq("user_id", user!.id);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setTwoFA(!v); }
-    else toast({ title: v ? "Two-factor login enabled" : "Two-factor login disabled" });
+    if (error) { toast({ title: t("creator.common.error"), description: error.message, variant: "destructive" }); setTwoFA(!v); }
+    else toast({ title: v ? t("creator.settings.twoFAOn") : t("creator.settings.twoFAOff") });
   };
 
   const [form, setForm] = useState({
@@ -309,7 +313,7 @@ const InfluencerSettings = () => {
     const next = { ...form, ...patch };
     setForm(next);
     const { error } = await supabase.from("influencer_settings").upsert({ ...next, influencer_id: user!.id }, { onConflict: "influencer_id" });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setForm(form); return; }
+    if (error) { toast({ title: t("creator.common.error"), description: error.message, variant: "destructive" }); setForm(form); return; }
     queryClient.invalidateQueries({ queryKey: ["influencer-settings"] });
   };
 
@@ -321,24 +325,24 @@ const InfluencerSettings = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Settings saved" });
+      toast({ title: t("creator.settings.saved") });
       queryClient.invalidateQueries({ queryKey: ["influencer-settings"] });
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("creator.common.error"), description: e.message, variant: "destructive" }),
   });
 
   return (
     <DashboardLayout type="influencer">
       <div className="space-y-6 max-w-4xl">
         <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Account</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Settings</h1>
-            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Connected accounts, notifications and security.</p>
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">{t("creator.settings.eyebrow")}</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">{t("nav.settings")}</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">{t("creator.settings.subtitle")}</p>
           </div>
         </div>
 
         <Card>
-          <CardHeader><CardTitle>Connected Accounts</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("creator.settings.connectedAccounts")}</CardTitle></CardHeader>
           <CardContent className="divide-y divide-border">
             {phylloEnabled() ? (
               <>
@@ -355,13 +359,13 @@ const InfluencerSettings = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("creator.settings.notifications")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {[
-              { key: "notification_invitations" as const, label: "Invitation notifications" },
-              { key: "notification_messages" as const, label: "Message notifications" },
-              { key: "notification_earnings" as const, label: "Earnings notifications" },
-              { key: "notification_promotions" as const, label: "Promotional notifications" },
+              { key: "notification_invitations" as const, label: t("creator.settings.notifInvitations") },
+              { key: "notification_messages" as const, label: t("creator.settings.notifMessages") },
+              { key: "notification_earnings" as const, label: t("creator.settings.notifEarnings") },
+              { key: "notification_promotions" as const, label: t("creator.settings.notifPromotions") },
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between">
                 <Label>{label}</Label>
@@ -372,39 +376,39 @@ const InfluencerSettings = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Privacy</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("creator.settings.privacy")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Show profile publicly</Label>
+              <Label>{t("creator.settings.showProfile")}</Label>
               <Switch checked={form.privacy_show_profile} onCheckedChange={(v) => saveField({ privacy_show_profile: v })} />
             </div>
             <div className="flex items-center justify-between">
-              <Label>Show earnings publicly</Label>
+              <Label>{t("creator.settings.showEarnings")}</Label>
               <Switch checked={form.privacy_show_earnings} onCheckedChange={(v) => saveField({ privacy_show_earnings: v })} />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Language</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("common.language")}</CardTitle></CardHeader>
           <CardContent>
-            <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v })}>
+            <Select value={form.language} onValueChange={(v) => { setLanguage(v); saveField({ language: v }); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="ar">Arabic</SelectItem>
+                <SelectItem value="ar">العربية</SelectItem>
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Security</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("creator.settings.security")}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Two-factor login (email code)</Label>
-                <p className="text-xs text-muted-foreground">Require a 6-digit code sent to your email on every sign-in.</p>
+                <Label>{t("creator.settings.twoFA")}</Label>
+                <p className="text-xs text-muted-foreground">{t("creator.settings.twoFAHint")}</p>
               </div>
               <Switch checked={twoFA} onCheckedChange={toggle2FA} />
             </div>
@@ -412,7 +416,7 @@ const InfluencerSettings = () => {
         </Card>
 
         <Button className="w-full" onClick={() => updateSettings.mutate()} disabled={updateSettings.isPending}>
-          <Save className="w-4 h-4 mr-2" /> {updateSettings.isPending ? "Saving..." : "Save Settings"}
+          <Save className="w-4 h-4 me-2" /> {updateSettings.isPending ? t("creator.profile.saving") : t("creator.settings.save")}
         </Button>
       </div>
     </DashboardLayout>

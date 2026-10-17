@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { MapPin, Users, Sparkles } from "lucide-react";
 import { prettyLabel } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 /** Photo-led offer card for the creator side (Dashboard, Home, Explore). */
 const OfferTile = ({ offer, className = "", footer, corner }: { offer: any; className?: string; footer?: React.ReactNode; corner?: React.ReactNode }) => {
+  const { t } = useTranslation();
   const cover = offer.cover_image_url || offer.image_url || offer.venues?.cover_image_url;
   const slots = offer.max_redemptions ? offer.max_redemptions - (offer.current_redemptions ?? 0) : null;
   return (
@@ -15,12 +17,12 @@ const OfferTile = ({ offer, className = "", footer, corner }: { offer: any; clas
             : <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--venue-brand)), hsl(0 60% 26%))" }}><Sparkles className="w-10 h-10" style={{ color: "hsl(var(--primary))" }} /></div>}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
           {offer.offer_type && (
-            <span className="absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
-              {prettyLabel(offer.offer_type)}
+            <span className="absolute start-3 top-3 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style={{ background: "hsl(var(--primary))", color: "hsl(var(--venue-brand))" }}>
+              {t(`creator.offerTypes.${offer.offer_type}`, { defaultValue: prettyLabel(offer.offer_type) })}
             </span>
           )}
           {!corner && slots != null && slots > 0 && slots <= 5 && (
-            <span className="absolute right-3 top-3 rounded-full px-3 py-1 text-[11px] font-bold bg-white/90 text-neutral-900">{slots} left</span>
+            <span className="absolute end-3 top-3 rounded-full px-3 py-1 text-[11px] font-bold bg-white/90 text-neutral-900">{t("creator.offer.left", { n: slots })}</span>
           )}
           <div className="absolute inset-x-0 bottom-0 p-4 text-white">
             <div className="flex items-center gap-2 mb-2">
@@ -37,7 +39,7 @@ const OfferTile = ({ offer, className = "", footer, corner }: { offer: any; clas
           </div>
         </div>
       </Link>
-      {corner && <div className="absolute right-5 top-5 z-10">{corner}</div>}
+      {corner && <div className="absolute end-5 top-5 z-10">{corner}</div>}
       {footer && <div className="px-2 pt-3 pb-1">{footer}</div>}
     </div>
   );

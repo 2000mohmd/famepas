@@ -21,10 +21,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Check, X, QrCode, MapPin, Calendar, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { dateOpts } from "@/lib/dateLocale";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const InfluencerInvitations = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -83,12 +86,12 @@ const InfluencerInvitations = () => {
       }
     },
     onSuccess: () => {
-      toast({ title: "Invitation updated" });
+      toast({ title: t("creator.invitations.updated") });
       queryClient.invalidateQueries({ queryKey: ["my-invitations"] });
       setSelected(null);
       setConfirmCancel(null);
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("creator.common.error"), description: e.message, variant: "destructive" }),
   });
 
   const statusColor = (s: string) => {
@@ -105,9 +108,9 @@ const InfluencerInvitations = () => {
     <DashboardLayout type="influencer">
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Inbox</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Invitations</h1>
-            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Venues that picked you personally. Accept to lock in your visit.</p>
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">{t("creator.invitations.eyebrow")}</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">{t("creator.invitations.title")}</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">{t("creator.invitations.subtitle")}</p>
           </div>
         </div>
 
@@ -128,13 +131,13 @@ const InfluencerInvitations = () => {
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-extrabold text-foreground">{inv.offers?.title || "Venue invitation"}</h3>
-                      <Badge className={`${statusColor(inv.status)} rounded-full px-3 capitalize`}>{inv.status}</Badge>
+                      <h3 className="text-lg font-extrabold text-foreground">{inv.offers?.title || t("creator.invitations.fallbackTitle")}</h3>
+                      <Badge className={`${statusColor(inv.status)} rounded-full px-3 capitalize`}>{t(`creator.status.${inv.status}`, { defaultValue: inv.status })}</Badge>
                     </div>
                     <p className="text-sm font-semibold text-muted-foreground">{inv.venues?.name}{inv.venues?.city ? ` · ${inv.venues.city}` : ""}</p>
                     {inv.scheduled_at && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {format(new Date(inv.scheduled_at), "PPP p")}
+                        <Calendar className="w-3 h-3" /> {format(new Date(inv.scheduled_at), "PPP p", dateOpts())}
                       </p>
                     )}
                   </div>
@@ -143,8 +146,8 @@ const InfluencerInvitations = () => {
             </Card>
           ))}
           {invitations?.length === 0 && (
-            <VenueEmpty icon={Send} title="No invitations yet" body="Venues invite creators whose profiles stand out. Add a great photo, a bio and your niches to get noticed."
-              actions={<BrandButton to="/influencer/profile">Complete profile</BrandButton>} />
+            <VenueEmpty icon={Send} title={t("creator.invitations.emptyTitle")} body={t("creator.invitations.emptyBody")}
+              actions={<BrandButton to="/influencer/profile">{t("creator.common.completeProfile")}</BrandButton>} />
           )}
         </div>
 
@@ -159,12 +162,12 @@ const InfluencerInvitations = () => {
                       <AvatarImage src={selected.venues?.logo_url || selected.venues?.image_url || undefined} />
                       <AvatarFallback><Building2 className="w-4 h-4" /></AvatarFallback>
                     </Avatar>
-                    {selected.offers?.title || "Venue Invitation"}
+                    {selected.offers?.title || t("creator.invitations.fallbackTitle")}
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge className={statusColor(selected.status)}>{selected.status}</Badge>
+                    <Badge className={statusColor(selected.status)}>{t(`creator.status.${selected.status}`, { defaultValue: selected.status })}</Badge>
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{selected.venues?.name}</p>
@@ -174,19 +177,19 @@ const InfluencerInvitations = () => {
                   </div>
                   {selected.offers?.description && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">Offer</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t("creator.invitations.offer")}</p>
                       <p className="text-foreground">{selected.offers.description}</p>
                     </div>
                   )}
                   {selected.message && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">Message from venue</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t("creator.invitations.messageFromVenue")}</p>
                       <p className="text-foreground">{selected.message}</p>
                     </div>
                   )}
                   {selected.scheduled_at && (
                     <p className="text-muted-foreground flex items-center gap-1">
-                      <Calendar className="w-4 h-4" /> {format(new Date(selected.scheduled_at), "PPP p")}
+                      <Calendar className="w-4 h-4" /> {format(new Date(selected.scheduled_at), "PPP p", dateOpts())}
                     </p>
                   )}
                   {selected.qr_code && (
@@ -203,14 +206,14 @@ const InfluencerInvitations = () => {
                         size="sm"
                         onClick={() => updateStatus.mutate({ id: selected.id, status: "accepted" })}
                       >
-                        <Check className="w-4 h-4 mr-1" /> Accept
+                        <Check className="w-4 h-4 me-1" /> {t("creator.invitations.accept")}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => updateStatus.mutate({ id: selected.id, status: "declined" })}
                       >
-                        <X className="w-4 h-4 mr-1" /> Decline
+                        <X className="w-4 h-4 me-1" /> {t("creator.invitations.decline")}
                       </Button>
                     </>
                   )}
@@ -220,7 +223,7 @@ const InfluencerInvitations = () => {
                       variant="destructive"
                       onClick={() => setConfirmCancel(selected)}
                     >
-                      <X className="w-4 h-4 mr-1" /> Cancel Invitation
+                      <X className="w-4 h-4 me-1" /> {t("creator.invitations.cancel")}
                     </Button>
                   )}
                 </div>
@@ -232,17 +235,17 @@ const InfluencerInvitations = () => {
         <AlertDialog open={!!confirmCancel} onOpenChange={(o) => !o && setConfirmCancel(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Cancel this invitation?</AlertDialogTitle>
+              <AlertDialogTitle>{t("creator.invitations.cancelConfirmTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                The venue will be notified and any related booking will be removed.
+                {t("creator.invitations.cancelConfirmBody")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Keep it</AlertDialogCancel>
+              <AlertDialogCancel>{t("creator.invitations.keepIt")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => confirmCancel && updateStatus.mutate({ id: confirmCancel.id, status: "cancelled" })}
               >
-                Yes, cancel
+                {t("creator.invitations.yesCancel")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

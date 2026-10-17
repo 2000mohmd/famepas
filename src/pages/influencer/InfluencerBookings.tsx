@@ -20,8 +20,11 @@ import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { notifyEmail } from "@/lib/notify";
+import { dateOpts } from "@/lib/dateLocale";
+import { useTranslation } from "react-i18next";
 
 const InfluencerBookings = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [uploadFor, setUploadFor] = useState<any | null>(null);
@@ -85,10 +88,10 @@ const InfluencerBookings = () => {
     const { data, error } = await (supabase as any).rpc("confirm_delivery_received", { _redemption_id: redemptionId });
     setConfirmingReceipt(null);
     if (error || !data?.ok) {
-      toast({ title: "Couldn't confirm receipt", description: data?.reason || error?.message, variant: "destructive" });
+      toast({ title: t("creator.bookings.receiptFailed"), description: data?.reason || error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Receipt confirmed", description: "Your post deadline starts now." });
+    toast({ title: t("creator.bookings.receiptConfirmed"), description: t("creator.bookings.deadlineStarts") });
     queryClient.invalidateQueries({ queryKey: ["my-bookings", user?.id] });
   };
 
@@ -99,17 +102,17 @@ const InfluencerBookings = () => {
   const submitContent = async () => {
     if (!uploadFor || !user) return;
     if (!contentUrl.trim() && !file) {
-      toast({ title: "Add a post URL or upload a file", variant: "destructive" });
+      toast({ title: t("creator.bookings.needUrlOrFile"), variant: "destructive" });
       return;
     }
     const typedUrl = contentUrl.trim().toLowerCase();
     if (typedUrl) {
       if (platform === "instagram" && !typedUrl.includes("instagram.com")) {
-        toast({ title: "That link isn't an Instagram post", description: "Paste the link to your Instagram post or reel.", variant: "destructive" });
+        toast({ title: t("creator.bookings.notInstagram"), description: t("creator.bookings.pasteInstagram"), variant: "destructive" });
         return;
       }
       if (platform === "tiktok" && !typedUrl.includes("tiktok.com")) {
-        toast({ title: "That link isn't a TikTok video", description: "Paste the link to your TikTok video.", variant: "destructive" });
+        toast({ title: t("creator.bookings.notTiktok"), description: t("creator.bookings.pasteTiktok"), variant: "destructive" });
         return;
       }
     }
@@ -145,8 +148,8 @@ const InfluencerBookings = () => {
         const { data: res } = await (supabase as any).rpc("submit_booking_post", {
           _redemption_id: uploadFor.redemption_id, _url: url,
         });
-        if (res && !res.ok) toast({ title: "Post saved, but not logged for delivery", description: res.reason });
-        else if (res?.late) toast({ title: "Submitted after the deadline", description: "It still counts, marked as late." });
+        if (res && !res.ok) toast({ title: t("creator.bookings.notLogged"), description: res.reason });
+        else if (res?.late) toast({ title: t("creator.bookings.late"), description: t("creator.bookings.lateBody") });
       }
 
       // Auto-fetch real metrics from Instagram/TikTok via RapidAPI
@@ -156,11 +159,11 @@ const InfluencerBookings = () => {
         }).catch(() => { /* metrics best-effort; venue can refresh later */ });
       }
 
-      toast({ title: "Content submitted", description: "The venue will review and approve it." });
+      toast({ title: t("creator.bookings.submitted"), description: t("creator.bookings.submittedBody") });
       resetUpload();
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
     } catch (e: any) {
-      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+      toast({ title: t("creator.bookings.uploadFailed"), description: e.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -188,25 +191,25 @@ const InfluencerBookings = () => {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-extrabold text-foreground">{booking.offers?.title || "Visit"}</h3>
+              <h3 className="text-lg font-extrabold text-foreground">{booking.offers?.title || t("creator.bookings.visit")}</h3>
               {/* Adnan, "Creator Page fixes" #5: one clear stage badge, not three
                   disagreeing ones — delivery_stage already carries this label. */}
               {booking.offer_redemptions?.delivery_stage ? (
                 <Badge variant="outline" className={`text-xs ${DELIVERY_TONE[booking.offer_redemptions.delivery_stage] ?? ""}`}>
-                  {DELIVERY_LABEL[booking.offer_redemptions.delivery_stage] ?? booking.offer_redemptions.delivery_stage}
+                  {t(`creator.delivery.${booking.offer_redemptions.delivery_stage}`, { defaultValue: DELIVERY_LABEL[booking.offer_redemptions.delivery_stage] ?? booking.offer_redemptions.delivery_stage })}
                 </Badge>
               ) : (
-                <Badge className={statusColor(booking.status)}>{booking.status.replace("_", " ")}</Badge>
+                <Badge className={statusColor(booking.status)}>{t(`creator.status.${booking.status}`, { defaultValue: booking.status.replace("_", " ") })}</Badge>
               )}
               {deliverable?.status === "rejected" && (
                 <Badge variant="outline" className="text-xs bg-destructive/15 text-destructive border-destructive/30">
-                  Content rejected
+                  {t("creator.bookings.contentRejected")}
                 </Badge>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {booking.venues?.logo_url && (
-                <img src={booking.venues.logo_url} alt={`${booking.venues?.name ?? "Venue"} logo`} loading="lazy" className="w-9 h-9 rounded-xl object-cover border border-border bg-white" />
+                <img src={booking.venues.logo_url} alt={booking.venues?.name ?? t("creator.common.venue")} loading="lazy" className="w-9 h-9 rounded-xl object-cover border border-border bg-white" />
               )}
               <span className="font-semibold">{booking.venues?.name}{booking.venues?.city ? ` · ${booking.venues.city}` : ""}</span>
             </div>
@@ -214,14 +217,14 @@ const InfluencerBookings = () => {
                 falls back to the row's creation time when none was chosen. */}
             <p className="inline-flex items-center gap-2 mt-1 rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-foreground">
               <CalendarDays className="w-4 h-4" style={{ color: "hsl(var(--venue-brand))" }} /> {booking.preferred_date
-                ? format(parseISO(`${booking.preferred_date}T00:00:00`), "PPP")
-                : format(new Date(booking.scheduled_date), "PPP p")}
+                ? format(parseISO(`${booking.preferred_date}T00:00:00`), "PPP", dateOpts())
+                : format(new Date(booking.scheduled_date), "PPP p", dateOpts())}
             </p>
             {booking.checked_in_at && (
-              <p className="text-xs text-green-500">Checked in: {format(new Date(booking.checked_in_at), "PPP p")}</p>
+              <p className="text-xs text-green-500">{t("creator.bookings.checkedIn", { date: format(new Date(booking.checked_in_at), "PPP p", dateOpts()) })}</p>
             )}
             {booking.deliverable_deadline && (
-              <p className="text-xs text-muted-foreground">Deliverable deadline: {format(new Date(booking.deliverable_deadline), "PPP")}</p>
+              <p className="text-xs text-muted-foreground">{t("creator.bookings.deadline", { date: format(new Date(booking.deliverable_deadline), "PPP", dateOpts()) })}</p>
             )}
             {(() => {
               const d = booking.offer_redemptions;
@@ -231,12 +234,12 @@ const InfluencerBookings = () => {
                 <div className="mt-1 space-y-1">
                   {d.delivery_stage === "visited" && d.shipped_at && !d.received_at && (
                     <Button size="sm" variant="outline" disabled={confirmingReceipt === d.id} onClick={() => confirmReceived(d.id)}>
-                      {confirmingReceipt === d.id ? "Confirming..." : "I received it"}
+                      {confirmingReceipt === d.id ? t("creator.bookings.confirming") : t("creator.bookings.received")}
                     </Button>
                   )}
                   {due && d.delivery_stage === "visited" && (!d.shipped_at || d.received_at) && (
                     <p className={`text-xs ${due < new Date() ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                      Post due by {format(due, "PPP p")}
+                      {t("creator.bookings.postDue", { date: format(due, "PPP p", dateOpts()) })}
                     </p>
                   )}
                   {d.failure_reason && <p className="text-xs text-destructive">{d.failure_reason}</p>}
@@ -251,35 +254,35 @@ const InfluencerBookings = () => {
             {booking.offer_id && (
               <Button asChild size="sm" variant="ghost">
                 <Link to={`/influencer/offers/${booking.offer_id}`}>
-                  <ExternalLink className="w-4 h-4 mr-1" /> View offer
+                  <ExternalLink className="w-4 h-4 me-1" /> {t("creator.bookings.viewOffer")}
                 </Link>
               </Button>
             )}
             {booking.status === "upcoming" && (
-              <p className="text-[11px] text-muted-foreground max-w-[180px] text-right">
-                The venue confirms your check-in with the code above.
+              <p className="text-[11px] text-muted-foreground max-w-[180px] text-end">
+                {t("creator.bookings.checkinHint")}
               </p>
             )}
             {booking.status === "checked_in" && !hasDeliverable && (
               <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
-                <Upload className="w-4 h-4 mr-1" /> Share Post Link
+                <Upload className="w-4 h-4 me-1" /> {t("creator.bookings.sharePost")}
               </Button>
             )}
             {booking.status === "completed" && !hasDeliverable && (
               <Button size="sm" onClick={() => setUploadFor(booking)}>
-                <Upload className="w-4 h-4 mr-1" /> Upload Content
+                <Upload className="w-4 h-4 me-1" /> {t("creator.bookings.uploadContent")}
               </Button>
             )}
             {booking.status === "completed" && deliverable?.status === "rejected" && (
               <Button size="sm" variant="outline" onClick={() => setUploadFor(booking)}>
-                <Upload className="w-4 h-4 mr-1" /> Resubmit
+                <Upload className="w-4 h-4 me-1" /> {t("creator.bookings.resubmit")}
               </Button>
             )}
           </div>
         </div>
         {hasDeliverable && deliverable.status !== "rejected" && (
           <div className="mt-3 pt-3 border-t">
-            <Label className="text-xs text-muted-foreground">Published post URL</Label>
+            <Label className="text-xs text-muted-foreground">{t("creator.bookings.publishedUrl")}</Label>
             <div className="flex gap-2 mt-1">
               <Input
                 defaultValue={deliverable.post_url || ""}
@@ -291,8 +294,8 @@ const InfluencerBookings = () => {
                     .from("deliverables")
                     .update({ post_url: v || null })
                     .eq("id", deliverable.id);
-                  if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-                  toast({ title: "Post URL saved" });
+                  if (error) { toast({ title: t("creator.common.error"), description: error.message, variant: "destructive" }); return; }
+                  toast({ title: t("creator.bookings.urlSaved") });
                   queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
                 }}
                 className="h-9 text-sm"
@@ -303,21 +306,21 @@ const InfluencerBookings = () => {
                 disabled={!deliverable.post_url}
                 onClick={async () => {
                   const url = (deliverable.post_url || "").trim();
-                  if (!url) { toast({ title: "Add a post URL first", variant: "destructive" }); return; }
-                  toast({ title: "Fetching views..." });
+                  if (!url) { toast({ title: t("creator.bookings.addUrlFirst"), variant: "destructive" }); return; }
+                  toast({ title: t("creator.bookings.fetchingViews") });
                   const { error } = await supabase.functions.invoke("fetch-post-metrics", {
                     body: { deliverable_id: deliverable.id, post_url: url },
                   });
-                  if (error) { toast({ title: "Refresh failed", description: error.message, variant: "destructive" }); return; }
-                  toast({ title: "Views refreshed" });
+                  if (error) { toast({ title: t("creator.bookings.refreshFailed"), description: error.message, variant: "destructive" }); return; }
+                  toast({ title: t("creator.bookings.viewsRefreshed") });
                   queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
                 }}
               >
-                <RefreshCw className="w-4 h-4 mr-1" /> Refresh views
+                <RefreshCw className="w-4 h-4 me-1" /> {t("creator.bookings.refreshViews")}
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Views: <span className="font-medium text-foreground">{deliverable.views ?? 0}</span> • Likes: {deliverable.likes ?? 0} • Comments: {deliverable.comments ?? 0}
+              {t("creator.bookings.views")}: <span className="font-medium text-foreground">{deliverable.views ?? 0}</span> • {t("creator.bookings.likes")}: {deliverable.likes ?? 0} • {t("creator.bookings.comments")}: {deliverable.comments ?? 0}
             </p>
           </div>
         )}
@@ -329,27 +332,27 @@ const InfluencerBookings = () => {
     <DashboardLayout type="influencer">
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-[2rem] p-7 md:p-10 flex flex-wrap items-end justify-between gap-6 creator-hero">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">Your visits</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">Bookings</h1>
-            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">Your upcoming visits and the content you've delivered. Show your QR code at the door to check in.</p>
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] mb-3 creator-hero-eyebrow">{t("creator.bookings.eyebrow")}</p>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.02] creator-hero-title">{t("creator.bookings.title")}</h1>
+            <p className="mt-3 text-base md:text-lg opacity-75 max-w-2xl">{t("creator.bookings.subtitle")}</p>
           </div>
         </div>
 
         <Tabs defaultValue="upcoming">
           <TabsList>
-            <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-            <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
+            <TabsTrigger value="upcoming">{t("creator.bookings.upcomingTab", { n: upcoming.length })}</TabsTrigger>
+            <TabsTrigger value="past">{t("creator.bookings.pastTab", { n: past.length })}</TabsTrigger>
           </TabsList>
           <TabsContent value="upcoming" className="space-y-4 mt-4">
             {upcoming.map(renderBooking)}
             {upcoming.length === 0 && (
-              <VenueEmpty icon={CalendarDays} title="No upcoming visits" body="Apply to an offer you love — once the venue accepts, your visit shows up here with your check-in QR code."
-                actions={<BrandButton to="/influencer/explore">Browse offers</BrandButton>} />
+              <VenueEmpty icon={CalendarDays} title={t("creator.bookings.emptyUpcomingTitle")} body={t("creator.bookings.emptyUpcomingBody")}
+                actions={<BrandButton to="/influencer/explore">{t("creator.common.browseOffers")}</BrandButton>} />
             )}
           </TabsContent>
           <TabsContent value="past" className="space-y-4 mt-4">
             {past.map(renderBooking)}
-            {past.length === 0 && <VenueEmpty compact icon={CalendarDays} title="No past visits yet" body="Completed visits and the content you delivered will be listed here." />}
+            {past.length === 0 && <VenueEmpty compact icon={CalendarDays} title={t("creator.bookings.emptyPastTitle")} body={t("creator.bookings.emptyPastBody")} />}
           </TabsContent>
         </Tabs>
       </div>
@@ -359,15 +362,15 @@ const InfluencerBookings = () => {
       <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) resetUpload(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Submit your content</DialogTitle>
+            <DialogTitle>{t("creator.bookings.dialogTitle")}</DialogTitle>
             <DialogDescription>
-              Share the link to your post (and optional media file) so the venue can approve it.
+              {t("creator.bookings.dialogBody")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Platform</Label>
+                <Label className="text-xs">{t("creator.bookings.platform")}</Label>
                 <Select value={platform} onValueChange={setPlatform}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -378,20 +381,20 @@ const InfluencerBookings = () => {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Content type</Label>
+                <Label className="text-xs">{t("creator.bookings.contentType")}</Label>
                 <Select value={contentType} onValueChange={setContentType}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="post">Post</SelectItem>
-                    <SelectItem value="reel">Reel</SelectItem>
-                    <SelectItem value="story">Story</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="post">{t("creator.contentTypes.post")}</SelectItem>
+                    <SelectItem value="reel">{t("creator.contentTypes.reel")}</SelectItem>
+                    <SelectItem value="story">{t("creator.contentTypes.story")}</SelectItem>
+                    <SelectItem value="video">{t("creator.contentTypes.video")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Post URL</Label>
+              <Label className="text-xs">{t("creator.bookings.postUrl")}</Label>
               <Input
                 value={contentUrl}
                 onChange={e => setContentUrl(e.target.value)}
@@ -399,21 +402,21 @@ const InfluencerBookings = () => {
               />
               {(platform === "instagram" || platform === "tiktok") && !connectedPlatforms.includes(platform) && (
                 <p className="text-[11px] text-amber-600 mt-1">
-                  Link your {platform === "tiktok" ? "TikTok" : "Instagram"} account in{" "}
-                  <Link to="/influencer/settings" className="underline">Settings</Link> so the venue can see your post performance.
+                  {t("creator.bookings.linkAccountA", { platform: platform === "tiktok" ? "TikTok" : "Instagram" })}{" "}
+                  <Link to="/influencer/settings" className="underline">{t("nav.settings")}</Link> {t("creator.bookings.linkAccountB")}
                 </p>
               )}
             </div>
             <div>
-              <Label className="text-xs">Caption (optional)</Label>
+              <Label className="text-xs">{t("creator.bookings.caption")}</Label>
               <Textarea value={caption} onChange={e => setCaption(e.target.value)} rows={3} maxLength={2000} />
             </div>
             <div>
-              <Label className="text-xs">Upload media (optional)</Label>
+              <Label className="text-xs">{t("creator.bookings.media")}</Label>
               <Input type="file" accept="image/*,video/*" onChange={e => setFile(e.target.files?.[0] ?? null)} />
             </div>
             <Button onClick={submitContent} disabled={submitting} className="w-full">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4 mr-1" /> Submit for review</>}
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4 me-1" /> {t("creator.bookings.submitForReview")}</>}
             </Button>
           </div>
         </DialogContent>

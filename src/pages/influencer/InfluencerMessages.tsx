@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface Message {
   id: string;
@@ -17,6 +18,7 @@ interface Message {
 }
 
 const InfluencerMessages = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [thread, setThread] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
@@ -82,7 +84,7 @@ const InfluencerMessages = () => {
     }
     if (!receiverId) {
       setSending(false);
-      toast({ title: "Couldn't send message", description: "Please try again in a moment.", variant: "destructive" });
+      toast({ title: t("creator.messages.sendFailed"), description: t("creator.messages.tryAgain"), variant: "destructive" });
       return;
     }
     const { data, error } = await supabase
@@ -103,44 +105,44 @@ const InfluencerMessages = () => {
     <DashboardLayout type="influencer">
       <div className="animate-fade-in space-y-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">Support</p>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Messages</h1>
-          <p className="mt-2 text-muted-foreground">Chat directly with the FamePass team — questions, bookings, anything.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">{t("creator.messages.eyebrow")}</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">{t("creator.messages.title")}</h1>
+          <p className="mt-2 text-muted-foreground">{t("creator.messages.subtitle")}</p>
         </div>
 
         <div className="rounded-[2rem] bg-card border border-border flex flex-col overflow-hidden shadow-[var(--venue-shadow)]" style={{ height: "68vh" }}>
           <div className="flex items-center gap-4 px-6 py-4 border-b border-border">
             <span className="relative w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(var(--venue-brand))" }}>
               <img src="/website/images/emblem-gold.webp" alt="" className="h-7 w-auto" />
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card" />
+              <span className="absolute bottom-0 end-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card" />
             </span>
             <div>
-              <p className="font-extrabold text-foreground">FamePass support</p>
-              <p className="text-xs text-muted-foreground">AI assistant replies instantly · our team steps in when needed</p>
+              <p className="font-extrabold text-foreground">{t("creator.messages.supportName")}</p>
+              <p className="text-xs text-muted-foreground">{t("creator.messages.supportSub")}</p>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-3" style={{ background: "hsl(var(--background))" }}>
             {loading ? (
-              <p className="text-muted-foreground text-sm text-center mt-8">Loading…</p>
+              <p className="text-muted-foreground text-sm text-center mt-8">{t("common.loading")}</p>
             ) : thread.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-4">
                 <span className="flex items-center justify-center w-20 h-20 rounded-full"
                   style={{ background: "radial-gradient(circle at 30% 30%, hsl(var(--gold-light)), hsl(var(--primary)))", boxShadow: "0 0 0 10px hsl(var(--primary) / .12)" }}>
                   <Send className="w-8 h-8" style={{ color: "hsl(var(--venue-brand))" }} />
                 </span>
-                <p className="text-2xl font-extrabold text-foreground">Say hello 👋</p>
-                <p className="text-muted-foreground max-w-sm">Questions about an offer or a visit? Message the FamePass team and we'll reply right here.</p>
+                <p className="text-2xl font-extrabold text-foreground">{t("creator.messages.emptyTitle")}</p>
+                <p className="text-muted-foreground max-w-sm">{t("creator.messages.emptyBody")}</p>
               </div>
             ) : (
               thread.map((m) => {
                 const mine = m.sender_id === user?.id;
                 return (
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] px-4 py-3 text-sm leading-relaxed shadow-sm ${mine ? "rounded-3xl rounded-br-lg" : "rounded-3xl rounded-bl-lg bg-card border border-border text-foreground"}`}
+                    <div className={`max-w-[75%] px-4 py-3 text-sm leading-relaxed shadow-sm ${mine ? "rounded-3xl rounded-ee-lg" : "rounded-3xl rounded-es-lg bg-card border border-border text-foreground"}`}
                       style={mine ? { background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" } : undefined}>
-                      {m.ai_generated && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "hsl(var(--venue-brand))" }}><Sparkles className="w-3 h-3" /> FamePass AI</span>}
+                      {m.ai_generated && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "hsl(var(--venue-brand))" }}><Sparkles className="w-3 h-3" /> {t("creator.messages.ai")}</span>}
                       {m.content}
-                      {escalated.has(m.id) && <span className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-emerald-700"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Sent to the FamePass team</span>}
+                      {escalated.has(m.id) && <span className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-emerald-700"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t("creator.messages.escalated")}</span>}
                       {(m as any).created_at && <span className="block text-[10px] mt-1 opacity-60">{new Date((m as any).created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
                     </div>
                   </div>
@@ -150,7 +152,7 @@ const InfluencerMessages = () => {
                 {aiThinking && (
                   <div className="flex justify-start">
                     <div className="rounded-3xl rounded-bl-lg bg-card border border-border px-4 py-3 text-sm text-muted-foreground inline-flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} /> FamePass AI is typing
+                      <Sparkles className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} /> {t("creator.messages.typing")}
                       <span className="inline-flex gap-1"><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" /><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:.15s]" /><span className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:.3s]" /></span>
                     </div>
                   </div>
@@ -162,10 +164,10 @@ const InfluencerMessages = () => {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Write a message…"
+              placeholder={t("creator.messages.placeholder")}
               className="h-12 rounded-full px-5 bg-muted border-0"
             />
-            <Button onClick={sendMessage} disabled={sending || !draft.trim()} size="icon" aria-label="Send message"
+            <Button onClick={sendMessage} disabled={sending || !draft.trim()} size="icon" aria-label={t("creator.messages.send")}
               className="w-12 h-12 rounded-full shrink-0" style={{ background: "hsl(var(--venue-brand))", color: "hsl(var(--venue-brand-foreground))" }}>
               <Send className="w-5 h-5" />
             </Button>
